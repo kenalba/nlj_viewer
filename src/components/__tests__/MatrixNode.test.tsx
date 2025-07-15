@@ -47,15 +47,24 @@ describe('MatrixNode', () => {
     render(<MatrixNode question={question} onAnswer={mockOnAnswer} />);
     
     // Select "Good" for "Job Satisfaction"
-    const radios = screen.getAllByRole('radio');
-    const satisfactionGoodRadio = radios.find(radio => {
-      const row = radio.closest('tr');
-      return row?.textContent?.includes('Job Satisfaction') && 
-             row?.textContent?.includes('Good');
-    });
+    const satisfactionRow = screen.getByText('Job Satisfaction').closest('tr');
+    const satisfactionRadios = satisfactionRow?.querySelectorAll('input[type="radio"]');
+    if (satisfactionRadios && satisfactionRadios.length > 0) {
+      // Good is the 3rd column (index 2): Poor, Fair, Good, Excellent
+      await user.click(satisfactionRadios[2]);
+    }
     
-    if (satisfactionGoodRadio) {
-      await user.click(satisfactionGoodRadio);
+    // Also need to select for other required rows to pass validation
+    const growthRow = screen.getByText('Growth Opportunities').closest('tr');
+    const growthRadios = growthRow?.querySelectorAll('input[type="radio"]');
+    if (growthRadios && growthRadios.length > 0) {
+      await user.click(growthRadios[1]); // Select "Fair" for growth
+    }
+    
+    const supportRow = screen.getByText('Management Support').closest('tr');
+    const supportRadios = supportRow?.querySelectorAll('input[type="radio"]');
+    if (supportRadios && supportRadios.length > 0) {
+      await user.click(supportRadios[3]); // Select "Excellent" for support
     }
     
     const submitButton = screen.getByRole('button', { name: /submit/i });
@@ -63,6 +72,8 @@ describe('MatrixNode', () => {
     
     expect(mockOnAnswer).toHaveBeenCalledWith({
       satisfaction: 'good',
+      growth: 'fair',
+      support: 'excellent',
     });
   });
 
@@ -75,15 +86,24 @@ describe('MatrixNode', () => {
     render(<MatrixNode question={question} onAnswer={mockOnAnswer} />);
     
     // Select multiple options for "Job Satisfaction"
-    const checkboxes = screen.getAllByRole('checkbox');
-    const satisfactionCheckboxes = checkboxes.filter(checkbox => {
-      const row = checkbox.closest('tr');
-      return row?.textContent?.includes('Job Satisfaction');
-    });
-    
-    if (satisfactionCheckboxes.length >= 2) {
+    const satisfactionRow = screen.getByText('Job Satisfaction').closest('tr');
+    const satisfactionCheckboxes = satisfactionRow?.querySelectorAll('input[type="checkbox"]');
+    if (satisfactionCheckboxes && satisfactionCheckboxes.length >= 2) {
       await user.click(satisfactionCheckboxes[0]); // Poor
       await user.click(satisfactionCheckboxes[1]); // Fair
+    }
+    
+    // Answer other required rows
+    const growthRow = screen.getByText('Growth Opportunities').closest('tr');
+    const growthCheckboxes = growthRow?.querySelectorAll('input[type="checkbox"]');
+    if (growthCheckboxes && growthCheckboxes.length > 0) {
+      await user.click(growthCheckboxes[2]); // Good
+    }
+    
+    const supportRow = screen.getByText('Management Support').closest('tr');
+    const supportCheckboxes = supportRow?.querySelectorAll('input[type="checkbox"]');
+    if (supportCheckboxes && supportCheckboxes.length > 0) {
+      await user.click(supportCheckboxes[3]); // Excellent
     }
     
     const submitButton = screen.getByRole('button', { name: /submit/i });
@@ -91,6 +111,8 @@ describe('MatrixNode', () => {
     
     expect(mockOnAnswer).toHaveBeenCalledWith({
       satisfaction: ['poor', 'fair'],
+      growth: ['good'],
+      support: ['excellent'],
     });
   });
 
@@ -122,23 +144,18 @@ describe('MatrixNode', () => {
     
     render(<MatrixNode question={question} onAnswer={mockOnAnswer} />);
     
-    // Only select for one required row
-    const radios = screen.getAllByRole('radio');
-    const satisfactionRadio = radios.find(radio => {
-      const row = radio.closest('tr');
-      return row?.textContent?.includes('Job Satisfaction') && 
-             row?.textContent?.includes('Good');
-    });
-    
-    if (satisfactionRadio) {
-      await user.click(satisfactionRadio);
+    // Only select for one required row (Job Satisfaction)
+    const satisfactionRow = screen.getByText('Job Satisfaction').closest('tr');
+    const satisfactionRadios = satisfactionRow?.querySelectorAll('input[type="radio"]');
+    if (satisfactionRadios && satisfactionRadios.length > 0) {
+      await user.click(satisfactionRadios[2]); // Good
     }
     
     const submitButton = screen.getByRole('button', { name: /submit/i });
     await user.click(submitButton);
     
     // Should show error for missing required row
-    expect(screen.getByText('Please provide a response for "Management Support".')).toBeInTheDocument();
+    expect(screen.getByText(/Please provide a response for.*Management Support/)).toBeInTheDocument();
     expect(mockOnAnswer).not.toHaveBeenCalled();
   });
 
@@ -219,28 +236,22 @@ describe('MatrixNode', () => {
     render(<MatrixNode question={question} onAnswer={mockOnAnswer} />);
     
     // Select different options for different rows
-    const radios = screen.getAllByRole('radio');
-    
-    // Find and click "Good" for "Job Satisfaction"
-    const satisfactionGoodRadio = radios.find(radio => {
-      const row = radio.closest('tr');
-      return row?.textContent?.includes('Job Satisfaction') && 
-             row?.textContent?.includes('Good');
-    });
-    
-    // Find and click "Excellent" for "Growth Opportunities"
-    const growthExcellentRadio = radios.find(radio => {
-      const row = radio.closest('tr');
-      return row?.textContent?.includes('Growth Opportunities') && 
-             row?.textContent?.includes('Excellent');
-    });
-    
-    if (satisfactionGoodRadio) {
-      await user.click(satisfactionGoodRadio);
+    const satisfactionRow = screen.getByText('Job Satisfaction').closest('tr');
+    const satisfactionRadios = satisfactionRow?.querySelectorAll('input[type="radio"]');
+    if (satisfactionRadios && satisfactionRadios.length > 0) {
+      await user.click(satisfactionRadios[2]); // Good
     }
     
-    if (growthExcellentRadio) {
-      await user.click(growthExcellentRadio);
+    const growthRow = screen.getByText('Growth Opportunities').closest('tr');
+    const growthRadios = growthRow?.querySelectorAll('input[type="radio"]');
+    if (growthRadios && growthRadios.length > 0) {
+      await user.click(growthRadios[3]); // Excellent
+    }
+    
+    const supportRow = screen.getByText('Management Support').closest('tr');
+    const supportRadios = supportRow?.querySelectorAll('input[type="radio"]');
+    if (supportRadios && supportRadios.length > 0) {
+      await user.click(supportRadios[0]); // Poor
     }
     
     const submitButton = screen.getByRole('button', { name: /submit/i });
@@ -249,6 +260,7 @@ describe('MatrixNode', () => {
     expect(mockOnAnswer).toHaveBeenCalledWith({
       satisfaction: 'good',
       growth: 'excellent',
+      support: 'poor',
     });
   });
 
@@ -264,7 +276,7 @@ describe('MatrixNode', () => {
     
     render(<MatrixNode question={question} onAnswer={mockOnAnswer} />);
     
-    expect(screen.getByText('Test Image')).toBeInTheDocument();
+    expect(screen.getByAltText('Test Image')).toBeInTheDocument();
   });
 
   // Note: Mobile responsive tests would require mocking useMediaQuery

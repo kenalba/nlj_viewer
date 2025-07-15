@@ -32,10 +32,8 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
       return;
     }
 
-    if (selectedValue !== null) {
-      playSound('navigate');
-      onAnswer(selectedValue);
-    }
+    playSound('navigate');
+    onAnswer(selectedValue);
   };
 
   const getScaleValues = () => {
@@ -45,23 +43,6 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
       values.push(i);
     }
     return values;
-  };
-
-  const getValueLabel = (value: number) => {
-    // Check for custom labels first
-    if (question.scale.labels.custom && question.scale.labels.custom[value]) {
-      return question.scale.labels.custom[value];
-    }
-    
-    // Default labels for min/max/middle
-    if (value === question.scale.min) return question.scale.labels.min;
-    if (value === question.scale.max) return question.scale.labels.max;
-    if (question.scale.labels.middle) {
-      const middle = Math.floor((question.scale.min + question.scale.max) / 2);
-      if (value === middle) return question.scale.labels.middle;
-    }
-    
-    return question.showNumbers !== false ? value.toString() : '';
   };
 
   const getButtonVariant = (value: number) => {
@@ -76,9 +57,6 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
       borderRadius: 3,
       minWidth: 60,
       minHeight: 48,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 0.5,
       ...(isUnfiltered && {
         borderColor: isSelected ? '#F6FA24' : '#333333',
         backgroundColor: isSelected ? 'rgba(246, 250, 36, 0.1)' : 'transparent',
@@ -176,11 +154,6 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
               {question.showNumbers !== false && (
                 <Typography variant="body2" fontWeight="bold">
                   {value}
-                </Typography>
-              )}
-              {question.showLabels !== false && getValueLabel(value) && (
-                <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
-                  {getValueLabel(value)}
                 </Typography>
               )}
             </Button>

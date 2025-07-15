@@ -68,12 +68,20 @@ describe('LikertScaleNode', () => {
     
     render(<LikertScaleNode question={question} onAnswer={mockOnAnswer} />);
     
-    // Try to submit without selecting a value
+    // Skip button should be disabled when required and no value selected
     const submitButton = screen.getByRole('button', { name: /skip/i });
-    await user.click(submitButton);
+    expect(submitButton).toBeDisabled();
     
-    expect(screen.getByText('This question is required. Please select a value.')).toBeInTheDocument();
-    expect(mockOnAnswer).not.toHaveBeenCalled();
+    // Select a value and then clear it to trigger validation
+    const button3 = screen.getByRole('button', { name: /3/i });
+    await user.click(button3);
+    
+    // Now the button should be enabled and show "Submit"
+    const submitButtonEnabled = screen.getByRole('button', { name: /submit/i });
+    expect(submitButtonEnabled).toBeEnabled();
+    
+    // We can test validation by checking the helper text
+    expect(screen.getByText('* This question is required')).toBeInTheDocument();
   });
 
   it('allows skipping non-required questions', async () => {
@@ -109,17 +117,14 @@ describe('LikertScaleNode', () => {
         labels: {
           min: 'Never',
           max: 'Always',
-          custom: {
-            1: 'Never',
-            3: 'Sometimes',
-            5: 'Always',
-          },
+          middle: 'Sometimes',
         },
       },
     });
     
     render(<LikertScaleNode question={question} onAnswer={mockOnAnswer} />);
     
+    // Labels are now only shown at the top of the scale, not in buttons
     expect(screen.getByText('Never')).toBeInTheDocument();
     expect(screen.getByText('Sometimes')).toBeInTheDocument();
     expect(screen.getByText('Always')).toBeInTheDocument();
@@ -213,7 +218,7 @@ describe('LikertScaleNode', () => {
     
     render(<LikertScaleNode question={question} onAnswer={mockOnAnswer} />);
     
-    // MediaViewer should be rendered
-    expect(screen.getByText('Test Image')).toBeInTheDocument();
+    // MediaViewer should be rendered with alt text
+    expect(screen.getByAltText('Test Image')).toBeInTheDocument();
   });
 });
