@@ -14,7 +14,7 @@ A TypeScript React application for playing interactive Non-Linear Journey (NLJ) 
 - **Survey System**: Comprehensive survey question types with automotive and cross-industry templates
 - **Media Support**: Images, videos, and rich content integration
 - **Type-Safe**: Full TypeScript coverage for robust development
-- **Comprehensive Testing**: Full test suite with VSCode integration (120 tests passing)
+- **Comprehensive Testing**: Full test suite with VSCode integration (203 tests passing)
 - **Deployment-Ready**: All TypeScript build errors resolved and pre-deployment verification script included
 - **Keyboard Navigation**: Full keyboard support for accessibility (arrow keys, Enter, number keys)
   - **UnifiedQuestionNode**: Number keys (1-9) for choice selection, Enter to submit/continue
@@ -26,7 +26,6 @@ A TypeScript React application for playing interactive Non-Linear Journey (NLJ) 
 ## Quick Start
 
 ```bash
-cd src
 npm install
 npm run dev
 ```

@@ -23,7 +23,7 @@ A modern, responsive TypeScript React application for playing interactive Non-Li
 - **Real-time Feedback**: Immediate response validation with user-controlled progression
 - **Progress Tracking**: Visual progress indicators and completion tracking
 - **Type-Safe**: Full TypeScript coverage for robust development
-- **Comprehensive Testing**: Full test suite with VSCode integration (97 tests passing)
+- **Comprehensive Testing**: Full test suite with VSCode integration (203 tests passing)
 - **Debug Mode**: Comprehensive console logging for development (auto-enabled in dev mode)
 - **Deployment-Ready**: All TypeScript build errors resolved with pre-deployment verification
 - **Keyboard Navigation**: Full accessibility support with keyboard controls
@@ -33,9 +33,6 @@ A modern, responsive TypeScript React application for playing interactive Non-Li
 ## 🎯 Quick Start
 
 ```bash
-# Navigate to the project directory
-cd src
-
 # Install dependencies
 npm install
 
@@ -87,9 +84,9 @@ Visit `http://localhost:5173` to load scenarios and begin training.
 - **GameView**: Main gameplay interface with navigation and progress tracking
 - **MediaViewer**: Responsive media display with click-to-enlarge functionality
 - **Question Components**: Specialized components for each question type
-  - `TrueFalseNode`: Interactive True/False buttons with feedback
+  - `TrueFalseNode`: Interactive True/False buttons with submit/continue workflow and keyboard support (1 for True, 2 for False)
   - `OrderingNode`: Drag-and-drop item reordering with validation
-  - `MatchingNode`: Click-to-connect matching with visual connection lines
+  - `MatchingNode`: Click-to-connect matching with visual connection lines and manual continue
   - `ShortAnswerNode`: Text input with flexible answer validation
   - `UnifiedQuestionNode`: Enhanced multiple choice with improved choice buttons
   - `LikertScaleNode`: 1-5, 1-7, 1-10+ scales with customizable labels
@@ -139,7 +136,7 @@ The application uses a custom Material UI theme with:
 npm run dev          # Development server with hot reload
 npm run build        # Production build (TypeScript errors resolved)
 npm run preview      # Preview production build
-npm run test         # Run test suite (97 tests passing)
+npm run test         # Run test suite (203 tests passing)
 npm run test:ui      # Run tests with UI
 npm run test:coverage # Run tests with coverage
 npm run lint         # Run ESLint (39 non-critical issues remaining)
@@ -153,7 +150,7 @@ npm run type-check   # Run TypeScript compiler check
 
 The pre-deployment script verifies:
 - ✅ TypeScript compilation success
-- ✅ All tests passing (97/97)
+- ✅ All tests passing (203/203)
 - ✅ Critical lint issues resolved
 - ✅ Build process completion
 - ⚠️ Reports non-critical style warnings
@@ -230,7 +227,7 @@ Supports the full NLJ schema including:
 
 All TypeScript build errors have been resolved as of the latest commits:
 - **Build**: ✅ Successful TypeScript compilation
-- **Tests**: ✅ All 97 tests passing
+- **Tests**: ✅ All 203 tests passing
 - **Lint**: ✅ Critical errors resolved (39 non-critical style warnings remain)
 - **Pre-deployment**: ✅ Verification script available
 
