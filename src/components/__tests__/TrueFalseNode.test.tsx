@@ -651,8 +651,6 @@ describe('TrueFalseNode', () => {
 
     // Manually trigger continue without selecting an answer
     // This would be an edge case, but we should handle it gracefully
-    const instance = screen.getByText('The sky is blue.').closest('[data-testid]');
-    
     // The component should not call onAnswer if no answer is selected
     expect(mockOnAnswer).not.toHaveBeenCalled();
   });
