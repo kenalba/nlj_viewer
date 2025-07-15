@@ -10,7 +10,7 @@ import { useTheme } from '../contexts/ThemeContext';
 
 interface RatingNodeProps {
   question: RatingNodeType;
-  onAnswer: (response: number) => void;
+  onAnswer: (response: number | null) => void;
 }
 
 export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) => {
@@ -21,22 +21,25 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
   const muiTheme = useMuiTheme();
 
   const handleValueSelect = (value: number) => {
-    setSelectedValue(value);
-    setShowValidation(false);
-    playSound('click');
+    console.log('handleValueSelect:', value, typeof value);
+    const numValue = Number(value);
+    if (!isNaN(numValue)) {
+      setSelectedValue(numValue);
+      setShowValidation(false);
+      playSound('click');
+    }
   };
 
   const handleSubmit = () => {
+    console.log('handleSubmit:', selectedValue, typeof selectedValue);
     if (question.required && selectedValue === null) {
       setShowValidation(true);
       playSound('error');
       return;
     }
 
-    if (selectedValue !== null) {
-      playSound('navigate');
-      onAnswer(selectedValue);
-    }
+    playSound('navigate');
+    onAnswer(selectedValue);
   };
 
   const renderStarRating = () => {
@@ -46,9 +49,10 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
         <Rating
           value={selectedValue || 0}
-          onChange={(event, newValue) => {
-            if (newValue !== null) {
-              handleValueSelect(newValue);
+          onChange={(_, newValue) => {
+            console.log('Rating onChange:', newValue, typeof newValue);
+            if (newValue !== null && !isNaN(newValue)) {
+              handleValueSelect(Number(newValue));
             }
           }}
           max={question.range.max}
@@ -56,6 +60,7 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
           size="large"
           icon={<Star sx={{ fontSize: 40 }} />}
           emptyIcon={<StarBorder sx={{ fontSize: 40 }} />}
+          aria-label="Rating"
           sx={{
             '& .MuiRating-iconFilled': {
               color: isUnfiltered ? '#F6FA24' : '#ffc107',
@@ -68,7 +73,7 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
             },
           }}
         />
-        {question.showValue && selectedValue !== null && (
+        {question.showValue && selectedValue !== null && selectedValue > 0 && (
           <Typography variant="h6" sx={{ ml: 2, alignSelf: 'center' }}>
             {selectedValue}/{question.range.max}
           </Typography>
@@ -223,7 +228,6 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
           variant="contained"
           onClick={handleSubmit}
           size="large"
-          disabled={question.required && selectedValue === null}
           sx={{
             borderRadius: 3,
             minWidth: 120,
@@ -240,7 +244,7 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
             }),
           }}
         >
-          {selectedValue !== null ? 'Submit' : 'Skip'}
+          {selectedValue !== null && selectedValue > 0 ? 'Submit' : 'Skip'}
         </Button>
       </Box>
 
