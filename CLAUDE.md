@@ -89,7 +89,7 @@ React Context + useReducer pattern for:
 npm run dev          # Development server
 npm run build        # Production build
 npm run preview      # Preview production build
-npm run test         # Run test suite (120 tests passing)
+npm run test         # Run test suite (169 tests passing)
 npm run test:ui      # Run tests with UI
 npm run test:coverage # Run tests with coverage
 npm run lint         # Run ESLint (39 non-critical issues remaining)
@@ -141,14 +141,14 @@ Supports comprehensive activity schema including:
 ## Current Development Status
 
 ✅ **Core System**: Fully functional with all question types implemented
-✅ **Testing**: 120 tests passing, comprehensive test coverage with UnifiedQuestionNode coverage
+✅ **Testing**: 169 tests passing, comprehensive test coverage including TrueFalseNode and OrderingNode
 ✅ **Deployment**: TypeScript build errors resolved, deployment-ready
 ✅ **UI/UX**: Responsive design, enhanced keyboard navigation, audio feedback
 ✅ **xAPI Integration**: Complete event tracking system with learning analytics
 ✅ **Bug Fixes**: 
   - UnifiedQuestionNode feedback display issue resolved
   - React error #310 in completion screen fixed (hooks moved to top-level)
-  - TrueFalseNode enhanced with submit/continue workflow
+  - TrueFalseNode enhanced with submit/continue workflow and keyboard controls (1 for True, 2 for False)
   - MatchingNode auto-proceeding fixed with manual continue button
 
 ## xAPI Integration - Phase 1 Complete
