@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Box, Typography, Slider, Button, Alert, FormHelperText } from '@mui/material';
-import { useTheme as useMuiTheme } from '@mui/material/styles';
 import type { SliderNode as SliderNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
@@ -20,9 +19,8 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
   const [showValidation, setShowValidation] = useState(false);
   const { playSound } = useAudio();
   const { themeMode } = useTheme();
-  const muiTheme = useMuiTheme();
 
-  const handleValueChange = (event: Event, newValue: number | number[]) => {
+  const handleValueChange = (_event: Event, newValue: number | number[]) => {
     const value = Array.isArray(newValue) ? newValue[0] : newValue;
     setSelectedValue(value);
     setShowValidation(false);
@@ -139,8 +137,8 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
           step={question.range.step || 1}
           marks={marks}
           valueLabelDisplay={question.showValue !== false ? "auto" : "off"}
-          valueLabelFormat={formatValue}
-          track={question.continuous !== false}
+          valueLabelFormat={(value) => formatValue(value)}
+          track={question.continuous !== false ? "normal" : false}
           sx={{
             height: 8,
             '& .MuiSlider-track': {

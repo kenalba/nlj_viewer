@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, ButtonGroup, Button, Alert, FormHelperText } from '@mui/material';
-import { useTheme as useMuiTheme } from '@mui/material/styles';
 import type { LikertScaleNode as LikertScaleNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
@@ -17,15 +16,23 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
   const [showValidation, setShowValidation] = useState(false);
   const { playSound } = useAudio();
   const { themeMode } = useTheme();
-  const muiTheme = useMuiTheme();
 
-  const handleValueSelect = (value: number) => {
+  const handleValueSelect = useCallback((value: number) => {
     setSelectedValue(value);
     setShowValidation(false);
     playSound('click');
-  };
+  }, [playSound]);
 
-  const handleSubmit = () => {
+  const getScaleValues = useCallback(() => {
+    const values = [];
+    const step = question.scale.step || 1;
+    for (let i = question.scale.min; i <= question.scale.max; i += step) {
+      values.push(i);
+    }
+    return values;
+  }, [question.scale.min, question.scale.max, question.scale.step]);
+
+  const handleSubmit = useCallback(() => {
     if (question.required && selectedValue === null) {
       setShowValidation(true);
       playSound('error');
@@ -33,8 +40,8 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
     }
 
     playSound('navigate');
-    onAnswer(selectedValue);
-  };
+    onAnswer(selectedValue || 0);
+  }, [question.required, selectedValue, playSound, onAnswer]);
 
   // Keyboard support
   useEffect(() => {
@@ -77,16 +84,7 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
 
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
-  }, [selectedValue, question.required]);
-
-  const getScaleValues = () => {
-    const values = [];
-    const step = question.scale.step || 1;
-    for (let i = question.scale.min; i <= question.scale.max; i += step) {
-      values.push(i);
-    }
-    return values;
-  };
+  }, [selectedValue, question.required, getScaleValues, handleValueSelect, handleSubmit]);
 
   const getButtonVariant = (value: number) => {
     return selectedValue === value ? 'contained' : 'outlined';

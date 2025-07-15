@@ -8,13 +8,17 @@ const initialState: GameState = {
   variables: {},
   visitedNodes: new Set(),
   completed: false,
+  activityType: 'training',
+  responses: {},
+  sessionId: crypto.randomUUID(),
+  startTime: new Date(),
 };
 
 const gameReducer = (state: GameState, action: GameAction): GameState => {
   let newState: GameState;
   
   switch (action.type) {
-    case 'LOAD_SCENARIO':
+    case 'LOAD_SCENARIO': {
       const scenario: NLJScenario = action.payload;
       const startNode = scenario.nodes.find(n => n.type === 'start');
       const initialVariables = scenario.variableDefinitions?.reduce(
@@ -36,8 +40,9 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
         variables: initialVariables,
       });
       break;
+    }
 
-    case 'NAVIGATE_TO_NODE':
+    case 'NAVIGATE_TO_NODE': {
       const { nodeId } = action.payload;
       newState = {
         ...state,
@@ -51,8 +56,9 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
         totalVisited: newState.visitedNodes.size,
       });
       break;
+    }
 
-    case 'UPDATE_VARIABLE':
+    case 'UPDATE_VARIABLE': {
       const { variableId, value } = action.payload;
       newState = {
         ...state,
@@ -68,8 +74,9 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
         allVariables: newState.variables,
       });
       break;
+    }
 
-    case 'COMPLETE_SCENARIO':
+    case 'COMPLETE_SCENARIO': {
       newState = {
         ...state,
         completed: true,
@@ -82,11 +89,13 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
         finalVariables: state.variables,
       });
       break;
+    }
 
-    case 'RESET':
+    case 'RESET': {
       newState = initialState;
       debugLog('Reset', 'Game state reset', null);
       break;
+    }
 
     default:
       newState = state;

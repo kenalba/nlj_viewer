@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Box, Typography, TextField, Button, Alert, FormHelperText } from '@mui/material';
-import { useTheme as useMuiTheme } from '@mui/material/styles';
 import type { TextAreaNode as TextAreaNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
@@ -18,7 +17,6 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
   const [validationError, setValidationError] = useState<string>('');
   const { playSound } = useAudio();
   const { themeMode } = useTheme();
-  const muiTheme = useMuiTheme();
 
   const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = event.target.value;

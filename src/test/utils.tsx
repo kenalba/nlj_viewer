@@ -1,25 +1,10 @@
-import React, { ReactElement } from 'react';
-import { render, RenderOptions } from '@testing-library/react';
-import { ThemeProvider } from '@mui/material/styles';
-import { CssBaseline } from '@mui/material';
+import React, { type ReactElement } from 'react';
+import { render, type RenderOptions } from '@testing-library/react';
 import { ThemeProvider as CustomThemeProvider } from '../contexts/ThemeContext';
-import { AudioProvider, useAudio } from '../contexts/AudioContext';
-import { GameProvider, useGameContext } from '../contexts/GameContext';
-import { hyundaiTheme } from '../theme/hyundaiTheme';
-import { unfilteredTheme } from '../theme/unfilteredTheme';
+import { AudioProvider } from '../contexts/AudioContext';
+import { GameProvider } from '../contexts/GameContext';
 import type { GameState } from '../types/nlj';
 
-// Mock theme context
-const MockThemeProvider = ({ children, themeMode = 'hyundai' }: { children: React.ReactNode; themeMode?: 'hyundai' | 'unfiltered' }) => {
-  const theme = themeMode === 'hyundai' ? hyundaiTheme : unfilteredTheme;
-  
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      {children}
-    </ThemeProvider>
-  );
-};
 
 // Mock audio context
 const MockAudioProvider = ({ children }: { children: React.ReactNode }) => {
@@ -32,11 +17,9 @@ const MockAudioProvider = ({ children }: { children: React.ReactNode }) => {
 
 // Mock game context
 const MockGameProvider = ({ 
-  children, 
-  initialState 
+  children
 }: { 
-  children: React.ReactNode; 
-  initialState?: Partial<GameState>;
+  children: React.ReactNode;
 }) => {
   return (
     <GameProvider>
@@ -47,18 +30,14 @@ const MockGameProvider = ({
 
 // All providers wrapper
 const AllProvidersWrapper = ({ 
-  children, 
-  themeMode = 'hyundai',
-  gameState 
+  children
 }: { 
-  children: React.ReactNode; 
-  themeMode?: 'hyundai' | 'unfiltered';
-  gameState?: Partial<GameState>;
+  children: React.ReactNode;
 }) => {
   return (
     <CustomThemeProvider>
       <MockAudioProvider>
-        <MockGameProvider initialState={gameState}>
+        <MockGameProvider>
           {children}
         </MockGameProvider>
       </MockAudioProvider>
@@ -74,11 +53,11 @@ const customRender = (
     gameState?: Partial<GameState>;
   }
 ) => {
-  const { themeMode, gameState, ...renderOptions } = options || {};
+  const { ...renderOptions } = options || {};
   
   return render(ui, {
     wrapper: ({ children }) => (
-      <AllProvidersWrapper themeMode={themeMode} gameState={gameState}>
+      <AllProvidersWrapper>
         {children}
       </AllProvidersWrapper>
     ),

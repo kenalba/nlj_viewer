@@ -93,7 +93,7 @@ describe('LikertScaleNode', () => {
     const submitButton = screen.getByRole('button', { name: /skip/i });
     await user.click(submitButton);
     
-    expect(mockOnAnswer).toHaveBeenCalledWith(null);
+    expect(mockOnAnswer).toHaveBeenCalledWith(0);
   });
 
   it('uses default value when provided', () => {

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Typography, Rating, Button, Alert, FormHelperText, ButtonGroup } from '@mui/material';
 import { Star, StarBorder } from '@mui/icons-material';
-import { useTheme as useMuiTheme } from '@mui/material/styles';
 import type { RatingNode as RatingNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
@@ -18,7 +17,6 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
   const [showValidation, setShowValidation] = useState(false);
   const { playSound } = useAudio();
   const { themeMode } = useTheme();
-  const muiTheme = useMuiTheme();
 
   const handleValueSelect = (value: number) => {
     console.log('handleValueSelect:', value, typeof value);

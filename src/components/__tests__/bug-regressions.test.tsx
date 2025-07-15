@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor, vi } from '../../test/utils';
 import { NodeRenderer } from '../NodeRenderer';
 import { LikertScaleNode } from '../LikertScaleNode';
@@ -150,6 +149,8 @@ describe('Bug Regression Tests', () => {
     const createMockScenario = (nodes: any[], links: any[]): NLJScenario => ({
       id: 'test-scenario',
       name: 'Test Survey',
+      orientation: 'horizontal',
+      activityType: 'survey',
       nodes,
       links,
       variableDefinitions: [],
@@ -160,10 +161,10 @@ describe('Bug Regression Tests', () => {
       const mockNavigateToNode = vi.fn();
       
       const nodes = [
-        { id: 'start', type: 'start', x: 100, y: 100, width: 200, height: 100 },
-        { id: 'q1', type: 'likert_scale', x: 100, y: 200, width: 400, height: 200, text: 'Question 1', scale: { min: 1, max: 5, step: 1, labels: { min: 'Min', max: 'Max' } } },
-        { id: 'q2', type: 'likert_scale', x: 100, y: 300, width: 400, height: 200, text: 'Question 2', scale: { min: 1, max: 5, step: 1, labels: { min: 'Min', max: 'Max' } } },
-        { id: 'end', type: 'end', x: 100, y: 400, width: 200, height: 100 },
+        { id: 'start', type: 'start' as const, x: 100, y: 100, width: 200, height: 100 },
+        { id: 'q1', type: 'likert_scale' as const, x: 100, y: 200, width: 400, height: 200, text: 'Question 1', scale: { min: 1, max: 5, step: 1, labels: { min: 'Min', max: 'Max' } } },
+        { id: 'q2', type: 'likert_scale' as const, x: 100, y: 300, width: 400, height: 200, text: 'Question 2', scale: { min: 1, max: 5, step: 1, labels: { min: 'Min', max: 'Max' } } },
+        { id: 'end', type: 'end' as const, x: 100, y: 400, width: 200, height: 100 },
       ];
 
       const links = [
@@ -180,7 +181,7 @@ describe('Bug Regression Tests', () => {
           scenarioId: 'test', 
           currentNodeId: 'q1', 
           variables: {}, 
-          visitedNodes: new Set(),
+          visitedNodes: new Set<string>(),
           completed: false,
           activityType: 'survey' as const,
           responses: {},
@@ -220,8 +221,8 @@ describe('Bug Regression Tests', () => {
       const mockNavigateToNode = vi.fn();
       
       const nodes = [
-        { id: 'q1', type: 'likert_scale', x: 100, y: 200, width: 400, height: 200, text: 'Final Question', scale: { min: 1, max: 5, step: 1, labels: { min: 'Min', max: 'Max' } } },
-        { id: 'end', type: 'end', x: 100, y: 400, width: 200, height: 100 },
+        { id: 'q1', type: 'likert_scale' as const, x: 100, y: 200, width: 400, height: 200, text: 'Final Question', scale: { min: 1, max: 5, step: 1, labels: { min: 'Min', max: 'Max' } } },
+        { id: 'end', type: 'end' as const, x: 100, y: 400, width: 200, height: 100 },
       ];
 
       const links = [
@@ -235,7 +236,7 @@ describe('Bug Regression Tests', () => {
           scenarioId: 'test', 
           currentNodeId: 'q1', 
           variables: {}, 
-          visitedNodes: new Set(),
+          visitedNodes: new Set<string>(),
           completed: false,
           activityType: 'survey' as const,
           responses: {},
@@ -275,7 +276,7 @@ describe('Bug Regression Tests', () => {
       const mockNavigateToNode = vi.fn();
       
       const nodes = [
-        { id: 'q1', type: 'likert_scale', x: 100, y: 200, width: 400, height: 200, text: 'Orphaned Question', scale: { min: 1, max: 5, step: 1, labels: { min: 'Min', max: 'Max' } } },
+        { id: 'q1', type: 'likert_scale' as const, x: 100, y: 200, width: 400, height: 200, text: 'Orphaned Question', scale: { min: 1, max: 5, step: 1, labels: { min: 'Min', max: 'Max' } } },
       ];
 
       // No links - this should cause navigation failure
@@ -288,7 +289,7 @@ describe('Bug Regression Tests', () => {
           scenarioId: 'test', 
           currentNodeId: 'q1', 
           variables: {}, 
-          visitedNodes: new Set(),
+          visitedNodes: new Set<string>(),
           completed: false,
           activityType: 'survey' as const,
           responses: {},

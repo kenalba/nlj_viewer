@@ -17,7 +17,7 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock ResizeObserver
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
+globalThis.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
@@ -28,7 +28,7 @@ HTMLElement.prototype.scrollTo = vi.fn();
 window.scrollTo = vi.fn();
 
 // Mock Audio API for sound testing
-global.AudioContext = vi.fn().mockImplementation(() => ({
+globalThis.AudioContext = vi.fn().mockImplementation(() => ({
   createOscillator: vi.fn(() => ({
     connect: vi.fn(),
     disconnect: vi.fn(),
@@ -69,7 +69,7 @@ Object.defineProperty(window, 'sessionStorage', {
 });
 
 // Mock crypto.randomUUID
-Object.defineProperty(global, 'crypto', {
+Object.defineProperty(globalThis, 'crypto', {
   value: {
     randomUUID: vi.fn(() => 'mock-uuid-1234'),
   },

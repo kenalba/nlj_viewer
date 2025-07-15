@@ -357,7 +357,7 @@ export function convertTrivieToNLJ(quiz: TrivieQuiz): NLJScenario {
         } as OrderingNode;
         break;
         
-      case 'matching':
+      case 'matching': {
         // Parse matching pairs from "leftItem->rightItem" format
         const matchingPairs = question.choices?.map(choice => {
           const parts = choice.text.split('->');
@@ -404,8 +404,9 @@ export function convertTrivieToNLJ(quiz: TrivieQuiz): NLJScenario {
           correctMatches: correctMatches
         } as MatchingNode;
         break;
+      }
         
-      case 'short_answer':
+      case 'short_answer': {
         questionNode = {
           id: questionNodeId,
           type: 'short_answer',
@@ -420,8 +421,9 @@ export function convertTrivieToNLJ(quiz: TrivieQuiz): NLJScenario {
           caseSensitive: false
         } as ShortAnswerNode;
         break;
+      }
         
-      default: // multiple_choice
+      default: {// multiple_choice
         questionNode = {
           id: questionNodeId,
           type: 'question',
@@ -434,6 +436,7 @@ export function convertTrivieToNLJ(quiz: TrivieQuiz): NLJScenario {
           additionalMediaList: []
         } as QuestionNode;
         break;
+      }
     }
     
     nodes.push(questionNode);
@@ -584,6 +587,7 @@ export function convertTrivieToNLJ(quiz: TrivieQuiz): NLJScenario {
     id: quiz.id,
     name: quiz.title,
     orientation: 'horizontal',
+    activityType: 'training',
     nodes,
     links,
     variableDefinitions: [{
