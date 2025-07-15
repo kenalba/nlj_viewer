@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, ButtonGroup, Button, Alert, FormHelperText } from '@mui/material';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
 import type { LikertScaleNode as LikertScaleNodeType } from '../types/nlj';
@@ -35,6 +35,49 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
     playSound('navigate');
     onAnswer(selectedValue);
   };
+
+  // Keyboard support
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Only handle keyboard events for this component when it's active
+      if (event.target !== document.body) return;
+      
+      const scaleValues = getScaleValues();
+      
+      // Handle number keys (1-9)
+      if (event.key >= '1' && event.key <= '9') {
+        const keyValue = parseInt(event.key, 10);
+        if (scaleValues.includes(keyValue)) {
+          event.preventDefault();
+          handleValueSelect(keyValue);
+        }
+      }
+      
+      // Handle arrow keys for navigation
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        const currentIndex = selectedValue ? scaleValues.indexOf(selectedValue) : -1;
+        
+        if (event.key === 'ArrowLeft' && currentIndex > 0) {
+          handleValueSelect(scaleValues[currentIndex - 1]);
+        } else if (event.key === 'ArrowRight' && currentIndex < scaleValues.length - 1) {
+          handleValueSelect(scaleValues[currentIndex + 1]);
+        } else if (event.key === 'ArrowRight' && currentIndex === -1) {
+          // Select first value if none selected
+          handleValueSelect(scaleValues[0]);
+        }
+      }
+      
+      // Handle Enter key to submit
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        handleSubmit();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [selectedValue, question.required]);
 
   const getScaleValues = () => {
     const values = [];
@@ -124,21 +167,46 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
       </Box>
 
       {/* Scale Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3, px: 1 }}>
         <ButtonGroup 
           variant="outlined" 
           size="large"
           orientation={scaleValues.length > 7 ? 'vertical' : 'horizontal'}
           sx={{ 
             gap: 1,
+            '& .MuiButtonGroup-grouped': {
+              borderRadius: 3,
+              '&:not(:last-of-type)': {
+                borderBottomRightRadius: 3,
+                borderTopRightRadius: 3,
+                borderRightColor: 'divider',
+              },
+              '&:not(:first-of-type)': {
+                borderTopLeftRadius: 3,
+                borderBottomLeftRadius: 3,
+                borderLeftColor: 'divider',
+              },
+              '&:last-of-type': {
+                borderRight: '1px solid',
+                borderRightColor: 'divider',
+              },
+            },
             ...(scaleValues.length > 7 && {
               '& .MuiButtonGroup-grouped': {
                 borderRadius: 3,
                 '&:not(:last-of-type)': {
                   borderBottomRightRadius: 3,
+                  borderBottom: '1px solid',
+                  borderBottomColor: 'divider',
                 },
                 '&:not(:first-of-type)': {
                   borderTopLeftRadius: 3,
+                  borderTop: '1px solid',
+                  borderTopColor: 'divider',
+                },
+                '&:last-of-type': {
+                  borderBottom: '1px solid',
+                  borderBottomColor: 'divider',
                 },
               },
             }),
@@ -201,6 +269,11 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
           * This question is required
         </FormHelperText>
       )}
+      
+      {/* Keyboard Controls Helper */}
+      <FormHelperText sx={{ textAlign: 'center', mt: 1, fontSize: '0.75rem', opacity: 0.7 }}>
+        Use number keys (1-{getScaleValues().length}) or arrow keys to select • Enter to submit
+      </FormHelperText>
     </NodeCard>
   );
 };

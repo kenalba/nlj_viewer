@@ -245,6 +245,6 @@ describe('TextAreaNode', () => {
     
     render(<TextAreaNode question={question} onAnswer={mockOnAnswer} />);
     
-    expect(screen.getByText('Test Image')).toBeInTheDocument();
+    expect(screen.getByAltText('Test Image')).toBeInTheDocument();
   });
 });

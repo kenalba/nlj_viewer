@@ -12,7 +12,7 @@ interface GameContextValue {
   reset: () => void;
 }
 
-const GameContext = createContext<GameContextValue | undefined>(undefined);
+export const GameContext = createContext<GameContextValue | undefined>(undefined);
 
 export const useGameContext = () => {
   const context = useContext(GameContext);

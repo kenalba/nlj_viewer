@@ -45,7 +45,7 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
 
   const handleSubmit = () => {
     const trimmedValue = textValue.trim();
-    const error = validateInput(trimmedValue);
+    const error = validateInput(textValue); // Use original value for length validation
     
     if (error) {
       setValidationError(error);
@@ -69,9 +69,7 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
   };
 
   const isSubmitDisabled = () => {
-    if (question.required && textValue.trim().length === 0) {
-      return true;
-    }
+    // Don't disable button to allow validation error display
     return false;
   };
 
@@ -115,9 +113,8 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
           placeholder={question.placeholder || 'Type your response here...'}
           fullWidth
           variant="outlined"
-          spellCheck={question.spellCheck !== false}
           inputProps={{
-            maxLength: question.maxLength,
+            spellCheck: question.spellCheck !== false,
             style: { 
               resize: question.resizable !== false ? 'vertical' : 'none',
             },

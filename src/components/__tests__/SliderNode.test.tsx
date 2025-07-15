@@ -77,7 +77,9 @@ describe('SliderNode', () => {
     
     render(<SliderNode question={question} onAnswer={mockOnAnswer} />);
     
-    expect(screen.getByText('50')).toBeInTheDocument();
+    // Look for the specific current value display (h6 element)
+    const currentValueDisplay = screen.getByRole('heading', { level: 6 });
+    expect(currentValueDisplay).toHaveTextContent('50');
   });
 
   it('formats values with precision', () => {
@@ -89,7 +91,9 @@ describe('SliderNode', () => {
     
     render(<SliderNode question={question} onAnswer={mockOnAnswer} />);
     
-    expect(screen.getByText('0.5')).toBeInTheDocument();
+    // Look for the specific current value display (h6 element)
+    const currentValueDisplay = screen.getByRole('heading', { level: 6 });
+    expect(currentValueDisplay).toHaveTextContent('0.5');
   });
 
   it('shows validation error for required questions', async () => {
@@ -116,7 +120,10 @@ describe('SliderNode', () => {
 
   it('allows skipping non-required questions', async () => {
     const user = userEvent.setup();
-    const question = createMockSliderQuestion({ required: false });
+    const question = createMockSliderQuestion({ 
+      required: false,
+      defaultValue: undefined // No default value so it shows Skip
+    });
     
     render(<SliderNode question={question} onAnswer={mockOnAnswer} />);
     
@@ -169,7 +176,9 @@ describe('SliderNode', () => {
     
     render(<SliderNode question={question} onAnswer={mockOnAnswer} />);
     
-    expect(screen.getByText('Half')).toBeInTheDocument();
+    // Look for the specific current value display (h6 element)
+    const currentValueDisplay = screen.getByRole('heading', { level: 6 });
+    expect(currentValueDisplay).toHaveTextContent('Half');
   });
 
   it('shows tick marks when enabled', () => {
@@ -201,7 +210,7 @@ describe('SliderNode', () => {
       themeMode: 'unfiltered',
     });
     
-    const submitButton = screen.getByRole('button', { name: /submit/i });
+    const submitButton = screen.getByRole('button', { name: /skip/i });
     expect(submitButton).toBeInTheDocument();
   });
 
@@ -229,6 +238,6 @@ describe('SliderNode', () => {
     
     render(<SliderNode question={question} onAnswer={mockOnAnswer} />);
     
-    expect(screen.getByText('Test Image')).toBeInTheDocument();
+    expect(screen.getByAltText('Test Image')).toBeInTheDocument();
   });
 });

@@ -1,10 +1,11 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '../../test/utils';
+import { render, screen, fireEvent, waitFor, vi } from '../../test/utils';
 import { NodeRenderer } from '../NodeRenderer';
 import { LikertScaleNode } from '../LikertScaleNode';
 import { RatingNode } from '../RatingNode';
 import { createMockLikertQuestion, createMockRatingQuestion } from '../../test/utils';
 import type { NLJScenario } from '../../types/nlj';
+import { GameContext } from '../../contexts/GameContext';
 
 describe('Bug Regression Tests', () => {
   describe('Bug #4: Survey Question State Persistence Issue', () => {
@@ -194,8 +195,9 @@ describe('Bug Regression Tests', () => {
       };
 
       render(
-        <NodeRenderer node={nodes[1]} scenario={scenario} />,
-        { gameState: mockGameContext.state }
+        <GameContext.Provider value={mockGameContext}>
+          <NodeRenderer node={nodes[1]} scenario={scenario} />
+        </GameContext.Provider>
       );
 
       // Answer the question
@@ -248,8 +250,9 @@ describe('Bug Regression Tests', () => {
       };
 
       render(
-        <NodeRenderer node={nodes[0]} scenario={scenario} />,
-        { gameState: mockGameContext.state }
+        <GameContext.Provider value={mockGameContext}>
+          <NodeRenderer node={nodes[0]} scenario={scenario} />
+        </GameContext.Provider>
       );
 
       // Answer the final question
@@ -300,8 +303,9 @@ describe('Bug Regression Tests', () => {
       };
 
       render(
-        <NodeRenderer node={nodes[0]} scenario={scenario} />,
-        { gameState: mockGameContext.state }
+        <GameContext.Provider value={mockGameContext}>
+          <NodeRenderer node={nodes[0]} scenario={scenario} />
+        </GameContext.Provider>
       );
 
       // Answer the question

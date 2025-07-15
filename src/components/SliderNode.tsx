@@ -9,13 +9,13 @@ import { useTheme } from '../contexts/ThemeContext';
 
 interface SliderNodeProps {
   question: SliderNodeType;
-  onAnswer: (response: number) => void;
+  onAnswer: (response: number | null) => void;
 }
 
 export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) => {
   const [selectedValue, setSelectedValue] = useState<number | null>(
     question.defaultValue !== undefined ? question.defaultValue : 
-    question.required ? null : Math.floor((question.range.min + question.range.max) / 2)
+    question.required ? null : null
   );
   const [showValidation, setShowValidation] = useState(false);
   const { playSound } = useAudio();
@@ -36,10 +36,8 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
       return;
     }
 
-    if (selectedValue !== null) {
-      playSound('navigate');
-      onAnswer(selectedValue);
-    }
+    playSound('navigate');
+    onAnswer(selectedValue);
   };
 
   const formatValue = (value: number) => {
@@ -219,7 +217,6 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
           variant="contained"
           onClick={handleSubmit}
           size="large"
-          disabled={question.required && selectedValue === null}
           sx={{
             borderRadius: 3,
             minWidth: 120,

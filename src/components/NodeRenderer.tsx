@@ -44,6 +44,17 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     });
   }, [node.id]);
 
+  // Automatically complete scenario when end node is rendered
+  useEffect(() => {
+    if (node.type === 'end' && !state.completed) {
+      debugLog('Completion', 'Scenario completed by reaching end node', {
+        nodeId: node.id,
+        nodeType: node.type,
+      });
+      completeScenario();
+    }
+  }, [node.id, node.type, state.completed, completeScenario]);
+
   const handleChoiceSelect = (choice: ChoiceNode) => {
     // Play sound based on choice type
     if (choice.choiceType === 'CORRECT') {
@@ -136,9 +147,10 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
       // Always navigate to the next node first
       navigateToNode(nextNodeId);
       
-      // If the next node is an end node, play completion sound
+      // If the next node is an end node, complete the scenario
       if (nextNodeId === 'end' || isScenarioComplete(scenario, nextNodeId)) {
         playSound('complete');
+        completeScenario();
       }
     } else {
       // Check if we're actually at the end or if there's a navigation issue
@@ -193,17 +205,6 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
       );
 
     case 'end': {
-      // Automatically complete scenario when end node is rendered
-      useEffect(() => {
-        if (!state.completed) {
-          debugLog('Completion', 'Scenario completed by reaching end node', {
-            nodeId: node.id,
-            nodeType: node.type,
-          });
-          completeScenario();
-        }
-      }, [node.id, state.completed, completeScenario]);
-
       return (
         <NodeCard variant="interstitial" animate={false}>
           <Typography variant="h4" gutterBottom align="center" color="primary">
