@@ -1,0 +1,1467 @@
+{
+  "id": "649dfb284055d613315af4ec",
+  "name": "FSA_102_3_20",
+  "orientation": "vertical",
+  "nodes": [
+    {
+      "type": "choice",
+      "id": "9b6b5f98-60f5-4249-9e34-03bde3b7b537",
+      "parentId": "1035495c-4118-4b5e-91f9-91193b353940",
+      "text": "Of course, you have plenty of facts about the vehicle, and it’s time to see it live and in-person!  The Explorer is a great choice. Let me grab the keys so we can take a closer look, and talk details. How does that sound?",
+      "value": 0,
+      "feedback": "Mandy revealed that she doesn't trust you very much, and her mind is set on one thing. Supporting her principles and thinking is a good idea.",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "beb677dc-bcc0-4584-b78a-9212e4651bcc",
+          "value": 1
+        }
+      ],
+      "x": 1487,
+      "y": 1369,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "1035495c-4118-4b5e-91f9-91193b353940",
+      "text": "Now is the time to be an advocate and tie Mandy's motivations to your presentation.  Which response does this best?",
+      "media": {
+        "id": "3002",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ3_20_PANEL-3.jpg",
+        "title": "FSA_102_NLJ3_20_PANEL-3",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ3_20_PANEL-3.jpg",
+        "createTimestamp": "2023-06-29T20:48:56.882736Z",
+        "updateTimestamp": "2024-01-31T13:30:48.326333Z"
+      },
+      "additionalMediaList": [],
+      "x": 1144,
+      "y": 1122,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "344fc768-6969-4603-8646-d743007b3007",
+      "x": 258,
+      "y": 868,
+      "width": 215,
+      "height": 130,
+      "text": "You show Mandy where to look, and let her do her thing. After some time, she makes her way to leave. You offer your card in case she has any questions.  You expect a call, but nearly a week has passed and you still haven't heard from her.  You're left wondering what you could've done better."
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "345d35cc-c336-4add-9c81-a502eca72600",
+      "x": 258,
+      "y": 614,
+      "width": 215,
+      "height": 130,
+      "media": {
+        "id": "3017",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ3_20_PANEL-10.jpg",
+        "title": "FSA_102_NLJ3_20_PANEL-10",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ3_20_PANEL-10.jpg",
+        "createTimestamp": "2023-06-29T21:53:41.516213Z",
+        "updateTimestamp": "2024-01-31T13:30:48.678070Z"
+      }
+    },
+    {
+      "type": "question",
+      "id": "eec4f2af-6639-485f-8b7b-d7f05ba79ed8",
+      "text": "This is a good time to ask a Results Focused Question to discover Mandy's needs and motivations.  Which response achieves this?",
+      "media": {
+        "id": "2990",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ3_20_PANEL-2.jpg",
+        "title": "FSA_102_NLJ3_20_PANEL-2",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ3_20_PANEL-2.jpg",
+        "createTimestamp": "2023-06-29T20:47:48.958762Z",
+        "updateTimestamp": "2024-01-31T13:30:48.312225Z"
+      },
+      "additionalMediaList": [],
+      "x": 800,
+      "y": 614,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "08939c3f-3c8a-48e0-9240-8e8211b1f112",
+      "x": 968,
+      "y": 1874,
+      "width": 215,
+      "height": 130,
+      "text": "You're suprised at Mandy's tone. You point her towards the Explorer, and she makes off on her own like a lion on the hunt of its prey.  You notice she speaks to another sales consultant on the floor, and watch as they grab the keys to take the car for a test drive.  You're left wondering where you went wrong."
+    },
+    {
+      "type": "choice",
+      "id": "d7578032-ed81-46bc-86e5-8d133bd7588a",
+      "parentId": "fb2e25ba-b171-4978-b043-e4e42037c60a",
+      "text": "Duly noted! I want to make sure you're where you need to be.  Let's start with the Explorer, since that's priority number one. I'll pull some specs on some similar vehicles for you to take home with you, so you can weigh your options on your own time. Does that sound like a good plan?",
+      "value": 0,
+      "feedback": "This is a good way to show Mandy that you can work together and move forward",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "4fea4a4d-b0e1-4e7c-85c1-9f35a5810e17",
+          "value": 1
+        },
+        {
+          "variableId": "f177f815-cdbd-4f2e-9628-2d43f152b8a6",
+          "value": 1
+        }
+      ],
+      "x": 1203,
+      "y": 1867,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "f6e0a1f7-7c11-4252-936a-07d3779448da",
+      "text": "Which response best Sets a Direction and flexes to Mandy's Analytical Social Style?",
+      "media": {
+        "id": "3001",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ3_20_PANEL-1.jpg",
+        "title": "FSA_102_NLJ3_20_PANEL-1",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ3_20_PANEL-1.jpg",
+        "createTimestamp": "2023-06-29T20:46:32.837889Z",
+        "updateTimestamp": "2024-01-31T13:30:48.300485Z"
+      },
+      "additionalMediaList": [],
+      "x": 170,
+      "y": 146,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "start",
+      "id": "1",
+      "x": 242,
+      "y": 12,
+      "width": 70,
+      "height": 50
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "8a96aa2e-f552-4f73-9384-e0e4c8cc99d9",
+      "x": 23,
+      "y": 614,
+      "width": 215,
+      "height": 130,
+      "media": {
+        "id": "3016",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ3_20_PANEL-9.jpg",
+        "title": "FSA_102_NLJ3_20_PANEL-9",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ3_20_PANEL-9.jpg",
+        "createTimestamp": "2023-06-29T21:52:51.987492Z",
+        "updateTimestamp": "2024-01-31T13:30:48.668608Z"
+      }
+    },
+    {
+      "type": "choice",
+      "id": "702e80fb-fe57-4a84-9538-1ccf16e5680a",
+      "parentId": "1035495c-4118-4b5e-91f9-91193b353940",
+      "text": "I assure you, I'm not. Do you use your car for things outside work? What do you envision your perfect car to be?",
+      "value": 0,
+      "feedback": "Mandy has demonstrated she doesn't trust you, so she is probably not in the mood for you and your questions.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "f177f815-cdbd-4f2e-9628-2d43f152b8a6",
+          "value": 3
+        },
+        {
+          "variableId": "beb677dc-bcc0-4584-b78a-9212e4651bcc",
+          "value": 0
+        }
+      ],
+      "x": 850,
+      "y": 1369,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "9250d048-449a-4094-9294-2025ee2e0599",
+      "x": 610,
+      "y": 1376,
+      "width": 215,
+      "height": 130,
+      "text": "Mandy walks off towards the used SUVs without your help. You try and pull her towards the newer models, but she refuses your help.  You offer your card before she leaves, but never receive a call from Mandy.  You're left wondering where you went wrong."
+    },
+    {
+      "type": "choice",
+      "id": "580b3525-526e-4e7b-b424-ba8bf6b35d9f",
+      "parentId": "fb2e25ba-b171-4978-b043-e4e42037c60a",
+      "text": "Trust me, you're going to want to test drive the other options, too, before you make any decision. Reading on the website is one thing, but driving in the vehicle is a different experience you can't get online.",
+      "value": 0,
+      "feedback": "This may be true, but this does not effectively address Mandy's excuse",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "4fea4a4d-b0e1-4e7c-85c1-9f35a5810e17",
+          "value": 0
+        },
+        {
+          "variableId": "f177f815-cdbd-4f2e-9628-2d43f152b8a6",
+          "value": 2
+        }
+      ],
+      "x": 1438,
+      "y": 1867,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "92b1d9fd-7fbc-4ace-a7ce-bc382678290a",
+      "parentId": "1035495c-4118-4b5e-91f9-91193b353940",
+      "text": "I assure you, I'm not.  You will thank me once you see this.  This one has a 2.3L eco boost engine, 10-speed automatic transmission, and remote keyless entry.",
+      "value": 0,
+      "feedback": "Yes it's is true, and Analytical likes facts and figures.  If an Analytical doesn't trust you, facts and figures at the wrong time won't help you.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "f177f815-cdbd-4f2e-9628-2d43f152b8a6",
+          "value": 3
+        },
+        {
+          "variableId": "beb677dc-bcc0-4584-b78a-9212e4651bcc",
+          "value": 0
+        }
+      ],
+      "x": 1085,
+      "y": 1369,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "2001f7b3-499f-4ed2-b414-36a7c26b4ca3",
+      "x": 968,
+      "y": 1620,
+      "width": 215,
+      "height": 130,
+      "media": {
+        "id": "3036",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ3_20_PANEL-7.jpg",
+        "title": "FSA_102_NLJ3_20_PANEL-7",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ3_20_PANEL-7.jpg",
+        "createTimestamp": "2023-06-29T21:50:59.392530Z",
+        "updateTimestamp": "2024-01-31T13:30:48.645122Z"
+      }
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "3df36619-7330-4938-8032-948d2f2fd6b9",
+      "x": 1637,
+      "y": 2118,
+      "width": 215,
+      "height": 130,
+      "media": {
+        "id": "3035",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ3_20_PANEL-8.jpg",
+        "title": "FSA_102_NLJ3_20_PANEL-8",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ3_20_PANEL-8.jpg",
+        "createTimestamp": "2023-06-29T21:49:48.388167Z",
+        "updateTimestamp": "2024-01-31T13:30:48.633590Z"
+      }
+    },
+    {
+      "type": "choice",
+      "id": "799cbb99-2b5d-4637-a382-29f532c861f3",
+      "parentId": "eec4f2af-6639-485f-8b7b-d7f05ba79ed8",
+      "text": "Are you aware of all a New Explorer has to offer?  Features like a twin-panel moonroof, multi-color ambient lighting, and a third row seat that folds at the push of a button!  Who doesn't need that?",
+      "value": 0,
+      "feedback": "These closed-ended questions will not encourage Mandy to reveal her needs and motivations",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "cbbfee6e-648e-4d50-accd-f2bdaf2e79d5",
+          "value": 0
+        },
+        {
+          "variableId": "f177f815-cdbd-4f2e-9628-2d43f152b8a6",
+          "value": 4
+        }
+      ],
+      "x": 728,
+      "y": 861,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "ec443783-1e18-4613-b267-41acabdfff8f",
+      "x": 1203,
+      "y": 2332,
+      "width": 215,
+      "height": 130,
+      "text": "You and Mandy take the Explorer on a quick test drive, and talk through her questions and concerns for the vehicle. Before she leaves, you print out information on two other cars on the lot, in addition to the Explorer. You exchange contact information, and set an appointment for Mandy to come back later that week.  When Mandy purchases the Explorer, she thanks you for your help."
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "0938793d-f758-4b97-928f-290364ef4624",
+      "x": 1637,
+      "y": 2332,
+      "width": 215,
+      "height": 130,
+      "text": "You're surprised by Mandy's reaction. She shakes her head and walks towards the lot on her own to help herself. You're left wondering where you went wrong."
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "24c91e82-5a72-48cd-b7fd-0955da162797",
+      "x": 86,
+      "y": 1122,
+      "width": 215,
+      "height": 130,
+      "content": "Flexing to the customer's social style and setting a direction are critical - please choose again."
+    },
+    {
+      "type": "choice",
+      "id": "c758b6d8-8e0b-42ed-8528-4eb063471cac",
+      "parentId": "fb2e25ba-b171-4978-b043-e4e42037c60a",
+      "text": "Do you have any one who can accept the delivery for you?",
+      "value": 0,
+      "feedback": "You are kidding, right?",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "4fea4a4d-b0e1-4e7c-85c1-9f35a5810e17",
+          "value": 0
+        },
+        {
+          "variableId": "f177f815-cdbd-4f2e-9628-2d43f152b8a6",
+          "value": 2
+        }
+      ],
+      "x": 1673,
+      "y": 1867,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "8d5cec91-8052-4910-9ca5-819654808006",
+      "parentId": "f6e0a1f7-7c11-4252-936a-07d3779448da",
+      "text": "When you envision yourself in your new vehicle, what do you see?  Will a used SUV make that dream a reality? Maybe, maybe not.  I can help you make your new car visions your reality.",
+      "value": 0,
+      "feedback": "Mandy is not an Expressive.  But starting out this way probably wouldn't be a good idea with any social style.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "f177f815-cdbd-4f2e-9628-2d43f152b8a6",
+          "value": 6
+        },
+        {
+          "variableId": "c504a283-1fcd-47c2-90c0-ae005729de65",
+          "value": 0
+        },
+        {
+          "variableId": "92ca26d1-ad04-4f41-a1c7-215f739b2900",
+          "value": 0
+        }
+      ],
+      "x": 258,
+      "y": 400,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "end",
+      "id": "2",
+      "x": 1225,
+      "y": 2610,
+      "width": 70,
+      "height": 50
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "10714d43-d83b-4d96-b1f0-b41147712bec",
+      "x": 23,
+      "y": 868,
+      "width": 215,
+      "height": 130,
+      "text": "You give Mandy the specs she asks for. You try and offer your help, sharing small anecdotes about whichever car she shows interest in, but she continues to shoo you away despite your efforts.  She leaves without making any further steps towards purchasing a car.  You're left wondering where you went wrong."
+    },
+    {
+      "type": "choice",
+      "id": "9369767f-402c-4b96-b232-d28f92912606",
+      "parentId": "f6e0a1f7-7c11-4252-936a-07d3779448da",
+      "text": "You know, we've got plenty of used SUVs you could practically swim in them! I can answer any questions you've got. No need to waste your time reading the small print. I can show you around, point out some of the star options that I think you might be interested in. How does that sound?",
+      "value": 0,
+      "feedback": "You have Set a Direction, but this response does not flex to Mandy's social style - an Analytical wants facts and figures.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "c504a283-1fcd-47c2-90c0-ae005729de65",
+          "value": 1
+        },
+        {
+          "variableId": "f177f815-cdbd-4f2e-9628-2d43f152b8a6",
+          "value": 5
+        },
+        {
+          "variableId": "92ca26d1-ad04-4f41-a1c7-215f739b2900",
+          "value": 0
+        }
+      ],
+      "x": 23,
+      "y": 400,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "3154ea97-d3af-4013-bd49-66f08fdd805c",
+      "parentId": "eec4f2af-6639-485f-8b7b-d7f05ba79ed8",
+      "text": "Sure, we can start there. But would you follow me, so I can show you the new Explorer on the lot?  It has a bunch of upgrades that I know you're going to want to see.",
+      "value": 0,
+      "feedback": "This closed-ended question will not encourage Mandy to reveal her needs and motivations",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "cbbfee6e-648e-4d50-accd-f2bdaf2e79d5",
+          "value": 0
+        },
+        {
+          "variableId": "f177f815-cdbd-4f2e-9628-2d43f152b8a6",
+          "value": 4
+        }
+      ],
+      "x": 493,
+      "y": 861,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "d54ad605-47e3-4678-9c75-5c29eb8f9d4c",
+      "parentId": "f6e0a1f7-7c11-4252-936a-07d3779448da",
+      "text": "I'd be happy to provide details. Which vehicle are you interested in? I can go ahead and grab the specs, answer any questions you have, and discuss your options.",
+      "value": 0,
+      "feedback": "Analyticals need evidence.  Providing Mandy with facts and figures is a good way to flex to her social style.",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "c504a283-1fcd-47c2-90c0-ae005729de65",
+          "value": 1
+        },
+        {
+          "variableId": "92ca26d1-ad04-4f41-a1c7-215f739b2900",
+          "value": 1
+        }
+      ],
+      "x": 800,
+      "y": 400,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "6dccedb0-d342-47b6-89c2-c52f86d919e2",
+      "x": 1203,
+      "y": 2118,
+      "width": 215,
+      "height": 130,
+      "media": {
+        "id": "3015",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ3_20_PANEL-5.jpg",
+        "title": "FSA_102_NLJ3_20_PANEL-5",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ3_20_PANEL-5.jpg",
+        "createTimestamp": "2023-06-29T21:49:17.132756Z",
+        "updateTimestamp": "2024-01-31T13:30:48.622057Z"
+      }
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "34840a16-8841-4b59-8580-bb4dfdb466ad",
+      "x": 610,
+      "y": 1122,
+      "width": 215,
+      "height": 130,
+      "media": {
+        "id": "3037",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ3_20_PANEL-6.jpg",
+        "title": "FSA_102_NLJ3_20_PANEL-6",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ3_20_PANEL-6.jpg",
+        "createTimestamp": "2023-06-29T21:52:00.248810Z",
+        "updateTimestamp": "2024-01-31T13:30:48.656818Z"
+      }
+    },
+    {
+      "type": "choice",
+      "id": "fdf0a33b-30c9-4a7b-b365-bcece755275e",
+      "parentId": "eec4f2af-6639-485f-8b7b-d7f05ba79ed8",
+      "text": "I know the one! I'd be happy to pull information the Explorer. Share with me, what drew you to that vehicle? The more I know, the better I can pull some extra options that may fit your needs.",
+      "value": 0,
+      "feedback": "This RFQ will likely set you on the path to discovering Mandy's needs and motivations",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "cbbfee6e-648e-4d50-accd-f2bdaf2e79d5",
+          "value": 1
+        }
+      ],
+      "x": 1144,
+      "y": 861,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "fb2e25ba-b171-4978-b043-e4e42037c60a",
+      "text": "Which response best addresses this objection?",
+      "media": {
+        "id": "2991",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ3_20_PANEL-4.jpg",
+        "title": "FSA_102_NLJ3_20_PANEL-4",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ3_20_PANEL-4.jpg",
+        "createTimestamp": "2023-06-29T20:49:39.888851Z",
+        "updateTimestamp": "2024-01-31T13:30:48.339871Z"
+      },
+      "additionalMediaList": [],
+      "x": 1487,
+      "y": 1620,
+      "width": 215,
+      "height": 130
+    }
+  ],
+  "links": [
+    {
+      "id": "32130474-dec9-41d1-9242-7f37cbdfeaee",
+      "type": "link",
+      "sourceNodeId": "ec443783-1e18-4613-b267-41acabdfff8f",
+      "targetNodeId": "2",
+      "probability": 100,
+      "startPoint": {
+        "x": 1310,
+        "y": 2462
+      },
+      "endPoint": {
+        "x": 1267,
+        "y": 2610
+      },
+      "bendPoints": [
+        {
+          "x": 1310,
+          "y": 2512
+        },
+        {
+          "x": 1267,
+          "y": 2512
+        }
+      ]
+    },
+    {
+      "id": "cc444244-9237-47cc-b284-867f61d90965",
+      "type": "link",
+      "sourceNodeId": "9250d048-449a-4094-9294-2025ee2e0599",
+      "targetNodeId": "2",
+      "probability": 100,
+      "startPoint": {
+        "x": 718,
+        "y": 1506
+      },
+      "endPoint": {
+        "x": 1239,
+        "y": 2610
+      },
+      "bendPoints": [
+        {
+          "x": 718,
+          "y": 1678
+        },
+        {
+          "x": 718,
+          "y": 1932
+        },
+        {
+          "x": 718,
+          "y": 2176
+        },
+        {
+          "x": 718,
+          "y": 2390
+        },
+        {
+          "x": 718,
+          "y": 2522
+        },
+        {
+          "x": 1239,
+          "y": 2522
+        }
+      ]
+    },
+    {
+      "id": "cb081fcf-565f-48dd-a8b0-305043122c4e",
+      "type": "parent-child",
+      "sourceNodeId": "1035495c-4118-4b5e-91f9-91193b353940",
+      "targetNodeId": "9b6b5f98-60f5-4249-9e34-03bde3b7b537",
+      "startPoint": {
+        "x": 1305,
+        "y": 1252
+      },
+      "endPoint": {
+        "x": 1595,
+        "y": 1369
+      },
+      "bendPoints": [
+        {
+          "x": 1305,
+          "y": 1302
+        },
+        {
+          "x": 1595,
+          "y": 1302
+        }
+      ]
+    },
+    {
+      "id": "810abab6-2a82-4c95-874b-7cb6040874a8",
+      "type": "link",
+      "sourceNodeId": "34840a16-8841-4b59-8580-bb4dfdb466ad",
+      "targetNodeId": "9250d048-449a-4094-9294-2025ee2e0599",
+      "probability": 100,
+      "startPoint": {
+        "x": 718,
+        "y": 1252
+      },
+      "endPoint": {
+        "x": 718,
+        "y": 1376
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "9e982539-d871-488c-a7e4-3bb2d56c2f74",
+      "type": "parent-child",
+      "sourceNodeId": "f6e0a1f7-7c11-4252-936a-07d3779448da",
+      "targetNodeId": "8d5cec91-8052-4910-9ca5-819654808006",
+      "startPoint": {
+        "x": 299,
+        "y": 276
+      },
+      "endPoint": {
+        "x": 365,
+        "y": 400
+      },
+      "bendPoints": [
+        {
+          "x": 299,
+          "y": 350
+        },
+        {
+          "x": 365,
+          "y": 350
+        }
+      ]
+    },
+    {
+      "id": "1faad457-ce31-4042-b6be-3f5fce44511c",
+      "type": "link",
+      "sourceNodeId": "344fc768-6969-4603-8646-d743007b3007",
+      "targetNodeId": "24c91e82-5a72-48cd-b7fd-0955da162797",
+      "probability": 100,
+      "startPoint": {
+        "x": 365,
+        "y": 998
+      },
+      "endPoint": {
+        "x": 247,
+        "y": 1122
+      },
+      "bendPoints": [
+        {
+          "x": 365,
+          "y": 1048
+        },
+        {
+          "x": 247,
+          "y": 1048
+        }
+      ]
+    },
+    {
+      "id": "6114234b-95f1-44c7-a0d3-4e242ddfbef0",
+      "type": "parent-child",
+      "sourceNodeId": "f6e0a1f7-7c11-4252-936a-07d3779448da",
+      "targetNodeId": "d54ad605-47e3-4678-9c75-5c29eb8f9d4c",
+      "startPoint": {
+        "x": 342,
+        "y": 276
+      },
+      "endPoint": {
+        "x": 908,
+        "y": 400
+      },
+      "bendPoints": [
+        {
+          "x": 342,
+          "y": 340
+        },
+        {
+          "x": 908,
+          "y": 340
+        }
+      ]
+    },
+    {
+      "id": "2d537b53-4a1b-4cb9-81f2-9ff0cdbdc791",
+      "type": "link",
+      "sourceNodeId": "799cbb99-2b5d-4637-a382-29f532c861f3",
+      "targetNodeId": "34840a16-8841-4b59-8580-bb4dfdb466ad",
+      "probability": 100,
+      "startPoint": {
+        "x": 835,
+        "y": 991
+      },
+      "endPoint": {
+        "x": 753,
+        "y": 1122
+      },
+      "bendPoints": [
+        {
+          "x": 835,
+          "y": 1048
+        },
+        {
+          "x": 753,
+          "y": 1048
+        }
+      ]
+    },
+    {
+      "id": "fd8a75ee-78de-4958-bf40-eabb735c4a54",
+      "type": "parent-child",
+      "sourceNodeId": "1035495c-4118-4b5e-91f9-91193b353940",
+      "targetNodeId": "92b1d9fd-7fbc-4ace-a7ce-bc382678290a",
+      "startPoint": {
+        "x": 1251,
+        "y": 1252
+      },
+      "endPoint": {
+        "x": 1193,
+        "y": 1369
+      },
+      "bendPoints": [
+        {
+          "x": 1251,
+          "y": 1312
+        },
+        {
+          "x": 1193,
+          "y": 1312
+        }
+      ]
+    },
+    {
+      "id": "44ec8e69-5b1d-44ab-af46-53fa92381205",
+      "type": "link",
+      "sourceNodeId": "1",
+      "targetNodeId": "f6e0a1f7-7c11-4252-936a-07d3779448da",
+      "probability": 100,
+      "startPoint": {
+        "x": 277,
+        "y": 62
+      },
+      "endPoint": {
+        "x": 277,
+        "y": 146
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "365cefc6-2710-4ce0-a94a-5afb92cd34e6",
+      "type": "link",
+      "sourceNodeId": "580b3525-526e-4e7b-b424-ba8bf6b35d9f",
+      "targetNodeId": "3df36619-7330-4938-8032-948d2f2fd6b9",
+      "probability": 100,
+      "startPoint": {
+        "x": 1545,
+        "y": 1997
+      },
+      "endPoint": {
+        "x": 1709,
+        "y": 2118
+      },
+      "bendPoints": [
+        {
+          "x": 1545,
+          "y": 2054
+        },
+        {
+          "x": 1709,
+          "y": 2054
+        }
+      ]
+    },
+    {
+      "id": "60d350b8-415d-48a1-8c2a-2f6ad29c2bb6",
+      "type": "parent-child",
+      "sourceNodeId": "eec4f2af-6639-485f-8b7b-d7f05ba79ed8",
+      "targetNodeId": "3154ea97-d3af-4013-bd49-66f08fdd805c",
+      "startPoint": {
+        "x": 854,
+        "y": 744
+      },
+      "endPoint": {
+        "x": 600,
+        "y": 861
+      },
+      "bendPoints": [
+        {
+          "x": 854,
+          "y": 794
+        },
+        {
+          "x": 600,
+          "y": 794
+        }
+      ]
+    },
+    {
+      "id": "224e50a2-cc64-4432-98d7-f8d2a862a664",
+      "type": "parent-child",
+      "sourceNodeId": "eec4f2af-6639-485f-8b7b-d7f05ba79ed8",
+      "targetNodeId": "fdf0a33b-30c9-4a7b-b365-bcece755275e",
+      "startPoint": {
+        "x": 961,
+        "y": 744
+      },
+      "endPoint": {
+        "x": 1251,
+        "y": 861
+      },
+      "bendPoints": [
+        {
+          "x": 961,
+          "y": 794
+        },
+        {
+          "x": 1251,
+          "y": 794
+        }
+      ]
+    },
+    {
+      "id": "35aad3ec-ab2f-4cf4-812f-49960a73dfcd",
+      "type": "link",
+      "sourceNodeId": "24c91e82-5a72-48cd-b7fd-0955da162797",
+      "targetNodeId": "f6e0a1f7-7c11-4252-936a-07d3779448da",
+      "probability": 100,
+      "startPoint": {
+        "x": 140,
+        "y": 1122
+      },
+      "endPoint": {
+        "x": 213,
+        "y": 276
+      },
+      "bendPoints": [
+        {
+          "x": 140,
+          "y": 1058
+        },
+        {
+          "x": 12,
+          "y": 1058
+        },
+        {
+          "x": 12,
+          "y": 926
+        },
+        {
+          "x": 12,
+          "y": 672
+        },
+        {
+          "x": 12,
+          "y": 465
+        },
+        {
+          "x": 12,
+          "y": 340
+        },
+        {
+          "x": 213,
+          "y": 340
+        }
+      ]
+    },
+    {
+      "id": "69214657-343a-4b40-834d-b3977276d4fb",
+      "type": "link",
+      "sourceNodeId": "6dccedb0-d342-47b6-89c2-c52f86d919e2",
+      "targetNodeId": "ec443783-1e18-4613-b267-41acabdfff8f",
+      "probability": 100,
+      "startPoint": {
+        "x": 1310,
+        "y": 2248
+      },
+      "endPoint": {
+        "x": 1310,
+        "y": 2332
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "e67c8a75-74b3-4e57-9bd2-5a8de31bda07",
+      "type": "parent-child",
+      "sourceNodeId": "f6e0a1f7-7c11-4252-936a-07d3779448da",
+      "targetNodeId": "9369767f-402c-4b96-b232-d28f92912606",
+      "startPoint": {
+        "x": 256,
+        "y": 276
+      },
+      "endPoint": {
+        "x": 130,
+        "y": 400
+      },
+      "bendPoints": [
+        {
+          "x": 256,
+          "y": 350
+        },
+        {
+          "x": 130,
+          "y": 350
+        }
+      ]
+    },
+    {
+      "id": "46965973-94b8-4107-86f1-8b92f6b41d73",
+      "type": "link",
+      "sourceNodeId": "3154ea97-d3af-4013-bd49-66f08fdd805c",
+      "targetNodeId": "34840a16-8841-4b59-8580-bb4dfdb466ad",
+      "probability": 100,
+      "startPoint": {
+        "x": 600,
+        "y": 991
+      },
+      "endPoint": {
+        "x": 682,
+        "y": 1122
+      },
+      "bendPoints": [
+        {
+          "x": 600,
+          "y": 1048
+        },
+        {
+          "x": 682,
+          "y": 1048
+        }
+      ]
+    },
+    {
+      "id": "4245dac7-0752-4ffe-aba6-2b86d86ff2a9",
+      "type": "link",
+      "sourceNodeId": "08939c3f-3c8a-48e0-9240-8e8211b1f112",
+      "targetNodeId": "2",
+      "probability": 100,
+      "startPoint": {
+        "x": 1075,
+        "y": 2004
+      },
+      "endPoint": {
+        "x": 1253,
+        "y": 2610
+      },
+      "bendPoints": [
+        {
+          "x": 1075,
+          "y": 2176
+        },
+        {
+          "x": 1075,
+          "y": 2390
+        },
+        {
+          "x": 1075,
+          "y": 2512
+        },
+        {
+          "x": 1253,
+          "y": 2512
+        }
+      ]
+    },
+    {
+      "id": "ef6c6baf-862b-434b-b375-45a2b0cd8346",
+      "type": "parent-child",
+      "sourceNodeId": "fb2e25ba-b171-4978-b043-e4e42037c60a",
+      "targetNodeId": "d7578032-ed81-46bc-86e5-8d133bd7588a",
+      "startPoint": {
+        "x": 1541,
+        "y": 1750
+      },
+      "endPoint": {
+        "x": 1310,
+        "y": 1867
+      },
+      "bendPoints": [
+        {
+          "x": 1541,
+          "y": 1800
+        },
+        {
+          "x": 1310,
+          "y": 1800
+        }
+      ]
+    },
+    {
+      "id": "af3d0082-1a62-4841-bae9-cf03cb3f85a3",
+      "type": "link",
+      "sourceNodeId": "3df36619-7330-4938-8032-948d2f2fd6b9",
+      "targetNodeId": "0938793d-f758-4b97-928f-290364ef4624",
+      "probability": 100,
+      "startPoint": {
+        "x": 1745,
+        "y": 2248
+      },
+      "endPoint": {
+        "x": 1745,
+        "y": 2332
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "e9473bd3-1686-4c06-b16e-2582b995116b",
+      "type": "link",
+      "sourceNodeId": "0938793d-f758-4b97-928f-290364ef4624",
+      "targetNodeId": "2",
+      "probability": 100,
+      "startPoint": {
+        "x": 1745,
+        "y": 2462
+      },
+      "endPoint": {
+        "x": 1281,
+        "y": 2610
+      },
+      "bendPoints": [
+        {
+          "x": 1745,
+          "y": 2522
+        },
+        {
+          "x": 1281,
+          "y": 2522
+        }
+      ]
+    },
+    {
+      "id": "6734bd24-a35b-4049-8bd6-0f789ed4f9f9",
+      "type": "parent-child",
+      "sourceNodeId": "fb2e25ba-b171-4978-b043-e4e42037c60a",
+      "targetNodeId": "580b3525-526e-4e7b-b424-ba8bf6b35d9f",
+      "startPoint": {
+        "x": 1595,
+        "y": 1750
+      },
+      "endPoint": {
+        "x": 1545,
+        "y": 1867
+      },
+      "bendPoints": [
+        {
+          "x": 1595,
+          "y": 1810
+        },
+        {
+          "x": 1545,
+          "y": 1810
+        }
+      ]
+    },
+    {
+      "id": "e342e073-83aa-4c05-9a06-f0b0676f8dc4",
+      "type": "link",
+      "sourceNodeId": "9369767f-402c-4b96-b232-d28f92912606",
+      "targetNodeId": "8a96aa2e-f552-4f73-9384-e0e4c8cc99d9",
+      "probability": 100,
+      "startPoint": {
+        "x": 130,
+        "y": 530
+      },
+      "endPoint": {
+        "x": 130,
+        "y": 614
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "addb1453-5103-4ce8-b070-c06697b18666",
+      "type": "link",
+      "sourceNodeId": "92b1d9fd-7fbc-4ace-a7ce-bc382678290a",
+      "targetNodeId": "2001f7b3-499f-4ed2-b414-36a7c26b4ca3",
+      "probability": 100,
+      "startPoint": {
+        "x": 1193,
+        "y": 1499
+      },
+      "endPoint": {
+        "x": 1111,
+        "y": 1620
+      },
+      "bendPoints": [
+        {
+          "x": 1193,
+          "y": 1556
+        },
+        {
+          "x": 1111,
+          "y": 1556
+        }
+      ]
+    },
+    {
+      "id": "f9defd28-816a-4de5-bf92-ab7ceb938297",
+      "type": "link",
+      "sourceNodeId": "2001f7b3-499f-4ed2-b414-36a7c26b4ca3",
+      "targetNodeId": "08939c3f-3c8a-48e0-9240-8e8211b1f112",
+      "probability": 100,
+      "startPoint": {
+        "x": 1075,
+        "y": 1750
+      },
+      "endPoint": {
+        "x": 1075,
+        "y": 1874
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "23a9d6b5-dc11-40f0-85c7-a6440b008002",
+      "type": "parent-child",
+      "sourceNodeId": "1035495c-4118-4b5e-91f9-91193b353940",
+      "targetNodeId": "702e80fb-fe57-4a84-9538-1ccf16e5680a",
+      "startPoint": {
+        "x": 1198,
+        "y": 1252
+      },
+      "endPoint": {
+        "x": 958,
+        "y": 1369
+      },
+      "bendPoints": [
+        {
+          "x": 1198,
+          "y": 1302
+        },
+        {
+          "x": 958,
+          "y": 1302
+        }
+      ]
+    },
+    {
+      "id": "2fa4d53d-6efa-4aaa-8986-8935528fa10c",
+      "type": "link",
+      "sourceNodeId": "10714d43-d83b-4d96-b1f0-b41147712bec",
+      "targetNodeId": "24c91e82-5a72-48cd-b7fd-0955da162797",
+      "probability": 100,
+      "startPoint": {
+        "x": 130,
+        "y": 998
+      },
+      "endPoint": {
+        "x": 194,
+        "y": 1122
+      },
+      "bendPoints": [
+        {
+          "x": 130,
+          "y": 1048
+        },
+        {
+          "x": 194,
+          "y": 1048
+        }
+      ]
+    },
+    {
+      "id": "2c7062bb-1d7e-4cb2-8524-990aa4a02c12",
+      "type": "link",
+      "sourceNodeId": "d54ad605-47e3-4678-9c75-5c29eb8f9d4c",
+      "targetNodeId": "eec4f2af-6639-485f-8b7b-d7f05ba79ed8",
+      "probability": 100,
+      "startPoint": {
+        "x": 908,
+        "y": 530
+      },
+      "endPoint": {
+        "x": 908,
+        "y": 614
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "224cb7f5-b00f-4137-b935-696bc168f956",
+      "type": "link",
+      "sourceNodeId": "c758b6d8-8e0b-42ed-8528-4eb063471cac",
+      "targetNodeId": "3df36619-7330-4938-8032-948d2f2fd6b9",
+      "probability": 100,
+      "startPoint": {
+        "x": 1780,
+        "y": 1997
+      },
+      "endPoint": {
+        "x": 1780,
+        "y": 2118
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "df599397-b71d-4ec7-b4e7-e1490ad30ac6",
+      "type": "link",
+      "sourceNodeId": "fdf0a33b-30c9-4a7b-b365-bcece755275e",
+      "targetNodeId": "1035495c-4118-4b5e-91f9-91193b353940",
+      "probability": 100,
+      "startPoint": {
+        "x": 1251,
+        "y": 991
+      },
+      "endPoint": {
+        "x": 1251,
+        "y": 1122
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "ce9663a8-f8a7-4f6b-ba67-be522b335154",
+      "type": "link",
+      "sourceNodeId": "8d5cec91-8052-4910-9ca5-819654808006",
+      "targetNodeId": "345d35cc-c336-4add-9c81-a502eca72600",
+      "probability": 100,
+      "startPoint": {
+        "x": 365,
+        "y": 530
+      },
+      "endPoint": {
+        "x": 365,
+        "y": 614
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "0ab89d10-f337-49ee-b235-dc4e45bcbc9a",
+      "type": "parent-child",
+      "sourceNodeId": "eec4f2af-6639-485f-8b7b-d7f05ba79ed8",
+      "targetNodeId": "799cbb99-2b5d-4637-a382-29f532c861f3",
+      "startPoint": {
+        "x": 908,
+        "y": 744
+      },
+      "endPoint": {
+        "x": 835,
+        "y": 861
+      },
+      "bendPoints": [
+        {
+          "x": 908,
+          "y": 804
+        },
+        {
+          "x": 835,
+          "y": 804
+        }
+      ]
+    },
+    {
+      "id": "2a9193e1-bf83-42b9-b50d-0550ee077bbc",
+      "type": "link",
+      "sourceNodeId": "702e80fb-fe57-4a84-9538-1ccf16e5680a",
+      "targetNodeId": "2001f7b3-499f-4ed2-b414-36a7c26b4ca3",
+      "probability": 100,
+      "startPoint": {
+        "x": 958,
+        "y": 1499
+      },
+      "endPoint": {
+        "x": 1040,
+        "y": 1620
+      },
+      "bendPoints": [
+        {
+          "x": 958,
+          "y": 1556
+        },
+        {
+          "x": 1040,
+          "y": 1556
+        }
+      ]
+    },
+    {
+      "id": "633af9c8-0d2b-4759-9c6d-382d60477b5c",
+      "type": "link",
+      "sourceNodeId": "345d35cc-c336-4add-9c81-a502eca72600",
+      "targetNodeId": "344fc768-6969-4603-8646-d743007b3007",
+      "probability": 100,
+      "startPoint": {
+        "x": 365,
+        "y": 744
+      },
+      "endPoint": {
+        "x": 365,
+        "y": 868
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "ab36c292-ae14-48f6-b7e0-efa261334bcc",
+      "type": "parent-child",
+      "sourceNodeId": "fb2e25ba-b171-4978-b043-e4e42037c60a",
+      "targetNodeId": "c758b6d8-8e0b-42ed-8528-4eb063471cac",
+      "startPoint": {
+        "x": 1649,
+        "y": 1750
+      },
+      "endPoint": {
+        "x": 1780,
+        "y": 1867
+      },
+      "bendPoints": [
+        {
+          "x": 1649,
+          "y": 1800
+        },
+        {
+          "x": 1780,
+          "y": 1800
+        }
+      ]
+    },
+    {
+      "id": "006059b3-3288-4b8c-a1ff-6af14e8c20e1",
+      "type": "link",
+      "sourceNodeId": "9b6b5f98-60f5-4249-9e34-03bde3b7b537",
+      "targetNodeId": "fb2e25ba-b171-4978-b043-e4e42037c60a",
+      "probability": 100,
+      "startPoint": {
+        "x": 1595,
+        "y": 1499
+      },
+      "endPoint": {
+        "x": 1595,
+        "y": 1620
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "ca8cc103-77ad-4a14-a1ca-a5642f202c49",
+      "type": "link",
+      "sourceNodeId": "8a96aa2e-f552-4f73-9384-e0e4c8cc99d9",
+      "targetNodeId": "10714d43-d83b-4d96-b1f0-b41147712bec",
+      "probability": 100,
+      "startPoint": {
+        "x": 130,
+        "y": 744
+      },
+      "endPoint": {
+        "x": 130,
+        "y": 868
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "95b5c9d8-9851-4676-88a2-cfe459baf78d",
+      "type": "link",
+      "sourceNodeId": "d7578032-ed81-46bc-86e5-8d133bd7588a",
+      "targetNodeId": "6dccedb0-d342-47b6-89c2-c52f86d919e2",
+      "probability": 100,
+      "startPoint": {
+        "x": 1310,
+        "y": 1997
+      },
+      "endPoint": {
+        "x": 1310,
+        "y": 2118
+      },
+      "bendPoints": []
+    }
+  ],
+  "variableDefinitions": [
+    {
+      "id": "beb677dc-bcc0-4584-b78a-9212e4651bcc",
+      "name": "TM",
+      "type": "integer"
+    },
+    {
+      "id": "cbbfee6e-648e-4d50-accd-f2bdaf2e79d5",
+      "name": "RFQ",
+      "type": "integer"
+    },
+    {
+      "id": "4fea4a4d-b0e1-4e7c-85c1-9f35a5810e17",
+      "name": "EC",
+      "type": "integer"
+    },
+    {
+      "id": "92ca26d1-ad04-4f41-a1c7-215f739b2900",
+      "name": "SS",
+      "type": "integer"
+    },
+    {
+      "id": "f177f815-cdbd-4f2e-9628-2d43f152b8a6",
+      "name": "Outcome",
+      "type": "integer"
+    },
+    {
+      "id": "c504a283-1fcd-47c2-90c0-ae005729de65",
+      "name": "VA",
+      "type": "integer"
+    }
+  ],
+  "goals": [
+    {
+      "id": "e23bc1c2-7f1d-4d7c-bb7a-d06d1431dbc0",
+      "name": "Can you be the customer's advocate by setting a direction with a Verbal Agenda, asking an RFQ, Tying Motivations to Presentation, and Handling Objections?",
+      "description": "",
+      "script": "if Outcome==1 then\r\nmessage=\"Good work!  You set a direction, flexed to the customer's social style, asked an RFQ, tied the customer's motivations to your presentation, and handled the objection\"\r\ncelebrate=true\r\nendif\r\n\r\nif Outcome==2 then\r\nmessage=\"There was a better way to handle the objection\"\r\ncelebrate=true\r\nendif\r\n\r\nif Outcome==3 then\r\nmessage=\"When the customer reveals their needs and motivations, be sure to use what you know in your presentation.\"\r\ncelebrate=false\r\nendif\r\n\r\nif Outcome==4 then\r\nmessage=\"A Results Focused Question would have gotten you the information you needed to be an advocate for the customer.\"\r\ncelebrate=false\r\n\r\nendif\r\n\r\nif Outcome==5 then\r\nmessage=\"Build influence by flexing to the customer's social style.\"\r\ncelebrate=false\r\nendif\r\n\r\nif Outcome==6 then\r\nmessage=\"Setting a direction and flexing to the customer's social style would have been a better way to start.\"\r\ncelebrate=false\r\nendif\r\n",
+      "tagValues": [
+        {
+          "id": "3d2a067c-8ec9-459f-9210-ec114b8acc18",
+          "tagDefinitionId": "1001",
+          "value": "FSA_102_3_20"
+        }
+      ]
+    }
+  ]
+}

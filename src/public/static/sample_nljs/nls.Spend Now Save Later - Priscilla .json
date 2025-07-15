@@ -1,0 +1,2240 @@
+{
+  "id": "6813def61ebe90607b9e477c",
+  "name": "Spend Now Save Later - Priscilla ",
+  "orientation": "vertical",
+  "nodes": [
+    {
+      "type": "choice",
+      "id": "bf402dea-4246-4aa3-8f29-dd39357856c2",
+      "parentId": "9187eee0-23fd-4b40-a029-a50302efc83b",
+      "text": "Would you like to learn more about them, before making that decision?",
+      "feedback": "Without knowledge about Priscilla's motivations, you won't be able to tie value of the add-on in a way that Priscilla will be interested.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 838,
+      "y": 6751,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "8eefb825-7922-4e3b-8ea8-7d10fd347d1d",
+      "x": 1047,
+      "y": 4937,
+      "width": 215,
+      "height": 130,
+      "content": "Great!  You determined the customer's social style. Keep it up and see if you can help Priscilla take home a car today!"
+    },
+    {
+      "type": "question",
+      "id": "8662aed1-f6c4-4dbe-87ae-f663ffce9372",
+      "text": "Based on the clues and what the Mentor just said, what is the social style of this customer?",
+      "content": "",
+      "media": {
+        "id": "42717",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/ca5c702a-820b-429f-88ad-960ada3e3f81",
+        "title": "scene_6_720.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/ca5c702a-820b-429f-88ad-960ada3e3f81",
+        "createTimestamp": "2025-05-02T15:40:36.146424Z",
+        "updateTimestamp": "2025-05-02T15:40:36.292036Z"
+      },
+      "additionalMediaList": [],
+      "x": 752,
+      "y": 4214,
+      "width": 278,
+      "height": 355
+    },
+    {
+      "type": "choice",
+      "id": "05b2c21a-1a1d-4d7a-93ba-7297fe58cd50",
+      "parentId": "d5172bb5-9ce1-4cb0-893d-896383f327e6",
+      "text": "Priscilla did her research online",
+      "feedback": "This is true, but it's not enough of a clue to determine Priscilla's social style yet.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 74,
+      "y": 1616,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "195490b3-9f8c-4e57-a060-fbbb2357fbe8",
+      "x": 1119,
+      "y": 8968,
+      "width": 215,
+      "height": 130,
+      "content": "Not quite...observe the interaction and try again!"
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "dbbd8181-c28c-4cda-a15f-a2aa03adf1e4",
+      "x": 1366,
+      "y": 10282,
+      "width": 215,
+      "height": 130,
+      "content": "Analyticals like to know all the facts and figures to help inform their decision making."
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "c8e06b5c-62bb-4e66-9ec0-7d8344444270",
+      "x": 12,
+      "y": 360,
+      "width": 309,
+      "height": 317,
+      "media": {
+        "id": "41894",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/6f1a736d-b515-46af-bb0b-199ce6c8e0ce",
+        "title": "302_Panel1A.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/6f1a736d-b515-46af-bb0b-199ce6c8e0ce",
+        "createTimestamp": "2025-05-01T20:51:52.837226Z",
+        "updateTimestamp": "2025-05-01T20:51:53.167936Z"
+      }
+    },
+    {
+      "type": "choice",
+      "id": "81f7aa2e-24ad-4578-abbb-214b7204e8c9",
+      "parentId": "8662aed1-f6c4-4dbe-87ae-f663ffce9372",
+      "text": "Amiable",
+      "feedback": "Priscilla is a slow decision maker like an Amiable, but this isn't her social style.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 577,
+      "y": 4693,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "d5172bb5-9ce1-4cb0-893d-896383f327e6",
+      "text": "What clue did the customer give about their social style?",
+      "content": "",
+      "media": {
+        "id": "43525",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/2b1222c6-1e11-40ae-9240-57bdcadb47b9",
+        "title": "302_Panel1C.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/2b1222c6-1e11-40ae-9240-57bdcadb47b9",
+        "createTimestamp": "2025-05-02T15:41:21.706914Z",
+        "updateTimestamp": "2025-05-02T15:41:21.951580Z"
+      },
+      "additionalMediaList": [],
+      "x": 225,
+      "y": 1199,
+      "width": 335,
+      "height": 317
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "dc4a3c03-980d-483d-b0d3-76a883fb946c",
+      "x": 1019,
+      "y": 5181,
+      "width": 270,
+      "height": 288,
+      "media": {
+        "id": "41918",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/affadfb4-c507-4cb1-9086-fbbaf233b8a0",
+        "title": "302_Panel3A.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/affadfb4-c507-4cb1-9086-fbbaf233b8a0",
+        "createTimestamp": "2025-05-02T14:31:24.815470Z",
+        "updateTimestamp": "2025-05-02T14:31:25.239329Z"
+      }
+    },
+    {
+      "type": "choice",
+      "id": "9d452ca2-b580-4022-b8d2-b9dd8e4f14fe",
+      "parentId": "6ba1dc5b-43ec-4cdc-a4a5-f0c274e1f91f",
+      "text": "I understand your hesitation, but trust me this is a great deal. Especially since this is a more popular model, as I'm sure you're aware. Who knows until another one comes in stock? Why not \"jump in\" to the great deal in front of you? Get it? Jump in? 'Cus you're a swim coach? I like to keep things light. So what do you think?",
+      "feedback": "This question is very personable. Analyticals like Priscilla prefer facts and figures as a way to build value and trust. ",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 1483,
+      "y": 9423,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "860cce8b-a785-4ee2-b5ec-cd54bac0403f",
+      "x": 337,
+      "y": 4214,
+      "width": 215,
+      "height": 130,
+      "text": "Not quite...observe the interaction and try again!"
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "08b59182-c944-4b6b-868c-e33dcb69c2b1",
+      "x": 312,
+      "y": 2991,
+      "width": 446,
+      "height": 434,
+      "media": {
+        "id": "42704",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/1cddedd2-e171-47b0-af03-fab2908b13b0",
+        "title": "302_Panel2C.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/1cddedd2-e171-47b0-af03-fab2908b13b0",
+        "createTimestamp": "2025-05-01T20:55:35.613755Z",
+        "updateTimestamp": "2025-05-01T20:55:35.859286Z"
+      }
+    },
+    {
+      "type": "choice",
+      "id": "a6c53eb4-8a16-4aec-9727-5957df2d48d7",
+      "parentId": "4707ba96-cb3a-4af3-be5e-20de68623906",
+      "text": "Priscilla has been interested in the white SUV for a while now.",
+      "feedback": "Without any context, this isn't enough of a clue to find Priscilla's social style.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 427,
+      "y": 3960,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "e9e7cc98-244c-46bc-98eb-e290c6fc9d19",
+      "parentId": "6ba1dc5b-43ec-4cdc-a4a5-f0c274e1f91f",
+      "text": "I've had customers in similar predicaments where they didn't want to go for the extra add-ons, but once they learned the value they could bring to their drive, they were turned around to go for it! Sounds like between swim team and your excellence in the office, some extra support on the road can be the best way to go for the gold! What do you say?",
+      "feedback": "Referencing other customer experiences is a better flex to an Expressive than an Analytical.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 1248,
+      "y": 9423,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "30629379-5def-4cc6-93c1-801ab3aa3f59",
+      "x": 1731,
+      "y": 10048,
+      "width": 215,
+      "height": 130,
+      "content": "You show Priscilla the details about the add-on, and she is happy to learn that it'll save her future headaches by lasting longer than other wheels. Priscilla thanks you for your patience as she drives her new SUV off the lot."
+    },
+    {
+      "type": "choice",
+      "id": "5bf5fa60-ffea-49bf-a712-e18ff44b07b3",
+      "parentId": "8662aed1-f6c4-4dbe-87ae-f663ffce9372",
+      "text": "Driver",
+      "feedback": "Priscilla is task-focused like a Driver, but this isn't her social style.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 812,
+      "y": 4693,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "74497e5a-6da4-40b7-9017-eb589f1cbc72",
+      "x": 1731,
+      "y": 10282,
+      "width": 215,
+      "height": 130,
+      "content": "Great work! You asked the right Response Focused Questions, flexed to Priscilla's social style and saved the interation!"
+    },
+    {
+      "type": "choice",
+      "id": "63c8ac51-b9da-4a04-97fe-a36ae173a4cf",
+      "parentId": "6ba1dc5b-43ec-4cdc-a4a5-f0c274e1f91f",
+      "text": "This add-on is specifically catered to drivers who are going long distances. From what you've shared, this may come in handy for trips to swim meets or conferences. I know you've had your eye on this vehicle for a while, and I'd hate for you to have to delay your search. If you'd like I can provide further details comparing these add-ons to the base model wheels so you can learn more of their perks and advantages. Does that sound like a good plan to you?",
+      "feedback": "Providing further facts and figures is a great way to flex to an Analytical like Priscilla!",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "x": 1731,
+      "y": 9423,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "6ba1dc5b-43ec-4cdc-a4a5-f0c274e1f91f",
+      "text": "Which of the following best flexes to the customer's social style and  Sets a Direction?",
+      "content": "",
+      "media": {
+        "id": "42712",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/d2723357-0272-4d14-938f-4430d455ac49",
+        "title": "scene_6_720.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/d2723357-0272-4d14-938f-4430d455ac49",
+        "createTimestamp": "2025-05-02T15:37:54.801252Z",
+        "updateTimestamp": "2025-05-02T15:37:55.046897Z"
+      },
+      "additionalMediaList": [],
+      "x": 1541,
+      "y": 8968,
+      "width": 288,
+      "height": 345
+    },
+    {
+      "type": "choice",
+      "id": "a19a362f-7395-494a-b289-7fbe6b4c9a0b",
+      "parentId": "8662aed1-f6c4-4dbe-87ae-f663ffce9372",
+      "text": "Analytical",
+      "feedback": "Bingo! Priscilla is a slow decision maker and task-focused: all signs of an Analytical!",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "x": 1047,
+      "y": 4693,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "ce15c6e1-b8ed-4f14-88c7-49f8047a263b",
+      "x": 42,
+      "y": 1860,
+      "width": 215,
+      "height": 130,
+      "text": "Not quite...observe the interaction and try again!"
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "857c6049-6783-420c-b12d-084ed89579d7",
+      "x": 1019,
+      "y": 5927,
+      "width": 271,
+      "height": 262,
+      "content": "",
+      "media": {
+        "id": "42714",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/ebd47e90-2d3e-472c-a7c9-bb9f7f1d4d46",
+        "title": "scene_x_panel_1_720.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/ebd47e90-2d3e-472c-a7c9-bb9f7f1d4d46",
+        "createTimestamp": "2025-05-02T15:39:30.496214Z",
+        "updateTimestamp": "2025-05-02T15:39:30.720463Z"
+      }
+    },
+    {
+      "type": "choice",
+      "id": "07904396-6593-4157-bf2c-0dc4d0f03c6d",
+      "parentId": "9187eee0-23fd-4b40-a029-a50302efc83b",
+      "text": "Why's that?",
+      "feedback": "This question is vague, and may not offer enough information for us to learn more about Priscilla's motivations.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 1073,
+      "y": 6751,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "9187eee0-23fd-4b40-a029-a50302efc83b",
+      "text": "Which of the following RFQs is most likely to help the customer  reveal their motivation?",
+      "content": "",
+      "media": {
+        "id": "42715",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/651d4ef9-0f4e-45a8-811b-6dc1da63e76f",
+        "title": "scene_6_720.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/651d4ef9-0f4e-45a8-811b-6dc1da63e76f",
+        "createTimestamp": "2025-05-02T15:39:54.776871Z",
+        "updateTimestamp": "2025-05-02T15:39:54.934898Z"
+      },
+      "additionalMediaList": [],
+      "x": 1019,
+      "y": 6273,
+      "width": 270,
+      "height": 354
+    },
+    {
+      "type": "question",
+      "id": "3df4b533-b59c-4dd7-a11b-d80cfa38244b",
+      "text": "Which of the following RFQs is most likely to help the customer see the situation with new eyes?",
+      "content": "",
+      "media": {
+        "id": "42716",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/2450060e-61e6-445e-8f09-4f58fe6e9a63",
+        "title": "scene_6_720.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/2450060e-61e6-445e-8f09-4f58fe6e9a63",
+        "createTimestamp": "2025-05-02T15:40:16.553254Z",
+        "updateTimestamp": "2025-05-02T15:40:16.724Z"
+      },
+      "additionalMediaList": [],
+      "x": 1248,
+      "y": 7841,
+      "width": 337,
+      "height": 335
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "1a67b03f-6344-44ed-992d-89b601ed784d",
+      "x": 915,
+      "y": 6995,
+      "width": 295,
+      "height": 327,
+      "media": {
+        "id": "42706",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/435ee2e8-1766-4a59-b6f5-5fcea4c41e70",
+        "title": "302_Scene5.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/435ee2e8-1766-4a59-b6f5-5fcea4c41e70",
+        "createTimestamp": "2025-05-02T14:37:03.365826Z",
+        "updateTimestamp": "2025-05-02T14:37:03.657366Z"
+      }
+    },
+    {
+      "type": "choice",
+      "id": "8e1accd3-c804-446a-857e-adfee7ff9b0b",
+      "parentId": "d5172bb5-9ce1-4cb0-893d-896383f327e6",
+      "text": "Priscilla wants to look at the car she researched with no delay.",
+      "feedback": "Great eye! This tells us that Priscilla is task-focused.",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "x": 544,
+      "y": 1616,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "8335d637-ae43-4b0b-ae4a-b3410ff7af56",
+      "parentId": "9187eee0-23fd-4b40-a029-a50302efc83b",
+      "text": "Help me understand, what concerns you most about the add-on?",
+      "feedback": "This question can help us learn more about Priscilla's motivation behind her decision. ",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "x": 1309,
+      "y": 6751,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "592c2736-9e11-43ae-8b94-6ae3698c1d5a",
+      "parentId": "3df4b533-b59c-4dd7-a11b-d80cfa38244b",
+      "text": "Would you rather wait to see if we'll get another model in stock without any add-ons?",
+      "feedback": "This question won't help you make the sale today, and won't help Priscilla see the situation with new eyes.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 1087,
+      "y": 8300,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "7a2c2c29-4be1-42d0-bb6f-5c7869c6c8b8",
+      "parentId": "4707ba96-cb3a-4af3-be5e-20de68623906",
+      "text": "Priscilla has a lot of patience.",
+      "feedback": "This may be true, but it's not enough of a clue to determine Priscilla's social style.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 192,
+      "y": 3960,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "f06854ce-2c80-417d-b103-41156afaeae5",
+      "x": 1003,
+      "y": 5553,
+      "width": 302,
+      "height": 290,
+      "media": {
+        "id": "42705",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/07846bce-0b7f-44c0-98d4-1a592a8da0b4",
+        "title": "302_Panel3B.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/07846bce-0b7f-44c0-98d4-1a592a8da0b4",
+        "createTimestamp": "2025-05-02T14:31:51.758407Z",
+        "updateTimestamp": "2025-05-02T14:31:51.964209Z"
+      }
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "cbd71575-6480-4436-a06c-2abfb5ae941f",
+      "x": 617,
+      "y": 5181,
+      "width": 215,
+      "height": 130,
+      "content": "Try again.  Knowing the customer's social style helps you be their advocate."
+    },
+    {
+      "type": "choice",
+      "id": "2fd2d0f5-e8cd-4b38-9f8c-55f209b1a64d",
+      "parentId": "3df4b533-b59c-4dd7-a11b-d80cfa38244b",
+      "text": "Share with me, how do you use your current car?",
+      "feedback": "Learning more about how Priscilla uses her vehicle can help tie value into your presentation,",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "x": 1578,
+      "y": 8300,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "da51f6a4-5b69-4ae1-94b5-cdfa4ed2131f",
+      "x": 239,
+      "y": 805,
+      "width": 307,
+      "height": 310,
+      "media": {
+        "id": "42700",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/715a936c-5acf-408b-ba13-6ef5556abe58",
+        "title": "302_Panel1B.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/715a936c-5acf-408b-ba13-6ef5556abe58",
+        "createTimestamp": "2025-05-01T20:52:14.294Z",
+        "updateTimestamp": "2025-05-01T20:52:14.584194Z"
+      }
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "4263afe5-0789-4b60-ae4e-106e948cea05",
+      "x": 1157,
+      "y": 8544,
+      "width": 309,
+      "height": 294,
+      "media": {
+        "id": "42708",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/028505b8-3aca-4edb-ab41-4d9c8f5b1247",
+        "title": "302_Scene7.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/028505b8-3aca-4edb-ab41-4d9c8f5b1247",
+        "createTimestamp": "2025-05-02T14:42:41.157956Z",
+        "updateTimestamp": "2025-05-02T14:42:41.388020Z"
+      }
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "ca07ceec-b5f7-41bb-9956-d76fc7cf7072",
+      "x": 872,
+      "y": 7436,
+      "width": 215,
+      "height": 130,
+      "content": "Not quite...observe the interaction and try again!"
+    },
+    {
+      "type": "choice",
+      "id": "082c104d-87e1-49a4-911f-301136f51870",
+      "parentId": "3df4b533-b59c-4dd7-a11b-d80cfa38244b",
+      "text": "Tell me what's your hesitation for the wheel add on, specifically.",
+      "feedback": "We've already asked a question similar to this. This won't help Priscilla see the situation with new eyes.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 1322,
+      "y": 8300,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "d0898f15-bfee-4d23-b12b-a5aca5fb989d",
+      "parentId": "4707ba96-cb3a-4af3-be5e-20de68623906",
+      "text": "Priscilla's been eyeing this car for a while, and waited until it was available at an offer she liked to come in.",
+      "feedback": "That's right! This lets us know that Priscilla is a slow decision maker.",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "x": 784,
+      "y": 3960,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "b1377eaa-aaf5-471b-9110-47ed8a69d675",
+      "x": 1693,
+      "y": 9667,
+      "width": 291,
+      "height": 291,
+      "media": {
+        "id": "42711",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/b1bc4c13-c18f-4b43-b86d-f2de523f0735",
+        "title": "302_Scene8.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/b1bc4c13-c18f-4b43-b86d-f2de523f0735",
+        "createTimestamp": "2025-05-02T15:36:03.523424Z",
+        "updateTimestamp": "2025-05-02T15:36:03.746137Z"
+      }
+    },
+    {
+      "type": "start",
+      "id": "1",
+      "x": 131,
+      "y": 12,
+      "width": 70,
+      "height": 50
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "2b8a1640-32c8-48a7-88d4-472200795f75",
+      "x": 1330,
+      "y": 9667,
+      "width": 286,
+      "height": 285,
+      "media": {
+        "id": "42710",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/49eef924-883d-4806-b150-46de738d9c40",
+        "title": "302_Scene9.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/49eef924-883d-4806-b150-46de738d9c40",
+        "createTimestamp": "2025-05-02T15:24:52.387876Z",
+        "updateTimestamp": "2025-05-02T15:24:52.600967Z"
+      }
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "e8aa2910-0aa8-44df-a745-d14c95f8fc4a",
+      "x": 1298,
+      "y": 7032,
+      "width": 237,
+      "height": 239,
+      "content": "",
+      "media": {
+        "id": "42707",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/42d261f5-44b8-49f4-bd58-2dde0e43fb5e",
+        "title": "302_Scene4.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/42d261f5-44b8-49f4-bd58-2dde0e43fb5e",
+        "createTimestamp": "2025-05-02T14:40:17.736924Z",
+        "updateTimestamp": "2025-05-02T14:40:17.918112Z"
+      }
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "705d5164-6fd0-4687-9467-99a4d8ce837b",
+      "x": 694,
+      "y": 4937,
+      "width": 215,
+      "height": 130,
+      "content": "Sorry, that's not the customer's social style"
+    },
+    {
+      "type": "question",
+      "id": "4707ba96-cb3a-4af3-be5e-20de68623906",
+      "text": "What additional clue did the customer provide  about their social style?",
+      "content": "",
+      "media": {
+        "id": "42718",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/ff0c9f0b-4033-4fe2-acbe-5de09e0f5483",
+        "title": "scene_6_720.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/ff0c9f0b-4033-4fe2-acbe-5de09e0f5483",
+        "createTimestamp": "2025-05-02T15:40:51.311157Z",
+        "updateTimestamp": "2025-05-02T15:40:51.457100Z"
+      },
+      "additionalMediaList": [],
+      "x": 384,
+      "y": 3509,
+      "width": 302,
+      "height": 351
+    },
+    {
+      "type": "choice",
+      "id": "3842d9be-9cd1-4d40-8563-535ff7cd101c",
+      "parentId": "d5172bb5-9ce1-4cb0-893d-896383f327e6",
+      "text": "Priscilla is interested in the new white SUV",
+      "feedback": "This isn't a clue to Priscillla's social style.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 309,
+      "y": 1616,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "4bf0e9cb-b388-4106-a6f3-83b0e9e3a95c",
+      "x": 1531,
+      "y": 8544,
+      "width": 308,
+      "height": 310,
+      "content": "",
+      "media": {
+        "id": "42709",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/fdf21b70-9ef2-4e0b-adc6-641d3ceffcb8",
+        "title": "302_Scene6.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/fdf21b70-9ef2-4e0b-adc6-641d3ceffcb8",
+        "createTimestamp": "2025-05-02T14:43:36.045099Z",
+        "updateTimestamp": "2025-05-02T14:43:36.239763Z"
+      }
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "ef4cb9ef-280d-4dbd-9515-0c6cbd1fdaf7",
+      "x": 1262,
+      "y": 7436,
+      "width": 309,
+      "height": 321,
+      "content": "",
+      "media": {
+        "id": "41919",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/56dec47e-14a4-40dd-a6db-79e9e1fdc052",
+        "title": "panel_4a_720.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/56dec47e-14a4-40dd-a6db-79e9e1fdc052",
+        "createTimestamp": "2025-05-02T15:38:52.303532Z",
+        "updateTimestamp": "2025-05-02T15:38:52.556216Z"
+      }
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "adbf1fe5-a27f-4c3e-83f5-5560420f9ec6",
+      "x": 1365,
+      "y": 10042,
+      "width": 216,
+      "height": 156,
+      "content": "Priscilla dodges your last attempts to sell her on the SUV. She walks off the lot, and you're left alone to wonder what you could've said or done to have save the situation."
+    },
+    {
+      "type": "end",
+      "id": "2",
+      "x": 1592,
+      "y": 10538,
+      "width": 70,
+      "height": 50
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "66e3abf8-08fd-47a7-a678-c5a10e624531",
+      "x": 317,
+      "y": 2465,
+      "width": 435,
+      "height": 442,
+      "media": {
+        "id": "42703",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/65a0931c-eeaa-4cbc-a34c-395f1a30ca3e",
+        "title": "302_Panel2B.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/65a0931c-eeaa-4cbc-a34c-395f1a30ca3e",
+        "createTimestamp": "2025-05-01T20:55:10.691671Z",
+        "updateTimestamp": "2025-05-01T20:55:10.858391Z"
+      }
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "a5fdf4b4-4d1e-43f1-a02b-8a2750c303ed",
+      "x": 59,
+      "y": 146,
+      "width": 215,
+      "height": 130,
+      "content": "Today is your first day! You are shadowing Sales Consultant Dan as he interacts with a customer named Priscilla."
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "76deb25c-8380-47f6-9c5f-25b514520886",
+      "x": 424,
+      "y": 1860,
+      "width": 455,
+      "height": 477,
+      "media": {
+        "id": "42702",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/71adfbed-704a-4eab-9e67-aae586c3797f",
+        "title": "302_Panel2A.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/71adfbed-704a-4eab-9e67-aae586c3797f",
+        "createTimestamp": "2025-05-01T20:54:55.996689Z",
+        "updateTimestamp": "2025-05-01T20:54:56.236992Z"
+      }
+    }
+  ],
+  "links": [
+    {
+      "id": "3fae35db-2317-40d9-b1f2-363a554ea529",
+      "type": "link",
+      "sourceNodeId": "30629379-5def-4cc6-93c1-801ab3aa3f59",
+      "targetNodeId": "74497e5a-6da4-40b7-9017-eb589f1cbc72",
+      "probability": 100,
+      "startPoint": {
+        "x": 1838,
+        "y": 10178
+      },
+      "endPoint": {
+        "x": 1838,
+        "y": 10282
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "afaa8818-1652-425c-b4ac-a96ab67e8e42",
+      "type": "link",
+      "sourceNodeId": "63c8ac51-b9da-4a04-97fe-a36ae173a4cf",
+      "targetNodeId": "b1377eaa-aaf5-471b-9110-47ed8a69d675",
+      "probability": 100,
+      "startPoint": {
+        "x": 1838,
+        "y": 9553
+      },
+      "endPoint": {
+        "x": 1838,
+        "y": 9667
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "8b8125e6-2f2e-48d9-8503-77743218b32a",
+      "type": "parent-child",
+      "sourceNodeId": "6ba1dc5b-43ec-4cdc-a4a5-f0c274e1f91f",
+      "targetNodeId": "9d452ca2-b580-4022-b8d2-b9dd8e4f14fe",
+      "startPoint": {
+        "x": 1685,
+        "y": 9313
+      },
+      "endPoint": {
+        "x": 1591,
+        "y": 9423
+      },
+      "bendPoints": [
+        {
+          "x": 1685,
+          "y": 9373
+        },
+        {
+          "x": 1591,
+          "y": 9373
+        }
+      ]
+    },
+    {
+      "id": "e04b258c-767b-4709-b3b2-4d56b922b682",
+      "type": "link",
+      "sourceNodeId": "3842d9be-9cd1-4d40-8563-535ff7cd101c",
+      "targetNodeId": "ce15c6e1-b8ed-4f14-88c7-49f8047a263b",
+      "probability": 100,
+      "startPoint": {
+        "x": 417,
+        "y": 1746
+      },
+      "endPoint": {
+        "x": 203,
+        "y": 1860
+      },
+      "bendPoints": [
+        {
+          "x": 417,
+          "y": 1796
+        },
+        {
+          "x": 203,
+          "y": 1796
+        }
+      ]
+    },
+    {
+      "id": "f2891b20-ae52-42b8-b916-ad6553df2da2",
+      "type": "link",
+      "sourceNodeId": "857c6049-6783-420c-b12d-084ed89579d7",
+      "targetNodeId": "9187eee0-23fd-4b40-a029-a50302efc83b",
+      "probability": 100,
+      "startPoint": {
+        "x": 1154,
+        "y": 6189
+      },
+      "endPoint": {
+        "x": 1154,
+        "y": 6273
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "df1bf5bf-3060-405a-8dd1-cc32d9722fbc",
+      "type": "link",
+      "sourceNodeId": "4263afe5-0789-4b60-ae4e-106e948cea05",
+      "targetNodeId": "195490b3-9f8c-4e57-a060-fbbb2357fbe8",
+      "probability": 100,
+      "startPoint": {
+        "x": 1312,
+        "y": 8838
+      },
+      "endPoint": {
+        "x": 1262,
+        "y": 8968
+      },
+      "bendPoints": [
+        {
+          "x": 1312,
+          "y": 8904
+        },
+        {
+          "x": 1262,
+          "y": 8904
+        }
+      ]
+    },
+    {
+      "id": "3843670a-67a6-456e-9013-6e948bdc07ae",
+      "type": "parent-child",
+      "sourceNodeId": "9187eee0-23fd-4b40-a029-a50302efc83b",
+      "targetNodeId": "bf402dea-4246-4aa3-8f29-dd39357856c2",
+      "startPoint": {
+        "x": 1127,
+        "y": 6627
+      },
+      "endPoint": {
+        "x": 945,
+        "y": 6751
+      },
+      "bendPoints": [
+        {
+          "x": 1127,
+          "y": 6701
+        },
+        {
+          "x": 945,
+          "y": 6701
+        }
+      ]
+    },
+    {
+      "id": "7bc5df0a-f6db-4166-85ac-f3d2924af362",
+      "type": "link",
+      "sourceNodeId": "a19a362f-7395-494a-b289-7fbe6b4c9a0b",
+      "targetNodeId": "8eefb825-7922-4e3b-8ea8-7d10fd347d1d",
+      "probability": 100,
+      "startPoint": {
+        "x": 1154,
+        "y": 4823
+      },
+      "endPoint": {
+        "x": 1154,
+        "y": 4937
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "7adb615c-c774-439b-9b9a-a0d03ea11558",
+      "type": "link",
+      "sourceNodeId": "705d5164-6fd0-4687-9467-99a4d8ce837b",
+      "targetNodeId": "cbd71575-6480-4436-a06c-2abfb5ae941f",
+      "probability": 100,
+      "startPoint": {
+        "x": 802,
+        "y": 5067
+      },
+      "endPoint": {
+        "x": 760,
+        "y": 5181
+      },
+      "bendPoints": [
+        {
+          "x": 802,
+          "y": 5117
+        },
+        {
+          "x": 760,
+          "y": 5117
+        }
+      ]
+    },
+    {
+      "id": "420f2736-4731-4fac-a097-0946df5feff6",
+      "type": "link",
+      "sourceNodeId": "195490b3-9f8c-4e57-a060-fbbb2357fbe8",
+      "targetNodeId": "3df4b533-b59c-4dd7-a11b-d80cfa38244b",
+      "probability": 100,
+      "startPoint": {
+        "x": 1191,
+        "y": 8968
+      },
+      "endPoint": {
+        "x": 1315,
+        "y": 8176
+      },
+      "bendPoints": [
+        {
+          "x": 1191,
+          "y": 8904
+        },
+        {
+          "x": 1076,
+          "y": 8904
+        },
+        {
+          "x": 1076,
+          "y": 8692
+        },
+        {
+          "x": 1076,
+          "y": 8365
+        },
+        {
+          "x": 1076,
+          "y": 8240
+        },
+        {
+          "x": 1315,
+          "y": 8240
+        }
+      ]
+    },
+    {
+      "id": "87a3c555-eb69-41ac-b503-be3edca2c968",
+      "type": "link",
+      "sourceNodeId": "76deb25c-8380-47f6-9c5f-25b514520886",
+      "targetNodeId": "66e3abf8-08fd-47a7-a678-c5a10e624531",
+      "probability": 100,
+      "startPoint": {
+        "x": 576,
+        "y": 2337
+      },
+      "endPoint": {
+        "x": 535,
+        "y": 2465
+      },
+      "bendPoints": [
+        {
+          "x": 576,
+          "y": 2401
+        },
+        {
+          "x": 535,
+          "y": 2401
+        }
+      ]
+    },
+    {
+      "id": "710fa799-adc9-4fec-8fd4-df8336b4e7ba",
+      "type": "link",
+      "sourceNodeId": "e8aa2910-0aa8-44df-a745-d14c95f8fc4a",
+      "targetNodeId": "ef4cb9ef-280d-4dbd-9515-0c6cbd1fdaf7",
+      "probability": 100,
+      "startPoint": {
+        "x": 1416,
+        "y": 7271
+      },
+      "endPoint": {
+        "x": 1416,
+        "y": 7436
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "f8cdea25-6d7b-453d-bcc7-ff2576201619",
+      "type": "link",
+      "sourceNodeId": "05b2c21a-1a1d-4d7a-93ba-7297fe58cd50",
+      "targetNodeId": "ce15c6e1-b8ed-4f14-88c7-49f8047a263b",
+      "probability": 100,
+      "startPoint": {
+        "x": 182,
+        "y": 1746
+      },
+      "endPoint": {
+        "x": 149,
+        "y": 1860
+      },
+      "bendPoints": [
+        {
+          "x": 182,
+          "y": 1796
+        },
+        {
+          "x": 149,
+          "y": 1796
+        }
+      ]
+    },
+    {
+      "id": "10c4ea09-cba1-4779-9e96-c883d31f9ecd",
+      "type": "link",
+      "sourceNodeId": "adbf1fe5-a27f-4c3e-83f5-5560420f9ec6",
+      "targetNodeId": "dbbd8181-c28c-4cda-a15f-a2aa03adf1e4",
+      "probability": 100,
+      "startPoint": {
+        "x": 1473,
+        "y": 10198
+      },
+      "endPoint": {
+        "x": 1473,
+        "y": 10282
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "241da86c-3566-400a-a137-a8a06474bec2",
+      "type": "parent-child",
+      "sourceNodeId": "8662aed1-f6c4-4dbe-87ae-f663ffce9372",
+      "targetNodeId": "a19a362f-7395-494a-b289-7fbe6b4c9a0b",
+      "startPoint": {
+        "x": 975,
+        "y": 4569
+      },
+      "endPoint": {
+        "x": 1154,
+        "y": 4693
+      },
+      "bendPoints": [
+        {
+          "x": 975,
+          "y": 4633
+        },
+        {
+          "x": 1154,
+          "y": 4633
+        }
+      ]
+    },
+    {
+      "id": "26bdca1b-01cd-49a6-bace-3814e6d0b907",
+      "type": "link",
+      "sourceNodeId": "e9e7cc98-244c-46bc-98eb-e290c6fc9d19",
+      "targetNodeId": "2b8a1640-32c8-48a7-88d4-472200795f75",
+      "probability": 100,
+      "startPoint": {
+        "x": 1356,
+        "y": 9553
+      },
+      "endPoint": {
+        "x": 1425,
+        "y": 9667
+      },
+      "bendPoints": [
+        {
+          "x": 1356,
+          "y": 9603
+        },
+        {
+          "x": 1425,
+          "y": 9603
+        }
+      ]
+    },
+    {
+      "id": "a75ca33f-71d3-4d68-90ee-27a3c01d2243",
+      "type": "parent-child",
+      "sourceNodeId": "6ba1dc5b-43ec-4cdc-a4a5-f0c274e1f91f",
+      "targetNodeId": "63c8ac51-b9da-4a04-97fe-a36ae173a4cf",
+      "startPoint": {
+        "x": 1757,
+        "y": 9313
+      },
+      "endPoint": {
+        "x": 1838,
+        "y": 9423
+      },
+      "bendPoints": [
+        {
+          "x": 1757,
+          "y": 9363
+        },
+        {
+          "x": 1838,
+          "y": 9363
+        }
+      ]
+    },
+    {
+      "id": "ae9b0032-e803-44ce-81d3-cdfcfaad8645",
+      "type": "parent-child",
+      "sourceNodeId": "9187eee0-23fd-4b40-a029-a50302efc83b",
+      "targetNodeId": "8335d637-ae43-4b0b-ae4a-b3410ff7af56",
+      "startPoint": {
+        "x": 1235,
+        "y": 6627
+      },
+      "endPoint": {
+        "x": 1416,
+        "y": 6751
+      },
+      "bendPoints": [
+        {
+          "x": 1235,
+          "y": 6691
+        },
+        {
+          "x": 1416,
+          "y": 6691
+        }
+      ]
+    },
+    {
+      "id": "d3e7be29-57fb-406d-a626-87c9929e57ea",
+      "type": "link",
+      "sourceNodeId": "a5fdf4b4-4d1e-43f1-a02b-8a2750c303ed",
+      "targetNodeId": "c8e06b5c-62bb-4e66-9ec0-7d8344444270",
+      "probability": 100,
+      "startPoint": {
+        "x": 166,
+        "y": 276
+      },
+      "endPoint": {
+        "x": 166,
+        "y": 360
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "cc99da21-8b9b-485b-b66a-0a79c0e5c4f4",
+      "type": "link",
+      "sourceNodeId": "592c2736-9e11-43ae-8b94-6ae3698c1d5a",
+      "targetNodeId": "4263afe5-0789-4b60-ae4e-106e948cea05",
+      "probability": 100,
+      "startPoint": {
+        "x": 1194,
+        "y": 8430
+      },
+      "endPoint": {
+        "x": 1260,
+        "y": 8544
+      },
+      "bendPoints": [
+        {
+          "x": 1194,
+          "y": 8480
+        },
+        {
+          "x": 1260,
+          "y": 8480
+        }
+      ]
+    },
+    {
+      "id": "e0711c22-0ac4-46c1-8cdf-71c74686b1f6",
+      "type": "link",
+      "sourceNodeId": "f06854ce-2c80-417d-b103-41156afaeae5",
+      "targetNodeId": "857c6049-6783-420c-b12d-084ed89579d7",
+      "probability": 100,
+      "startPoint": {
+        "x": 1154,
+        "y": 5843
+      },
+      "endPoint": {
+        "x": 1154,
+        "y": 5927
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "c67e0de7-e469-4d57-9a04-0e62fde7dadf",
+      "type": "link",
+      "sourceNodeId": "66e3abf8-08fd-47a7-a678-c5a10e624531",
+      "targetNodeId": "08b59182-c944-4b6b-868c-e33dcb69c2b1",
+      "probability": 100,
+      "startPoint": {
+        "x": 535,
+        "y": 2907
+      },
+      "endPoint": {
+        "x": 535,
+        "y": 2991
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "2a6650eb-b93f-4fc3-ba35-1f7fc38d42a9",
+      "type": "link",
+      "sourceNodeId": "cbd71575-6480-4436-a06c-2abfb5ae941f",
+      "targetNodeId": "8662aed1-f6c4-4dbe-87ae-f663ffce9372",
+      "probability": 100,
+      "startPoint": {
+        "x": 689,
+        "y": 5181
+      },
+      "endPoint": {
+        "x": 808,
+        "y": 4569
+      },
+      "bendPoints": [
+        {
+          "x": 689,
+          "y": 5117
+        },
+        {
+          "x": 566,
+          "y": 5117
+        },
+        {
+          "x": 566,
+          "y": 4995
+        },
+        {
+          "x": 566,
+          "y": 4758
+        },
+        {
+          "x": 566,
+          "y": 4633
+        },
+        {
+          "x": 808,
+          "y": 4633
+        }
+      ]
+    },
+    {
+      "id": "ca0282d3-0e9e-419f-81df-9e7cb8a9eda1",
+      "type": "parent-child",
+      "sourceNodeId": "8662aed1-f6c4-4dbe-87ae-f663ffce9372",
+      "targetNodeId": "81f7aa2e-24ad-4578-abbb-214b7204e8c9",
+      "startPoint": {
+        "x": 864,
+        "y": 4569
+      },
+      "endPoint": {
+        "x": 684,
+        "y": 4693
+      },
+      "bendPoints": [
+        {
+          "x": 864,
+          "y": 4643
+        },
+        {
+          "x": 684,
+          "y": 4643
+        }
+      ]
+    },
+    {
+      "id": "9150aba8-ed09-47b6-bee5-1c89896c553d",
+      "type": "link",
+      "sourceNodeId": "2fd2d0f5-e8cd-4b38-9f8c-55f209b1a64d",
+      "targetNodeId": "4bf0e9cb-b388-4106-a6f3-83b0e9e3a95c",
+      "probability": 100,
+      "startPoint": {
+        "x": 1685,
+        "y": 8430
+      },
+      "endPoint": {
+        "x": 1685,
+        "y": 8544
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "46f94ace-69b3-4287-ac36-77db87b90c10",
+      "type": "parent-child",
+      "sourceNodeId": "3df4b533-b59c-4dd7-a11b-d80cfa38244b",
+      "targetNodeId": "082c104d-87e1-49a4-911f-301136f51870",
+      "startPoint": {
+        "x": 1450,
+        "y": 8176
+      },
+      "endPoint": {
+        "x": 1429,
+        "y": 8300
+      },
+      "bendPoints": [
+        {
+          "x": 1450,
+          "y": 8240
+        },
+        {
+          "x": 1429,
+          "y": 8240
+        }
+      ]
+    },
+    {
+      "id": "873535ba-1aa0-42ef-9a67-2edbae48428e",
+      "type": "link",
+      "sourceNodeId": "81f7aa2e-24ad-4578-abbb-214b7204e8c9",
+      "targetNodeId": "705d5164-6fd0-4687-9467-99a4d8ce837b",
+      "probability": 100,
+      "startPoint": {
+        "x": 684,
+        "y": 4823
+      },
+      "endPoint": {
+        "x": 766,
+        "y": 4937
+      },
+      "bendPoints": [
+        {
+          "x": 684,
+          "y": 4873
+        },
+        {
+          "x": 766,
+          "y": 4873
+        }
+      ]
+    },
+    {
+      "id": "1543d50a-0e9e-4c18-b487-0096286c9798",
+      "type": "link",
+      "sourceNodeId": "4bf0e9cb-b388-4106-a6f3-83b0e9e3a95c",
+      "targetNodeId": "6ba1dc5b-43ec-4cdc-a4a5-f0c274e1f91f",
+      "probability": 100,
+      "startPoint": {
+        "x": 1685,
+        "y": 8854
+      },
+      "endPoint": {
+        "x": 1685,
+        "y": 8968
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "ce6ff3de-ec31-4788-bd19-a89c0482fc76",
+      "type": "link",
+      "sourceNodeId": "dc4a3c03-980d-483d-b0d3-76a883fb946c",
+      "targetNodeId": "f06854ce-2c80-417d-b103-41156afaeae5",
+      "probability": 100,
+      "startPoint": {
+        "x": 1154,
+        "y": 5469
+      },
+      "endPoint": {
+        "x": 1154,
+        "y": 5553
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "dfc4824d-e048-4f08-ad6e-d8594a24e3b8",
+      "type": "parent-child",
+      "sourceNodeId": "d5172bb5-9ce1-4cb0-893d-896383f327e6",
+      "targetNodeId": "05b2c21a-1a1d-4d7a-93ba-7297fe58cd50",
+      "startPoint": {
+        "x": 309,
+        "y": 1516
+      },
+      "endPoint": {
+        "x": 182,
+        "y": 1616
+      },
+      "bendPoints": [
+        {
+          "x": 309,
+          "y": 1566
+        },
+        {
+          "x": 182,
+          "y": 1566
+        }
+      ]
+    },
+    {
+      "id": "ebdb1fd2-5a71-4e3c-a1c5-cf36f3ec4487",
+      "type": "parent-child",
+      "sourceNodeId": "9187eee0-23fd-4b40-a029-a50302efc83b",
+      "targetNodeId": "07904396-6593-4157-bf2c-0dc4d0f03c6d",
+      "startPoint": {
+        "x": 1181,
+        "y": 6627
+      },
+      "endPoint": {
+        "x": 1180,
+        "y": 6751
+      },
+      "bendPoints": [
+        {
+          "x": 1181,
+          "y": 6691
+        },
+        {
+          "x": 1180,
+          "y": 6691
+        }
+      ]
+    },
+    {
+      "id": "a1d46a03-d69d-4b4b-9832-30b76ffa2da1",
+      "type": "link",
+      "sourceNodeId": "07904396-6593-4157-bf2c-0dc4d0f03c6d",
+      "targetNodeId": "1a67b03f-6344-44ed-992d-89b601ed784d",
+      "probability": 100,
+      "startPoint": {
+        "x": 1180,
+        "y": 6881
+      },
+      "endPoint": {
+        "x": 1112,
+        "y": 6995
+      },
+      "bendPoints": [
+        {
+          "x": 1180,
+          "y": 6931
+        },
+        {
+          "x": 1112,
+          "y": 6931
+        }
+      ]
+    },
+    {
+      "id": "9d35d838-e5e0-4924-bb4e-f8c635a20ea2",
+      "type": "link",
+      "sourceNodeId": "08b59182-c944-4b6b-868c-e33dcb69c2b1",
+      "targetNodeId": "4707ba96-cb3a-4af3-be5e-20de68623906",
+      "probability": 100,
+      "startPoint": {
+        "x": 535,
+        "y": 3425
+      },
+      "endPoint": {
+        "x": 535,
+        "y": 3509
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "07c65a40-e639-44c7-8ebd-5d4f7ac70d7f",
+      "type": "parent-child",
+      "sourceNodeId": "d5172bb5-9ce1-4cb0-893d-896383f327e6",
+      "targetNodeId": "3842d9be-9cd1-4d40-8563-535ff7cd101c",
+      "startPoint": {
+        "x": 392,
+        "y": 1516
+      },
+      "endPoint": {
+        "x": 417,
+        "y": 1616
+      },
+      "bendPoints": [
+        {
+          "x": 392,
+          "y": 1566
+        },
+        {
+          "x": 417,
+          "y": 1566
+        }
+      ]
+    },
+    {
+      "id": "8b6c0936-8b4c-4534-9e7b-afa5d7d68342",
+      "type": "link",
+      "sourceNodeId": "1a67b03f-6344-44ed-992d-89b601ed784d",
+      "targetNodeId": "ca07ceec-b5f7-41bb-9956-d76fc7cf7072",
+      "probability": 100,
+      "startPoint": {
+        "x": 1063,
+        "y": 7322
+      },
+      "endPoint": {
+        "x": 1015,
+        "y": 7436
+      },
+      "bendPoints": [
+        {
+          "x": 1063,
+          "y": 7372
+        },
+        {
+          "x": 1015,
+          "y": 7372
+        }
+      ]
+    },
+    {
+      "id": "2b333550-55cf-4209-8c0e-40660c9a1c0f",
+      "type": "parent-child",
+      "sourceNodeId": "3df4b533-b59c-4dd7-a11b-d80cfa38244b",
+      "targetNodeId": "2fd2d0f5-e8cd-4b38-9f8c-55f209b1a64d",
+      "startPoint": {
+        "x": 1517,
+        "y": 8176
+      },
+      "endPoint": {
+        "x": 1685,
+        "y": 8300
+      },
+      "bendPoints": [
+        {
+          "x": 1517,
+          "y": 8240
+        },
+        {
+          "x": 1685,
+          "y": 8240
+        }
+      ]
+    },
+    {
+      "id": "63593336-b92c-464f-91a0-a6b7ebaa31f0",
+      "type": "link",
+      "sourceNodeId": "ef4cb9ef-280d-4dbd-9515-0c6cbd1fdaf7",
+      "targetNodeId": "3df4b533-b59c-4dd7-a11b-d80cfa38244b",
+      "probability": 100,
+      "startPoint": {
+        "x": 1416,
+        "y": 7757
+      },
+      "endPoint": {
+        "x": 1416,
+        "y": 7841
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "82eb3420-6d6c-4733-9390-f2fd1eaa3682",
+      "type": "link",
+      "sourceNodeId": "ce15c6e1-b8ed-4f14-88c7-49f8047a263b",
+      "targetNodeId": "c8e06b5c-62bb-4e66-9ec0-7d8344444270",
+      "probability": 100,
+      "startPoint": {
+        "x": 95,
+        "y": 1860
+      },
+      "endPoint": {
+        "x": 115,
+        "y": 677
+      },
+      "bendPoints": [
+        {
+          "x": 95,
+          "y": 1796
+        },
+        {
+          "x": 63,
+          "y": 1796
+        },
+        {
+          "x": 63,
+          "y": 1681
+        },
+        {
+          "x": 63,
+          "y": 1350
+        },
+        {
+          "x": 63,
+          "y": 953
+        },
+        {
+          "x": 63,
+          "y": 741
+        },
+        {
+          "x": 115,
+          "y": 741
+        }
+      ]
+    },
+    {
+      "id": "e897e025-aff7-4f4d-934e-39163481b63f",
+      "type": "parent-child",
+      "sourceNodeId": "4707ba96-cb3a-4af3-be5e-20de68623906",
+      "targetNodeId": "d0898f15-bfee-4d23-b12b-a5aca5fb989d",
+      "startPoint": {
+        "x": 610,
+        "y": 3860
+      },
+      "endPoint": {
+        "x": 891,
+        "y": 3960
+      },
+      "bendPoints": [
+        {
+          "x": 610,
+          "y": 3910
+        },
+        {
+          "x": 891,
+          "y": 3910
+        }
+      ]
+    },
+    {
+      "id": "c8c21069-be64-4110-981a-77c0cc65d89a",
+      "type": "link",
+      "sourceNodeId": "860cce8b-a785-4ee2-b5ec-cd54bac0403f",
+      "targetNodeId": "76deb25c-8380-47f6-9c5f-25b514520886",
+      "probability": 100,
+      "startPoint": {
+        "x": 498,
+        "y": 4214
+      },
+      "endPoint": {
+        "x": 727,
+        "y": 2337
+      },
+      "bendPoints": [
+        {
+          "x": 498,
+          "y": 4150
+        },
+        {
+          "x": 768,
+          "y": 4150
+        },
+        {
+          "x": 768,
+          "y": 4025
+        },
+        {
+          "x": 768,
+          "y": 3677
+        },
+        {
+          "x": 768,
+          "y": 3201
+        },
+        {
+          "x": 768,
+          "y": 2679
+        },
+        {
+          "x": 768,
+          "y": 2401
+        },
+        {
+          "x": 727,
+          "y": 2401
+        }
+      ]
+    },
+    {
+      "id": "a1c6f7f1-80a5-4a82-ad06-ff6d064d94bd",
+      "type": "link",
+      "sourceNodeId": "2b8a1640-32c8-48a7-88d4-472200795f75",
+      "targetNodeId": "adbf1fe5-a27f-4c3e-83f5-5560420f9ec6",
+      "probability": 100,
+      "startPoint": {
+        "x": 1473,
+        "y": 9952
+      },
+      "endPoint": {
+        "x": 1473,
+        "y": 10042
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "8f7c3a39-f68f-40cc-b816-fef18056df79",
+      "type": "parent-child",
+      "sourceNodeId": "4707ba96-cb3a-4af3-be5e-20de68623906",
+      "targetNodeId": "7a2c2c29-4be1-42d0-bb6f-5c7869c6c8b8",
+      "startPoint": {
+        "x": 459,
+        "y": 3860
+      },
+      "endPoint": {
+        "x": 300,
+        "y": 3960
+      },
+      "bendPoints": [
+        {
+          "x": 459,
+          "y": 3910
+        },
+        {
+          "x": 300,
+          "y": 3910
+        }
+      ]
+    },
+    {
+      "id": "f59b91f9-5189-48f8-aa09-eabf2c68907b",
+      "type": "link",
+      "sourceNodeId": "9d452ca2-b580-4022-b8d2-b9dd8e4f14fe",
+      "targetNodeId": "2b8a1640-32c8-48a7-88d4-472200795f75",
+      "probability": 100,
+      "startPoint": {
+        "x": 1591,
+        "y": 9553
+      },
+      "endPoint": {
+        "x": 1521,
+        "y": 9667
+      },
+      "bendPoints": [
+        {
+          "x": 1591,
+          "y": 9603
+        },
+        {
+          "x": 1521,
+          "y": 9603
+        }
+      ]
+    },
+    {
+      "id": "4adcfc7a-aa28-4ab9-aefc-7cc9409f9693",
+      "type": "parent-child",
+      "sourceNodeId": "4707ba96-cb3a-4af3-be5e-20de68623906",
+      "targetNodeId": "a6c53eb4-8a16-4aec-9727-5957df2d48d7",
+      "startPoint": {
+        "x": 535,
+        "y": 3860
+      },
+      "endPoint": {
+        "x": 535,
+        "y": 3960
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "667771a2-8082-4c2c-8fd5-721962d88e1b",
+      "type": "link",
+      "sourceNodeId": "da51f6a4-5b69-4ae1-94b5-cdfa4ed2131f",
+      "targetNodeId": "d5172bb5-9ce1-4cb0-893d-896383f327e6",
+      "probability": 100,
+      "startPoint": {
+        "x": 392,
+        "y": 1115
+      },
+      "endPoint": {
+        "x": 392,
+        "y": 1199
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "337233c0-c6b5-42e5-aa04-f85baece9207",
+      "type": "link",
+      "sourceNodeId": "dbbd8181-c28c-4cda-a15f-a2aa03adf1e4",
+      "targetNodeId": "2",
+      "probability": 100,
+      "startPoint": {
+        "x": 1473,
+        "y": 10412
+      },
+      "endPoint": {
+        "x": 1616,
+        "y": 10538
+      },
+      "bendPoints": [
+        {
+          "x": 1473,
+          "y": 10462
+        },
+        {
+          "x": 1616,
+          "y": 10462
+        }
+      ]
+    },
+    {
+      "id": "5eaca666-0dad-43ed-b1de-d60fdd73c9c5",
+      "type": "link",
+      "sourceNodeId": "082c104d-87e1-49a4-911f-301136f51870",
+      "targetNodeId": "4263afe5-0789-4b60-ae4e-106e948cea05",
+      "probability": 100,
+      "startPoint": {
+        "x": 1429,
+        "y": 8430
+      },
+      "endPoint": {
+        "x": 1363,
+        "y": 8544
+      },
+      "bendPoints": [
+        {
+          "x": 1429,
+          "y": 8480
+        },
+        {
+          "x": 1363,
+          "y": 8480
+        }
+      ]
+    },
+    {
+      "id": "227d52f2-fa9f-44d1-bc0d-4bd8aff889c9",
+      "type": "link",
+      "sourceNodeId": "d0898f15-bfee-4d23-b12b-a5aca5fb989d",
+      "targetNodeId": "8662aed1-f6c4-4dbe-87ae-f663ffce9372",
+      "probability": 100,
+      "startPoint": {
+        "x": 891,
+        "y": 4090
+      },
+      "endPoint": {
+        "x": 891,
+        "y": 4214
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "17532d9a-a81f-4e3e-bcf1-050fd4d5a54e",
+      "type": "parent-child",
+      "sourceNodeId": "6ba1dc5b-43ec-4cdc-a4a5-f0c274e1f91f",
+      "targetNodeId": "e9e7cc98-244c-46bc-98eb-e290c6fc9d19",
+      "startPoint": {
+        "x": 1613,
+        "y": 9313
+      },
+      "endPoint": {
+        "x": 1356,
+        "y": 9423
+      },
+      "bendPoints": [
+        {
+          "x": 1613,
+          "y": 9363
+        },
+        {
+          "x": 1356,
+          "y": 9363
+        }
+      ]
+    },
+    {
+      "id": "da16fc89-9b8a-481e-93bc-5633043723ae",
+      "type": "link",
+      "sourceNodeId": "bf402dea-4246-4aa3-8f29-dd39357856c2",
+      "targetNodeId": "1a67b03f-6344-44ed-992d-89b601ed784d",
+      "probability": 100,
+      "startPoint": {
+        "x": 945,
+        "y": 6881
+      },
+      "endPoint": {
+        "x": 1014,
+        "y": 6995
+      },
+      "bendPoints": [
+        {
+          "x": 945,
+          "y": 6931
+        },
+        {
+          "x": 1014,
+          "y": 6931
+        }
+      ]
+    },
+    {
+      "id": "03927f1e-baa7-4710-b26f-f8d5ce61d8e9",
+      "type": "link",
+      "sourceNodeId": "8335d637-ae43-4b0b-ae4a-b3410ff7af56",
+      "targetNodeId": "e8aa2910-0aa8-44df-a745-d14c95f8fc4a",
+      "probability": 100,
+      "startPoint": {
+        "x": 1416,
+        "y": 6881
+      },
+      "endPoint": {
+        "x": 1416,
+        "y": 7032
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "af2ddbce-7258-4b01-a6e2-2f48aa06748f",
+      "type": "link",
+      "sourceNodeId": "7a2c2c29-4be1-42d0-bb6f-5c7869c6c8b8",
+      "targetNodeId": "860cce8b-a785-4ee2-b5ec-cd54bac0403f",
+      "probability": 100,
+      "startPoint": {
+        "x": 300,
+        "y": 4090
+      },
+      "endPoint": {
+        "x": 391,
+        "y": 4214
+      },
+      "bendPoints": [
+        {
+          "x": 300,
+          "y": 4140
+        },
+        {
+          "x": 391,
+          "y": 4140
+        }
+      ]
+    },
+    {
+      "id": "739b6946-d195-4730-91d9-56058b0e9630",
+      "type": "parent-child",
+      "sourceNodeId": "3df4b533-b59c-4dd7-a11b-d80cfa38244b",
+      "targetNodeId": "592c2736-9e11-43ae-8b94-6ae3698c1d5a",
+      "startPoint": {
+        "x": 1383,
+        "y": 8176
+      },
+      "endPoint": {
+        "x": 1194,
+        "y": 8300
+      },
+      "bendPoints": [
+        {
+          "x": 1383,
+          "y": 8250
+        },
+        {
+          "x": 1194,
+          "y": 8250
+        }
+      ]
+    },
+    {
+      "id": "73e7813f-7222-40b2-b3af-f7be898d6d1f",
+      "type": "link",
+      "sourceNodeId": "74497e5a-6da4-40b7-9017-eb589f1cbc72",
+      "targetNodeId": "2",
+      "probability": 100,
+      "startPoint": {
+        "x": 1838,
+        "y": 10412
+      },
+      "endPoint": {
+        "x": 1639,
+        "y": 10538
+      },
+      "bendPoints": [
+        {
+          "x": 1838,
+          "y": 10462
+        },
+        {
+          "x": 1639,
+          "y": 10462
+        }
+      ]
+    },
+    {
+      "id": "74bd5d6c-c12e-450f-8fc0-581c9a91798b",
+      "type": "link",
+      "sourceNodeId": "1",
+      "targetNodeId": "a5fdf4b4-4d1e-43f1-a02b-8a2750c303ed",
+      "probability": 100,
+      "startPoint": {
+        "x": 166,
+        "y": 62
+      },
+      "endPoint": {
+        "x": 166,
+        "y": 146
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "9bfbeca6-4533-4293-9502-1458123c8b01",
+      "type": "link",
+      "sourceNodeId": "5bf5fa60-ffea-49bf-a712-e18ff44b07b3",
+      "targetNodeId": "705d5164-6fd0-4687-9467-99a4d8ce837b",
+      "probability": 100,
+      "startPoint": {
+        "x": 919,
+        "y": 4823
+      },
+      "endPoint": {
+        "x": 838,
+        "y": 4937
+      },
+      "bendPoints": [
+        {
+          "x": 919,
+          "y": 4873
+        },
+        {
+          "x": 838,
+          "y": 4873
+        }
+      ]
+    },
+    {
+      "id": "5668d2bf-42c1-4139-8953-5059e899f27c",
+      "type": "link",
+      "sourceNodeId": "c8e06b5c-62bb-4e66-9ec0-7d8344444270",
+      "targetNodeId": "da51f6a4-5b69-4ae1-94b5-cdfa4ed2131f",
+      "probability": 100,
+      "startPoint": {
+        "x": 218,
+        "y": 677
+      },
+      "endPoint": {
+        "x": 392,
+        "y": 805
+      },
+      "bendPoints": [
+        {
+          "x": 218,
+          "y": 741
+        },
+        {
+          "x": 392,
+          "y": 741
+        }
+      ]
+    },
+    {
+      "id": "86b0faf5-f474-416a-baed-3e8cb5f7d6a7",
+      "type": "link",
+      "sourceNodeId": "8eefb825-7922-4e3b-8ea8-7d10fd347d1d",
+      "targetNodeId": "dc4a3c03-980d-483d-b0d3-76a883fb946c",
+      "probability": 100,
+      "startPoint": {
+        "x": 1154,
+        "y": 5067
+      },
+      "endPoint": {
+        "x": 1154,
+        "y": 5181
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "aa9fed69-7e1e-4e28-87d1-764b73bbe11a",
+      "type": "link",
+      "sourceNodeId": "8e1accd3-c804-446a-857e-adfee7ff9b0b",
+      "targetNodeId": "76deb25c-8380-47f6-9c5f-25b514520886",
+      "probability": 100,
+      "startPoint": {
+        "x": 651,
+        "y": 1746
+      },
+      "endPoint": {
+        "x": 651,
+        "y": 1860
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "ee487d63-70c7-4120-a1ec-5d1900d43c9d",
+      "type": "parent-child",
+      "sourceNodeId": "8662aed1-f6c4-4dbe-87ae-f663ffce9372",
+      "targetNodeId": "5bf5fa60-ffea-49bf-a712-e18ff44b07b3",
+      "startPoint": {
+        "x": 919,
+        "y": 4569
+      },
+      "endPoint": {
+        "x": 919,
+        "y": 4693
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "ac35c1d4-4311-4cad-8f8f-fd992233713b",
+      "type": "link",
+      "sourceNodeId": "b1377eaa-aaf5-471b-9110-47ed8a69d675",
+      "targetNodeId": "30629379-5def-4cc6-93c1-801ab3aa3f59",
+      "probability": 100,
+      "startPoint": {
+        "x": 1838,
+        "y": 9958
+      },
+      "endPoint": {
+        "x": 1838,
+        "y": 10048
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "a8d8f1f3-7a4a-40b6-b351-9f8ba3153991",
+      "type": "parent-child",
+      "sourceNodeId": "d5172bb5-9ce1-4cb0-893d-896383f327e6",
+      "targetNodeId": "8e1accd3-c804-446a-857e-adfee7ff9b0b",
+      "startPoint": {
+        "x": 476,
+        "y": 1516
+      },
+      "endPoint": {
+        "x": 651,
+        "y": 1616
+      },
+      "bendPoints": [
+        {
+          "x": 476,
+          "y": 1566
+        },
+        {
+          "x": 651,
+          "y": 1566
+        }
+      ]
+    },
+    {
+      "id": "455a6648-e53a-4665-a3e9-d84bbd6e1bb3",
+      "type": "link",
+      "sourceNodeId": "ca07ceec-b5f7-41bb-9956-d76fc7cf7072",
+      "targetNodeId": "9187eee0-23fd-4b40-a029-a50302efc83b",
+      "probability": 100,
+      "startPoint": {
+        "x": 943,
+        "y": 7436
+      },
+      "endPoint": {
+        "x": 1073,
+        "y": 6627
+      },
+      "bendPoints": [
+        {
+          "x": 943,
+          "y": 7372
+        },
+        {
+          "x": 827,
+          "y": 7372
+        },
+        {
+          "x": 827,
+          "y": 7151
+        },
+        {
+          "x": 827,
+          "y": 6816
+        },
+        {
+          "x": 827,
+          "y": 6691
+        },
+        {
+          "x": 1073,
+          "y": 6691
+        }
+      ]
+    },
+    {
+      "id": "a30db2fd-0023-4341-bd6f-d20dc968ac12",
+      "type": "link",
+      "sourceNodeId": "a6c53eb4-8a16-4aec-9727-5957df2d48d7",
+      "targetNodeId": "860cce8b-a785-4ee2-b5ec-cd54bac0403f",
+      "probability": 100,
+      "startPoint": {
+        "x": 535,
+        "y": 4090
+      },
+      "endPoint": {
+        "x": 444,
+        "y": 4214
+      },
+      "bendPoints": [
+        {
+          "x": 535,
+          "y": 4140
+        },
+        {
+          "x": 444,
+          "y": 4140
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "43a9ea55-81d5-4ede-a863-61abefa0ce45",
+      "name": "Spend Now Save Later - Priscilla ",
+      "description": "",
+      "script": "message=\"Great job! You listened to Priscilla through the whole interaction and catered the experience to fit her needs and social style. \" celebrate=true",
+      "tagValues": [
+        {
+          "id": "8c6e1f37-4641-4056-bc62-aecbf7963734",
+          "tagDefinitionId": "18375",
+          "value": "FSA_302"
+        }
+      ]
+    }
+  ]
+}
