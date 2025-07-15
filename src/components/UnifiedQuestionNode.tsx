@@ -40,7 +40,6 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
 
   // Reset state when question changes (not when choices re-render)
   useEffect(() => {
-    console.log('🔍 Question changed, resetting feedback state. Question ID:', question.id);
     setSelectedChoice('');
     setShowFeedback(false);
     setSelectedChoiceNode(null);
@@ -62,19 +61,14 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
   }, [showFeedback]);
 
   const handleChoiceClick = (choice: ChoiceNode) => {
-    console.log('🔍 Choice clicked:', choice.text, 'id:', choice.id);
     if (disabled || showFeedback) return;
-    console.log('🔍 Setting selectedChoice to:', choice.id);
     setSelectedChoice(choice.id);
   };
 
   const handleSubmit = () => {
-    console.log('🔍 UnifiedQuestion handleSubmit called:', { selectedChoice, choicesLength: choices.length });
     const choice = choices.find(c => c.id === selectedChoice);
-    console.log('🔍 Found choice:', choice?.text || 'NOT FOUND');
     
     if (choice) {
-      console.log('🔍 Setting feedback states');
       setSelectedChoiceNode(choice);
       setShowFeedback(true);
       
@@ -90,8 +84,6 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
         timeSpent,
         1 // First attempt
       );
-    } else {
-      console.log('🚫 No choice found for selectedChoice:', selectedChoice);
     }
   };
 
@@ -100,6 +92,38 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
       onChoiceSelect(selectedChoiceNode);
     }
   };
+
+  // Keyboard support
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Only handle keyboard events when this component is active
+      if (disabled) return;
+      
+      // Handle number keys (1-9) to select choices (only when not showing feedback)
+      if (!showFeedback && event.key >= '1' && event.key <= '9') {
+        const choiceIndex = parseInt(event.key, 10) - 1;
+        if (choiceIndex < choices.length) {
+          event.preventDefault();
+          handleChoiceClick(choices[choiceIndex]);
+        }
+      }
+      
+      // Handle Enter key
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        if (showFeedback) {
+          // Continue to next question when showing feedback
+          handleContinue();
+        } else if (selectedChoice) {
+          // Submit answer when choice is selected
+          handleSubmit();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [disabled, showFeedback, choices, selectedChoice, handleChoiceClick, handleSubmit, handleContinue]);
 
   const getFeedbackSeverity = (choiceType: string) => {
     switch (choiceType) {
@@ -268,9 +292,7 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
               }
             }}
           >
-            {(() => {
-              console.log('🔍 Feedback render check:', { showFeedback, hasSelectedChoiceNode: !!selectedChoiceNode });
-              return selectedChoiceNode ? (
+            {selectedChoiceNode ? (
               <Box 
                 ref={feedbackRef}
                 sx={{
@@ -338,9 +360,17 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
                   </Button>
                 </Box>
               </Box>
-              ) : null;
-            })()}
+            ) : null}
           </Collapse>
+        </Box>
+      )}
+      
+      {/* Keyboard Controls Helper */}
+      {choices.length > 0 && !showFeedback && (
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', opacity: 0.7 }}>
+            Use number keys (1-{Math.min(choices.length, 9)}) to select • Enter to submit
+          </Typography>
         </Box>
       )}
     </NodeCard>

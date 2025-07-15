@@ -198,6 +198,12 @@ function detectColumnMapping(headers: string[]): Record<string, number> {
     if (h === 'answer_3') mapping.choiceC = index;
     if (h === 'answer_4') mapping.choiceD = index;
     
+    // Trivie-specific feedback columns
+    if (h === 'answer_1_feedback') mapping.feedbackA = index;
+    if (h === 'answer_2_feedback') mapping.feedbackB = index;
+    if (h === 'answer_3_feedback') mapping.feedbackC = index;
+    if (h === 'answer_4_feedback') mapping.feedbackD = index;
+    
     // Fallback answer choices detection - only if not already found
     if (h.includes('choice') || h.includes('option') || (h.includes('answer') && !h.includes('_'))) {
       if ((h.includes('a') || h.includes('1')) && mapping.choiceA === undefined) mapping.choiceA = index;
@@ -235,6 +241,7 @@ function detectColumnMapping(headers: string[]): Record<string, number> {
   debugLog('Trivie Parser', 'Column mapping detected', {
     questionCol: mapping.question,
     choiceCols: [mapping.choiceA, mapping.choiceB, mapping.choiceC, mapping.choiceD].filter(c => c !== undefined),
+    feedbackCols: [mapping.feedbackA, mapping.feedbackB, mapping.feedbackC, mapping.feedbackD].filter(c => c !== undefined),
     correctAnswerCol: mapping.correctAnswer
   });
 
@@ -265,6 +272,7 @@ function parseChoices(row: any[], columnMap: Record<string, number>): TrivieChoi
   
   // Check for individual choice columns (A, B, C, D)
   const choiceColumns = ['choiceA', 'choiceB', 'choiceC', 'choiceD'];
+  const feedbackColumns = ['feedbackA', 'feedbackB', 'feedbackC', 'feedbackD'];
   const choiceLabels = ['A', 'B', 'C', 'D'];
   
   for (let i = 0; i < choiceColumns.length; i++) {
@@ -275,10 +283,18 @@ function parseChoices(row: any[], columnMap: Record<string, number>): TrivieChoi
       if (choiceText) {
         const isCorrect = correctAnswers.has(choiceLabels[i]) || correctAnswers.has(String(i + 1));
         
+        // Extract choice-specific feedback
+        const feedbackIndex = columnMap[feedbackColumns[i]];
+        let feedback = '';
+        if (feedbackIndex !== undefined && row[feedbackIndex]) {
+          feedback = String(row[feedbackIndex]).trim();
+        }
+        
         choices.push({
           id: `choice_${choiceLabels[i].toLowerCase()}`,
           text: choiceText,
-          isCorrect
+          isCorrect,
+          explanation: feedback
         });
       }
     }

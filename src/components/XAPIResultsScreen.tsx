@@ -492,32 +492,27 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
         <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              Raw xAPI Statements
+              Raw xAPI Statements ({statements.length} statements)
             </Typography>
-            <Stack spacing={3}>
-              {statements.map((stmt, index) => (
-                <Box key={index}>
-                  <Typography variant="subtitle2" gutterBottom sx={{ mb: 1 }}>
-                    {index + 1}. {stmt.verb.display['en-US'] || stmt.verb.id.split('/').pop()} • {stmt.object?.id || 'Unknown'}
-                  </Typography>
-                  <Box
-                    component="pre"
-                    sx={{
-                      backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.grey[100],
-                      color: theme.palette.mode === 'dark' ? theme.palette.grey[100] : theme.palette.grey[900],
-                      p: 2,
-                      borderRadius: 1,
-                      overflow: 'auto',
-                      fontSize: '0.875rem',
-                      maxHeight: 400,
-                      border: `1px solid ${theme.palette.divider}`,
-                    }}
-                  >
-                    {JSON.stringify(stmt, null, 2)}
-                  </Box>
-                </Box>
-              ))}
-            </Stack>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              All captured xAPI statements in JSON format
+            </Typography>
+            <Box
+              component="pre"
+              sx={{
+                backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.grey[100],
+                color: theme.palette.mode === 'dark' ? theme.palette.grey[100] : theme.palette.grey[900],
+                p: 2,
+                borderRadius: 1,
+                overflow: 'auto',
+                fontSize: '0.75rem',
+                maxHeight: 600,
+                border: `1px solid ${theme.palette.divider}`,
+                fontFamily: 'monospace',
+              }}
+            >
+              {JSON.stringify(statements, null, 2)}
+            </Box>
           </CardContent>
         </Card>
       )}

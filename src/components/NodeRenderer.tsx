@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Box, Typography, Button, useTheme as useMuiTheme, Stack } from '@mui/material';
 import { Analytics, Refresh } from '@mui/icons-material';
+import confetti from 'canvas-confetti';
 import type { NLJNode, NLJScenario, ChoiceNode } from '../types/nlj';
 import { UnifiedQuestionNode } from './UnifiedQuestionNode';
 import { InterstitialPanel } from './InterstitialPanel';
@@ -219,6 +220,18 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
           />
         );
       }
+
+      // Trigger confetti effect when completion screen is shown
+      useEffect(() => {
+        const timer = setTimeout(() => {
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+        }, 500);
+        return () => clearTimeout(timer);
+      }, []);
 
       return (
         <NodeCard variant="interstitial" animate={false}>
