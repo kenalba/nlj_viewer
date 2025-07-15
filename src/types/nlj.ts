@@ -77,7 +77,62 @@ export interface InterstitialPanelNode extends BaseNode {
   media?: Media;
 }
 
-export type NLJNode = StartNode | EndNode | QuestionNode | ChoiceNode | InterstitialPanelNode;
+export interface TrueFalseNode extends BaseNode {
+  type: 'true_false';
+  text: string;
+  content?: string;
+  media?: Media;
+  additionalMediaList?: Media[];
+  correctAnswer: boolean;
+}
+
+export interface OrderingNode extends BaseNode {
+  type: 'ordering';
+  text: string;
+  content?: string;
+  media?: Media;
+  additionalMediaList?: Media[];
+  items: OrderingItem[];
+}
+
+export interface OrderingItem {
+  id: string;
+  text: string;
+  correctOrder: number;
+}
+
+export interface MatchingNode extends BaseNode {
+  type: 'matching';
+  text: string;
+  content?: string;
+  media?: Media;
+  additionalMediaList?: Media[];
+  leftItems: MatchingItem[];
+  rightItems: MatchingItem[];
+  correctMatches: MatchingPair[];
+}
+
+export interface MatchingItem {
+  id: string;
+  text: string;
+}
+
+export interface MatchingPair {
+  leftId: string;
+  rightId: string;
+}
+
+export interface ShortAnswerNode extends BaseNode {
+  type: 'short_answer';
+  text: string;
+  content?: string;
+  media?: Media;
+  additionalMediaList?: Media[];
+  correctAnswers: string[];
+  caseSensitive?: boolean;
+}
+
+export type NLJNode = StartNode | EndNode | QuestionNode | ChoiceNode | InterstitialPanelNode | TrueFalseNode | OrderingNode | MatchingNode | ShortAnswerNode;
 
 export interface VariableDefinition {
   id: string;

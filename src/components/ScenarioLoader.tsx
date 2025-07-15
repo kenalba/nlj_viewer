@@ -16,6 +16,7 @@ import {
 import { Upload as UploadIcon, PlayArrow as PlayIcon } from '@mui/icons-material';
 import type { NLJScenario } from '../types/nlj';
 import { validateScenario } from '../utils/scenarioUtils';
+import { parseTrivieExcel, convertTrivieToNLJ, validateTrivieQuiz } from '../utils/trivieInterpreter';
 import { useGameContext } from '../contexts/GameContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAudio } from '../contexts/AudioContext';
@@ -32,6 +33,11 @@ const SAMPLE_SCENARIOS = [
   'nls.Spend Now Save Later - Priscilla .json',
 ];
 
+// Sample Trivie quizzes
+const SAMPLE_TRIVIE_QUIZZES = [
+  'quizzes_export_2025-07-15.xlsx',
+];
+
 export const ScenarioLoader: React.FC = () => {
   const { loadScenario } = useGameContext();
   const { themeMode } = useTheme();
@@ -44,15 +50,52 @@ export const ScenarioLoader: React.FC = () => {
     setError(null);
     
     try {
-      const text = await file.text();
-      const scenario: NLJScenario = JSON.parse(text);
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
       
-      // Validate scenario
-      const validationErrors = validateScenario(scenario);
-      if (validationErrors.length > 0) {
-        playSound('error');
-        setError(`Validation errors: ${validationErrors.join(', ')}`);
-        return;
+      let scenario: NLJScenario;
+      
+      if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+        // Handle Trivie Excel files
+        const quizzes = await parseTrivieExcel(file);
+        if (quizzes.length === 0) {
+          playSound('error');
+          setError('No valid quizzes found in Excel file');
+          return;
+        }
+        
+        // Use the first quiz if multiple are found
+        const quiz = quizzes[0];
+        
+        // Validate Trivie quiz
+        const trivieErrors = validateTrivieQuiz(quiz);
+        if (trivieErrors.length > 0) {
+          playSound('error');
+          setError(`Trivie validation errors: ${trivieErrors.join(', ')}`);
+          return;
+        }
+        
+        // Convert to NLJ format
+        scenario = convertTrivieToNLJ(quiz);
+        
+        // Validate converted scenario
+        const validationErrors = validateScenario(scenario);
+        if (validationErrors.length > 0) {
+          playSound('error');
+          setError(`Conversion validation errors: ${validationErrors.join(', ')}`);
+          return;
+        }
+      } else {
+        // Handle JSON NLJ files
+        const text = await file.text();
+        scenario = JSON.parse(text);
+        
+        // Validate scenario
+        const validationErrors = validateScenario(scenario);
+        if (validationErrors.length > 0) {
+          playSound('error');
+          setError(`Validation errors: ${validationErrors.join(', ')}`);
+          return;
+        }
       }
       
       // Store scenario data in localStorage
@@ -65,7 +108,7 @@ export const ScenarioLoader: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [loadScenario]);
+  }, [loadScenario, playSound]);
 
   const loadSampleScenario = useCallback(async (filename: string) => {
     setLoading(true);
@@ -97,7 +140,32 @@ export const ScenarioLoader: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [loadScenario]);
+  }, [loadScenario, playSound]);
+
+  const loadSampleTrivieQuiz = useCallback(async (filename: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${import.meta.env.BASE_URL}static/sample_trivie_quiz/${filename}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const arrayBuffer = await response.arrayBuffer();
+      const file = new File([arrayBuffer], filename, { 
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      });
+      
+      // Use the existing file loading logic
+      await loadScenarioFromFile(file);
+    } catch (err) {
+      playSound('error');
+      setError(err instanceof Error ? err.message : 'Failed to load sample Trivie quiz');
+    } finally {
+      setLoading(false);
+    }
+  }, [loadScenarioFromFile, playSound]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -150,79 +218,179 @@ export const ScenarioLoader: React.FC = () => {
         </Box>
       )}
 
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
-          {/* Upload Section */}
-          <Card sx={{ flex: 1, height: 'fit-content' }}>
-            <CardContent sx={{ p: 4 }}>
-              <Box sx={{ textAlign: 'center', mb: 3 }}>
-                <UploadIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-                <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
-                  Upload Scenario
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  Upload a .json file containing an NLJ scenario
-                </Typography>
-              </Box>
-              <Button
-                variant="contained"
-                component="label"
-                startIcon={<UploadIcon />}
-                disabled={loading}
-                fullWidth
-                size="large"
-              >
-                Choose File
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={handleFileUpload}
-                  hidden
-                />
-              </Button>
-            </CardContent>
-          </Card>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {/* NLJ Scenarios Section */}
+          <Box>
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+              NLJ Scenarios
+            </Typography>
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 3, 
+              alignItems: 'stretch',
+              flexDirection: { xs: 'column', md: 'row' }
+            }}>
+              {/* Upload NLJ */}
+              <Card sx={{ flex: 1 }}>
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ textAlign: 'center', mb: 3 }}>
+                    <UploadIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
+                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                      Upload NLJ
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                      Upload a .json file containing an NLJ scenario
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    component="label"
+                    startIcon={<UploadIcon />}
+                    disabled={loading}
+                    fullWidth
+                    size="large"
+                  >
+                    Choose JSON File
+                    <input
+                      type="file"
+                      accept=".json"
+                      onChange={handleFileUpload}
+                      hidden
+                    />
+                  </Button>
+                </CardContent>
+              </Card>
 
-          {/* Sample Scenarios */}
-          <Card sx={{ flex: 1 }}>
-            <CardContent sx={{ p: 4 }}>
-              <Box sx={{ textAlign: 'center', mb: 3 }}>
-                <PlayIcon sx={{ fontSize: 48, color: 'hyundai.accent', mb: 2 }} />
-                <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
-                  Sample Scenarios
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  Try one of the included demo scenarios
-                </Typography>
-              </Box>
-              <List>
-                {SAMPLE_SCENARIOS.map((filename) => (
-                  <ListItem key={filename} disablePadding sx={{ mb: 1 }}>
-                    <ListItemButton
-                      onClick={() => loadSampleScenario(filename)}
-                      disabled={loading}
-                      sx={{ 
-                        borderRadius: 2,
-                        '&:hover': { backgroundColor: 'action.hover' }
-                      }}
-                    >
-                      <PlayIcon sx={{ mr: 2, fontSize: 20, color: 'hyundai.accent' }} />
-                      <ListItemText 
-                        primary={filename.replace('.json', '').replace(/^nls\./, '')}
-                        slotProps={{
-                          primary: {
-                            style: {
-                              fontSize: '0.95rem',
-                              fontWeight: 500
-                            }
-                          }
-                        }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
+              {/* Sample Scenarios */}
+              <Card sx={{ flex: 1 }}>
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ textAlign: 'center', mb: 3 }}>
+                    <PlayIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
+                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                      Sample Scenarios
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                      Try one of the included NLJ demo scenarios
+                    </Typography>
+                  </Box>
+                  <List>
+                    {SAMPLE_SCENARIOS.map((filename) => (
+                      <ListItem key={filename} disablePadding sx={{ mb: 1 }}>
+                        <ListItemButton
+                          onClick={() => loadSampleScenario(filename)}
+                          disabled={loading}
+                          sx={{ 
+                            borderRadius: 2,
+                            '&:hover': { backgroundColor: 'action.hover' }
+                          }}
+                        >
+                          <PlayIcon sx={{ mr: 2, fontSize: 20, color: 'primary.main' }} />
+                          <ListItemText 
+                            primary={filename.replace('.json', '').replace(/^nls\./, '')}
+                            slotProps={{
+                              primary: {
+                                style: {
+                                  fontSize: '0.95rem',
+                                  fontWeight: 500
+                                }
+                              }
+                            }}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    ))}
+                  </List>
+                </CardContent>
+              </Card>
+            </Box>
+          </Box>
+
+          {/* Trivie Quizzes Section */}
+          <Box>
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+              Trivie Quizzes
+            </Typography>
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 3, 
+              alignItems: 'stretch',
+              flexDirection: { xs: 'column', md: 'row' }
+            }}>
+              {/* Upload Trivie */}
+              <Card sx={{ flex: 1 }}>
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ textAlign: 'center', mb: 3 }}>
+                    <UploadIcon sx={{ fontSize: 48, color: 'secondary.main', mb: 2 }} />
+                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                      Upload Trivie Quiz
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                      Upload an .xlsx file containing a Trivie quiz
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    component="label"
+                    startIcon={<UploadIcon />}
+                    disabled={loading}
+                    fullWidth
+                    size="large"
+                    color="secondary"
+                  >
+                    Choose Excel File
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls"
+                      onChange={handleFileUpload}
+                      hidden
+                    />
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Sample Trivie Quizzes */}
+              <Card sx={{ flex: 1 }}>
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ textAlign: 'center', mb: 3 }}>
+                    <PlayIcon sx={{ fontSize: 48, color: 'secondary.main', mb: 2 }} />
+                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                      Sample Quizzes
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                      Try converted Trivie quiz formats
+                    </Typography>
+                  </Box>
+                  <List>
+                    {SAMPLE_TRIVIE_QUIZZES.map((filename) => (
+                      <ListItem key={filename} disablePadding sx={{ mb: 1 }}>
+                        <ListItemButton
+                          onClick={() => loadSampleTrivieQuiz(filename)}
+                          disabled={loading}
+                          sx={{ 
+                            borderRadius: 2,
+                            '&:hover': { backgroundColor: 'action.hover' }
+                          }}
+                        >
+                          <PlayIcon sx={{ mr: 2, fontSize: 20, color: 'secondary.main' }} />
+                          <ListItemText 
+                            primary={filename.replace('.xlsx', '').replace(/^quizzes_export_/, 'Quiz Export ')}
+                            slotProps={{
+                              primary: {
+                                style: {
+                                  fontSize: '0.95rem',
+                                  fontWeight: 500
+                                }
+                              }
+                            }}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    ))}
+                  </List>
+                </CardContent>
+              </Card>
+            </Box>
+          </Box>
         </Box>
       </Container>
     </Box>
