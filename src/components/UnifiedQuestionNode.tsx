@@ -154,7 +154,7 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
                 onClick={() => handleChoiceClick(choice)}
                 sx={{
                   display: 'flex',
-                  alignItems: 'flex-start',
+                  alignItems: 'center',
                   gap: 2,
                   p: 2,
                   border: '1px solid',

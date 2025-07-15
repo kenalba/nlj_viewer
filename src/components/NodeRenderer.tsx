@@ -4,6 +4,10 @@ import type { NLJNode, NLJScenario, ChoiceNode } from '../types/nlj';
 import { UnifiedQuestionNode } from './UnifiedQuestionNode';
 import { InterstitialPanel } from './InterstitialPanel';
 import { NodeCard } from './NodeCard';
+import { TrueFalseNode } from './TrueFalseNode';
+import { OrderingNode } from './OrderingNode';
+import { MatchingNode } from './MatchingNode';
+import { ShortAnswerNode } from './ShortAnswerNode';
 import { useGameContext } from '../contexts/GameContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAudio } from '../contexts/AudioContext';
@@ -99,6 +103,34 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     }
   };
 
+  const handleQuestionAnswer = (isCorrect: boolean) => {
+    debugLog('Question Answer', `User answered question: ${isCorrect ? 'correct' : 'incorrect'}`, {
+      currentNode: node.id,
+      nodeType: node.type,
+      isCorrect,
+    });
+
+    // Update score if applicable
+    if (state.score !== undefined) {
+      // Note: We could add a score update mechanism here if needed
+    }
+
+    // Navigate to next node
+    const nextNodeId = findNextNode(scenario, node.id);
+    if (nextNodeId) {
+      if (nextNodeId === 'end' || isScenarioComplete(scenario, nextNodeId)) {
+        playSound('complete');
+        completeScenario();
+      } else {
+        navigateToNode(nextNodeId);
+      }
+    } else {
+      // If no next node found, we're at the end
+      playSound('complete');
+      completeScenario();
+    }
+  };
+
   switch (node.type) {
     case 'start':
       return (
@@ -171,7 +203,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
         </NodeCard>
       );
 
-    case 'question':
+    case 'question': {
       const choices = getChoicesForQuestion(scenario, node.id);
       return (
         <UnifiedQuestionNode 
@@ -180,12 +212,45 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
           onChoiceSelect={handleChoiceSelect}
         />
       );
+    }
 
     case 'interstitial_panel':
       return (
         <InterstitialPanel 
           panel={node} 
           onContinue={handleContinue}
+        />
+      );
+
+    case 'true_false':
+      return (
+        <TrueFalseNode 
+          question={node} 
+          onAnswer={handleQuestionAnswer}
+        />
+      );
+
+    case 'ordering':
+      return (
+        <OrderingNode 
+          question={node} 
+          onAnswer={handleQuestionAnswer}
+        />
+      );
+
+    case 'matching':
+      return (
+        <MatchingNode 
+          question={node} 
+          onAnswer={handleQuestionAnswer}
+        />
+      );
+
+    case 'short_answer':
+      return (
+        <ShortAnswerNode 
+          question={node} 
+          onAnswer={handleQuestionAnswer}
         />
       );
 

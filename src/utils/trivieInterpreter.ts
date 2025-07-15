@@ -6,7 +6,7 @@ import { debugLog } from './debug';
 export interface TrivieQuestion {
   id: string;
   question: string;
-  type: 'multiple_choice' | 'true_false' | 'short_answer';
+  type: 'multiple_choice' | 'true_false' | 'short_answer' | 'ordering' | 'matching';
   choices?: TrivieChoice[];
   correctAnswer?: string;
   explanation?: string;
@@ -319,46 +319,153 @@ export function convertTrivieToNLJ(quiz: TrivieQuiz): NLJScenario {
   quiz.questions.forEach((question, questionIndex) => {
     const questionNodeId = `question_${questionIndex + 1}`;
     
-    // Create question node
-    const questionNode: QuestionNode = {
-      id: questionNodeId,
-      type: 'question',
-      text: question.question,
-      content: question.explanation || '',
-      x: 200 + (questionIndex * 300),
-      y: 200,
-      width: 200,
-      height: 100,
-      additionalMediaList: []
-    };
+    // Create question node based on type
+    let questionNode: NLJNode;
+    
+    switch (question.type) {
+      case 'true_false':
+        questionNode = {
+          id: questionNodeId,
+          type: 'true_false',
+          text: question.question,
+          content: question.explanation || '',
+          x: 200 + (questionIndex * 300),
+          y: 200,
+          width: 200,
+          height: 100,
+          additionalMediaList: [],
+          correctAnswer: question.choices?.[0]?.text?.toLowerCase().includes('true') || false
+        } as TrueFalseNode;
+        break;
+        
+      case 'ordering':
+        questionNode = {
+          id: questionNodeId,
+          type: 'ordering',
+          text: question.question,
+          content: question.explanation || '',
+          x: 200 + (questionIndex * 300),
+          y: 200,
+          width: 200,
+          height: 100,
+          additionalMediaList: [],
+          items: question.choices?.map((choice, index) => ({
+            id: `${questionNodeId}_item_${index}`,
+            text: choice.text,
+            correctOrder: choice.isCorrect ? 1 : index + 1 // This needs better logic
+          })) || []
+        } as OrderingNode;
+        break;
+        
+      case 'matching':
+        // Parse matching pairs from "leftItem->rightItem" format
+        const matchingPairs = question.choices?.map(choice => {
+          const parts = choice.text.split('->');
+          if (parts.length === 2) {
+            return {
+              left: parts[0].trim(),
+              right: parts[1].trim(),
+              isCorrect: choice.isCorrect
+            };
+          }
+          return null;
+        }).filter(pair => pair !== null) || [];
+        
+        // Extract unique left and right items
+        const leftItems = Array.from(new Set(matchingPairs.map(p => p!.left)));
+        const rightItems = Array.from(new Set(matchingPairs.map(p => p!.right)));
+        
+        // Create correct matches from the pairs marked as correct
+        const correctMatches = matchingPairs
+          .filter(pair => pair!.isCorrect)
+          .map(pair => ({
+            leftId: `${questionNodeId}_left_${leftItems.indexOf(pair!.left)}`,
+            rightId: `${questionNodeId}_right_${rightItems.indexOf(pair!.right)}`
+          }));
+        
+        questionNode = {
+          id: questionNodeId,
+          type: 'matching',
+          text: question.question,
+          content: question.explanation || '',
+          x: 200 + (questionIndex * 300),
+          y: 200,
+          width: 200,
+          height: 100,
+          additionalMediaList: [],
+          leftItems: leftItems.map((item, index) => ({
+            id: `${questionNodeId}_left_${index}`,
+            text: item
+          })),
+          rightItems: rightItems.map((item, index) => ({
+            id: `${questionNodeId}_right_${index}`,
+            text: item
+          })),
+          correctMatches: correctMatches
+        } as MatchingNode;
+        break;
+        
+      case 'short_answer':
+        questionNode = {
+          id: questionNodeId,
+          type: 'short_answer',
+          text: question.question,
+          content: question.explanation || '',
+          x: 200 + (questionIndex * 300),
+          y: 200,
+          width: 200,
+          height: 100,
+          additionalMediaList: [],
+          correctAnswers: question.choices?.filter(c => c.isCorrect).map(c => c.text) || [],
+          caseSensitive: false
+        } as ShortAnswerNode;
+        break;
+        
+      default: // multiple_choice
+        questionNode = {
+          id: questionNodeId,
+          type: 'question',
+          text: question.question,
+          content: question.explanation || '',
+          x: 200 + (questionIndex * 300),
+          y: 200,
+          width: 200,
+          height: 100,
+          additionalMediaList: []
+        } as QuestionNode;
+        break;
+    }
+    
     nodes.push(questionNode);
     
-    // Create choice nodes
+    // Create choice nodes only for multiple choice questions
     const choiceNodes: ChoiceNode[] = [];
-    question.choices?.forEach((choice, choiceIndex) => {
-      const choiceNodeId = `${questionNodeId}_choice_${choiceIndex + 1}`;
-      
-      const choiceNode: ChoiceNode = {
-        id: choiceNodeId,
-        type: 'choice',
-        parentId: questionNodeId,
-        text: choice.text,
-        feedback: choice.explanation || '',
-        isCorrect: choice.isCorrect,
-        choiceType: choice.isCorrect ? 'CORRECT' : 'INCORRECT',
-        x: 200 + (questionIndex * 300),
-        y: 300 + (choiceIndex * 50),
-        width: 150,
-        height: 40,
-        variableChanges: choice.isCorrect ? [{
-          variableId: 'score',
-          value: question.points || 1
-        }] : []
-      };
-      
-      choiceNodes.push(choiceNode);
-      nodes.push(choiceNode);
-    });
+    if (question.type === 'multiple_choice') {
+      question.choices?.forEach((choice, choiceIndex) => {
+        const choiceNodeId = `${questionNodeId}_choice_${choiceIndex + 1}`;
+        
+        const choiceNode: ChoiceNode = {
+          id: choiceNodeId,
+          type: 'choice',
+          parentId: questionNodeId,
+          text: choice.text,
+          feedback: choice.explanation || '',
+          isCorrect: choice.isCorrect,
+          choiceType: choice.isCorrect ? 'CORRECT' : 'INCORRECT',
+          x: 200 + (questionIndex * 300),
+          y: 300 + (choiceIndex * 50),
+          width: 150,
+          height: 40,
+          variableChanges: choice.isCorrect ? [{
+            variableId: 'score',
+            value: question.points || 1
+          }] : []
+        };
+        
+        choiceNodes.push(choiceNode);
+        nodes.push(choiceNode);
+      });
+    }
     
     allChoiceNodes.push(choiceNodes);
     
@@ -380,7 +487,7 @@ export function convertTrivieToNLJ(quiz: TrivieQuiz): NLJScenario {
   nodes.push(endNode);
   
   // Now create all links
-  quiz.questions.forEach((question, questionIndex) => {
+  quiz.questions.forEach((_, questionIndex) => {
     const questionNodeId = `question_${questionIndex + 1}`;
     const choiceNodes = allChoiceNodes[questionIndex];
     
@@ -396,9 +503,12 @@ export function convertTrivieToNLJ(quiz: TrivieQuiz): NLJScenario {
         endPoint: { x: 0, y: 0 }
       });
     } else {
-      // Link from previous question choices to this question
+      // Link from previous question (or its choices) to this question
+      const prevQuestion = quiz.questions[questionIndex - 1];
       const prevChoiceNodes = allChoiceNodes[questionIndex - 1];
-      if (prevChoiceNodes.length > 0) {
+      
+      if (prevQuestion.type === 'multiple_choice' && prevChoiceNodes.length > 0) {
+        // Link from previous question choices to this question
         prevChoiceNodes.forEach(prevChoice => {
           links.push({
             id: `${prevChoice.id}_to_${questionNodeId}`,
@@ -410,7 +520,7 @@ export function convertTrivieToNLJ(quiz: TrivieQuiz): NLJScenario {
           });
         });
       } else {
-        // If previous question had no choices, link directly from previous question
+        // Link directly from previous question (for non-multiple choice)
         const prevQuestionId = `question_${questionIndex}`;
         links.push({
           id: `${prevQuestionId}_to_${questionNodeId}`,
