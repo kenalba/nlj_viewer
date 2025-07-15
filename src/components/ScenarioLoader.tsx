@@ -38,6 +38,14 @@ const SAMPLE_TRIVIE_QUIZZES = [
   'quizzes_export_2025-07-15.xlsx',
 ];
 
+// Sample surveys
+const SAMPLE_SURVEYS = [
+  'automotive_sales_department.json',
+  'employee_engagement.json',
+  'manager_effectiveness.json',
+  'work_life_balance.json',
+];
+
 export const ScenarioLoader: React.FC = () => {
   const { loadScenario } = useGameContext();
   const { themeMode } = useTheme();
@@ -166,6 +174,38 @@ export const ScenarioLoader: React.FC = () => {
       setLoading(false);
     }
   }, [loadScenarioFromFile, playSound]);
+
+  const loadSampleSurvey = useCallback(async (filename: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${import.meta.env.BASE_URL}static/sample_surveys/${filename}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const scenario: NLJScenario = await response.json();
+      
+      // Validate scenario
+      const validationErrors = validateScenario(scenario);
+      if (validationErrors.length > 0) {
+        playSound('error');
+        setError(`Validation errors: ${validationErrors.join(', ')}`);
+        return;
+      }
+      
+      // Store scenario data in localStorage
+      localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
+      playSound('navigate');
+      loadScenario(scenario);
+    } catch (err) {
+      playSound('error');
+      setError(err instanceof Error ? err.message : 'Failed to load sample survey');
+    } finally {
+      setLoading(false);
+    }
+  }, [loadScenario, playSound]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -308,7 +348,7 @@ export const ScenarioLoader: React.FC = () => {
           {/* Trivie Quizzes Section */}
           <Box>
             <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-              Trivie Quizzes
+              Trivie Quizzes & Surveys
             </Typography>
             <Box sx={{ 
               display: 'flex', 
@@ -374,6 +414,53 @@ export const ScenarioLoader: React.FC = () => {
                           <PlayIcon sx={{ mr: 2, fontSize: 20, color: 'secondary.main' }} />
                           <ListItemText 
                             primary={filename.replace('.xlsx', '').replace(/^quizzes_export_/, 'Quiz Export ')}
+                            slotProps={{
+                              primary: {
+                                style: {
+                                  fontSize: '0.95rem',
+                                  fontWeight: 500
+                                }
+                              }
+                            }}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    ))}
+                  </List>
+                </CardContent>
+              </Card>
+            </Box>
+            
+            {/* Sample Surveys Subsection */}
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+                Sample Surveys
+              </Typography>
+              <Card>
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ textAlign: 'center', mb: 3 }}>
+                    <PlayIcon sx={{ fontSize: 40, color: 'info.main', mb: 2 }} />
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                      Employee Feedback Surveys
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Try automotive and cross-industry survey examples
+                    </Typography>
+                  </Box>
+                  <List>
+                    {SAMPLE_SURVEYS.map((filename) => (
+                      <ListItem key={filename} disablePadding sx={{ mb: 1 }}>
+                        <ListItemButton
+                          onClick={() => loadSampleSurvey(filename)}
+                          disabled={loading}
+                          sx={{ 
+                            borderRadius: 2,
+                            '&:hover': { backgroundColor: 'action.hover' }
+                          }}
+                        >
+                          <PlayIcon sx={{ mr: 2, fontSize: 20, color: 'info.main' }} />
+                          <ListItemText 
+                            primary={filename.replace('.json', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                             slotProps={{
                               primary: {
                                 style: {

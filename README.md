@@ -1,20 +1,20 @@
-# NLJ Viewer - Non-Linear Journey Interactive Training
+# NLJ Viewer - Unified Activity Viewer
 
-A modern, responsive TypeScript React application for playing interactive Non-Linear Journey (NLJ) training scenarios. Built with Material UI and designed for optimal mobile and desktop experiences.
+A modern, responsive TypeScript React application for playing interactive Non-Linear Journey (NLJ) training scenarios, surveys, and assessments. Built with Material UI and designed for optimal mobile and desktop experiences.
 
 ## 🚀 Features
 
+- **Unified Activity System**: Support for training scenarios, surveys, and assessments in a single platform
 - **Complete Question Type Support**: 
-  - **Multiple Choice**: Enhanced choice buttons with visual feedback
-  - **True/False**: Interactive buttons with immediate validation
-  - **Ordering**: Drag-and-drop item reordering with visual feedback
-  - **Matching**: Click-to-connect with visual connection lines
-  - **Short Answer**: Flexible text input with multiple correct answers
+  - **Training Questions**: Multiple Choice, True/False, Ordering, Matching, Short Answer
+  - **Survey Questions**: Likert Scales, Rating Questions, Matrix Questions, Sliders, Text Areas
+  - **Assessment Questions**: All training types with scoring and feedback
 - **Interactive Training Scenarios**: Play branching narrative training content with real-time feedback
+- **Comprehensive Survey System**: Employee feedback surveys with automotive and cross-industry templates
 - **Trivie Excel Integration**: Load and convert Trivie quiz Excel files automatically
 - **Mobile-Responsive Design**: Optimized for both mobile and desktop with adaptive layouts
 - **Audio Feedback**: Comprehensive sound system with oscillator-based audio for user actions
-- **Visual Interactions**: Drag-and-drop, connection lines, and smooth animations
+- **Visual Interactions**: Drag-and-drop, connection lines, sliders, and smooth animations
 - **Multi-Theme Support**: Switch between Hyundai and Unfiltered themes
 - **Media Support**: 
   - Responsive image and video display with click-to-enlarge functionality
@@ -23,6 +23,7 @@ A modern, responsive TypeScript React application for playing interactive Non-Li
 - **Real-time Feedback**: Immediate response validation with user-controlled progression
 - **Progress Tracking**: Visual progress indicators and completion tracking
 - **Type-Safe**: Full TypeScript coverage for robust development
+- **Comprehensive Testing**: Full test suite with VSCode integration
 - **Debug Mode**: Comprehensive console logging for development (auto-enabled in dev mode)
 
 ## 🎯 Quick Start
@@ -48,27 +49,25 @@ Visit `http://localhost:5173` to load scenarios and begin training.
 
 ## 📋 Usage
 
-### Loading Scenarios
+### Loading Content
 1. **Upload NLJ Scenario**: Upload your own NLJ JSON file
 2. **Upload Trivie Excel**: Load Trivie quiz Excel files (automatically converted)
-3. **Sample Scenarios**: Try included demo scenarios:
-   - FSA sales training modules
-   - Hyundai Ioniq9 product knowledge
-   - Interactive decision trees
-   - Trivie quiz samples
+3. **Upload Survey**: Load survey JSON files
+4. **Sample Content**: Try included demo content:
+   - **NLJ Scenarios**: FSA sales training modules, Hyundai Ioniq9 product knowledge, Interactive decision trees
+   - **Trivie Quizzes**: Excel format quiz samples
+   - **Survey Templates**: Automotive Sales Department, Employee Engagement, Manager Effectiveness, Work-Life Balance
 
-### Training Flow
-1. Select and load a scenario (NLJ JSON or Trivie Excel)
+### Activity Flow
+1. Select and load content (NLJ JSON, Trivie Excel, or Survey JSON)
 2. Progress through various question types:
-   - **Multiple Choice**: Select from available options
-   - **True/False**: Click True or False buttons
-   - **Ordering**: Drag items to arrange in correct sequence
-   - **Matching**: Click items from both columns to connect them
-   - **Short Answer**: Type your response in the text field
+   - **Training Questions**: Multiple Choice, True/False, Ordering, Matching, Short Answer
+   - **Survey Questions**: Likert Scales, Rating Questions, Matrix Questions, Sliders, Text Areas
+   - **Assessment Questions**: All training types with scoring and feedback
 3. Receive immediate feedback with visual and audio cues
-4. Click "Continue" or answer questions to proceed
+4. Click "Continue", "Submit", or answer questions to proceed
 5. Track progress via the header progress bar
-6. Complete the scenario and view results
+6. Complete the activity and view results
 
 ### Media Interaction
 - **Images**: Click any image to view full-size in a modal
@@ -89,6 +88,11 @@ Visit `http://localhost:5173` to load scenarios and begin training.
   - `MatchingNode`: Click-to-connect matching with visual connection lines
   - `ShortAnswerNode`: Text input with flexible answer validation
   - `UnifiedQuestionNode`: Enhanced multiple choice with improved choice buttons
+  - `LikertScaleNode`: 1-5, 1-7, 1-10+ scales with customizable labels
+  - `RatingNode`: Star ratings, numeric scales, and categorical options
+  - `MatrixNode`: Grid-based questions with responsive design
+  - `SliderNode`: Continuous scale input with custom ranges
+  - `TextAreaNode`: Long-form text input with validation
 
 ### Type System
 ```typescript
@@ -131,6 +135,9 @@ The application uses a custom Material UI theme with:
 npm run dev          # Development server with hot reload
 npm run build        # Production build
 npm run preview      # Preview production build
+npm run test         # Run test suite
+npm run test:ui      # Run tests with UI
+npm run test:coverage # Run tests with coverage
 npm run lint         # Run ESLint
 npm run type-check   # Run TypeScript compiler check
 ```

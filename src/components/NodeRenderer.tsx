@@ -8,6 +8,11 @@ import { TrueFalseNode } from './TrueFalseNode';
 import { OrderingNode } from './OrderingNode';
 import { MatchingNode } from './MatchingNode';
 import { ShortAnswerNode } from './ShortAnswerNode';
+import { LikertScaleNode } from './LikertScaleNode';
+import { RatingNode } from './RatingNode';
+import { SliderNode } from './SliderNode';
+import { TextAreaNode } from './TextAreaNode';
+import { MatrixNode } from './MatrixNode';
 import { useGameContext } from '../contexts/GameContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAudio } from '../contexts/AudioContext';
@@ -112,11 +117,12 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     }
   };
 
-  const handleQuestionAnswer = (isCorrect: boolean) => {
+  const handleQuestionAnswer = (isCorrect: boolean, response?: any) => {
     debugLog('Question Answer', `User answered question: ${isCorrect ? 'correct' : 'incorrect'}`, {
       currentNode: node.id,
       nodeType: node.type,
       isCorrect,
+      response,
     });
 
     // Update score if applicable
@@ -260,6 +266,46 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
         <ShortAnswerNode 
           question={node} 
           onAnswer={handleQuestionAnswer}
+        />
+      );
+
+    case 'likert_scale':
+      return (
+        <LikertScaleNode 
+          question={node} 
+          onAnswer={(response) => handleQuestionAnswer(true, response)}
+        />
+      );
+
+    case 'rating':
+      return (
+        <RatingNode 
+          question={node} 
+          onAnswer={(response) => handleQuestionAnswer(true, response)}
+        />
+      );
+
+    case 'slider':
+      return (
+        <SliderNode 
+          question={node} 
+          onAnswer={(response) => handleQuestionAnswer(true, response)}
+        />
+      );
+
+    case 'text_area':
+      return (
+        <TextAreaNode 
+          question={node} 
+          onAnswer={(response) => handleQuestionAnswer(true, response)}
+        />
+      );
+
+    case 'matrix':
+      return (
+        <MatrixNode 
+          question={node} 
+          onAnswer={(response) => handleQuestionAnswer(true, response)}
         />
       );
 
