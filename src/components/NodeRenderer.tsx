@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box, Typography, Button, useTheme as useMuiTheme } from '@mui/material';
 import type { NLJNode, NLJScenario, ChoiceNode } from '../types/nlj';
 import { UnifiedQuestionNode } from './UnifiedQuestionNode';
@@ -29,6 +29,15 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
   const { themeMode } = useTheme();
   const muiTheme = useMuiTheme();
   const { playSound } = useAudio();
+
+  // Scroll to top when node changes
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'smooth'
+    });
+  }, [node.id]);
 
   const handleChoiceSelect = (choice: ChoiceNode) => {
     // Play sound based on choice type
