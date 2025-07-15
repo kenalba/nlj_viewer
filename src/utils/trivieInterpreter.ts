@@ -57,12 +57,7 @@ export async function parseTrivieExcel(file: File): Promise<TrivieQuiz[]> {
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
       
-      debugLog('Trivie Parser', `Processing sheet: ${sheetName}`, {
-        rows: jsonData.length,
-        firstRow: jsonData[0],
-        secondRow: jsonData[1],
-        thirdRow: jsonData[2]
-      });
+      debugLog('Trivie Parser', `Found sheet: ${sheetName}`);
 
       // Try to interpret the sheet data as a quiz
       const quiz = parseSheetAsQuiz(sheetName, jsonData as any[][]);
@@ -89,12 +84,7 @@ function parseSheetAsQuiz(sheetName: string, data: any[][]): TrivieQuiz | null {
     const headers = data[0] as string[];
     const rows = data.slice(1);
     
-    debugLog('Trivie Parser', `Sheet data structure for ${sheetName}`, {
-      totalRows: data.length,
-      headers: headers,
-      firstDataRow: rows[0],
-      secondDataRow: rows[1]
-    });
+    debugLog('Trivie Parser', `Processing sheet: ${sheetName} (${data.length} rows)`);
 
     // Common column mappings for quiz formats
     const columnMap = detectColumnMapping(headers);
@@ -110,13 +100,10 @@ function parseSheetAsQuiz(sheetName: string, data: any[][]): TrivieQuiz | null {
     for (const row of rows) {
       if (!row || !row[columnMap.question]) continue;
 
-      debugLog('Trivie Parser', `Processing row ${questionId}`, {
-        rowData: row.map((cell, idx) => `[${idx}]: ${cell}`),
-        questionText: row[columnMap.question],
+      debugLog('Trivie Parser', `Processing question ${questionId}`, {
+        questionText: row[columnMap.question]?.substring(0, 50) + '...',
         questionType: columnMap.questionType ? row[columnMap.questionType] : 'unknown',
-        answer1: row[columnMap.choiceA],
-        answer2: row[columnMap.choiceB],
-        correctChoices: row[columnMap.correctAnswer]
+        hasChoices: !!(row[columnMap.choiceA] || row[columnMap.choiceB])
       });
 
       const question: TrivieQuestion = {
@@ -135,11 +122,7 @@ function parseSheetAsQuiz(sheetName: string, data: any[][]): TrivieQuiz | null {
       const choices = parseChoices(row, columnMap);
       question.choices = choices;
       
-      debugLog('Trivie Parser', `Question ${questionId} parsed`, {
-        question: question.question,
-        choicesCount: choices.length,
-        choices: choices.map(c => ({ text: c.text, isCorrect: c.isCorrect }))
-      });
+      debugLog('Trivie Parser', `Question ${questionId} parsed: ${choices.length} choices`);
 
       // Determine question type from the question_type column
       if (columnMap.questionType && row[columnMap.questionType]) {
@@ -210,22 +193,10 @@ function detectColumnMapping(headers: string[]): Record<string, number> {
     }
     
     // Trivie-specific answer columns
-    if (h === 'answer_1') {
-      mapping.choiceA = index;
-      debugLog('Trivie Parser', 'Found answer_1 column', { index, header });
-    }
-    if (h === 'answer_2') {
-      mapping.choiceB = index;
-      debugLog('Trivie Parser', 'Found answer_2 column', { index, header });
-    }
-    if (h === 'answer_3') {
-      mapping.choiceC = index;
-      debugLog('Trivie Parser', 'Found answer_3 column', { index, header });
-    }
-    if (h === 'answer_4') {
-      mapping.choiceD = index;
-      debugLog('Trivie Parser', 'Found answer_4 column', { index, header });
-    }
+    if (h === 'answer_1') mapping.choiceA = index;
+    if (h === 'answer_2') mapping.choiceB = index;
+    if (h === 'answer_3') mapping.choiceC = index;
+    if (h === 'answer_4') mapping.choiceD = index;
     
     // Fallback answer choices detection - only if not already found
     if (h.includes('choice') || h.includes('option') || (h.includes('answer') && !h.includes('_'))) {
@@ -262,13 +233,9 @@ function detectColumnMapping(headers: string[]): Record<string, number> {
   });
 
   debugLog('Trivie Parser', 'Column mapping detected', {
-    headers: headers.map((h, i) => `[${i}]: ${h}`),
-    mapping,
-    choiceAIndex: mapping.choiceA,
-    choiceBIndex: mapping.choiceB,
-    choiceCIndex: mapping.choiceC,
-    choiceDIndex: mapping.choiceD,
-    correctAnswerIndex: mapping.correctAnswer
+    questionCol: mapping.question,
+    choiceCols: [mapping.choiceA, mapping.choiceB, mapping.choiceC, mapping.choiceD].filter(c => c !== undefined),
+    correctAnswerCol: mapping.correctAnswer
   });
 
   return mapping;
@@ -302,23 +269,11 @@ function parseChoices(row: any[], columnMap: Record<string, number>): TrivieChoi
   
   for (let i = 0; i < choiceColumns.length; i++) {
     const columnIndex = columnMap[choiceColumns[i]];
-    debugLog('Trivie Parser', `Checking choice ${choiceLabels[i]}`, {
-      choiceColumn: choiceColumns[i],
-      columnIndex,
-      rowValue: columnIndex !== undefined ? row[columnIndex] : 'undefined',
-      hasValue: columnIndex !== undefined && row[columnIndex]
-    });
     
     if (columnIndex !== undefined && row[columnIndex]) {
       const choiceText = String(row[columnIndex]).trim();
       if (choiceText) {
         const isCorrect = correctAnswers.has(choiceLabels[i]) || correctAnswers.has(String(i + 1));
-        
-        debugLog('Trivie Parser', `Creating choice ${choiceLabels[i]}`, {
-          choiceText,
-          isCorrect,
-          correctAnswers: Array.from(correctAnswers)
-        });
         
         choices.push({
           id: `choice_${choiceLabels[i].toLowerCase()}`,
@@ -329,23 +284,13 @@ function parseChoices(row: any[], columnMap: Record<string, number>): TrivieChoi
     }
   }
   
-  debugLog('Trivie Parser', 'Parsed choices result', {
-    choicesCount: choices.length,
-    correctAnswers: Array.from(correctAnswers),
-    choices: choices.map(c => ({ text: c.text, isCorrect: c.isCorrect })),
-    columnMapChoices: {
-      choiceA: columnMap.choiceA,
-      choiceB: columnMap.choiceB,
-      choiceC: columnMap.choiceC,
-      choiceD: columnMap.choiceD
-    },
-    actualChoiceValues: {
-      choiceA: columnMap.choiceA !== undefined ? row[columnMap.choiceA] : 'undefined',
-      choiceB: columnMap.choiceB !== undefined ? row[columnMap.choiceB] : 'undefined',
-      choiceC: columnMap.choiceC !== undefined ? row[columnMap.choiceC] : 'undefined',
-      choiceD: columnMap.choiceD !== undefined ? row[columnMap.choiceD] : 'undefined'
-    }
-  });
+  // Only log if there are parsing issues
+  if (choices.length === 0 && (columnMap.choiceA !== undefined || columnMap.choiceB !== undefined)) {
+    debugLog('Trivie Parser', 'No choices parsed despite having choice columns', {
+      choicesFound: choices.length,
+      correctAnswers: Array.from(correctAnswers)
+    });
+  }
   
   return choices;
 }
@@ -417,11 +362,10 @@ export function convertTrivieToNLJ(quiz: TrivieQuiz): NLJScenario {
     
     allChoiceNodes.push(choiceNodes);
     
-    debugLog('Trivie Converter', `Created nodes for question ${questionIndex + 1}`, {
-      questionNodeId,
-      choiceNodesCount: choiceNodes.length,
-      choiceNodeIds: choiceNodes.map(c => c.id)
-    });
+    // Only log if there are issues
+    if (choiceNodes.length === 0 && question.type === 'multiple_choice') {
+      debugLog('Trivie Converter', `No choice nodes created for multiple choice question ${questionIndex + 1}`);
+    }
   });
   
   // Create end node
@@ -519,13 +463,10 @@ export function convertTrivieToNLJ(quiz: TrivieQuiz): NLJScenario {
       });
     }
     
-    debugLog('Trivie Converter', `Created links for question ${questionIndex + 1}`, {
-      questionNodeId,
-      choiceNodesCount: choiceNodes.length,
-      nextQuestionId,
-      parentChildLinks: choiceNodes.length,
-      choiceToNextLinks: choiceNodes.length > 0 ? choiceNodes.length : 1
-    });
+    // Minimal logging for link creation
+    if (choiceNodes.length === 0) {
+      debugLog('Trivie Converter', `Question ${questionIndex + 1} has no choices, creating direct link`);
+    }
   });
   
   // Create the NLJ scenario
@@ -542,13 +483,7 @@ export function convertTrivieToNLJ(quiz: TrivieQuiz): NLJScenario {
     }]
   };
   
-  debugLog('Trivie Converter', 'Converted Trivie quiz to NLJ', {
-    quizId: quiz.id,
-    questionsCount: quiz.questions.length,
-    nodesCount: nodes.length,
-    linksCount: links.length,
-    links: links.map(l => `${l.sourceNodeId} -> ${l.targetNodeId}`)
-  });
+  debugLog('Trivie Converter', `Successfully converted quiz: ${quiz.questions.length} questions, ${nodes.length} nodes, ${links.length} links`);
   
   return scenario;
 }
