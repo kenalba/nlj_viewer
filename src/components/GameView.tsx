@@ -14,6 +14,7 @@ import { CardTransition } from './CardTransition';
 import { useGameContext } from '../contexts/GameContext';
 import { findNodeById } from '../utils/scenarioUtils';
 import { ThemeToggle } from './ThemeToggle';
+import { SoundToggle } from './SoundToggle';
 
 interface GameViewProps {
   scenario: NLJScenario;
@@ -57,6 +58,7 @@ export const GameView: React.FC<GameViewProps> = ({ scenario, onHome }) => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600, color: 'white' }}>
             {scenario.name}
           </Typography>
+          <SoundToggle />
           <ThemeToggle />
         </Toolbar>
       </AppBar>

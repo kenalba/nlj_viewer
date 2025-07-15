@@ -6,6 +6,7 @@ import { InterstitialPanel } from './InterstitialPanel';
 import { NodeCard } from './NodeCard';
 import { useGameContext } from '../contexts/GameContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAudio } from '../contexts/AudioContext';
 import { 
   findNextNode, 
   getChoicesForQuestion, 
@@ -23,8 +24,18 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
   const { state, navigateToNode, updateVariable, completeScenario } = useGameContext();
   const { themeMode } = useTheme();
   const muiTheme = useMuiTheme();
+  const { playSound } = useAudio();
 
   const handleChoiceSelect = (choice: ChoiceNode) => {
+    // Play sound based on choice type
+    if (choice.choiceType === 'CORRECT') {
+      playSound('correct');
+    } else if (choice.choiceType === 'INCORRECT') {
+      playSound('incorrect');
+    } else {
+      playSound('click');
+    }
+
     debugLog('Choice', `User selected choice: ${choice.text}`, {
       choiceId: choice.id,
       choiceType: choice.choiceType,
@@ -57,6 +68,8 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
   };
 
   const handleContinue = () => {
+    playSound('navigate');
+    
     debugLog('Continue', `User clicked continue from node: ${node.id}`, {
       nodeType: node.type,
       currentNode: node.id,
@@ -65,6 +78,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     const nextNodeId = findNextNode(scenario, node.id);
     if (nextNodeId) {
       if (isScenarioComplete(scenario, nextNodeId)) {
+        playSound('complete');
         completeScenario();
       }
       navigateToNode(nextNodeId);
@@ -72,6 +86,8 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
   };
 
   const handleRestart = () => {
+    playSound('navigate');
+    
     debugLog('Restart', 'User clicked restart', {
       currentNode: node.id,
       scenarioId: scenario.id,

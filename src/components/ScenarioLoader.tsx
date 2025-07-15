@@ -18,7 +18,9 @@ import type { NLJScenario } from '../types/nlj';
 import { validateScenario } from '../utils/scenarioUtils';
 import { useGameContext } from '../contexts/GameContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAudio } from '../contexts/AudioContext';
 import { ThemeToggle } from './ThemeToggle';
+import { SoundToggle } from './SoundToggle';
 
 // Sample scenarios for demo
 const SAMPLE_SCENARIOS = [
@@ -33,6 +35,7 @@ const SAMPLE_SCENARIOS = [
 export const ScenarioLoader: React.FC = () => {
   const { loadScenario } = useGameContext();
   const { themeMode } = useTheme();
+  const { playSound } = useAudio();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,14 +50,17 @@ export const ScenarioLoader: React.FC = () => {
       // Validate scenario
       const validationErrors = validateScenario(scenario);
       if (validationErrors.length > 0) {
+        playSound('error');
         setError(`Validation errors: ${validationErrors.join(', ')}`);
         return;
       }
       
       // Store scenario data in localStorage
       localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
+      playSound('navigate');
       loadScenario(scenario);
     } catch (err) {
+      playSound('error');
       setError(err instanceof Error ? err.message : 'Failed to load scenario');
     } finally {
       setLoading(false);
@@ -76,14 +82,17 @@ export const ScenarioLoader: React.FC = () => {
       // Validate scenario
       const validationErrors = validateScenario(scenario);
       if (validationErrors.length > 0) {
+        playSound('error');
         setError(`Validation errors: ${validationErrors.join(', ')}`);
         return;
       }
       
       // Store scenario data in localStorage
       localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
+      playSound('navigate');
       loadScenario(scenario);
     } catch (err) {
+      playSound('error');
       setError(err instanceof Error ? err.message : 'Failed to load sample scenario');
     } finally {
       setLoading(false);
@@ -114,7 +123,8 @@ export const ScenarioLoader: React.FC = () => {
         justifyContent: 'center'
       }}>
         <Box sx={{ textAlign: 'center', mb: 4, position: 'relative' }}>
-          <Box sx={{ position: 'absolute', top: 0, right: 0 }}>
+          <Box sx={{ position: 'absolute', top: 0, right: 0, display: 'flex', alignItems: 'center' }}>
+            <SoundToggle />
             <ThemeToggle />
           </Box>
           <Typography variant="h2" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>

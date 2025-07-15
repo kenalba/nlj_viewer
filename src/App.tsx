@@ -3,6 +3,7 @@ import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { GameProvider, useGameContext } from './contexts/GameContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { AudioProvider } from './contexts/AudioContext';
 import { ScenarioLoader } from './components/ScenarioLoader';
 import { GameView } from './components/GameView';
 import { debugLog, isDebugEnabled } from './utils/debug';
@@ -45,9 +46,11 @@ const AppWithTheme: React.FC = () => {
   return (
     <MuiThemeProvider theme={currentTheme}>
       <CssBaseline />
-      <GameProvider>
-        <AppContent />
-      </GameProvider>
+      <AudioProvider>
+        <GameProvider>
+          <AppContent />
+        </GameProvider>
+      </AudioProvider>
     </MuiThemeProvider>
   );
 };
