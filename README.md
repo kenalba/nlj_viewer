@@ -223,4 +223,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Built with [Vite](https://vitejs.dev/) and [React](https://reactjs.org/)
 - UI components from [Material-UI](https://mui.com/)
 - TypeScript for type safety
-- Designed for Hyundai training initiatives
+- Designed for Ander's training initiatives

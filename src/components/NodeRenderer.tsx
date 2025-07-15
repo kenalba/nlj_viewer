@@ -1,10 +1,11 @@
 import React from 'react';
-import { Box, Typography, Card, CardContent, Button } from '@mui/material';
+import { Box, Typography, Button, useTheme as useMuiTheme } from '@mui/material';
 import type { NLJNode, NLJScenario, ChoiceNode } from '../types/nlj';
-import { QuestionCard } from './QuestionCard';
-import { ChoiceSelector } from './ChoiceSelector';
+import { UnifiedQuestionNode } from './UnifiedQuestionNode';
 import { InterstitialPanel } from './InterstitialPanel';
+import { NodeCard } from './NodeCard';
 import { useGameContext } from '../contexts/GameContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { 
   findNextNode, 
   getChoicesForQuestion, 
@@ -20,6 +21,8 @@ interface NodeRendererProps {
 
 export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) => {
   const { state, navigateToNode, updateVariable, completeScenario } = useGameContext();
+  const { themeMode } = useTheme();
+  const muiTheme = useMuiTheme();
 
   const handleChoiceSelect = (choice: ChoiceNode) => {
     debugLog('Choice', `User selected choice: ${choice.text}`, {
@@ -83,67 +86,83 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
   switch (node.type) {
     case 'start':
       return (
-        <Card elevation={2}>
-          <CardContent>
-            <Typography variant="h4" gutterBottom align="center">
-              {scenario.name}
-            </Typography>
-            <Typography variant="body1" paragraph align="center">
-              Welcome to this interactive training scenario.
-            </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-              <Button
-                variant="contained"
-                onClick={handleContinue}
-                size="large"
-              >
-                Start Training
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
+        <NodeCard variant="interstitial" animate={false}>
+          <Typography variant="h4" gutterBottom align="center">
+            {scenario.name}
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 3 }} align="center">
+            Welcome to this interactive training scenario.
+          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Button
+              variant="contained"
+              onClick={handleContinue}
+              size="large"
+              sx={{
+                borderRadius: (muiTheme.shape.borderRadius as number) * 3,
+                boxShadow: themeMode === 'unfiltered' ? 
+                  '0 4px 16px rgba(246, 250, 36, 0.3)' : 
+                  'none',
+                '&:hover': {
+                  ...(themeMode === 'unfiltered' && {
+                    boxShadow: '0 6px 20px rgba(246, 250, 36, 0.4)',
+                    transform: 'translateY(-2px)',
+                  }),
+                },
+              }}
+            >
+              Start Training
+            </Button>
+          </Box>
+        </NodeCard>
       );
 
     case 'end':
       return (
-        <Card elevation={2}>
-          <CardContent>
-            <Typography variant="h4" gutterBottom align="center" color="primary">
-              Training Complete!
+        <NodeCard variant="interstitial" animate={false}>
+          <Typography variant="h4" gutterBottom align="center" color="primary">
+            Training Complete!
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 3 }} align="center">
+            You have successfully completed the training scenario.
+          </Typography>
+          {state.score !== undefined && (
+            <Typography variant="h6" align="center" sx={{ mt: 2 }}>
+              Final Score: {state.score}
             </Typography>
-            <Typography variant="body1" paragraph align="center">
-              You have successfully completed the training scenario.
-            </Typography>
-            {state.score !== undefined && (
-              <Typography variant="h6" align="center" sx={{ mt: 2 }}>
-                Final Score: {state.score}
-              </Typography>
-            )}
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-              <Button
-                variant="outlined"
-                onClick={handleRestart}
-                size="large"
-              >
-                Restart Training
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
+          )}
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+            <Button
+              variant="outlined"
+              onClick={handleRestart}
+              size="large"
+              sx={{
+                borderRadius: (muiTheme.shape.borderRadius as number) * 3,
+                ...(themeMode === 'unfiltered' && {
+                  borderColor: '#F6FA24',
+                  color: '#F6FA24',
+                  '&:hover': {
+                    borderColor: '#FFD700',
+                    backgroundColor: 'rgba(246, 250, 36, 0.1)',
+                    color: '#FFD700',
+                  },
+                }),
+              }}
+            >
+              Restart Training
+            </Button>
+          </Box>
+        </NodeCard>
       );
 
     case 'question':
       const choices = getChoicesForQuestion(scenario, node.id);
       return (
-        <Box>
-          <QuestionCard question={node} />
-          {choices.length > 0 && (
-            <ChoiceSelector 
-              choices={choices} 
-              onChoiceSelect={handleChoiceSelect}
-            />
-          )}
-        </Box>
+        <UnifiedQuestionNode 
+          question={node} 
+          choices={choices}
+          onChoiceSelect={handleChoiceSelect}
+        />
       );
 
     case 'interstitial_panel':
@@ -156,13 +175,11 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
 
     default:
       return (
-        <Card elevation={2}>
-          <CardContent>
-            <Typography variant="body1" color="error">
-              Unknown node type: {node.type}
-            </Typography>
-          </CardContent>
-        </Card>
+        <NodeCard variant="default" animate={false}>
+          <Typography variant="body1" color="error">
+            Unknown node type: {node.type}
+          </Typography>
+        </NodeCard>
       );
   }
 };

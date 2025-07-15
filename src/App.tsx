@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { GameProvider, useGameContext } from './contexts/GameContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { ScenarioLoader } from './components/ScenarioLoader';
 import { GameView } from './components/GameView';
-import { hyundaiTheme } from './theme/hyundaiTheme';
 import { debugLog, isDebugEnabled } from './utils/debug';
 
 const AppContent: React.FC = () => {
@@ -24,7 +24,9 @@ const AppContent: React.FC = () => {
   return <ScenarioLoader />;
 };
 
-const App: React.FC = () => {
+const AppWithTheme: React.FC = () => {
+  const { currentTheme, themeMode } = useTheme();
+
   useEffect(() => {
     if (isDebugEnabled()) {
       console.log('🐛 NLJ Debug mode is ACTIVE');
@@ -33,19 +35,27 @@ const App: React.FC = () => {
     
     debugLog('App', 'NLJ Viewer initialized', {
       version: '1.0.0',
-      theme: 'Hyundai',
+      theme: themeMode,
       debugMode: isDebugEnabled(),
       environment: import.meta.env.DEV ? 'development' : 'production',
       timestamp: new Date().toISOString(),
     });
-  }, []);
+  }, [themeMode]);
 
   return (
-    <ThemeProvider theme={hyundaiTheme}>
+    <MuiThemeProvider theme={currentTheme}>
       <CssBaseline />
       <GameProvider>
         <AppContent />
       </GameProvider>
+    </MuiThemeProvider>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <ThemeProvider>
+      <AppWithTheme />
     </ThemeProvider>
   );
 };

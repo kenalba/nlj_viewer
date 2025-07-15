@@ -1,7 +1,9 @@
 import React from 'react';
-import { Card, CardContent, Typography, Button, Box } from '@mui/material';
+import { Typography, Button, Box, useTheme as useMuiTheme } from '@mui/material';
 import type { InterstitialPanelNode } from '../types/nlj';
 import { MediaViewer } from './MediaViewer';
+import { NodeCard } from './NodeCard';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface InterstitialPanelProps {
   panel: InterstitialPanelNode;
@@ -13,32 +15,46 @@ export const InterstitialPanel: React.FC<InterstitialPanelProps> = ({
   onContinue,
 }) => {
   const displayText = panel.text || panel.content || '';
+  const { themeMode } = useTheme();
+  const muiTheme = useMuiTheme();
 
   return (
-    <Card elevation={2} sx={{ mb: 2 }}>
+    <NodeCard variant="interstitial" animate={false} sx={{ mb: 2 }}>
       {panel.media && (
-        <MediaViewer 
-          media={panel.media} 
-          alt="Scenario content"
-          size="large"
-        />
-      )}
-      <CardContent>
-        {displayText && (
-          <Typography variant="body1" paragraph>
-            {displayText}
-          </Typography>
-        )}
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-          <Button
-            variant="contained"
-            onClick={onContinue}
+        <Box sx={{ mb: 2 }}>
+          <MediaViewer 
+            media={panel.media} 
+            alt="Scenario content"
             size="large"
-          >
-            Continue
-          </Button>
+          />
         </Box>
-      </CardContent>
-    </Card>
+      )}
+      {displayText && (
+        <Typography variant="body1" sx={{ mb: 2 }}>
+          {displayText}
+        </Typography>
+      )}
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+        <Button
+          variant="contained"
+          onClick={onContinue}
+          size="large"
+          sx={{
+            borderRadius: (muiTheme.shape.borderRadius as number) * 3,
+            boxShadow: themeMode === 'unfiltered' ? 
+              '0 4px 16px rgba(246, 250, 36, 0.3)' : 
+              'none',
+            '&:hover': {
+              ...(themeMode === 'unfiltered' && {
+                boxShadow: '0 6px 20px rgba(246, 250, 36, 0.4)',
+                transform: 'translateY(-2px)',
+              }),
+            },
+          }}
+        >
+          Continue
+        </Button>
+      </Box>
+    </NodeCard>
   );
 };

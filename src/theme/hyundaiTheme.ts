@@ -115,7 +115,7 @@ export const hyundaiTheme = createTheme({
     },
   },
   shape: {
-    borderRadius: 8,
+    borderRadius: 2,
   },
   spacing: 8,
   components: {

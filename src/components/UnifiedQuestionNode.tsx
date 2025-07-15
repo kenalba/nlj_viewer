@@ -1,0 +1,320 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Box,
+  Typography,
+  Button,
+  Radio,
+  Stack,
+  Alert,
+  Collapse,
+  Divider,
+  useTheme as useMuiTheme,
+} from '@mui/material';
+import type { QuestionNode, ChoiceNode } from '../types/nlj';
+import { NodeCard } from './NodeCard';
+import { MediaViewer } from './MediaViewer';
+import { useTheme } from '../contexts/ThemeContext';
+
+interface UnifiedQuestionNodeProps {
+  question: QuestionNode;
+  choices: ChoiceNode[];
+  onChoiceSelect: (choice: ChoiceNode) => void;
+  disabled?: boolean;
+}
+
+export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
+  question,
+  choices,
+  onChoiceSelect,
+  disabled = false,
+}) => {
+  const [selectedChoice, setSelectedChoice] = useState<string>('');
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [selectedChoiceNode, setSelectedChoiceNode] = useState<ChoiceNode | null>(null);
+  const feedbackRef = useRef<HTMLDivElement>(null);
+  const { themeMode } = useTheme();
+  const muiTheme = useMuiTheme();
+
+  // Reset state when choices change (new question)
+  useEffect(() => {
+    setSelectedChoice('');
+    setShowFeedback(false);
+    setSelectedChoiceNode(null);
+  }, [choices]);
+
+  // Auto-scroll to feedback when it appears
+  useEffect(() => {
+    if (showFeedback && feedbackRef.current) {
+      const timer = setTimeout(() => {
+        feedbackRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center',
+          inline: 'nearest'
+        });
+      }, 350);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showFeedback]);
+
+  const handleChoiceClick = (choice: ChoiceNode) => {
+    if (disabled || showFeedback) return;
+    setSelectedChoice(choice.id);
+  };
+
+  const handleSubmit = () => {
+    const choice = choices.find(c => c.id === selectedChoice);
+    if (choice) {
+      setSelectedChoiceNode(choice);
+      setShowFeedback(true);
+    }
+  };
+
+  const handleContinue = () => {
+    if (selectedChoiceNode) {
+      onChoiceSelect(selectedChoiceNode);
+    }
+  };
+
+  const getFeedbackSeverity = (choiceType: string) => {
+    switch (choiceType) {
+      case 'CORRECT':
+        return 'success';
+      case 'INCORRECT':
+        return 'error';
+      default:
+        return 'info';
+    }
+  };
+
+  return (
+    <NodeCard variant="question" animate={false}>
+      {/* Question Media */}
+      {question.media && (
+        <Box sx={{ mb: 3 }}>
+          <MediaViewer 
+            media={question.media} 
+            alt={`Question: ${question.text}`}
+            size="large"
+          />
+        </Box>
+      )}
+
+      {/* Question Text */}
+      <Typography variant="h6" component="h2" gutterBottom sx={{ mb: 2 }}>
+        {question.text}
+      </Typography>
+
+      {/* Question Content */}
+      {question.content && (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          {question.content}
+        </Typography>
+      )}
+
+      {/* Additional Media */}
+      {question.additionalMediaList && question.additionalMediaList.length > 0 && (
+        <Box sx={{ mb: 3 }}>
+          {question.additionalMediaList.map((media, index) => (
+            <Box key={media.id} sx={{ mb: 2 }}>
+              <MediaViewer 
+                media={media} 
+                alt={`Additional media ${index + 1}`}
+                size="medium"
+              />
+            </Box>
+          ))}
+        </Box>
+      )}
+
+      {/* Divider before choices - only if we have content above */}
+      {choices.length > 0 && (question.text || question.content || question.media || (question.additionalMediaList && question.additionalMediaList.length > 0)) && (
+        <Divider sx={{ my: 3, borderColor: themeMode === 'unfiltered' ? '#333333' : 'divider' }} />
+      )}
+
+      {/* Choices Section */}
+      {choices.length > 0 && (
+        <Box>
+          <Typography 
+            variant="h6" 
+            gutterBottom 
+            sx={{ 
+              mb: 2,
+              color: 'text.primary',
+              fontSize: '1.1rem',
+            }}
+          >
+            Choose your response:
+          </Typography>
+          
+          <Stack spacing={1.5} sx={{ mb: 3 }}>
+            {choices.map((choice, index) => (
+              <Box
+                key={choice.id}
+                onClick={() => handleChoiceClick(choice)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 2,
+                  p: 2,
+                  border: '1px solid',
+                  borderColor: selectedChoice === choice.id ? 
+                    (themeMode === 'unfiltered' ? '#F6FA24' : 'primary.main') : 
+                    (themeMode === 'unfiltered' ? '#333333' : 'divider'),
+                  borderRadius: (muiTheme.shape.borderRadius as number) * 0.75,
+                  backgroundColor: selectedChoice === choice.id ? 
+                    (themeMode === 'unfiltered' ? 'rgba(246, 250, 36, 0.1)' : 'action.selected') : 
+                    'transparent',
+                  cursor: (!disabled && !showFeedback) ? 'pointer' : 'default',
+                  opacity: disabled ? 0.6 : 1,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    ...((!disabled && !showFeedback) && {
+                      backgroundColor: selectedChoice === choice.id ? 
+                        (themeMode === 'unfiltered' ? 'rgba(246, 250, 36, 0.15)' : 'action.selected') : 
+                        (themeMode === 'unfiltered' ? 'rgba(246, 250, 36, 0.05)' : 'action.hover'),
+                      borderColor: themeMode === 'unfiltered' ? 'rgba(246, 250, 36, 0.5)' : 'primary.light',
+                    }),
+                  },
+                }}
+              >
+                <Radio
+                  checked={selectedChoice === choice.id}
+                  onChange={() => handleChoiceClick(choice)}
+                  disabled={disabled || showFeedback}
+                  sx={{
+                    mt: 0.5,
+                    color: themeMode === 'unfiltered' ? '#666666' : 'text.secondary',
+                    '&.Mui-checked': {
+                      color: themeMode === 'unfiltered' ? '#F6FA24' : 'primary.main',
+                    },
+                  }}
+                />
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    fontSize: '0.95rem',
+                    lineHeight: 1.5,
+                    color: 'text.primary',
+                    fontWeight: selectedChoice === choice.id ? 500 : 400,
+                  }}
+                >
+                  {choice.text}
+                </Typography>
+              </Box>
+            ))}
+          </Stack>
+
+          {/* Submit Button */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={!selectedChoice || disabled || showFeedback}
+              size="large"
+              sx={{ 
+                px: 4, 
+                py: 1.5,
+                borderRadius: (muiTheme.shape.borderRadius as number) * 3,
+                boxShadow: themeMode === 'unfiltered' ? 
+                  '0 4px 16px rgba(246, 250, 36, 0.3)' : 
+                  'none',
+                '&:hover': {
+                  ...(themeMode === 'unfiltered' && {
+                    boxShadow: '0 6px 20px rgba(246, 250, 36, 0.4)',
+                    transform: 'translateY(-2px)',
+                  }),
+                },
+              }}
+            >
+              Submit Answer
+            </Button>
+          </Box>
+
+          {/* Feedback Section - Unfolds from bottom */}
+          <Collapse 
+            in={showFeedback}
+            timeout={400}
+            sx={{
+              position: 'relative',
+              '& .MuiCollapse-wrapper': {
+                borderRadius: { xs: 0, sm: `0 0 ${muiTheme.shape.borderRadius}px ${muiTheme.shape.borderRadius}px` },
+                overflow: 'hidden',
+              }
+            }}
+          >
+            {selectedChoiceNode && (
+              <Box 
+                ref={feedbackRef}
+                sx={{
+                  mt: 2,
+                  p: 3,
+                  backgroundColor: themeMode === 'unfiltered' ? 
+                    'rgba(246, 250, 36, 0.05)' : 
+                    'rgba(0, 0, 0, 0.02)',
+                  borderTop: `1px solid ${themeMode === 'unfiltered' ? '#333333' : 'divider'}`,
+                  borderRadius: { xs: 0, sm: `0 0 ${muiTheme.shape.borderRadius}px ${muiTheme.shape.borderRadius}px` },
+                  position: 'relative',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '2px',
+                    background: themeMode === 'unfiltered' ? 
+                      'linear-gradient(90deg, #F6FA24 0%, #FFD700 100%)' : 
+                      'linear-gradient(90deg, #0078D4 0%, #00BCF2 100%)',
+                    opacity: 0.6,
+                  },
+                }}
+              >
+                <Alert 
+                  severity={getFeedbackSeverity(selectedChoiceNode.choiceType)}
+                  sx={{ 
+                    borderRadius: (muiTheme.shape.borderRadius as number) * 1.5,
+                    mb: 2,
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    boxShadow: 'none',
+                    p: 0,
+                    '& .MuiAlert-icon': {
+                      color: themeMode === 'unfiltered' ? '#F6FA24' : 'inherit',
+                    },
+                  }}
+                >
+                  <Typography variant="body1" sx={{ fontSize: '0.95rem', color: 'text.primary' }}>
+                    {selectedChoiceNode.feedback || 'Thank you for your response.'}
+                  </Typography>
+                </Alert>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                  <Button
+                    variant="contained"
+                    onClick={handleContinue}
+                    size="large"
+                    sx={{ 
+                      px: 4, 
+                      py: 1.5,
+                      borderRadius: (muiTheme.shape.borderRadius as number) * 3,
+                      boxShadow: themeMode === 'unfiltered' ? 
+                        '0 4px 16px rgba(246, 250, 36, 0.3)' : 
+                        'none',
+                      '&:hover': {
+                        ...(themeMode === 'unfiltered' && {
+                          boxShadow: '0 6px 20px rgba(246, 250, 36, 0.4)',
+                          transform: 'translateY(-2px)',
+                        }),
+                      },
+                    }}
+                  >
+                    Continue
+                  </Button>
+                </Box>
+              </Box>
+            )}
+          </Collapse>
+        </Box>
+      )}
+    </NodeCard>
+  );
+};

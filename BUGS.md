@@ -1,14 +1,20 @@
 # Bug Tracker - NLJ Viewer
 
 ## Status Legend
+
 - 🐛 **Open**: Bug needs to be fixed
 - 🔧 **In Progress**: Currently being worked on
 - ✅ **Fixed**: Bug has been resolved
 - 🚫 **Wontfix**: Not going to be fixed
 
+NEW BUGS (unformatted)
+
+- The progress bar doesn't work so well, since I restart afterwards. We should remove it unless we have a predictable way of knowing how far into an NLJ we are -- which we rarely do. We'll need to think about ways to understand it.
+
 ---
 
 ## Bug #1: Pre-completed Second Question Issue
+
 **Status:** ✅ **Fixed**  
 **Priority:** High  
 **Assigned:** Claude  
@@ -18,6 +24,7 @@
 When viewing a question and answering it, if another question immediately follows, the second question appears pre-completed, preventing answer selection and progression.
 
 **Steps to Reproduce:**
+
 1. Load a scenario with consecutive questions
 2. Answer the first question
 3. Observe the second question appears pre-selected
@@ -35,6 +42,7 @@ Added `useEffect` hook in `ChoiceSelector.tsx` to reset component state (`select
 ---
 
 ## Bug #2: Feedback Scroll Issue
+
 **Status:** ✅ **Fixed**  
 **Priority:** High  
 **Assigned:** Claude  
@@ -44,6 +52,7 @@ Added `useEffect` hook in `ChoiceSelector.tsx` to reset component state (`select
 When feedback appears after answering a question, it displays at the bottom of the screen without auto-scrolling, making it easy to miss.
 
 **Steps to Reproduce:**
+
 1. Answer a question with feedback
 2. Feedback appears below the fold
 3. Screen doesn't scroll to show feedback
@@ -60,6 +69,7 @@ Added `useRef` and `useEffect` in `ChoiceSelector.tsx` to automatically scroll t
 ---
 
 ## Bug #3: GitHub Pages Deployment Permission Error
+
 **Status:** ✅ **Fixed**  
 **Priority:** High  
 **Assigned:** Claude  
@@ -69,6 +79,7 @@ Added `useRef` and `useEffect` in `ChoiceSelector.tsx` to automatically scroll t
 GitHub Actions workflow fails with permission denied error when trying to push to gh-pages branch.
 
 **Error Details:**
+
 ```
 remote: Permission to kenalba/nlj_viewer.git denied to github-actions[bot].
 fatal: unable to access 'https://github.com/kenalba/nlj_viewer.git/': The requested URL returned error: 403
@@ -80,6 +91,7 @@ The deployment action was using `peaceiris/actions-gh-pages@v3` which requires s
 
 **Fix Applied:**
 Updated `.github/workflows/deploy.yml` to use the modern GitHub Pages deployment approach:
+
 - Added proper `permissions` section with `contents: read`, `pages: write`, `id-token: write`
 - Used `actions/configure-pages@v4`, `actions/upload-pages-artifact@v3`, and `actions/deploy-pages@v4`
 - Added `environment` configuration for better security and tracking
@@ -90,6 +102,7 @@ Updated `.github/workflows/deploy.yml` to use the modern GitHub Pages deployment
 ## How to Report New Bugs
 
 1. **Use the template below:**
+
    ```
    ## Bug #X: [Brief Title]
    **Status:** 🐛 **Open**

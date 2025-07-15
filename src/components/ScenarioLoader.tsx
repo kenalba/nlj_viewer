@@ -17,6 +17,8 @@ import { Upload as UploadIcon, PlayArrow as PlayIcon } from '@mui/icons-material
 import type { NLJScenario } from '../types/nlj';
 import { validateScenario } from '../utils/scenarioUtils';
 import { useGameContext } from '../contexts/GameContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { ThemeToggle } from './ThemeToggle';
 
 // Sample scenarios for demo
 const SAMPLE_SCENARIOS = [
@@ -30,6 +32,7 @@ const SAMPLE_SCENARIOS = [
 
 export const ScenarioLoader: React.FC = () => {
   const { loadScenario } = useGameContext();
+  const { themeMode } = useTheme();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -110,12 +113,15 @@ export const ScenarioLoader: React.FC = () => {
         flexDirection: 'column',
         justifyContent: 'center'
       }}>
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Box sx={{ textAlign: 'center', mb: 4, position: 'relative' }}>
+          <Box sx={{ position: 'absolute', top: 0, right: 0 }}>
+            <ThemeToggle />
+          </Box>
           <Typography variant="h2" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
-            Hyundai Training
+            {themeMode === 'unfiltered' ? 'Interactive Training' : 'NLJ Training'}
           </Typography>
           <Typography variant="h5" color="text.secondary" sx={{ mb: 1 }}>
-            Interactive Learning Experience
+            {themeMode === 'unfiltered' ? 'Unfiltered Learning Experience' : 'Interactive Learning Experience'}
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
             Load a Non-Linear Journey scenario to begin your personalized training experience.
