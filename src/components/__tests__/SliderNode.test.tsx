@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, userEvent, createMockSliderQuestion } from '../../test/utils';
+import { render, screen, userEvent, fireEvent } from '../../test/test-utils';
+import { createMockSliderQuestion } from '../../test/utils';
 import { SliderNode } from '../SliderNode';
-import { fireEvent } from '@testing-library/react';
 
 describe('SliderNode', () => {
   const mockOnAnswer = vi.fn();

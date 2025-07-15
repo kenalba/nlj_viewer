@@ -1,6 +1,7 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { useGameEngine } from '../hooks/useGameEngine';
+import { useXAPI } from './XAPIContext';
 import type { GameState, NLJScenario } from '../types/nlj';
 
 interface GameContextValue {
@@ -28,9 +29,36 @@ interface GameProviderProps {
 
 export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
   const gameEngine = useGameEngine();
+  const { trackActivityCompleted } = useXAPI();
+
+  // Enhanced complete scenario with xAPI tracking
+  const completeScenario = useCallback((score?: number) => {
+    // Get current scenario from state to track completion
+    const currentScenario = {
+      id: gameEngine.state.scenarioId,
+      name: 'Current Scenario', // We'll need to store this in game state
+      nodes: [],
+      links: [],
+      orientation: 'horizontal' as const,
+      activityType: 'training' as const
+    };
+    
+    // Call original complete scenario
+    gameEngine.completeScenario(score);
+    
+    // Track completion in xAPI
+    if (currentScenario.id) {
+      trackActivityCompleted(currentScenario, score);
+    }
+  }, [gameEngine, trackActivityCompleted]);
+
+  const contextValue: GameContextValue = {
+    ...gameEngine,
+    completeScenario
+  };
 
   return (
-    <GameContext.Provider value={gameEngine}>
+    <GameContext.Provider value={contextValue}>
       {children}
     </GameContext.Provider>
   );

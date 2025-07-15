@@ -30,6 +30,12 @@
 // ============================================================================
 
 export {
+  // Constants
+  XAPI_VERBS,
+  XAPI_ACTIVITY_TYPES
+} from './types';
+
+export type {
   // Core xAPI Types
   XAPIStatement,
   XAPIActor,
@@ -57,11 +63,7 @@ export {
   // Event Types
   LearningActivityEvent,
   QuestionEvent,
-  SurveyEvent,
-  
-  // Constants
-  XAPI_VERBS,
-  XAPI_ACTIVITY_TYPES
+  SurveyEvent
 } from './types';
 
 // ============================================================================
@@ -87,9 +89,6 @@ export {
 
 export {
   XAPIClient,
-  XAPIClientConfig,
-  XAPIClientResponse,
-  XAPIOfflineStorage,
   LocalStorageXAPIStorage,
   OfflineXAPIClient,
   createXAPIClient,
@@ -97,12 +96,18 @@ export {
   createMockXAPIClient
 } from './client';
 
+export type {
+  XAPIClientConfig,
+  XAPIClientResponse,
+  XAPIOfflineStorage
+} from './client';
+
 // ============================================================================
 // Convenience Re-exports
 // ============================================================================
 
-import { createStatement, createActor, createActivity, XAPI_VERBS } from './builder';
-import { XAPI_ACTIVITY_TYPES } from './types';
+import { createStatement, createActor, createActivity } from './builder';
+import { XAPI_VERBS, XAPI_ACTIVITY_TYPES } from './types';
 
 export const xapi = {
   // Factory functions

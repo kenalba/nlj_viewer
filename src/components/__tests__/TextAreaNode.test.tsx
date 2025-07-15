@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, userEvent, createMockTextAreaQuestion } from '../../test/utils';
+import { render, screen, userEvent } from '../../test/test-utils';
+import { createMockTextAreaQuestion } from '../../test/utils';
 import { TextAreaNode } from '../TextAreaNode';
 
 describe('TextAreaNode', () => {

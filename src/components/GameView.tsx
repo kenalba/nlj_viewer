@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   Box, 
   AppBar, 
@@ -12,6 +12,7 @@ import type { NLJScenario } from '../types/nlj';
 import { NodeRenderer } from './NodeRenderer';
 import { CardTransition } from './CardTransition';
 import { useGameContext } from '../contexts/GameContext';
+import { useXAPI } from '../contexts/XAPIContext';
 import { findNodeById } from '../utils/scenarioUtils';
 import { ThemeToggle } from './ThemeToggle';
 import { SoundToggle } from './SoundToggle';
@@ -23,8 +24,16 @@ interface GameViewProps {
 
 export const GameView: React.FC<GameViewProps> = ({ scenario, onHome }) => {
   const { state } = useGameContext();
+  const { trackActivityLaunched } = useXAPI();
   
   const currentNode = findNodeById(scenario, state.currentNodeId);
+  
+  // Track activity launch only once when component mounts
+  useEffect(() => {
+    trackActivityLaunched(scenario);
+  }, [scenario.id]); // Only depend on scenario ID, not the function
+  
+  // Don't auto-track node visits - only track user actions
 
   if (!currentNode) {
     return (

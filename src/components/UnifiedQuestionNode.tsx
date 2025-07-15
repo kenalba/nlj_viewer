@@ -14,6 +14,7 @@ import type { QuestionNode, ChoiceNode } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useTheme } from '../contexts/ThemeContext';
+import { useXAPI } from '../contexts/XAPIContext';
 
 interface UnifiedQuestionNodeProps {
   question: QuestionNode;
@@ -31,16 +32,19 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
   const [selectedChoice, setSelectedChoice] = useState<string>('');
   const [showFeedback, setShowFeedback] = useState(false);
   const [selectedChoiceNode, setSelectedChoiceNode] = useState<ChoiceNode | null>(null);
+  const [questionStartTime] = useState(new Date());
   const feedbackRef = useRef<HTMLDivElement>(null);
   const { themeMode } = useTheme();
+  const { trackQuestionAnswered } = useXAPI();
   const muiTheme = useMuiTheme();
 
-  // Reset state when choices change (new question)
+  // Reset state when question changes (not when choices re-render)
   useEffect(() => {
+    console.log('🔍 Question changed, resetting feedback state. Question ID:', question.id);
     setSelectedChoice('');
     setShowFeedback(false);
     setSelectedChoiceNode(null);
-  }, [choices]);
+  }, [question.id]);
 
   // Auto-scroll to feedback when it appears
   useEffect(() => {
@@ -58,15 +62,36 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
   }, [showFeedback]);
 
   const handleChoiceClick = (choice: ChoiceNode) => {
+    console.log('🔍 Choice clicked:', choice.text, 'id:', choice.id);
     if (disabled || showFeedback) return;
+    console.log('🔍 Setting selectedChoice to:', choice.id);
     setSelectedChoice(choice.id);
   };
 
   const handleSubmit = () => {
+    console.log('🔍 UnifiedQuestion handleSubmit called:', { selectedChoice, choicesLength: choices.length });
     const choice = choices.find(c => c.id === selectedChoice);
+    console.log('🔍 Found choice:', choice?.text || 'NOT FOUND');
+    
     if (choice) {
+      console.log('🔍 Setting feedback states');
       setSelectedChoiceNode(choice);
       setShowFeedback(true);
+      
+      // Track question interaction
+      const timeSpent = Math.round((new Date().getTime() - questionStartTime.getTime()) / 1000);
+      const isCorrect = choice.choiceType === 'CORRECT';
+      
+      trackQuestionAnswered(
+        question.id,
+        'multiple-choice',
+        choice.text,
+        isCorrect,
+        timeSpent,
+        1 // First attempt
+      );
+    } else {
+      console.log('🚫 No choice found for selectedChoice:', selectedChoice);
     }
   };
 
@@ -243,7 +268,9 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
               }
             }}
           >
-            {selectedChoiceNode && (
+            {(() => {
+              console.log('🔍 Feedback render check:', { showFeedback, hasSelectedChoiceNode: !!selectedChoiceNode });
+              return selectedChoiceNode ? (
               <Box 
                 ref={feedbackRef}
                 sx={{
@@ -311,7 +338,8 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
                   </Button>
                 </Box>
               </Box>
-            )}
+              ) : null;
+            })()}
           </Collapse>
         </Box>
       )}

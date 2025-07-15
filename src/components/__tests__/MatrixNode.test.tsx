@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, userEvent, createMockMatrixQuestion } from '../../test/utils';
+import { render, screen, userEvent } from '../../test/test-utils';
+import { createMockMatrixQuestion } from '../../test/utils';
 import { MatrixNode } from '../MatrixNode';
 
 describe('MatrixNode', () => {

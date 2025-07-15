@@ -6,6 +6,10 @@
  */
 
 import {
+  XAPI_VERBS,
+  XAPI_ACTIVITY_TYPES
+} from './types';
+import type {
   XAPIStatement,
   XAPIActor,
   XAPIVerb,
@@ -15,8 +19,6 @@ import {
   XAPIStatementBuilder,
   XAPIValidationResult,
   XAPIValidationError,
-  XAPI_VERBS,
-  XAPI_ACTIVITY_TYPES,
   LearningActivityEvent,
   QuestionEvent,
   SurveyEvent

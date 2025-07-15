@@ -5,6 +5,7 @@ import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useXAPI } from '../contexts/XAPIContext';
 
 interface LikertScaleNodeProps {
   question: LikertScaleNodeType;
@@ -16,6 +17,7 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
   const [showValidation, setShowValidation] = useState(false);
   const { playSound } = useAudio();
   const { themeMode } = useTheme();
+  const { trackSurveyResponse } = useXAPI();
 
   const handleValueSelect = useCallback((value: number) => {
     setSelectedValue(value);
@@ -40,8 +42,16 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
     }
 
     playSound('navigate');
+    
+    // Track survey response
+    trackSurveyResponse(
+      'current-survey', // We'll get this from context later
+      question.id,
+      selectedValue?.toString() || '0'
+    );
+    
     onAnswer(selectedValue || 0);
-  }, [question.required, selectedValue, playSound, onAnswer]);
+  }, [question.required, selectedValue, playSound, onAnswer, trackSurveyResponse]);
 
   // Keyboard support
   useEffect(() => {

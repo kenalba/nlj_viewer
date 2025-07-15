@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, userEvent, createMockLikertQuestion } from '../../test/utils';
+import { render, screen, userEvent } from '../../test/test-utils';
+import { createMockLikertQuestion } from '../../test/utils';
 import { LikertScaleNode } from '../LikertScaleNode';
 
 describe('LikertScaleNode', () => {

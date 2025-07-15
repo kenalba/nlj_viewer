@@ -5,7 +5,7 @@
  * Can be used independently in other projects
  */
 
-import { XAPIStatement, XAPIConfig } from './types';
+import type { XAPIStatement } from './types';
 
 // ============================================================================
 // Client Configuration
@@ -36,7 +36,7 @@ export interface XAPIClientResponse {
 export class XAPIClient {
   private config: XAPIClientConfig;
   private pendingStatements: XAPIStatement[] = [];
-  private batchTimeout: NodeJS.Timeout | null = null;
+  private batchTimeout: number | null = null;
 
   constructor(config: XAPIClientConfig) {
     this.config = {
@@ -388,7 +388,7 @@ export function createOfflineXAPIClient(config: XAPIClientConfig, storage?: XAPI
 /**
  * Create a mock xAPI client for testing
  */
-export function createMockXAPIClient(): XAPIClient {
+export function createMockXAPIClient(): Partial<XAPIClient> {
   return {
     sendStatement: async (statement: XAPIStatement) => ({
       success: true,
@@ -406,5 +406,5 @@ export function createMockXAPIClient(): XAPIClient {
     getStatement: async () => ({ success: true, statusCode: 200, data: {} }),
     getStatements: async () => ({ success: true, statusCode: 200, data: [] }),
     testConnection: async () => ({ success: true, statusCode: 200, data: {} })
-  } as XAPIClient;
+  };
 }

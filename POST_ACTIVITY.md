@@ -326,7 +326,7 @@ interface AssessmentResults {
 - **Certificate Generation**: For passed training scenarios
 
 ### Survey Results Display
-- **Completion Confirmation**: Thank you message with completion confirmation
+- **Completion Confirmation**: Thank you message with completion confirmationI
 - **Response Summary**: High-level summary of responses (if not anonymous)
 - **Participation Stats**: Response rate, completion time
 - **Next Steps**: Information about how responses will be used

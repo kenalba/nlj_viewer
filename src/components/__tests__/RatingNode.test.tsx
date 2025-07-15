@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, userEvent, createMockRatingQuestion } from '../../test/utils';
-import { fireEvent } from '@testing-library/react';
+import { render, screen, userEvent, fireEvent } from '../../test/test-utils';
+import { createMockRatingQuestion } from '../../test/utils';
 import { RatingNode } from '../RatingNode';
 
 describe('RatingNode', () => {

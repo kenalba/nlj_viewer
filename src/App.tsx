@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { GameProvider, useGameContext } from './contexts/GameContext';
+import { XAPIProvider } from './contexts/XAPIContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { AudioProvider } from './contexts/AudioContext';
 import { ScenarioLoader } from './components/ScenarioLoader';
@@ -47,9 +48,11 @@ const AppWithTheme: React.FC = () => {
     <MuiThemeProvider theme={currentTheme}>
       <CssBaseline />
       <AudioProvider>
-        <GameProvider>
-          <AppContent />
-        </GameProvider>
+        <XAPIProvider enabled={true}>
+          <GameProvider>
+            <AppContent />
+          </GameProvider>
+        </XAPIProvider>
       </AudioProvider>
     </MuiThemeProvider>
   );

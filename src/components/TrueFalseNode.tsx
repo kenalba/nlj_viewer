@@ -5,6 +5,7 @@ import type { TrueFalseNode as TrueFalseNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
+import { useXAPI } from '../contexts/XAPIContext';
 
 interface TrueFalseNodeProps {
   question: TrueFalseNodeType;
@@ -14,7 +15,9 @@ interface TrueFalseNodeProps {
 export const TrueFalseNode: React.FC<TrueFalseNodeProps> = ({ question, onAnswer }) => {
   const [selectedAnswer, setSelectedAnswer] = useState<boolean | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [questionStartTime] = useState(new Date());
   const { playSound } = useAudio();
+  const { trackQuestionAnswered } = useXAPI();
 
   const handleAnswer = (answer: boolean) => {
     setSelectedAnswer(answer);
@@ -27,6 +30,17 @@ export const TrueFalseNode: React.FC<TrueFalseNodeProps> = ({ question, onAnswer
     } else {
       playSound('incorrect');
     }
+    
+    // Track question interaction
+    const timeSpent = Math.round((new Date().getTime() - questionStartTime.getTime()) / 1000);
+    trackQuestionAnswered(
+      question.id,
+      'true-false',
+      answer.toString(),
+      isCorrect,
+      timeSpent,
+      1 // First attempt
+    );
     
     // Delay the callback to show feedback
     setTimeout(() => {

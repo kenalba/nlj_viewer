@@ -1,8 +1,9 @@
-import { render, screen, fireEvent, waitFor, vi } from '../../test/utils';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '../../test/test-utils';
+import { createMockLikertQuestion, createMockRatingQuestion } from '../../test/utils';
 import { NodeRenderer } from '../NodeRenderer';
 import { LikertScaleNode } from '../LikertScaleNode';
 import { RatingNode } from '../RatingNode';
-import { createMockLikertQuestion, createMockRatingQuestion } from '../../test/utils';
 import type { NLJScenario } from '../../types/nlj';
 import { GameContext } from '../../contexts/GameContext';
 

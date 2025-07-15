@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
-import { Box, Typography, Button, useTheme as useMuiTheme } from '@mui/material';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Box, Typography, Button, useTheme as useMuiTheme, Stack } from '@mui/material';
+import { Analytics, Refresh } from '@mui/icons-material';
 import type { NLJNode, NLJScenario, ChoiceNode } from '../types/nlj';
 import { UnifiedQuestionNode } from './UnifiedQuestionNode';
 import { InterstitialPanel } from './InterstitialPanel';
@@ -13,9 +14,11 @@ import { RatingNode } from './RatingNode';
 import { SliderNode } from './SliderNode';
 import { TextAreaNode } from './TextAreaNode';
 import { MatrixNode } from './MatrixNode';
+import { XAPIResultsScreen } from './XAPIResultsScreen';
 import { useGameContext } from '../contexts/GameContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAudio } from '../contexts/AudioContext';
+import { useXAPI } from '../contexts/XAPIContext';
 import { 
   findNextNode, 
   getChoicesForQuestion, 
@@ -34,6 +37,8 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
   const { themeMode } = useTheme();
   const muiTheme = useMuiTheme();
   const { playSound } = useAudio();
+  const { isEnabled: xapiEnabled } = useXAPI();
+  const [showResults, setShowResults] = useState(false);
 
   // Scroll to top when node changes
   useEffect(() => {
@@ -55,7 +60,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     }
   }, [node.id, node.type, state.completed, completeScenario]);
 
-  const handleChoiceSelect = (choice: ChoiceNode) => {
+  const handleChoiceSelect = useCallback((choice: ChoiceNode) => {
     // Play sound based on choice type
     if (choice.choiceType === 'CORRECT') {
       playSound('correct');
@@ -94,9 +99,9 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
       }
       navigateToNode(nextNodeId);
     }
-  };
+  }, [playSound, state.variables, updateVariable, scenario, node.id, completeScenario, navigateToNode]);
 
-  const handleContinue = () => {
+  const handleContinue = useCallback(() => {
     playSound('navigate');
     
     debugLog('Continue', `User clicked continue from node: ${node.id}`, {
@@ -112,9 +117,9 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
       }
       navigateToNode(nextNodeId);
     }
-  };
+  }, [playSound, node.id, node.type, scenario, completeScenario, navigateToNode]);
 
-  const handleRestart = () => {
+  const handleRestart = useCallback(() => {
     playSound('navigate');
     
     debugLog('Restart', 'User clicked restart', {
@@ -126,9 +131,9 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     if (startNode) {
       navigateToNode(startNode.id);
     }
-  };
+  }, [playSound, node.id, scenario.id, scenario.nodes, navigateToNode]);
 
-  const handleQuestionAnswer = (isCorrect: boolean, response?: any) => {
+  const handleQuestionAnswer = useCallback((isCorrect: boolean, response?: any) => {
     debugLog('Question Answer', `User answered question: ${isCorrect ? 'correct' : 'incorrect'}`, {
       currentNode: node.id,
       nodeType: node.type,
@@ -168,7 +173,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
         console.error(`Navigation failed: Could not find next node for ${node.id}`);
       }
     }
-  };
+  }, [node.id, node.type, state.score, scenario, navigateToNode, playSound, completeScenario]);
 
   switch (node.type) {
     case 'start':
@@ -205,6 +210,16 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
       );
 
     case 'end': {
+      // Show xAPI results screen if enabled and user clicked to view results
+      if (showResults && xapiEnabled) {
+        return (
+          <XAPIResultsScreen
+            onBack={() => setShowResults(false)}
+            scenarioName={scenario.name}
+          />
+        );
+      }
+
       return (
         <NodeCard variant="interstitial" animate={false}>
           <Typography variant="h4" gutterBottom align="center" color="primary">
@@ -219,25 +234,48 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
             </Typography>
           )}
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-            <Button
-              variant="outlined"
-              onClick={handleRestart}
-              size="large"
-              sx={{
-                borderRadius: (muiTheme.shape.borderRadius as number) * 3,
-                ...(themeMode === 'unfiltered' && {
-                  borderColor: '#F6FA24',
-                  color: '#F6FA24',
-                  '&:hover': {
-                    borderColor: '#FFD700',
-                    backgroundColor: 'rgba(246, 250, 36, 0.1)',
-                    color: '#FFD700',
-                  },
-                }),
-              }}
-            >
-              Restart Training
-            </Button>
+            <Stack direction="row" spacing={2}>
+              {xapiEnabled && (
+                <Button
+                  variant="contained"
+                  startIcon={<Analytics />}
+                  onClick={() => setShowResults(true)}
+                  size="large"
+                  sx={{
+                    borderRadius: (muiTheme.shape.borderRadius as number) * 3,
+                    ...(themeMode === 'unfiltered' && {
+                      backgroundColor: '#F6FA24',
+                      color: '#000000',
+                      '&:hover': {
+                        backgroundColor: '#FFD700',
+                      },
+                    }),
+                  }}
+                >
+                  View Results
+                </Button>
+              )}
+              <Button
+                variant="outlined"
+                startIcon={<Refresh />}
+                onClick={handleRestart}
+                size="large"
+                sx={{
+                  borderRadius: (muiTheme.shape.borderRadius as number) * 3,
+                  ...(themeMode === 'unfiltered' && {
+                    borderColor: '#F6FA24',
+                    color: '#F6FA24',
+                    '&:hover': {
+                      borderColor: '#FFD700',
+                      backgroundColor: 'rgba(246, 250, 36, 0.1)',
+                      color: '#FFD700',
+                    },
+                  }),
+                }}
+              >
+                Restart Training
+              </Button>
+            </Stack>
           </Box>
         </NodeCard>
       );
