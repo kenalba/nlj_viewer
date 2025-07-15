@@ -2,41 +2,31 @@ import React, { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
-import { ThemeContext } from '../contexts/ThemeContext';
-import { AudioContext } from '../contexts/AudioContext';
-import { GameContext } from '../contexts/GameContext';
-import { createTheme } from '../theme/theme';
+import { ThemeProvider as CustomThemeProvider } from '../contexts/ThemeContext';
+import { AudioProvider, useAudio } from '../contexts/AudioContext';
+import { GameProvider, useGameContext } from '../contexts/GameContext';
+import { hyundaiTheme } from '../theme/hyundaiTheme';
+import { unfilteredTheme } from '../theme/unfilteredTheme';
 import type { GameState } from '../types/nlj';
 
 // Mock theme context
 const MockThemeProvider = ({ children, themeMode = 'hyundai' }: { children: React.ReactNode; themeMode?: 'hyundai' | 'unfiltered' }) => {
-  const theme = createTheme(themeMode);
+  const theme = themeMode === 'hyundai' ? hyundaiTheme : unfilteredTheme;
   
   return (
-    <ThemeContext.Provider value={{ 
-      themeMode, 
-      toggleTheme: () => {},
-      setTheme: () => {},
-    }}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
-      </ThemeProvider>
-    </ThemeContext.Provider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {children}
+    </ThemeProvider>
   );
 };
 
 // Mock audio context
 const MockAudioProvider = ({ children }: { children: React.ReactNode }) => {
   return (
-    <AudioContext.Provider value={{
-      playSound: () => {},
-      isEnabled: true,
-      toggleSound: () => {},
-      setEnabled: () => {},
-    }}>
+    <AudioProvider>
       {children}
-    </AudioContext.Provider>
+    </AudioProvider>
   );
 };
 
@@ -48,31 +38,10 @@ const MockGameProvider = ({
   children: React.ReactNode; 
   initialState?: Partial<GameState>;
 }) => {
-  const defaultState: GameState = {
-    scenarioId: 'test-scenario',
-    currentNodeId: 'test-node',
-    variables: {},
-    visitedNodes: new Set(),
-    completed: false,
-    activityType: 'survey',
-    responses: {},
-    sessionId: 'test-session',
-    startTime: new Date(),
-    ...initialState,
-  };
-
   return (
-    <GameContext.Provider value={{
-      state: defaultState,
-      dispatch: () => {},
-      loadScenario: () => {},
-      navigateToNode: () => {},
-      updateVariable: () => {},
-      completeScenario: () => {},
-      resetGame: () => {},
-    }}>
+    <GameProvider>
       {children}
-    </GameContext.Provider>
+    </GameProvider>
   );
 };
 
@@ -87,20 +56,20 @@ const AllProvidersWrapper = ({
   gameState?: Partial<GameState>;
 }) => {
   return (
-    <MockThemeProvider themeMode={themeMode}>
+    <CustomThemeProvider>
       <MockAudioProvider>
         <MockGameProvider initialState={gameState}>
           {children}
         </MockGameProvider>
       </MockAudioProvider>
-    </MockThemeProvider>
+    </CustomThemeProvider>
   );
 };
 
 // Custom render function
 const customRender = (
   ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper') & {
+  options?: Omit<RenderOptions, 'wrapper'> & {
     themeMode?: 'hyundai' | 'unfiltered';
     gameState?: Partial<GameState>;
   }

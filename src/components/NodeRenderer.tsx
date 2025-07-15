@@ -133,16 +133,28 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     // Navigate to next node
     const nextNodeId = findNextNode(scenario, node.id);
     if (nextNodeId) {
+      // Always navigate to the next node first
+      navigateToNode(nextNodeId);
+      
+      // If the next node is an end node, play completion sound
       if (nextNodeId === 'end' || isScenarioComplete(scenario, nextNodeId)) {
+        playSound('complete');
+      }
+    } else {
+      // Check if we're actually at the end or if there's a navigation issue
+      const currentNode = scenario.nodes.find(n => n.id === node.id);
+      if (currentNode?.type === 'end') {
         playSound('complete');
         completeScenario();
       } else {
-        navigateToNode(nextNodeId);
+        // Navigation failed - this is likely a scenario structure issue
+        debugLog('Navigation Error', 'Could not find next node for survey question', {
+          currentNode: node.id,
+          nodeType: node.type,
+          availableLinks: scenario.links.filter(l => l.sourceNodeId === node.id),
+        });
+        console.error(`Navigation failed: Could not find next node for ${node.id}`);
       }
-    } else {
-      // If no next node found, we're at the end
-      playSound('complete');
-      completeScenario();
     }
   };
 
@@ -180,7 +192,18 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
         </NodeCard>
       );
 
-    case 'end':
+    case 'end': {
+      // Automatically complete scenario when end node is rendered
+      useEffect(() => {
+        if (!state.completed) {
+          debugLog('Completion', 'Scenario completed by reaching end node', {
+            nodeId: node.id,
+            nodeType: node.type,
+          });
+          completeScenario();
+        }
+      }, [node.id, state.completed, completeScenario]);
+
       return (
         <NodeCard variant="interstitial" animate={false}>
           <Typography variant="h4" gutterBottom align="center" color="primary">
@@ -217,11 +240,13 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
           </Box>
         </NodeCard>
       );
+    }
 
     case 'question': {
       const choices = getChoicesForQuestion(scenario, node.id);
       return (
         <UnifiedQuestionNode 
+          key={node.id}
           question={node} 
           choices={choices}
           onChoiceSelect={handleChoiceSelect}
@@ -232,6 +257,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     case 'interstitial_panel':
       return (
         <InterstitialPanel 
+          key={node.id}
           panel={node} 
           onContinue={handleContinue}
         />
@@ -240,6 +266,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     case 'true_false':
       return (
         <TrueFalseNode 
+          key={node.id}
           question={node} 
           onAnswer={handleQuestionAnswer}
         />
@@ -248,6 +275,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     case 'ordering':
       return (
         <OrderingNode 
+          key={node.id}
           question={node} 
           onAnswer={handleQuestionAnswer}
         />
@@ -256,6 +284,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     case 'matching':
       return (
         <MatchingNode 
+          key={node.id}
           question={node} 
           onAnswer={handleQuestionAnswer}
         />
@@ -264,6 +293,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     case 'short_answer':
       return (
         <ShortAnswerNode 
+          key={node.id}
           question={node} 
           onAnswer={handleQuestionAnswer}
         />
@@ -272,6 +302,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     case 'likert_scale':
       return (
         <LikertScaleNode 
+          key={node.id}
           question={node} 
           onAnswer={(response) => handleQuestionAnswer(true, response)}
         />
@@ -280,6 +311,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     case 'rating':
       return (
         <RatingNode 
+          key={node.id}
           question={node} 
           onAnswer={(response) => handleQuestionAnswer(true, response)}
         />
@@ -288,6 +320,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     case 'slider':
       return (
         <SliderNode 
+          key={node.id}
           question={node} 
           onAnswer={(response) => handleQuestionAnswer(true, response)}
         />
@@ -296,6 +329,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     case 'text_area':
       return (
         <TextAreaNode 
+          key={node.id}
           question={node} 
           onAnswer={(response) => handleQuestionAnswer(true, response)}
         />
@@ -304,6 +338,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     case 'matrix':
       return (
         <MatrixNode 
+          key={node.id}
           question={node} 
           onAnswer={(response) => handleQuestionAnswer(true, response)}
         />
