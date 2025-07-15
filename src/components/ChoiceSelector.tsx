@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   FormControl,
   RadioGroup,
@@ -26,6 +26,30 @@ export const ChoiceSelector: React.FC<ChoiceSelectorProps> = ({
   const [selectedChoice, setSelectedChoice] = useState<string>('');
   const [showFeedback, setShowFeedback] = useState(false);
   const [selectedChoiceNode, setSelectedChoiceNode] = useState<ChoiceNode | null>(null);
+  const feedbackRef = useRef<HTMLDivElement>(null);
+
+  // Reset state when choices change (new question)
+  useEffect(() => {
+    setSelectedChoice('');
+    setShowFeedback(false);
+    setSelectedChoiceNode(null);
+  }, [choices]);
+
+  // Auto-scroll to feedback when it appears
+  useEffect(() => {
+    if (showFeedback && feedbackRef.current) {
+      // Delay scroll to allow Collapse animation to complete
+      const timer = setTimeout(() => {
+        feedbackRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center',
+          inline: 'nearest'
+        });
+      }, 350); // Material-UI Collapse animation duration
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showFeedback]);
 
   const handleSubmit = () => {
     const choice = choices.find(c => c.id === selectedChoice);
@@ -105,7 +129,7 @@ export const ChoiceSelector: React.FC<ChoiceSelectorProps> = ({
 
       <Collapse in={showFeedback}>
         {selectedChoiceNode && (
-          <Box sx={{ mt: 3 }}>
+          <Box ref={feedbackRef} sx={{ mt: 3 }}>
             <Alert 
               severity={getFeedbackSeverity(selectedChoiceNode.choiceType)}
               sx={{ borderRadius: 2, mb: 2 }}
