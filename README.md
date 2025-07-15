@@ -4,9 +4,18 @@ A modern, responsive TypeScript React application for playing interactive Non-Li
 
 ## 🚀 Features
 
+- **Complete Question Type Support**: 
+  - **Multiple Choice**: Enhanced choice buttons with visual feedback
+  - **True/False**: Interactive buttons with immediate validation
+  - **Ordering**: Drag-and-drop item reordering with visual feedback
+  - **Matching**: Click-to-connect with visual connection lines
+  - **Short Answer**: Flexible text input with multiple correct answers
 - **Interactive Training Scenarios**: Play branching narrative training content with real-time feedback
+- **Trivie Excel Integration**: Load and convert Trivie quiz Excel files automatically
 - **Mobile-Responsive Design**: Optimized for both mobile and desktop with adaptive layouts
-- **Hyundai Branding**: Custom Material UI theme with professional black, silver, and blue accent colors
+- **Audio Feedback**: Comprehensive sound system with oscillator-based audio for user actions
+- **Visual Interactions**: Drag-and-drop, connection lines, and smooth animations
+- **Multi-Theme Support**: Switch between Hyundai and Unfiltered themes
 - **Media Support**: 
   - Responsive image and video display with click-to-enlarge functionality
   - Automatic aspect ratio preservation
@@ -40,17 +49,24 @@ Visit `http://localhost:5173` to load scenarios and begin training.
 ## 📋 Usage
 
 ### Loading Scenarios
-1. **Upload Custom Scenario**: Upload your own NLJ JSON file
-2. **Sample Scenarios**: Try included demo scenarios:
+1. **Upload NLJ Scenario**: Upload your own NLJ JSON file
+2. **Upload Trivie Excel**: Load Trivie quiz Excel files (automatically converted)
+3. **Sample Scenarios**: Try included demo scenarios:
    - FSA sales training modules
    - Hyundai Ioniq9 product knowledge
    - Interactive decision trees
+   - Trivie quiz samples
 
 ### Training Flow
-1. Select and load a scenario
-2. Progress through questions and interactive content
-3. Make choices with immediate feedback
-4. Click "Continue" to proceed at your own pace
+1. Select and load a scenario (NLJ JSON or Trivie Excel)
+2. Progress through various question types:
+   - **Multiple Choice**: Select from available options
+   - **True/False**: Click True or False buttons
+   - **Ordering**: Drag items to arrange in correct sequence
+   - **Matching**: Click items from both columns to connect them
+   - **Short Answer**: Type your response in the text field
+3. Receive immediate feedback with visual and audio cues
+4. Click "Continue" or answer questions to proceed
 5. Track progress via the header progress bar
 6. Complete the scenario and view results
 
@@ -63,10 +79,16 @@ Visit `http://localhost:5173` to load scenarios and begin training.
 
 ### Core Components
 - **GameEngine** (`useGameEngine.ts`): State management for scenario progression using React Context + useReducer
-- **NodeRenderer**: Dynamic rendering of question, choice, and interstitial panel nodes
-- **ScenarioLoader**: File upload and sample scenario selection with validation
+- **NodeRenderer**: Dynamic rendering of all question types and interstitial panel nodes
+- **ScenarioLoader**: File upload and sample scenario selection with Trivie Excel support
 - **GameView**: Main gameplay interface with navigation and progress tracking
 - **MediaViewer**: Responsive media display with click-to-enlarge functionality
+- **Question Components**: Specialized components for each question type
+  - `TrueFalseNode`: Interactive True/False buttons with feedback
+  - `OrderingNode`: Drag-and-drop item reordering with validation
+  - `MatchingNode`: Click-to-connect matching with visual connection lines
+  - `ShortAnswerNode`: Text input with flexible answer validation
+  - `UnifiedQuestionNode`: Enhanced multiple choice with improved choice buttons
 
 ### Type System
 ```typescript
@@ -80,10 +102,11 @@ interface NLJScenario {
 
 interface NLJNode {
   id: string;
-  type: 'start' | 'question' | 'choice' | 'interstitial_panel' | 'end';
+  type: 'start' | 'question' | 'choice' | 'interstitial_panel' | 'end' | 
+        'true_false' | 'ordering' | 'matching' | 'short_answer';
   text: string;
   media?: Media;
-  // ... additional properties
+  // ... additional properties based on question type
 }
 ```
 
@@ -148,7 +171,8 @@ src/
 │   └── nlj.ts          # NLJ schema definitions
 ├── utils/              # Utility functions
 │   ├── debug.ts        # Debug logging system
-│   └── scenarioUtils.ts # Scenario processing
+│   ├── scenarioUtils.ts # Scenario processing
+│   └── trivieInterpreter.ts # Trivie Excel parsing and conversion
 ├── theme/              # Material UI theme
 │   └── hyundaiTheme.ts # Custom Hyundai theme
 └── static/             # Static assets
@@ -158,12 +182,14 @@ src/
 ## 🌐 Schema Support
 
 Supports the full NLJ schema including:
-- **Question/Choice nodes** with media and variable tracking
-- **Interstitial panels** for narrative content
-- **Variable definitions** with conditional logic
-- **Link relationships** for scenario flow
-- **Media objects** (images, videos, audio metadata)
+- **Question Types**: Multiple Choice, True/False, Ordering, Matching, Short Answer
+- **Interactive Elements**: Drag-and-drop, visual connections, text input validation
+- **Interstitial panels** for narrative content between questions
+- **Variable definitions** with conditional logic and scoring
+- **Link relationships** for both navigation and parent-child connections
+- **Media objects** (images, videos, audio metadata) with responsive display
 - **Goal tracking** and completion states
+- **Trivie Excel Import**: Automatic conversion from Trivie quiz format
 
 ## 📱 Responsive Design
 
@@ -199,12 +225,13 @@ Supports the full NLJ schema including:
 
 ## 🔮 Future Enhancements
 
-- **LRS Integration**: xAPI event tracking for learning analytics
+- **xAPI/TinCan Integration**: Emit learning events for LRS (Learning Record Store) integration
 - **Offline Support**: Service worker for offline scenario access
 - **Analytics Dashboard**: Training completion and performance metrics
 - **Scenario Authoring**: Built-in tools for creating NLJ scenarios
 - **Multi-language Support**: Internationalization for global deployment
 - **Advanced Media**: 360° images, interactive hotspots, AR content
+- **Enhanced Question Types**: Fill-in-the-blank, hotspot questions, and more
 
 ## 🤝 Contributing
 

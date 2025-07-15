@@ -6,7 +6,6 @@ import {
   Typography,
   Button,
   Radio,
-  FormControlLabel,
   Stack,
 } from '@mui/material';
 import type { ChoiceNode } from '../types/nlj';

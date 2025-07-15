@@ -148,7 +148,7 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
           </Typography>
           
           <Stack spacing={1.5} sx={{ mb: 3 }}>
-            {choices.map((choice, index) => (
+            {choices.map((choice) => (
               <Box
                 key={choice.id}
                 onClick={() => handleChoiceClick(choice)}

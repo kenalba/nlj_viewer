@@ -1,4 +1,5 @@
-import React, { useState, ReactNode } from 'react';
+import React, { useState } from 'react';
+import type { ReactNode } from 'react';
 import { Card, CardContent, Box, Fade, Grow, useTheme as useMuiTheme } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { useTheme } from '../contexts/ThemeContext';

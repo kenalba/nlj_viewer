@@ -22,14 +22,13 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
   const [selectedRight, setSelectedRight] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
   const { playSound } = useAudio();
 
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        setContainerDimensions({ width: rect.width, height: rect.height });
+        // Force re-render of connection lines when matches change
+        containerRef.current.style.transform = 'translateZ(0)';
       }
     };
 
@@ -184,7 +183,7 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
   const renderConnectionLines = () => {
     if (!containerRef.current || userMatches.length === 0) return null;
 
-    const lines = userMatches.map((match, index) => {
+    const lines = userMatches.map((match) => {
       const leftElement = containerRef.current?.querySelector(`[data-left-id="${match.leftId}"]`);
       const rightElement = containerRef.current?.querySelector(`[data-right-id="${match.rightId}"]`);
       
