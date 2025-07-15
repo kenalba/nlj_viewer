@@ -14,9 +14,11 @@ A TypeScript React application for playing interactive Non-Linear Journey (NLJ) 
 - **Survey System**: Comprehensive survey question types with automotive and cross-industry templates
 - **Media Support**: Images, videos, and rich content integration
 - **Type-Safe**: Full TypeScript coverage for robust development
-- **Comprehensive Testing**: Full test suite with VSCode integration (97 tests passing)
+- **Comprehensive Testing**: Full test suite with VSCode integration (120 tests passing)
 - **Deployment-Ready**: All TypeScript build errors resolved and pre-deployment verification script included
 - **Keyboard Navigation**: Full keyboard support for accessibility (arrow keys, Enter, number keys)
+  - **UnifiedQuestionNode**: Number keys (1-9) for choice selection, Enter to submit/continue
+  - **TrueFalseNode**: 1 for True, 2 for False, Enter to submit/continue
 - **Audio Feedback**: Oscillator-based audio system with user-controlled sound toggle
 - **Multi-Theme Support**: Hyundai and Unfiltered themes with dynamic switching
 - **xAPI Integration**: Comprehensive event tracking with learning analytics and post-activity results
@@ -40,11 +42,11 @@ Visit `http://localhost:5173` to load scenarios.
 - **ScenarioLoader**: File upload and sample scenario selection with Trivie Excel support
 - **GameView**: Main gameplay interface with progress tracking
 - **Question Components**: Specialized components for each question type
-  - `TrueFalseNode`: Interactive True/False buttons with feedback
+  - `TrueFalseNode`: Interactive True/False buttons with submit/continue workflow and keyboard support
   - `OrderingNode`: Drag-and-drop item reordering with validation
-  - `MatchingNode`: Click-to-connect matching with visual connection lines
+  - `MatchingNode`: Click-to-connect matching with visual connection lines and manual continue
   - `ShortAnswerNode`: Text input with flexible answer validation
-  - `UnifiedQuestionNode`: Multiple choice with enhanced choice buttons
+  - `UnifiedQuestionNode`: Multiple choice with enhanced choice buttons and comprehensive keyboard support
   - `LikertScaleNode`: 1-5, 1-7, 1-10+ scales with custom labels
   - `RatingNode`: Star ratings, numeric scales, and categorical ratings
   - `MatrixNode`: Grid-based questions with responsive design
@@ -87,7 +89,7 @@ React Context + useReducer pattern for:
 npm run dev          # Development server
 npm run build        # Production build
 npm run preview      # Preview production build
-npm run test         # Run test suite (97 tests passing)
+npm run test         # Run test suite (120 tests passing)
 npm run test:ui      # Run tests with UI
 npm run test:coverage # Run tests with coverage
 npm run lint         # Run ESLint (39 non-critical issues remaining)
@@ -139,11 +141,15 @@ Supports comprehensive activity schema including:
 ## Current Development Status
 
 ✅ **Core System**: Fully functional with all question types implemented
-✅ **Testing**: 97 tests passing, comprehensive test coverage
+✅ **Testing**: 120 tests passing, comprehensive test coverage with UnifiedQuestionNode coverage
 ✅ **Deployment**: TypeScript build errors resolved, deployment-ready
-✅ **UI/UX**: Responsive design, keyboard navigation, audio feedback
+✅ **UI/UX**: Responsive design, enhanced keyboard navigation, audio feedback
 ✅ **xAPI Integration**: Complete event tracking system with learning analytics
-✅ **Bug Fixes**: UnifiedQuestionNode feedback display issue resolved
+✅ **Bug Fixes**: 
+  - UnifiedQuestionNode feedback display issue resolved
+  - React error #310 in completion screen fixed (hooks moved to top-level)
+  - TrueFalseNode enhanced with submit/continue workflow
+  - MatchingNode auto-proceeding fixed with manual continue button
 
 ## xAPI Integration - Phase 1 Complete
 

@@ -61,6 +61,20 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     }
   }, [node.id, node.type, state.completed, completeScenario]);
 
+  // Trigger confetti effect when completion screen is shown
+  useEffect(() => {
+    if (node.type === 'end' && state.completed) {
+      const timer = setTimeout(() => {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [node.type, state.completed]);
+
   const handleChoiceSelect = useCallback((choice: ChoiceNode) => {
     // Play sound based on choice type
     if (choice.choiceType === 'CORRECT') {
@@ -221,17 +235,6 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
         );
       }
 
-      // Trigger confetti effect when completion screen is shown
-      useEffect(() => {
-        const timer = setTimeout(() => {
-          confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-          });
-        }, 500);
-        return () => clearTimeout(timer);
-      }, []);
 
       return (
         <NodeCard variant="interstitial" animate={false}>

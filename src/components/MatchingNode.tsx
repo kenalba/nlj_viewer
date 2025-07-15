@@ -5,6 +5,7 @@ import type { MatchingNode as MatchingNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
+import { useXAPI } from '../contexts/XAPIContext';
 
 interface MatchingNodeProps {
   question: MatchingNodeType;
@@ -21,8 +22,10 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
   const [selectedRight, setSelectedRight] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [questionStartTime] = useState(new Date());
   const containerRef = useRef<HTMLDivElement>(null);
   const { playSound } = useAudio();
+  const { trackQuestionAnswered } = useXAPI();
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -136,10 +139,27 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
       playSound('incorrect');
     }
     
-    // Delay the callback to show feedback
-    setTimeout(() => {
-      onAnswer(isCorrect);
-    }, 2000);
+    // Track question interaction
+    const timeSpent = Math.round((new Date().getTime() - questionStartTime.getTime()) / 1000);
+    trackQuestionAnswered(
+      question.id,
+      'matching',
+      JSON.stringify(userMatches),
+      isCorrect,
+      timeSpent,
+      1 // First attempt
+    );
+  };
+
+  const handleContinue = () => {
+    const isCorrect = userMatches.length === question.correctMatches.length &&
+      userMatches.every(userMatch => 
+        question.correctMatches.some(correctMatch => 
+          correctMatch.leftId === userMatch.leftId && 
+          correctMatch.rightId === userMatch.rightId
+        )
+      );
+    onAnswer(isCorrect);
   };
 
   const isMatchCorrect = (leftId: string, rightId: string) => {
@@ -402,31 +422,48 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
         </Box>
       </Box>
 
-      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={showFeedback || userMatches.length === 0}
-          sx={{ borderRadius: 3, minWidth: 120 }}
-        >
-          Submit Matches
-        </Button>
-      </Box>
+      {/* Submit Button */}
+      {!showFeedback && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={userMatches.length === 0}
+            sx={{ borderRadius: 3, minWidth: 120 }}
+          >
+            Submit Matches
+          </Button>
+        </Box>
+      )}
 
       {showFeedback && (
-        <Alert 
-          severity={getFeedbackSeverity() as 'success' | 'error'} 
-          sx={{ 
-            mt: 2,
-            borderRadius: 2,
-            '& .MuiAlert-message': {
-              width: '100%',
-              textAlign: 'center'
-            }
-          }}
-        >
-          {getFeedbackMessage()}
-        </Alert>
+        <Box>
+          <Alert 
+            severity={getFeedbackSeverity() as 'success' | 'error'} 
+            sx={{ 
+              mt: 2,
+              mb: 2,
+              borderRadius: 2,
+              '& .MuiAlert-message': {
+                width: '100%',
+                textAlign: 'center'
+              }
+            }}
+          >
+            {getFeedbackMessage()}
+          </Alert>
+          
+          {/* Continue Button */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Button
+              variant="contained"
+              onClick={handleContinue}
+              sx={{ borderRadius: 3, minWidth: 120 }}
+            >
+              Continue
+            </Button>
+          </Box>
+        </Box>
       )}
     </NodeCard>
   );
