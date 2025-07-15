@@ -63,7 +63,7 @@ export const ScenarioLoader: React.FC = () => {
     setError(null);
     
     try {
-      const response = await fetch(`/static/sample_nljs/${filename}`);
+      const response = await fetch(`${import.meta.env.BASE_URL}static/sample_nljs/${filename}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
