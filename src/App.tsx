@@ -7,6 +7,7 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { AudioProvider } from './contexts/AudioContext';
 import { ScenarioLoader } from './components/ScenarioLoader';
 import { GameView } from './components/GameView';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { debugLog, isDebugEnabled } from './utils/debug';
 
 const AppContent: React.FC = () => {
@@ -47,13 +48,15 @@ const AppWithTheme: React.FC = () => {
   return (
     <MuiThemeProvider theme={currentTheme}>
       <CssBaseline />
-      <AudioProvider>
-        <XAPIProvider enabled={true}>
-          <GameProvider>
-            <AppContent />
-          </GameProvider>
-        </XAPIProvider>
-      </AudioProvider>
+      <ErrorBoundary>
+        <AudioProvider>
+          <XAPIProvider enabled={true}>
+            <GameProvider>
+              <AppContent />
+            </GameProvider>
+          </XAPIProvider>
+        </AudioProvider>
+      </ErrorBoundary>
     </MuiThemeProvider>
   );
 };

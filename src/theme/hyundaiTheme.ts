@@ -45,6 +45,26 @@ export const hyundaiTheme = createTheme({
       primary: '#1A1A1A',
       secondary: '#666666',
     },
+    error: {
+      main: '#D32F2F',
+      light: '#EF5350',
+      dark: '#C62828',
+    },
+    warning: {
+      main: '#FFC107',
+      light: '#FFD54F',
+      dark: '#F57C00',
+    },
+    success: {
+      main: '#388E3C',
+      light: '#4CAF50',
+      dark: '#2E7D32',
+    },
+    info: {
+      main: '#0078D4',
+      light: '#42A5F5',
+      dark: '#1976D2',
+    },
     hyundai: {
       primary: '#1A1A1A',
       secondary: '#C0C0C0',

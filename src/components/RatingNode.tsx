@@ -6,6 +6,7 @@ import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useTheme } from '../contexts/ThemeContext';
+// import { getStarColors, getButtonColors } from '../utils/feedbackColors';
 
 interface RatingNodeProps {
   question: RatingNodeType;
@@ -108,13 +109,13 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
           aria-label="Rating"
           sx={{
             '& .MuiRating-iconFilled': {
-              color: isUnfiltered ? '#F6FA24' : '#ffc107',
+              color: isUnfiltered ? '#F6FA24' : 'warning.main',
             },
             '& .MuiRating-iconEmpty': {
-              color: isUnfiltered ? '#333333' : '#e0e0e0',
+              color: isUnfiltered ? '#333333' : 'action.disabled',
             },
             '& .MuiRating-iconHover': {
-              color: isUnfiltered ? '#FFD700' : '#ffb300',
+              color: isUnfiltered ? '#FFD700' : 'warning.light',
             },
           }}
         />
@@ -251,17 +252,6 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
           sx={{
             borderRadius: 3,
             minWidth: 120,
-            ...(themeMode === 'unfiltered' && {
-              backgroundColor: '#F6FA24',
-              color: '#000000',
-              '&:hover': {
-                backgroundColor: '#FFD700',
-              },
-              '&:disabled': {
-                backgroundColor: '#333333',
-                color: '#666666',
-              },
-            }),
           }}
         >
           {selectedValue !== null && selectedValue > 0 ? 'Submit' : 'Skip'}

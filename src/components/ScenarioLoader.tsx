@@ -22,6 +22,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAudio } from '../contexts/AudioContext';
 import { ThemeToggle } from './ThemeToggle';
 import { SoundToggle } from './SoundToggle';
+import { ErrorModal, type ErrorDetails } from './ErrorModal';
 
 // Sample scenarios for demo
 const SAMPLE_SCENARIOS = [
@@ -52,56 +53,202 @@ export const ScenarioLoader: React.FC = () => {
   const { playSound } = useAudio();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<ErrorDetails | null>(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+
+  const createErrorDetails = (
+    category: ErrorDetails['category'],
+    message: string,
+    details?: string,
+    suggestions?: string[],
+    file?: File,
+    additionalData?: any
+  ): ErrorDetails => ({
+    category,
+    message,
+    details,
+    suggestions,
+    fileName: file?.name,
+    fileSize: file?.size,
+    fileType: file?.type,
+    timestamp: Date.now(),
+    ...additionalData,
+  });
+
+  const handleError = (errorDetails: ErrorDetails) => {
+    setError(errorDetails.message);
+    setErrorDetails(errorDetails);
+    setShowErrorModal(true);
+    playSound('error');
+  };
 
   const loadScenarioFromFile = useCallback(async (file: File) => {
     setLoading(true);
     setError(null);
+    setErrorDetails(null);
+    setShowErrorModal(false);
     
     try {
       const fileExtension = file.name.split('.').pop()?.toLowerCase();
       
       let scenario: NLJScenario;
+      let rawData: any;
       
       if (fileExtension === 'xlsx' || fileExtension === 'xls') {
         // Handle Trivie Excel files
-        const quizzes = await parseTrivieExcel(file);
-        if (quizzes.length === 0) {
-          playSound('error');
-          setError('No valid quizzes found in Excel file');
-          return;
-        }
-        
-        // Use the first quiz if multiple are found
-        const quiz = quizzes[0];
-        
-        // Validate Trivie quiz
-        const trivieErrors = validateTrivieQuiz(quiz);
-        if (trivieErrors.length > 0) {
-          playSound('error');
-          setError(`Trivie validation errors: ${trivieErrors.join(', ')}`);
-          return;
-        }
-        
-        // Convert to NLJ format
-        scenario = convertTrivieToNLJ(quiz);
-        
-        // Validate converted scenario
-        const validationErrors = validateScenario(scenario);
-        if (validationErrors.length > 0) {
-          playSound('error');
-          setError(`Conversion validation errors: ${validationErrors.join(', ')}`);
+        try {
+          const quizzes = await parseTrivieExcel(file);
+          rawData = quizzes;
+          
+          if (quizzes.length === 0) {
+            handleError(createErrorDetails(
+              'content_validation',
+              'No valid quizzes found in Excel file',
+              'The Excel file was parsed successfully but no quiz data could be extracted. This may be due to missing headers, empty sheets, or unsupported format.',
+              [
+                'Verify the Excel file contains quiz data with proper headers',
+                'Check if the file has been exported from Trivie correctly',
+                'Ensure the first row contains column headers',
+                'Try using a different Excel file format (.xlsx instead of .xls)',
+              ],
+              file,
+              { rawData }
+            ));
+            return;
+          }
+          
+          // Use the first quiz if multiple are found
+          const quiz = quizzes[0];
+          
+          // Validate Trivie quiz
+          const trivieErrors = validateTrivieQuiz(quiz);
+          if (trivieErrors.length > 0) {
+            handleError(createErrorDetails(
+              'schema_validation',
+              'Trivie quiz validation failed',
+              `The Excel file contains ${trivieErrors.length} validation error(s) that prevent proper conversion.`,
+              [
+                'Check if all required columns are present in the Excel file',
+                'Verify question types are supported (multiple choice, true/false, etc.)',
+                'Ensure answer choices are properly formatted',
+                'Check for empty or invalid question text',
+              ],
+              file,
+              { 
+                rawData,
+                validationErrors: trivieErrors.map(error => ({ field: 'unknown', message: error }))
+              }
+            ));
+            return;
+          }
+          
+          // Convert to NLJ format
+          scenario = convertTrivieToNLJ(quiz);
+          
+          // Validate converted scenario
+          const validationErrors = validateScenario(scenario);
+          if (validationErrors.length > 0) {
+            handleError(createErrorDetails(
+              'content_validation',
+              'Scenario conversion validation failed',
+              `The converted scenario contains ${validationErrors.length} validation error(s).`,
+              [
+                'The Excel file was processed but the resulting scenario has structural issues',
+                'Try using a simpler Excel file to test',
+                'Check if the quiz questions follow supported formats',
+                'Report this issue if the Excel file looks correct',
+              ],
+              file,
+              { 
+                rawData: scenario,
+                validationErrors: validationErrors.map(error => ({ field: 'scenario', message: error }))
+              }
+            ));
+            return;
+          }
+        } catch (excelError) {
+          handleError(createErrorDetails(
+            'file_format',
+            'Excel file parsing failed',
+            `Unable to parse the Excel file: ${excelError instanceof Error ? excelError.message : 'Unknown error'}`,
+            [
+              'Verify the file is a valid Excel format (.xlsx or .xls)',
+              'Check if the file is corrupted or password-protected',
+              'Try saving the file in a different Excel format',
+              'Ensure the file is not currently open in another application',
+            ],
+            file,
+            { 
+              stackTrace: excelError instanceof Error ? excelError.stack : undefined,
+              rawData: undefined
+            }
+          ));
           return;
         }
       } else {
         // Handle JSON NLJ files
-        const text = await file.text();
-        scenario = JSON.parse(text);
-        
-        // Validate scenario
-        const validationErrors = validateScenario(scenario);
-        if (validationErrors.length > 0) {
-          playSound('error');
-          setError(`Validation errors: ${validationErrors.join(', ')}`);
+        try {
+          const text = await file.text();
+          try {
+            scenario = JSON.parse(text);
+            rawData = scenario;
+          } catch (jsonError) {
+            handleError(createErrorDetails(
+              'file_format',
+              'Invalid JSON format',
+              `The file contains invalid JSON: ${jsonError instanceof Error ? jsonError.message : 'Unknown error'}`,
+              [
+                'Check if the JSON file is properly formatted',
+                'Validate the JSON syntax using a JSON validator',
+                'Ensure the file is not corrupted',
+                'Try using a different JSON file',
+              ],
+              file,
+              { 
+                stackTrace: jsonError instanceof Error ? jsonError.stack : undefined,
+                rawData: text.substring(0, 1000) // First 1000 chars for debugging
+              }
+            ));
+            return;
+          }
+          
+          // Validate scenario
+          const validationErrors = validateScenario(scenario);
+          if (validationErrors.length > 0) {
+            handleError(createErrorDetails(
+              'schema_validation',
+              'Scenario validation failed',
+              `The JSON file contains ${validationErrors.length} validation error(s).`,
+              [
+                'Verify the JSON follows the NLJ scenario schema',
+                'Check if all required fields are present',
+                'Ensure node IDs are unique and properly referenced',
+                'Validate that links reference existing nodes',
+              ],
+              file,
+              { 
+                rawData: scenario,
+                validationErrors: validationErrors.map(error => ({ field: 'scenario', message: error }))
+              }
+            ));
+            return;
+          }
+        } catch (readError) {
+          handleError(createErrorDetails(
+            'file_format',
+            'Unable to read file',
+            `Failed to read the file contents: ${readError instanceof Error ? readError.message : 'Unknown error'}`,
+            [
+              'Check if the file is corrupted',
+              'Verify you have permission to read the file',
+              'Try using a different file',
+              'Ensure the file is not too large',
+            ],
+            file,
+            { 
+              stackTrace: readError instanceof Error ? readError.stack : undefined
+            }
+          ));
           return;
         }
       }
@@ -111,8 +258,21 @@ export const ScenarioLoader: React.FC = () => {
       playSound('navigate');
       loadScenario(scenario);
     } catch (err) {
-      playSound('error');
-      setError(err instanceof Error ? err.message : 'Failed to load scenario');
+      handleError(createErrorDetails(
+        'unknown',
+        'Unexpected error occurred',
+        `An unexpected error occurred while loading the file: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        [
+          'Try refreshing the page and uploading the file again',
+          'Check if your browser supports the file type',
+          'Clear browser cache and try again',
+          'Report this issue with the debug information',
+        ],
+        file,
+        { 
+          stackTrace: err instanceof Error ? err.stack : undefined
+        }
+      ));
     } finally {
       setLoading(false);
     }
@@ -480,6 +640,23 @@ export const ScenarioLoader: React.FC = () => {
           </Box>
         </Box>
       </Container>
+
+      {/* Enhanced Error Modal */}
+      {errorDetails && (
+        <ErrorModal
+          open={showErrorModal}
+          onClose={() => setShowErrorModal(false)}
+          error={errorDetails}
+          onRetry={() => {
+            setShowErrorModal(false);
+            setError(null);
+            setErrorDetails(null);
+          }}
+          onExportDebugInfo={() => {
+            console.log('Debug info exported:', errorDetails);
+          }}
+        />
+      )}
     </Box>
   );
 };

@@ -81,30 +81,33 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
           }}
           onClick={handleImageClick}
         >
-          {!loaded && (
-            <Skeleton 
-              variant="rectangular" 
-              width="100%" 
-              height={responsiveHeight} 
-              sx={{ position: error ? 'static' : 'absolute', top: 0, left: 0 }}
+          <Box sx={{ position: 'relative', height: responsiveHeight }}>
+            {!loaded && (
+              <Skeleton 
+                variant="rectangular" 
+                width="100%" 
+                height={responsiveHeight} 
+                sx={{ position: 'absolute', top: 0, left: 0, zIndex: 1 }}
+              />
+            )}
+            <CardMedia
+              component="img"
+              height={responsiveHeight}
+              image={error ? media.fullThumbnail || '/placeholder.svg' : media.fullPath}
+              alt={alt || media.title || 'Training content'}
+              onLoad={handleLoad}
+              onError={handleError}
+              sx={{ 
+                objectFit: 'contain',
+                borderRadius: 1,
+                maxWidth: '100%',
+                width: 'auto',
+                margin: '0 auto',
+                opacity: loaded ? 1 : 0,
+                transition: 'opacity 0.3s ease',
+              }}
             />
-          )}
-          <CardMedia
-            component="img"
-            height={responsiveHeight}
-            image={error ? media.fullThumbnail || '/placeholder.svg' : media.fullPath}
-            alt={alt || media.title || 'Training content'}
-            onLoad={handleLoad}
-            onError={handleError}
-            sx={{ 
-              display: loaded ? 'block' : 'none',
-              objectFit: 'contain',
-              borderRadius: 1,
-              maxWidth: '100%',
-              width: 'auto',
-              margin: '0 auto',
-            }}
-          />
+          </Box>
           <Tooltip title="Click to enlarge">
             <IconButton
               className="zoom-icon"
@@ -183,30 +186,33 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
           borderRadius: 2,
         }}
       >
-        {!loaded && (
-          <Skeleton 
-            variant="rectangular" 
-            width="100%" 
-            height={responsiveHeight} 
-            sx={{ position: 'absolute', top: 0, left: 0 }}
+        <Box sx={{ position: 'relative', height: responsiveHeight }}>
+          {!loaded && (
+            <Skeleton 
+              variant="rectangular" 
+              width="100%" 
+              height={responsiveHeight} 
+              sx={{ position: 'absolute', top: 0, left: 0, zIndex: 1 }}
+            />
+          )}
+          <CardMedia
+            component="video"
+            height={responsiveHeight}
+            src={media.fullPath}
+            controls
+            onLoadedData={handleLoad}
+            onError={handleError}
+            sx={{ 
+              objectFit: 'contain',
+              borderRadius: 1,
+              maxWidth: '100%',
+              width: 'auto',
+              margin: '0 auto',
+              opacity: loaded ? 1 : 0,
+              transition: 'opacity 0.3s ease',
+            }}
           />
-        )}
-        <CardMedia
-          component="video"
-          height={responsiveHeight}
-          src={media.fullPath}
-          controls
-          onLoadedData={handleLoad}
-          onError={handleError}
-          sx={{ 
-            display: loaded ? 'block' : 'none',
-            objectFit: 'contain',
-            borderRadius: 1,
-            maxWidth: '100%',
-            width: 'auto',
-            margin: '0 auto',
-          }}
-        />
+        </Box>
       </Box>
     );
   }

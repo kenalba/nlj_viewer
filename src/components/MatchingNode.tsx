@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, Typography, Button, Alert, Paper } from '@mui/material';
+import { Box, Typography, Button, Alert, Paper, useTheme } from '@mui/material';
 import { CheckCircle, Close } from '@mui/icons-material';
 import type { MatchingNode as MatchingNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
@@ -26,6 +26,7 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
   const containerRef = useRef<HTMLDivElement>(null);
   const { playSound } = useAudio();
   const { trackQuestionAnswered } = useXAPI();
+  const theme = useTheme();
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -219,7 +220,9 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
       const endY = rightRect.top + rightRect.height / 2 - containerRect.top;
 
       const isCorrect = showFeedback && isMatchCorrect(match.leftId, match.rightId);
-      const lineColor = showFeedback ? (isCorrect ? '#4CAF50' : '#f44336') : '#2196F3';
+      const lineColor = showFeedback 
+        ? (isCorrect ? theme.palette.success.main : theme.palette.error.main) 
+        : theme.palette.info.main;
 
       return (
         <line
