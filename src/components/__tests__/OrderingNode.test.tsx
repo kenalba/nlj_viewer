@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { OrderingNode } from '../OrderingNode';
 import { ThemeProvider } from '../../contexts/ThemeContext';
@@ -171,7 +171,7 @@ describe('OrderingNode', () => {
     expect(firstItem).toHaveAttribute('draggable', 'true');
   });
 
-  it('calls onAnswer after timeout', async () => {
+  it('shows continue button after submit and calls onAnswer when clicked', () => {
     render(
       <TestWrapper>
         <OrderingNode
@@ -181,11 +181,16 @@ describe('OrderingNode', () => {
       </TestWrapper>
     );
 
+    // Submit the order
     const submitButton = screen.getByText('Submit Order');
     fireEvent.click(submitButton);
 
-    // Fast-forward the timeout
-    vi.advanceTimersByTime(2000);
+    // Check if continue button appears
+    expect(screen.getByText('Continue')).toBeInTheDocument();
+
+    // Click continue button
+    const continueButton = screen.getByText('Continue');
+    fireEvent.click(continueButton);
 
     expect(mockOnAnswer).toHaveBeenCalled();
   });

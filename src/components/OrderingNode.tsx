@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Box, Typography, Button, Alert, Paper, IconButton } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, Button, Alert, Paper, IconButton, FormHelperText } from '@mui/material';
 import { DragIndicator, CheckCircle } from '@mui/icons-material';
 import type { OrderingNode as OrderingNodeType, OrderingItem } from '../types/nlj';
 import { NodeCard } from './NodeCard';
@@ -69,12 +69,34 @@ export const OrderingNode: React.FC<OrderingNodeProps> = ({ question, onAnswer }
     } else {
       playSound('incorrect');
     }
-    
-    // Delay the callback to show feedback
-    setTimeout(() => {
-      onAnswer(isCorrect);
-    }, 2000);
   };
+
+  const handleContinue = () => {
+    // Check if the order is correct
+    const isCorrect = orderedItems.every((item, index) => {
+      return item.correctOrder === index + 1;
+    });
+    
+    playSound('navigate');
+    onAnswer(isCorrect);
+  };
+
+  // Add keyboard support for Enter key
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        if (showFeedback) {
+          handleContinue();
+        } else {
+          handleSubmit();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [showFeedback, handleContinue, handleSubmit]);
 
   const getFeedbackMessage = () => {
     const isCorrect = orderedItems.every((item, index) => {
@@ -188,20 +210,43 @@ export const OrderingNode: React.FC<OrderingNodeProps> = ({ question, onAnswer }
       </Box>
 
       {showFeedback && (
-        <Alert 
-          severity={getFeedbackSeverity() as 'success' | 'error'} 
-          sx={{ 
-            mt: 2,
-            borderRadius: 2,
-            '& .MuiAlert-message': {
-              width: '100%',
-              textAlign: 'center'
-            }
-          }}
-        >
-          {getFeedbackMessage()}
-        </Alert>
+        <Box sx={{ mt: 2 }}>
+          <Alert 
+            severity={getFeedbackSeverity() as 'success' | 'error'} 
+            sx={{ 
+              borderRadius: 2,
+              mb: 2,
+              '& .MuiAlert-message': {
+                width: '100%',
+                textAlign: 'center'
+              }
+            }}
+          >
+            {getFeedbackMessage()}
+          </Alert>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Button
+              variant="contained"
+              onClick={handleContinue}
+              size="large"
+              sx={{ 
+                borderRadius: 3, 
+                minWidth: 120,
+                px: 4,
+                py: 1.5
+              }}
+            >
+              Continue
+            </Button>
+          </Box>
+        </Box>
       )}
+      
+      {/* Keyboard Controls Helper */}
+      <FormHelperText sx={{ textAlign: 'center', mt: 1, fontSize: '0.75rem', opacity: 0.7 }}>
+        {showFeedback ? 'Press Enter to continue' : 'Press Enter to submit'}
+      </FormHelperText>
     </NodeCard>
   );
 };
