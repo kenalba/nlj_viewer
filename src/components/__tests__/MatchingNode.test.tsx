@@ -131,7 +131,7 @@ describe('MatchingNode', () => {
       </TestWrapper>
     );
 
-    expect(screen.getByText('Click on items from both columns to match them together:')).toBeInTheDocument();
+    expect(screen.getByText('Click on items from both columns to match them together, or use keyboard navigation:')).toBeInTheDocument();
   });
 
   it('renders column headers', () => {

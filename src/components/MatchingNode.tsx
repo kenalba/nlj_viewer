@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, Typography, Button, Alert, Paper, useTheme } from '@mui/material';
+import { Box, Typography, Button, Alert, Paper, useTheme, FormHelperText } from '@mui/material';
 import { CheckCircle, Close } from '@mui/icons-material';
 import type { MatchingNode as MatchingNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
@@ -23,6 +23,12 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
   const [selectedRight, setSelectedRight] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [questionStartTime] = useState(new Date());
+  
+  // Keyboard navigation state
+  const [focusedColumn, setFocusedColumn] = useState<'left' | 'right' | null>('left');
+  const [focusedLeftIndex, setFocusedLeftIndex] = useState(0);
+  const [focusedRightIndex, setFocusedRightIndex] = useState(0);
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const { playSound } = useAudio();
   const { trackQuestionAnswered } = useXAPI();
@@ -40,6 +46,7 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
   }, [userMatches]);
+
 
   const handleLeftClick = (leftId: string) => {
     if (showFeedback) return;
@@ -255,6 +262,97 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
     );
   };
 
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (showFeedback) {
+        // Only handle Enter for continue when showing feedback
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          handleContinue();
+        }
+        return;
+      }
+
+      switch (event.key) {
+        case 'ArrowUp':
+          event.preventDefault();
+          if (focusedColumn === 'left') {
+            setFocusedLeftIndex(Math.max(0, focusedLeftIndex - 1));
+          } else if (focusedColumn === 'right') {
+            setFocusedRightIndex(Math.max(0, focusedRightIndex - 1));
+          }
+          break;
+
+        case 'ArrowDown':
+          event.preventDefault();
+          if (focusedColumn === 'left') {
+            setFocusedLeftIndex(Math.min(question.leftItems.length - 1, focusedLeftIndex + 1));
+          } else if (focusedColumn === 'right') {
+            setFocusedRightIndex(Math.min(question.rightItems.length - 1, focusedRightIndex + 1));
+          }
+          break;
+
+        case 'ArrowLeft':
+          event.preventDefault();
+          setFocusedColumn('left');
+          break;
+
+        case 'ArrowRight':
+        case 'Tab':
+          event.preventDefault();
+          setFocusedColumn('right');
+          break;
+
+        case 'Enter':
+        case ' ':
+          event.preventDefault();
+          if (focusedColumn === 'left') {
+            handleLeftClick(question.leftItems[focusedLeftIndex].id);
+          } else if (focusedColumn === 'right') {
+            handleRightClick(question.rightItems[focusedRightIndex].id);
+          }
+          break;
+
+        case 'Escape':
+          event.preventDefault();
+          setSelectedLeft(null);
+          setSelectedRight(null);
+          break;
+
+        case 'Backspace':
+        case 'Delete':
+          event.preventDefault();
+          if (focusedColumn === 'left' && selectedLeft === null) {
+            const leftId = question.leftItems[focusedLeftIndex].id;
+            const match = getMatchForLeft(leftId);
+            if (match) {
+              removeMatch(leftId, match.rightId);
+            }
+          } else if (focusedColumn === 'right' && selectedRight === null) {
+            const rightId = question.rightItems[focusedRightIndex].id;
+            const match = getMatchForRight(rightId);
+            if (match) {
+              removeMatch(match.leftId, rightId);
+            }
+          }
+          break;
+
+        case 's':
+        case 'S':
+          if (event.ctrlKey || event.metaKey) return; // Don't interfere with Ctrl+S
+          event.preventDefault();
+          if (userMatches.length > 0) {
+            handleSubmit();
+          }
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showFeedback, focusedColumn, focusedLeftIndex, focusedRightIndex, question.leftItems, question.rightItems, userMatches, selectedLeft, selectedRight, question.correctMatches, onAnswer, getMatchForLeft, getMatchForRight, handleLeftClick, handleRightClick, handleSubmit, removeMatch, handleContinue]);
+
   return (
     <NodeCard variant="question" animate={true}>
       <Box sx={{ mb: 3 }}>
@@ -286,7 +384,7 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
       </Box>
 
       <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-        Click on items from both columns to match them together:
+        Click on items from both columns to match them together, or use keyboard navigation:
       </Typography>
 
       <Box 
@@ -306,9 +404,10 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
           <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
             Column A
           </Typography>
-          {question.leftItems.map((item) => {
+          {question.leftItems.map((item, index) => {
             const isMatched = isLeftMatched(item.id);
             const isSelected = selectedLeft === item.id;
+            const isFocused = !showFeedback && focusedColumn === 'left' && focusedLeftIndex === index;
             const match = getMatchForLeft(item.id);
             
             return (
@@ -320,15 +419,20 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
                   p: 2,
                   mb: 1,
                   cursor: showFeedback ? 'default' : 'pointer',
-                  border: isSelected ? '2px solid' : '1px solid',
-                  borderColor: isSelected ? 'primary.main' : 'divider',
+                  border: isSelected ? '2px solid' : (isFocused ? '2px solid' : '1px solid'),
+                  borderColor: isSelected ? 'primary.main' : 
+                              isFocused ? 'secondary.main' : 'divider',
                   backgroundColor: isSelected ? 'action.selected' : 
+                                   isFocused ? 'action.focus' :
                                    isMatched ? 'action.hover' : 'background.paper',
                   '&:hover': !showFeedback ? {
                     backgroundColor: 'action.hover',
                     borderColor: 'primary.main',
                   } : {},
                   position: 'relative',
+                  outline: isFocused ? '2px solid' : 'none',
+                  outlineColor: isFocused ? 'secondary.light' : 'transparent',
+                  outlineOffset: isFocused ? '1px' : '0px',
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -376,9 +480,10 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
           <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
             Column B
           </Typography>
-          {question.rightItems.map((item) => {
+          {question.rightItems.map((item, index) => {
             const isMatched = isRightMatched(item.id);
             const isSelected = selectedRight === item.id;
+            const isFocused = !showFeedback && focusedColumn === 'right' && focusedRightIndex === index;
             const match = getMatchForRight(item.id);
             
             return (
@@ -390,14 +495,19 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
                   p: 2,
                   mb: 1,
                   cursor: showFeedback ? 'default' : 'pointer',
-                  border: isSelected ? '2px solid' : '1px solid',
-                  borderColor: isSelected ? 'primary.main' : 'divider',
+                  border: isSelected ? '2px solid' : (isFocused ? '2px solid' : '1px solid'),
+                  borderColor: isSelected ? 'primary.main' : 
+                              isFocused ? 'secondary.main' : 'divider',
                   backgroundColor: isSelected ? 'action.selected' : 
+                                   isFocused ? 'action.focus' :
                                    isMatched ? 'action.hover' : 'background.paper',
                   '&:hover': !showFeedback ? {
                     backgroundColor: 'action.hover',
                     borderColor: 'primary.main',
                   } : {},
+                  outline: isFocused ? '2px solid' : 'none',
+                  outlineColor: isFocused ? 'secondary.light' : 'transparent',
+                  outlineOffset: isFocused ? '1px' : '0px',
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -468,6 +578,14 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
           </Box>
         </Box>
       )}
+      
+      {/* Keyboard Controls Helper */}
+      <FormHelperText sx={{ textAlign: 'center', mt: 2, fontSize: '0.75rem', opacity: 0.7 }}>
+        {showFeedback ? 
+          'Press Enter to continue' : 
+          'Use arrow keys to navigate • Enter/Space to select • Tab to switch columns • Escape to clear • Delete to remove matches • S to submit'
+        }
+      </FormHelperText>
     </NodeCard>
   );
 };
