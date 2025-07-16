@@ -180,9 +180,14 @@ describe('LikertScaleNode', () => {
     
     render(<LikertScaleNode question={question} onAnswer={mockOnAnswer} />);
     
-    // With 10 buttons, should use vertical layout
-    const buttonGroup = screen.getByRole('group');
-    expect(buttonGroup).toHaveClass('MuiButtonGroup-vertical');
+    // With 10 buttons, should use vertical layout (flexDirection: 'column')
+    const allButtons = screen.getAllByRole('button');
+    const scaleButtons = allButtons.filter(btn => btn.textContent?.match(/^[0-9]+$/));
+    expect(scaleButtons.length).toBe(10);
+    
+    // Check that the container has vertical layout
+    const buttonContainer = scaleButtons[0].parentElement;
+    expect(buttonContainer).toHaveStyle('flex-direction: column');
   });
 
   it('applies hyundai theme correctly', () => {

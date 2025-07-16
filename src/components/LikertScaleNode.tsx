@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, ButtonGroup, Button, Alert, FormHelperText } from '@mui/material';
+import { Box, Typography, Button, Alert, FormHelperText } from '@mui/material';
 import type { LikertScaleNode as LikertScaleNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
@@ -163,67 +163,37 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
       </Box>
 
       {/* Scale Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3, px: 1 }}>
-        <ButtonGroup 
-          variant="outlined" 
-          size="large"
-          orientation={scaleValues.length > 7 ? 'vertical' : 'horizontal'}
-          sx={{ 
-            gap: 1,
-            '& .MuiButtonGroup-grouped': {
-              borderRadius: 3,
-              '&:not(:last-of-type)': {
-                borderBottomRightRadius: 3,
-                borderTopRightRadius: 3,
-                borderRightColor: 'divider',
-              },
-              '&:not(:first-of-type)': {
-                borderTopLeftRadius: 3,
-                borderBottomLeftRadius: 3,
-                borderLeftColor: 'divider',
-              },
-              '&:last-of-type': {
-                borderRight: '1px solid',
-                borderRightColor: 'divider',
-              },
-            },
-            ...(scaleValues.length > 7 && {
-              '& .MuiButtonGroup-grouped': {
-                borderRadius: 3,
-                '&:not(:last-of-type)': {
-                  borderBottomRightRadius: 3,
-                  borderBottom: '1px solid',
-                  borderBottomColor: 'divider',
-                },
-                '&:not(:first-of-type)': {
-                  borderTopLeftRadius: 3,
-                  borderTop: '1px solid',
-                  borderTopColor: 'divider',
-                },
-                '&:last-of-type': {
-                  borderBottom: '1px solid',
-                  borderBottomColor: 'divider',
-                },
-              },
-            }),
-          }}
-        >
-          {scaleValues.map((value) => (
-            <Button
-              key={value}
-              variant={getButtonVariant()}
-              onClick={() => handleValueSelect(value)}
-              sx={getButtonStyles(value)}
-              className={selectedValue === value ? 'selected' : ''}
-            >
-              {question.showNumbers !== false && (
-                <Typography variant="body2" fontWeight="bold">
-                  {value}
-                </Typography>
-              )}
-            </Button>
-          ))}
-        </ButtonGroup>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        mb: 3, 
+        px: 2,
+        ...(scaleValues.length > 7 && {
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 1,
+        }),
+        ...((scaleValues.length <= 7) && {
+          flexDirection: 'row',
+          gap: 1,
+          flexWrap: 'wrap',
+        }),
+      }}>
+        {scaleValues.map((value) => (
+          <Button
+            key={value}
+            variant={getButtonVariant()}
+            onClick={() => handleValueSelect(value)}
+            sx={getButtonStyles(value)}
+            className={selectedValue === value ? 'selected' : ''}
+          >
+            {question.showNumbers !== false && (
+              <Typography variant="body2" fontWeight="bold">
+                {value}
+              </Typography>
+            )}
+          </Button>
+        ))}
       </Box>
 
       {/* Validation Error */}

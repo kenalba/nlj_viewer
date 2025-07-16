@@ -4,7 +4,6 @@ import type { SliderNode as SliderNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
-import { useTheme } from '../contexts/ThemeContext';
 
 interface SliderNodeProps {
   question: SliderNodeType;
@@ -18,7 +17,6 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
   );
   const [showValidation, setShowValidation] = useState(false);
   const { playSound } = useAudio();
-  const { themeMode } = useTheme();
 
   const handleValueChange = (_event: Event, newValue: number | number[]) => {
     const value = Array.isArray(newValue) ? newValue[0] : newValue;
@@ -148,16 +146,6 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
         )}
       </Box>
 
-      {/* Slider Labels */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, px: 1 }}>
-        <Typography variant="body2" color="text.secondary">
-          {question.labels.min}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {question.labels.max}
-        </Typography>
-      </Box>
-
       {/* Current Value Display */}
       {question.showValue !== false && selectedValue !== null && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
@@ -167,13 +155,23 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
         </Box>
       )}
 
+      {/* Slider Labels */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, px: 3 }}>
+        <Typography variant="body2" color="text.secondary">
+          {question.labels.min}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {question.labels.max}
+        </Typography>
+      </Box>
+
       {/* Slider Component */}
       <Box sx={{ 
         px: 2, 
-        mb: 6, // Increased from 4 to 6 to prevent label cutoff
+        mb: 8, // Increased from 6 to 8 to prevent halo cutoff
+        pt: 4, // Add top padding to prevent halo cutoff
         position: 'relative',
-        overflow: 'hidden',
-        // Ensure proper containment
+        overflow: 'visible', // Changed from 'hidden' to 'visible' for halo
         width: '100%',
         boxSizing: 'border-box'
       }}>
@@ -188,85 +186,8 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
           valueLabelFormat={(value) => formatValue(value)}
           track={question.continuous !== false ? "normal" : false}
           sx={{
-            height: 8,
-            width: 'calc(100% - 24px)', // Account for thumb width
-            margin: '0 12px', // Center the slider and provide thumb space
-            // Ensure slider stays within bounds
-            '& .MuiSlider-root': {
-              width: '100%',
-            },
-            '& .MuiSlider-rail': {
-              color: themeMode === 'unfiltered' ? '#333333' : '#d0d0d0',
-              opacity: 1,
-              height: 8,
-            },
-            '& .MuiSlider-track': {
-              border: 'none',
-              height: 8,
-              ...(themeMode === 'unfiltered' && {
-                backgroundColor: '#F6FA24',
-              }),
-            },
-            '& .MuiSlider-thumb': {
-              height: 24,
-              width: 24,
-              backgroundColor: themeMode === 'unfiltered' ? '#F6FA24' : 'primary.main',
-              border: '2px solid currentColor',
-              // Reset default positioning
-              marginLeft: 0,
-              marginTop: 0,
-              '&:focus, &:hover, &.Mui-active, &.Mui-focusVisible': {
-                boxShadow: `0px 0px 0px 8px ${
-                  themeMode === 'unfiltered' ? 'rgba(246, 250, 36, 0.16)' : 'inherit'
-                }`,
-              },
-              '&:before': {
-                display: 'none',
-              },
-            },
-            '& .MuiSlider-valueLabel': {
-              lineHeight: 1.2,
-              fontSize: 12,
-              background: 'unset',
-              padding: 0,
-              width: 32,
-              height: 32,
-              borderRadius: '50% 50% 50% 0',
-              backgroundColor: themeMode === 'unfiltered' ? '#F6FA24' : 'primary.main',
-              color: themeMode === 'unfiltered' ? '#000000' : '#ffffff',
-              transformOrigin: 'bottom left',
-              transform: 'translate(50%, -100%) rotate(-45deg) scale(0)',
-              '&:before': { display: 'none' },
-              '&.MuiSlider-valueLabelOpen': {
-                transform: 'translate(50%, -100%) rotate(-45deg) scale(1)',
-              },
-              '& > *': {
-                transform: 'rotate(45deg)',
-              },
-            },
-            '& .MuiSlider-mark': {
-              backgroundColor: themeMode === 'unfiltered' ? '#666666' : '#bfbfbf',
-              height: 8,
-              width: 1,
-              '&.MuiSlider-markActive': {
-                opacity: 1,
-                backgroundColor: 'currentColor',
-              },
-            },
-            '& .MuiSlider-markLabel': {
-              color: 'text.secondary',
-              fontSize: '0.75rem',
-              // Prevent label overflow
-              whiteSpace: 'nowrap',
-              transform: 'translateX(-50%)',
-              // Ensure labels don't go outside container
-              maxWidth: '100px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              // Add padding to prevent vertical cutoff
-              paddingTop: '8px',
-              paddingBottom: '8px',
-            },
+            width: 'calc(100% - 48px)', // Account for thumb width and halo
+            margin: '0 24px', // Center the slider and provide thumb + halo space
           }}
         />
       </Box>
@@ -287,17 +208,6 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
           sx={{
             borderRadius: 3,
             minWidth: 120,
-            ...(themeMode === 'unfiltered' && {
-              backgroundColor: '#F6FA24',
-              color: '#000000',
-              '&:hover': {
-                backgroundColor: '#FFD700',
-              },
-              '&:disabled': {
-                backgroundColor: '#333333',
-                color: '#666666',
-              },
-            }),
           }}
         >
           {selectedValue !== null ? 'Submit' : 'Skip'}

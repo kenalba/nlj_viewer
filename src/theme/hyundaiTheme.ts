@@ -256,5 +256,74 @@ export const hyundaiTheme = createTheme({
         },
       },
     },
+    MuiSlider: {
+      styleOverrides: {
+        root: {
+          height: 8,
+          '& .MuiSlider-rail': {
+            color: '#d0d0d0',
+            opacity: 1,
+            height: 8,
+          },
+          '& .MuiSlider-track': {
+            border: 'none',
+            height: 8,
+            backgroundColor: '#0078D4',
+          },
+          '& .MuiSlider-thumb': {
+            height: 24,
+            width: 24,
+            backgroundColor: '#0078D4',
+            border: '2px solid currentColor',
+            '&:focus, &:hover, &.Mui-active, &.Mui-focusVisible': {
+              boxShadow: '0px 0px 0px 8px rgba(0, 120, 212, 0.16)',
+            },
+            '&:before': {
+              display: 'none',
+            },
+          },
+          '& .MuiSlider-valueLabel': {
+            lineHeight: 1.2,
+            fontSize: 12,
+            background: 'unset',
+            padding: 0,
+            width: 32,
+            height: 32,
+            borderRadius: '50% 50% 50% 0',
+            backgroundColor: '#0078D4',
+            color: '#ffffff',
+            transformOrigin: 'bottom left',
+            transform: 'translate(50%, -100%) rotate(-45deg) scale(0)',
+            '&:before': { display: 'none' },
+            '&.MuiSlider-valueLabelOpen': {
+              transform: 'translate(50%, -100%) rotate(-45deg) scale(1)',
+            },
+            '& > *': {
+              transform: 'rotate(45deg)',
+            },
+          },
+          '& .MuiSlider-mark': {
+            backgroundColor: '#bfbfbf',
+            height: 8,
+            width: 1,
+            '&.MuiSlider-markActive': {
+              opacity: 1,
+              backgroundColor: 'currentColor',
+            },
+          },
+          '& .MuiSlider-markLabel': {
+            color: '#666666',
+            fontSize: '0.75rem',
+            whiteSpace: 'nowrap',
+            transform: 'translateX(-50%)',
+            maxWidth: '100px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            paddingTop: '8px',
+            paddingBottom: '8px',
+          },
+        },
+      },
+    },
   },
 });

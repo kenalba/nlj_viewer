@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Box, 
   Typography, 
@@ -23,7 +23,6 @@ import type { MatrixNode as MatrixNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
-import { useTheme } from '../contexts/ThemeContext';
 
 interface MatrixNodeProps {
   question: MatrixNodeType;
@@ -34,8 +33,8 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
   const [responses, setResponses] = useState<Record<string, string | string[]>>({});
   const [showValidation, setShowValidation] = useState(false);
   const [validationError, setValidationError] = useState<string>('');
+  const [currentRowIndex, setCurrentRowIndex] = useState(0);
   const { playSound } = useAudio();
-  const { themeMode } = useTheme();
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
 
@@ -87,7 +86,7 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
     return null;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     const error = validateResponses();
     
     if (error) {
@@ -99,7 +98,63 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
 
     playSound('navigate');
     onAnswer(responses);
-  };
+  }, [responses, playSound, onAnswer, validateResponses]);
+
+  // Keyboard controls
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only handle keyboard events when this component is active
+      if (event.target !== document.body) return;
+      
+      const currentRow = question.rows[currentRowIndex];
+      if (!currentRow) return;
+      
+      // Handle number keys (1-9) for column selection
+      if (event.key >= '1' && event.key <= '9') {
+        const keyValue = parseInt(event.key, 10);
+        const columnIndex = keyValue - 1;
+        
+        if (columnIndex < question.columns.length) {
+          event.preventDefault();
+          const column = question.columns[columnIndex];
+          
+          if (question.matrixType === 'multiple') {
+            // For multiple selection, toggle the checkbox
+            const currentResponses = (responses[currentRow.id] as string[]) || [];
+            const isSelected = currentResponses.includes(column.id);
+            handleMultipleResponse(currentRow.id, column.id, !isSelected);
+          } else {
+            // For single selection, select the radio button
+            handleSingleResponse(currentRow.id, column.id);
+          }
+          
+          // Move to next row after selection
+          if (currentRowIndex < question.rows.length - 1) {
+            setCurrentRowIndex(currentRowIndex + 1);
+          }
+        }
+      }
+      
+      // Handle arrow keys for row navigation
+      if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        if (event.key === 'ArrowUp' && currentRowIndex > 0) {
+          setCurrentRowIndex(currentRowIndex - 1);
+        } else if (event.key === 'ArrowDown' && currentRowIndex < question.rows.length - 1) {
+          setCurrentRowIndex(currentRowIndex + 1);
+        }
+      }
+      
+      // Handle Enter key to submit
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        handleSubmit();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [currentRowIndex, question, responses, handleSingleResponse, handleMultipleResponse, handleSubmit]);
 
   const renderTableHeader = () => (
     <TableHead>
@@ -107,9 +162,7 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
         <TableCell sx={{ 
           fontWeight: 'bold', 
           borderBottom: '2px solid',
-          borderColor: themeMode === 'unfiltered' ? '#333333' : 'divider',
-          backgroundColor: themeMode === 'unfiltered' ? '#1A1A1A' : 'background.default',
-          color: themeMode === 'unfiltered' ? '#FFFFFF' : 'text.primary',
+          borderColor: 'divider',
         }}>
           {/* Empty cell for row labels */}
         </TableCell>
@@ -120,9 +173,7 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
             sx={{ 
               fontWeight: 'bold',
               borderBottom: '2px solid',
-              borderColor: themeMode === 'unfiltered' ? '#333333' : 'divider',
-              backgroundColor: themeMode === 'unfiltered' ? '#1A1A1A' : 'background.default',
-              color: themeMode === 'unfiltered' ? '#FFFFFF' : 'text.primary',
+              borderColor: 'divider',
               minWidth: isMobile ? 80 : 100,
             }}
           >
@@ -133,18 +184,27 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
     </TableHead>
   );
 
-  const renderSingleSelectRow = (row: typeof question.rows[0]) => (
-    <TableRow key={row.id}>
+  const renderSingleSelectRow = (row: typeof question.rows[0], rowIndex: number) => (
+    <TableRow 
+      key={row.id}
+      sx={{
+        backgroundColor: currentRowIndex === rowIndex ? 'action.hover' : 'transparent',
+        transition: 'background-color 0.2s ease',
+      }}
+    >
       <TableCell sx={{ 
         fontWeight: 'medium',
-        borderColor: themeMode === 'unfiltered' ? '#333333' : 'divider',
-        backgroundColor: themeMode === 'unfiltered' ? '#1A1A1A' : 'background.paper',
-        color: themeMode === 'unfiltered' ? '#FFFFFF' : 'text.primary',
+        borderColor: 'divider',
       }}>
         {row.text}
         {row.required !== false && (
           <Typography component="span" color="error" sx={{ ml: 0.5 }}>
             *
+          </Typography>
+        )}
+        {currentRowIndex === rowIndex && (
+          <Typography component="span" sx={{ ml: 1, fontSize: '0.8rem', opacity: 0.7 }}>
+            (active)
           </Typography>
         )}
       </TableCell>
@@ -153,39 +213,39 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
           key={column.id}
           align="center"
           sx={{ 
-            borderColor: themeMode === 'unfiltered' ? '#333333' : 'divider',
-            backgroundColor: themeMode === 'unfiltered' ? '#1A1A1A' : 'background.paper',
+            borderColor: 'divider',
           }}
         >
           <Radio
             checked={responses[row.id] === column.id}
             onChange={() => handleSingleResponse(row.id, column.id)}
-            sx={{
-              ...(themeMode === 'unfiltered' && {
-                color: '#666666',
-                '&.Mui-checked': {
-                  color: '#F6FA24',
-                },
-              }),
-            }}
           />
         </TableCell>
       ))}
     </TableRow>
   );
 
-  const renderMultipleSelectRow = (row: typeof question.rows[0]) => (
-    <TableRow key={row.id}>
+  const renderMultipleSelectRow = (row: typeof question.rows[0], rowIndex: number) => (
+    <TableRow 
+      key={row.id}
+      sx={{
+        backgroundColor: currentRowIndex === rowIndex ? 'action.hover' : 'transparent',
+        transition: 'background-color 0.2s ease',
+      }}
+    >
       <TableCell sx={{ 
         fontWeight: 'medium',
-        borderColor: themeMode === 'unfiltered' ? '#333333' : 'divider',
-        backgroundColor: themeMode === 'unfiltered' ? '#1A1A1A' : 'background.paper',
-        color: themeMode === 'unfiltered' ? '#FFFFFF' : 'text.primary',
+        borderColor: 'divider',
       }}>
         {row.text}
         {row.required !== false && (
           <Typography component="span" color="error" sx={{ ml: 0.5 }}>
             *
+          </Typography>
+        )}
+        {currentRowIndex === rowIndex && (
+          <Typography component="span" sx={{ ml: 1, fontSize: '0.8rem', opacity: 0.7 }}>
+            (active)
           </Typography>
         )}
       </TableCell>
@@ -194,21 +254,12 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
           key={column.id}
           align="center"
           sx={{ 
-            borderColor: themeMode === 'unfiltered' ? '#333333' : 'divider',
-            backgroundColor: themeMode === 'unfiltered' ? '#1A1A1A' : 'background.paper',
+            borderColor: 'divider',
           }}
         >
           <Checkbox
             checked={((responses[row.id] as string[]) || []).includes(column.id)}
             onChange={(e) => handleMultipleResponse(row.id, column.id, e.target.checked)}
-            sx={{
-              ...(themeMode === 'unfiltered' && {
-                color: '#666666',
-                '&.Mui-checked': {
-                  color: '#F6FA24',
-                },
-              }),
-            }}
           />
         </TableCell>
       ))}
@@ -220,20 +271,18 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
       component={Paper} 
       sx={{ 
         mb: 3,
-        backgroundColor: themeMode === 'unfiltered' ? '#1A1A1A' : 'background.paper',
         borderRadius: 2,
         overflow: 'auto',
-        border: themeMode === 'unfiltered' ? '1px solid #333333' : 'none',
       }}
     >
       <Table size={isMobile ? 'small' : 'medium'}>
         {renderTableHeader()}
         <TableBody>
-          {question.rows.map((row) => {
+          {question.rows.map((row, index) => {
             if (question.matrixType === 'multiple') {
-              return renderMultipleSelectRow(row);
+              return renderMultipleSelectRow(row, index);
             } else {
-              return renderSingleSelectRow(row);
+              return renderSingleSelectRow(row, index);
             }
           })}
         </TableBody>
@@ -243,15 +292,15 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
 
   const renderMobileCards = () => (
     <Box sx={{ mb: 3 }}>
-      {question.rows.map((row) => (
+      {question.rows.map((row, index) => (
         <Paper
           key={row.id}
           sx={{
             mb: 2,
             p: 2,
-            backgroundColor: themeMode === 'unfiltered' ? '#1A1A1A' : 'background.paper',
-            border: themeMode === 'unfiltered' ? '1px solid #333333' : 'none',
             borderRadius: 2,
+            backgroundColor: currentRowIndex === index ? 'action.hover' : 'background.paper',
+            transition: 'background-color 0.2s ease',
           }}
         >
           <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'medium' }}>
@@ -272,14 +321,6 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
                     <Checkbox
                       checked={((responses[row.id] as string[]) || []).includes(column.id)}
                       onChange={(e) => handleMultipleResponse(row.id, column.id, e.target.checked)}
-                      sx={{
-                        ...(themeMode === 'unfiltered' && {
-                          color: '#666666',
-                          '&.Mui-checked': {
-                            color: '#F6FA24',
-                          },
-                        }),
-                      }}
                     />
                   }
                   label={column.text}
@@ -296,16 +337,7 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
                   key={column.id}
                   value={column.id}
                   control={
-                    <Radio
-                      sx={{
-                        ...(themeMode === 'unfiltered' && {
-                          color: '#666666',
-                          '&.Mui-checked': {
-                            color: '#F6FA24',
-                          },
-                        }),
-                      }}
-                    />
+                    <Radio />
                   }
                   label={column.text}
                 />
@@ -366,13 +398,6 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
           sx={{
             borderRadius: 3,
             minWidth: 120,
-            ...(themeMode === 'unfiltered' && {
-              backgroundColor: '#F6FA24',
-              color: '#000000',
-              '&:hover': {
-                backgroundColor: '#FFD700',
-              },
-            }),
           }}
         >
           Submit
@@ -380,11 +405,16 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
       </Box>
 
       {/* Helper Text */}
-      {question.required && (
-        <FormHelperText sx={{ textAlign: 'center', mt: 1 }}>
-          * Required questions are marked with an asterisk
+      <Box sx={{ textAlign: 'center', mt: 1 }}>
+        {question.required && (
+          <FormHelperText sx={{ mb: 0.5 }}>
+            * Required questions are marked with an asterisk
+          </FormHelperText>
+        )}
+        <FormHelperText sx={{ fontSize: '0.75rem', opacity: 0.7 }}>
+          Use number keys (1-{question.columns.length}) for column selection • Arrow keys to navigate rows • Enter to submit
         </FormHelperText>
-      )}
+      </Box>
     </NodeCard>
   );
 };

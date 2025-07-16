@@ -370,5 +370,74 @@ export const unfilteredTheme = createTheme({
         },
       },
     },
+    MuiSlider: {
+      styleOverrides: {
+        root: {
+          height: 8,
+          '& .MuiSlider-rail': {
+            color: '#333333',
+            opacity: 1,
+            height: 8,
+          },
+          '& .MuiSlider-track': {
+            border: 'none',
+            height: 8,
+            backgroundColor: '#F6FA24',
+          },
+          '& .MuiSlider-thumb': {
+            height: 24,
+            width: 24,
+            backgroundColor: '#F6FA24',
+            border: '2px solid currentColor',
+            '&:focus, &:hover, &.Mui-active, &.Mui-focusVisible': {
+              boxShadow: '0px 0px 0px 8px rgba(246, 250, 36, 0.16)',
+            },
+            '&:before': {
+              display: 'none',
+            },
+          },
+          '& .MuiSlider-valueLabel': {
+            lineHeight: 1.2,
+            fontSize: 12,
+            background: 'unset',
+            padding: 0,
+            width: 32,
+            height: 32,
+            borderRadius: '50% 50% 50% 0',
+            backgroundColor: '#F6FA24',
+            color: '#000000',
+            transformOrigin: 'bottom left',
+            transform: 'translate(50%, -100%) rotate(-45deg) scale(0)',
+            '&:before': { display: 'none' },
+            '&.MuiSlider-valueLabelOpen': {
+              transform: 'translate(50%, -100%) rotate(-45deg) scale(1)',
+            },
+            '& > *': {
+              transform: 'rotate(45deg)',
+            },
+          },
+          '& .MuiSlider-mark': {
+            backgroundColor: '#666666',
+            height: 8,
+            width: 1,
+            '&.MuiSlider-markActive': {
+              opacity: 1,
+              backgroundColor: 'currentColor',
+            },
+          },
+          '& .MuiSlider-markLabel': {
+            color: '#CCCCCC',
+            fontSize: '0.75rem',
+            whiteSpace: 'nowrap',
+            transform: 'translateX(-50%)',
+            maxWidth: '100px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            paddingTop: '8px',
+            paddingBottom: '8px',
+          },
+        },
+      },
+    },
   },
 });

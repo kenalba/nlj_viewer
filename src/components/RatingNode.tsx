@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Rating, Button, Alert, FormHelperText, ButtonGroup } from '@mui/material';
+import { Box, Typography, Rating, Button, Alert, FormHelperText } from '@mui/material';
 import { Star, StarBorder } from '@mui/icons-material';
 import type { RatingNode as RatingNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
@@ -135,24 +135,29 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
     }
 
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-        <ButtonGroup variant="outlined" size="large">
-          {values.map((value) => (
-            <Button
-              key={value}
-              variant="outlined"
-              onClick={() => handleValueSelect(value)}
-              className={selectedValue === value ? 'selected' : ''}
-              sx={{
-                borderRadius: 3,
-                minWidth: 60,
-                minHeight: 48,
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        mb: 3,
+        gap: 1,
+        flexWrap: 'wrap',
+        px: 2,
+      }}>
+        {values.map((value) => (
+          <Button
+            key={value}
+            variant="outlined"
+            onClick={() => handleValueSelect(value)}
+            className={selectedValue === value ? 'selected' : ''}
+            sx={{
+              borderRadius: 3,
+              minWidth: 60,
+              minHeight: 48,
               }}
             >
               {value}
             </Button>
           ))}
-        </ButtonGroup>
       </Box>
     );
   };
