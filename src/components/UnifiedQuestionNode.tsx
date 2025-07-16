@@ -15,6 +15,7 @@ import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useTheme } from '../contexts/ThemeContext';
 import { useXAPI } from '../contexts/XAPIContext';
+import { getAlertFeedbackColors } from '../utils/feedbackColors';
 
 interface UnifiedQuestionNodeProps {
   question: QuestionNode;
@@ -328,7 +329,11 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
                     boxShadow: 'none',
                     p: 0,
                     '& .MuiAlert-icon': {
-                      color: themeMode === 'unfiltered' ? '#F6FA24' : 'inherit',
+                      color: getAlertFeedbackColors(
+                        muiTheme, 
+                        themeMode, 
+                        getFeedbackSeverity(selectedChoiceNode.choiceType) as 'success' | 'error' | 'warning' | 'info'
+                      ).iconColor,
                     },
                   }}
                 >

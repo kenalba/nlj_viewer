@@ -7,10 +7,12 @@ import {
   Button,
   Radio,
   Stack,
+  useTheme as useMuiTheme,
 } from '@mui/material';
 import type { ChoiceNode } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { useTheme } from '../contexts/ThemeContext';
+import { getAlertFeedbackColors } from '../utils/feedbackColors';
 
 interface EnhancedChoiceSelectorProps {
   choices: ChoiceNode[];
@@ -28,6 +30,7 @@ export const EnhancedChoiceSelector: React.FC<EnhancedChoiceSelectorProps> = ({
   const [selectedChoiceNode, setSelectedChoiceNode] = useState<ChoiceNode | null>(null);
   const feedbackRef = useRef<HTMLDivElement>(null);
   const { themeMode } = useTheme();
+  const muiTheme = useMuiTheme();
 
   // Reset state when choices change (new question)
   useEffect(() => {
@@ -174,14 +177,24 @@ export const EnhancedChoiceSelector: React.FC<EnhancedChoiceSelectorProps> = ({
               <Alert 
                 severity={getFeedbackSeverity(selectedChoiceNode.choiceType)}
                 sx={{ 
-                  borderRadius: themeMode === 'unfiltered' ? 16 : 2,
+                  ...getAlertFeedbackColors(
+                    muiTheme,
+                    themeMode,
+                    getFeedbackSeverity(selectedChoiceNode.choiceType) as 'success' | 'error' | 'warning' | 'info'
+                  ).backgroundStyle,
+                  borderRadius: getAlertFeedbackColors(
+                    muiTheme,
+                    themeMode,
+                    getFeedbackSeverity(selectedChoiceNode.choiceType) as 'success' | 'error' | 'warning' | 'info'
+                  ).borderRadius,
                   mb: 2,
-                  backgroundColor: themeMode === 'unfiltered' ? 
-                    'rgba(246, 250, 36, 0.1)' : 
-                    undefined,
-                  border: themeMode === 'unfiltered' ? 
-                    '1px solid rgba(246, 250, 36, 0.3)' : 
-                    undefined,
+                  '& .MuiAlert-icon': {
+                    color: getAlertFeedbackColors(
+                      muiTheme,
+                      themeMode,
+                      getFeedbackSeverity(selectedChoiceNode.choiceType) as 'success' | 'error' | 'warning' | 'info'
+                    ).iconColor,
+                  },
                 }}
               >
                 <Typography variant="body1" sx={{ fontSize: '1rem' }}>

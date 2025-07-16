@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Rating, Button, Alert, FormHelperText } from '@mui/material';
+import { Box, Typography, Rating, Button, Alert, FormHelperText, useTheme as useMuiTheme } from '@mui/material';
 import { Star, StarBorder } from '@mui/icons-material';
 import type { RatingNode as RatingNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useTheme } from '../contexts/ThemeContext';
-// import { getStarColors, getButtonColors } from '../utils/feedbackColors';
+import { getStarColors } from '../utils/feedbackColors';
 
 interface RatingNodeProps {
   question: RatingNodeType;
@@ -18,6 +18,7 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
   const [showValidation, setShowValidation] = useState(false);
   const { playSound } = useAudio();
   const { themeMode } = useTheme();
+  const muiTheme = useMuiTheme();
 
   const handleValueSelect = useCallback((value: number) => {
     console.log('handleValueSelect:', value, typeof value);
@@ -89,7 +90,6 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
   }, [question, handleValueSelect, handleSubmit]);
 
   const renderStarRating = () => {
-    const isUnfiltered = themeMode === 'unfiltered';
     
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
@@ -109,13 +109,13 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
           aria-label="Rating"
           sx={{
             '& .MuiRating-iconFilled': {
-              color: isUnfiltered ? '#F6FA24' : 'warning.main',
+              color: getStarColors(muiTheme, themeMode).filled,
             },
             '& .MuiRating-iconEmpty': {
-              color: isUnfiltered ? '#333333' : 'action.disabled',
+              color: getStarColors(muiTheme, themeMode).empty,
             },
             '& .MuiRating-iconHover': {
-              color: isUnfiltered ? '#FFD700' : 'warning.light',
+              color: getStarColors(muiTheme, themeMode).hover,
             },
           }}
         />
