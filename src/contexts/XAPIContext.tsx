@@ -16,6 +16,7 @@ import {
   surveyEventToStatement,
   createXAPIClient,
   createMockXAPIClient,
+  XAPIClient,
   XAPI_ACTIVITY_TYPES
 } from '../xapi';
 import type { 
@@ -140,13 +141,17 @@ export const XAPIProvider: React.FC<XAPIProviderProps> = ({
   
   // Session management
   const sessionId = useRef(crypto.randomUUID());
-  const xapiClient = useRef<any>(null);
+  const xapiClient = useRef<XAPIClient | Partial<XAPIClient> | null>(null);
   const launchedActivities = useRef<Set<string>>(new Set());
   
   // Initialize xAPI client when config changes
   useEffect(() => {
     if (config && config.endpoint) {
-      xapiClient.current = createXAPIClient(config as any);
+      xapiClient.current = createXAPIClient({
+        endpoint: config.endpoint,
+        username: config.username || '',
+        password: config.password || ''
+      });
     } else {
       xapiClient.current = createMockXAPIClient();
     }
@@ -199,7 +204,7 @@ export const XAPIProvider: React.FC<XAPIProviderProps> = ({
       setLastEventTime(new Date());
       
       // Send to LRS if client is configured
-      if (xapiClient.current && config) {
+      if (xapiClient.current && config && xapiClient.current.sendStatement) {
         xapiClient.current.sendStatement(statement).catch((error: Error) => {
           console.error('Failed to send xAPI statement:', error);
         });
@@ -253,7 +258,7 @@ export const XAPIProvider: React.FC<XAPIProviderProps> = ({
         platform: 'NLJ Viewer',
         language: 'en-US',
         extensions: {
-          'http://nlj-viewer.com/extensions/scenario-type': (scenario as any).type || 'training'
+          'http://nlj-viewer.com/extensions/scenario-type': scenario.activityType || 'training'
         }
       })
     };

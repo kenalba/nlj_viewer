@@ -60,7 +60,7 @@ export async function parseTrivieExcel(file: File): Promise<TrivieQuiz[]> {
       debugLog('Trivie Parser', `Found sheet: ${sheetName}`);
 
       // Try to interpret the sheet data as a quiz
-      const quiz = parseSheetAsQuiz(sheetName, jsonData as any[][]);
+      const quiz = parseSheetAsQuiz(sheetName, jsonData as unknown[][]);
       if (quiz) {
         quizzes.push(quiz);
       }
@@ -76,7 +76,7 @@ export async function parseTrivieExcel(file: File): Promise<TrivieQuiz[]> {
 /**
  * Parse a worksheet as a quiz
  */
-function parseSheetAsQuiz(sheetName: string, data: any[][]): TrivieQuiz | null {
+function parseSheetAsQuiz(sheetName: string, data: unknown[][]): TrivieQuiz | null {
   if (!data || data.length < 2) return null;
 
   try {
@@ -101,7 +101,7 @@ function parseSheetAsQuiz(sheetName: string, data: any[][]): TrivieQuiz | null {
       if (!row || !row[columnMap.question]) continue;
 
       debugLog('Trivie Parser', `Processing question ${questionId}`, {
-        questionText: row[columnMap.question]?.substring(0, 50) + '...',
+        questionText: String(row[columnMap.question] || '').substring(0, 50) + '...',
         questionType: columnMap.questionType ? row[columnMap.questionType] : 'unknown',
         hasChoices: !!(row[columnMap.choiceA] || row[columnMap.choiceB])
       });
@@ -113,7 +113,7 @@ function parseSheetAsQuiz(sheetName: string, data: any[][]): TrivieQuiz | null {
         choices: [],
         correctAnswer: columnMap.correctAnswer ? String(row[columnMap.correctAnswer] || '') : '',
         explanation: columnMap.explanation ? String(row[columnMap.explanation] || '') : '',
-        difficulty: columnMap.difficulty ? String(row[columnMap.difficulty] || 'medium') as any : 'medium',
+        difficulty: columnMap.difficulty ? (String(row[columnMap.difficulty] || 'medium') as 'easy' | 'medium' | 'hard') : 'medium',
         category: columnMap.category ? String(row[columnMap.category] || '') : '',
         points: columnMap.points ? Number(row[columnMap.points]) || 1 : 1
       };
@@ -251,7 +251,7 @@ function detectColumnMapping(headers: string[]): Record<string, number> {
 /**
  * Parse choices from row data
  */
-function parseChoices(row: any[], columnMap: Record<string, number>): TrivieChoice[] {
+function parseChoices(row: unknown[], columnMap: Record<string, number>): TrivieChoice[] {
   const choices: TrivieChoice[] = [];
   
   // Get correct answers (Trivie format: "A,C" or "1,3")

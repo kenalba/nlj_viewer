@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Typography, Button, Box, useTheme as useMuiTheme } from '@mui/material';
 import type { InterstitialPanelNode } from '../types/nlj';
 import { MediaViewer } from './MediaViewer';
@@ -17,6 +17,18 @@ export const InterstitialPanel: React.FC<InterstitialPanelProps> = ({
   const displayText = panel.text || panel.content || '';
   const { themeMode } = useTheme();
   const muiTheme = useMuiTheme();
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        onContinue();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onContinue]);
 
   return (
     <NodeCard variant="interstitial" animate={false} sx={{ mb: 2 }}>

@@ -108,6 +108,7 @@ export type {
 
 import { createStatement, createActor, createActivity } from './builder';
 import { XAPI_VERBS, XAPI_ACTIVITY_TYPES } from './types';
+import type { XAPIActor, XAPIVerb, XAPIObject } from './types';
 
 export const xapi = {
   // Factory functions
@@ -120,17 +121,17 @@ export const xapi = {
   activityTypes: XAPI_ACTIVITY_TYPES,
   
   // Common patterns
-  createLearningStatement: (actor: any, verb: any, activity: any) => 
+  createLearningStatement: (actor: XAPIActor, verb: XAPIVerb, activity: XAPIObject) => 
     createStatement().setActor(actor).setVerb(verb).setObject(activity),
     
-  createQuestionStatement: (actor: any, questionId: string, response: string, isCorrect: boolean) =>
+  createQuestionStatement: (actor: XAPIActor, questionId: string, response: string, isCorrect: boolean) =>
     createStatement()
       .setActor(actor)
       .setVerb(XAPI_VERBS.ANSWERED)
       .setObject(createActivity({ id: questionId, name: `Question ${questionId}` }))
       .setResult({ success: isCorrect, response }),
       
-  createCompletionStatement: (actor: any, activityId: string, activityName: string, score?: number) =>
+  createCompletionStatement: (actor: XAPIActor, activityId: string, activityName: string, score?: number) =>
     createStatement()
       .setActor(actor)
       .setVerb(XAPI_VERBS.COMPLETED)

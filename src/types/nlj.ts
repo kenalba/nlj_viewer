@@ -3,6 +3,24 @@
  * Extended to support unified activity system (training, surveys, assessments)
  */
 
+// JSON-compatible types for metadata and extensions
+export type JSONValue = string | number | boolean | null | JSONValue[] | { [key: string]: JSONValue };
+export type JSONObject = Record<string, JSONValue>;
+
+// Validation value types
+export type ValidationValue = string | number | boolean | RegExp | { min?: number; max?: number };
+
+// Node response types
+export type NodeResponseValue = 
+  | string 
+  | number 
+  | boolean 
+  | null
+  | string[] 
+  | Array<{ id: string; value: string }>
+  | Array<{ leftId: string; rightId: string }>
+  | Record<string, string | string[]>;
+
 export interface Media {
   id: string;
   type: 'IMAGE' | 'VIDEO' | 'AUDIO';
@@ -69,7 +87,7 @@ export interface BaseNode {
   title?: string;
   description?: string;
   tags?: string[];
-  metadata?: Record<string, any>;
+  metadata?: JSONObject;
   // Validation and theming
   validation?: ValidationConfig;
   theme?: Partial<ThemeConfiguration>;
@@ -168,9 +186,9 @@ export interface ShortAnswerNode extends BaseNode {
 // Validation configuration for all node types
 export interface ValidationRule {
   type: 'required' | 'minLength' | 'maxLength' | 'range' | 'pattern' | 'custom';
-  value?: any;
+  value?: ValidationValue;
   message: string;
-  customValidator?: (value: any) => boolean;
+  customValidator?: (value: unknown) => boolean;
 }
 
 export interface ValidationConfig {
@@ -183,13 +201,13 @@ export interface ValidationConfig {
 export interface NodeResponse {
   nodeId: string;
   nodeType: string;
-  response: any;
+  response: NodeResponseValue;
   timestamp: Date;
   timeToRespond: number;
   isCorrect?: boolean;
   isSkipped?: boolean;
   attemptNumber?: number;
-  metadata?: Record<string, any>;
+  metadata?: JSONObject;
 }
 
 // Survey-specific node types
@@ -450,7 +468,7 @@ export interface NLJScenario {
     description?: string;
     type: ActivityType;
     nodeIds: string[];
-    metadata?: Record<string, any>;
+    metadata?: JSONObject;
   }>;
   // Branching and navigation rules
   navigationRules?: Array<{
@@ -466,9 +484,9 @@ export interface NLJScenario {
     };
     scorm?: {
       version: '1.2' | '2004';
-      settings?: Record<string, any>;
+      settings?: JSONObject;
     };
-    custom?: Record<string, any>;
+    custom?: JSONObject;
   };
 }
 
@@ -528,10 +546,89 @@ export type GameActionType =
   | 'PAUSE_ACTIVITY'
   | 'RESUME_ACTIVITY';
 
-export interface GameAction {
-  type: GameActionType;
-  payload?: any;
+// Specific action interfaces for type safety
+export interface LoadScenarioAction {
+  type: 'LOAD_SCENARIO';
+  payload: NLJScenario;
 }
+
+export interface NavigateToNodeAction {
+  type: 'NAVIGATE_TO_NODE';
+  payload: { nodeId: string };
+}
+
+export interface UpdateVariableAction {
+  type: 'UPDATE_VARIABLE';
+  payload: { variableId: string; value: number };
+}
+
+export interface CompleteScenarioAction {
+  type: 'COMPLETE_SCENARIO';
+  payload?: { score?: number };
+}
+
+export interface ResetAction {
+  type: 'RESET';
+}
+
+export interface SubmitResponseAction {
+  type: 'SUBMIT_RESPONSE';
+  payload: NodeResponse;
+}
+
+export interface SkipQuestionAction {
+  type: 'SKIP_QUESTION';
+  payload: { nodeId: string };
+}
+
+export interface UpdateSectionAction {
+  type: 'UPDATE_SECTION';
+  payload: { sectionId: string };
+}
+
+export interface UpdateThemeAction {
+  type: 'UPDATE_THEME';
+  payload: { theme: ThemeConfiguration };
+}
+
+export interface UpdateAccessibilityAction {
+  type: 'UPDATE_ACCESSIBILITY';
+  payload: { accessibility: AccessibilityOptions };
+}
+
+export interface StartTimerAction {
+  type: 'START_TIMER';
+  payload: { timeLimit: number };
+}
+
+export interface UpdateTimerAction {
+  type: 'UPDATE_TIMER';
+  payload: { timeRemaining: number };
+}
+
+export interface PauseActivityAction {
+  type: 'PAUSE_ACTIVITY';
+}
+
+export interface ResumeActivityAction {
+  type: 'RESUME_ACTIVITY';
+}
+
+export type GameAction = 
+  | LoadScenarioAction
+  | NavigateToNodeAction
+  | UpdateVariableAction
+  | CompleteScenarioAction
+  | ResetAction
+  | SubmitResponseAction
+  | SkipQuestionAction
+  | UpdateSectionAction
+  | UpdateThemeAction
+  | UpdateAccessibilityAction
+  | StartTimerAction
+  | UpdateTimerAction
+  | PauseActivityAction
+  | ResumeActivityAction;
 
 // Response aggregation for analytics
 export interface ActivitySession {
@@ -545,7 +642,7 @@ export interface ActivitySession {
   responses: NodeResponse[];
   score?: number;
   duration?: number;
-  metadata?: Record<string, any>;
+  metadata?: JSONObject;
 }
 
 // xAPI integration types
@@ -610,7 +707,7 @@ export interface XAPIResult {
   completion?: boolean;
   response?: string;
   duration?: string;
-  extensions?: Record<string, any>;
+  extensions?: JSONObject;
 }
 
 export interface XAPIContext {
@@ -627,7 +724,7 @@ export interface XAPIContext {
   platform?: string;
   language?: string;
   statement?: string;
-  extensions?: Record<string, any>;
+  extensions?: JSONObject;
 }
 
 export interface XAPIStatement {

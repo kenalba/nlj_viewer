@@ -32,7 +32,7 @@ export const disableDebug = (): void => {
   console.log('💡 To re-enable: localStorage.setItem("nlj_debug", "true") or use nlj_debug.enable()');
 };
 
-export const debugLog = (category: string, message: string, data?: any): void => {
+export const debugLog = (category: string, message: string, data?: unknown): void => {
   if (!isDebugEnabled()) return;
   
   const timestamp = new Date().toLocaleTimeString();
@@ -44,19 +44,23 @@ export const debugLog = (category: string, message: string, data?: any): void =>
   console.groupEnd();
 };
 
-export const debugState = (action: string, prevState: any, newState: any): void => {
+export const debugState = (action: string, prevState: unknown, newState: unknown): void => {
   if (!isDebugEnabled()) return;
   
   const timestamp = new Date().toLocaleTimeString();
   console.group(`🔄 [${timestamp}] State Change: ${action}`);
   console.log('Previous State:', prevState);
   console.log('New State:', newState);
-  console.log('Changed:', getChangedFields(prevState, newState));
+  
+  // Type check before calling getChangedFields
+  if (typeof prevState === 'object' && prevState !== null && typeof newState === 'object' && newState !== null) {
+    console.log('Changed:', getChangedFields(prevState as Record<string, unknown>, newState as Record<string, unknown>));
+  }
   console.groupEnd();
 };
 
-const getChangedFields = (prev: any, next: any): Record<string, { from: any; to: any }> => {
-  const changes: Record<string, { from: any; to: any }> = {};
+const getChangedFields = (prev: Record<string, unknown>, next: Record<string, unknown>): Record<string, { from: unknown; to: unknown }> => {
+  const changes: Record<string, { from: unknown; to: unknown }> = {};
   
   for (const key in next) {
     if (JSON.stringify(prev[key]) !== JSON.stringify(next[key])) {
@@ -69,9 +73,10 @@ const getChangedFields = (prev: any, next: any): Record<string, { from: any; to:
 
 // Make debug functions available globally in development
 if (typeof window !== 'undefined') {
-  (window as any).nlj_debug = {
+  const debugInterface = {
     enable: enableDebug,
     disable: disableDebug,
     isEnabled: isDebugEnabled,
   };
+  (window as unknown as Window & { nlj_debug: typeof debugInterface }).nlj_debug = debugInterface;
 }

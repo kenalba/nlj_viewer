@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Box, Typography, Button, useTheme as useMuiTheme, Stack } from '@mui/material';
 import { Analytics, Refresh } from '@mui/icons-material';
 import confetti from 'canvas-confetti';
-import type { NLJNode, NLJScenario, ChoiceNode } from '../types/nlj';
+import type { NLJNode, NLJScenario, ChoiceNode, NodeResponseValue } from '../types/nlj';
 import { UnifiedQuestionNode } from './UnifiedQuestionNode';
 import { InterstitialPanel } from './InterstitialPanel';
 import { NodeCard } from './NodeCard';
@@ -148,7 +148,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     }
   }, [playSound, node.id, scenario.id, scenario.nodes, navigateToNode]);
 
-  const handleQuestionAnswer = useCallback((isCorrect: boolean, response?: any) => {
+  const handleQuestionAnswer = useCallback((isCorrect: boolean, response?: NodeResponseValue) => {
     debugLog('Question Answer', `User answered question: ${isCorrect ? 'correct' : 'incorrect'}`, {
       currentNode: node.id,
       nodeType: node.type,

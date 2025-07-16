@@ -4,7 +4,7 @@ import { createMockLikertQuestion, createMockRatingQuestion } from '../../test/u
 import { NodeRenderer } from '../NodeRenderer';
 import { LikertScaleNode } from '../LikertScaleNode';
 import { RatingNode } from '../RatingNode';
-import type { NLJScenario } from '../../types/nlj';
+import type { NLJScenario, NLJNode, Link } from '../../types/nlj';
 import { GameContext } from '../../contexts/GameContext';
 
 describe('Bug Regression Tests', () => {
@@ -147,7 +147,7 @@ describe('Bug Regression Tests', () => {
   });
 
   describe('Bug #5: Survey Question Navigation Failure', () => {
-    const createMockScenario = (nodes: any[], links: any[]): NLJScenario => ({
+    const createMockScenario = (nodes: NLJNode[], links: Link[]): NLJScenario => ({
       id: 'test-scenario',
       name: 'Test Survey',
       orientation: 'horizontal',
@@ -169,9 +169,9 @@ describe('Bug Regression Tests', () => {
       ];
 
       const links = [
-        { id: 'start-q1', type: 'link', sourceNodeId: 'start', targetNodeId: 'q1' },
-        { id: 'q1-q2', type: 'link', sourceNodeId: 'q1', targetNodeId: 'q2' },
-        { id: 'q2-end', type: 'link', sourceNodeId: 'q2', targetNodeId: 'end' },
+        { id: 'start-q1', type: 'link' as const, sourceNodeId: 'start', targetNodeId: 'q1', startPoint: { x: 0, y: 0 }, endPoint: { x: 0, y: 0 } },
+        { id: 'q1-q2', type: 'link' as const, sourceNodeId: 'q1', targetNodeId: 'q2', startPoint: { x: 0, y: 0 }, endPoint: { x: 0, y: 0 } },
+        { id: 'q2-end', type: 'link' as const, sourceNodeId: 'q2', targetNodeId: 'end', startPoint: { x: 0, y: 0 }, endPoint: { x: 0, y: 0 } },
       ];
 
       const scenario = createMockScenario(nodes, links);
@@ -227,7 +227,7 @@ describe('Bug Regression Tests', () => {
       ];
 
       const links = [
-        { id: 'q1-end', type: 'link', sourceNodeId: 'q1', targetNodeId: 'end' },
+        { id: 'q1-end', type: 'link' as const, sourceNodeId: 'q1', targetNodeId: 'end', startPoint: { x: 0, y: 0 }, endPoint: { x: 0, y: 0 } },
       ];
 
       const scenario = createMockScenario(nodes, links);
@@ -281,7 +281,7 @@ describe('Bug Regression Tests', () => {
       ];
 
       // No links - this should cause navigation failure
-      const links: any[] = [];
+      const links: Link[] = [];
 
       const scenario = createMockScenario(nodes, links);
       

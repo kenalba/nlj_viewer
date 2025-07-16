@@ -173,7 +173,7 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
     return <Assignment />;
   };
 
-  const getVerbColor = (verbId: string) => {
+  const getVerbColor = (verbId: string): 'primary' | 'success' | 'info' | 'error' | 'warning' | 'default' => {
     if (verbId.includes('launched')) return 'primary';
     if (verbId.includes('completed')) return 'success';
     if (verbId.includes('answered')) return 'info';
@@ -375,7 +375,7 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
                     key={verbId}
                     icon={getVerbIcon(verbId)}
                     label={`${verbId.split('/').pop()} (${count})`}
-                    color={getVerbColor(verbId) as any}
+                    color={getVerbColor(verbId)}
                     variant="outlined"
                   />
                 ))}
