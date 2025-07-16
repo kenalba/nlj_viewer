@@ -5,26 +5,47 @@ import {
   Card,
   CardContent,
   Typography,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
   Alert,
   CircularProgress,
   Container,
+  Tabs,
+  Tab,
 } from '@mui/material';
-import { Upload as UploadIcon, PlayArrow as PlayIcon } from '@mui/icons-material';
+import { 
+  Upload as UploadIcon, 
+  PlayArrow as PlayIcon,
+  Quiz as QuizIcon,
+  Poll as SurveyIcon,
+  Assignment as NLJIcon,
+} from '@mui/icons-material';
 import type { NLJScenario } from '../types/nlj';
 import { validateScenario } from '../utils/scenarioUtils';
 import { parseTrivieExcel, convertTrivieToNLJ, validateTrivieQuiz } from '../utils/trivieInterpreter';
 import { useGameContext } from '../contexts/GameContext';
-import { useTheme } from '../contexts/ThemeContext';
 import { useAudio } from '../contexts/AudioContext';
 import { ThemeToggle } from './ThemeToggle';
 import { SoundToggle } from './SoundToggle';
 import { ErrorModal, type ErrorDetails } from './ErrorModal';
 
-// Sample scenarios for demo
+// Activity Types
+type ActivityType = 'nlj' | 'trivie' | 'survey';
+
+// Activity Type Configuration
+interface ActivityTypeConfig {
+  id: ActivityType;
+  name: string;
+  icon: React.ReactElement;
+  color: 'primary' | 'secondary' | 'info';
+  uploadLabel: string;
+  uploadDescription: string;
+  uploadAccept: string;
+  samplesLabel: string;
+  samplesDescription: string;
+  samples: string[];
+  loadSampleFunction: (filename: string) => Promise<void>;
+}
+
+// Sample data arrays
 const SAMPLE_SCENARIOS = [
   'nls.Markdown_and_Carousel_Test.json',
   'nls.FSA_102_1_40.json',
@@ -36,12 +57,10 @@ const SAMPLE_SCENARIOS = [
   'nls.Testing NLJ Images.json',
 ];
 
-// Sample Trivie quizzes
 const SAMPLE_TRIVIE_QUIZZES = [
   'quizzes_export_2025-07-15.xlsx',
 ];
 
-// Sample surveys
 const SAMPLE_SURVEYS = [
   'automotive_sales_department.json',
   'employee_engagement.json',
@@ -51,12 +70,12 @@ const SAMPLE_SURVEYS = [
 
 export const ScenarioLoader: React.FC = () => {
   const { loadScenario } = useGameContext();
-  const { themeMode } = useTheme();
   const { playSound } = useAudio();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<ErrorDetails | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [selectedActivityType, setSelectedActivityType] = useState<ActivityType>('nlj');
 
   const createErrorDetails = (
     category: ErrorDetails['category'],
@@ -376,272 +395,257 @@ export const ScenarioLoader: React.FC = () => {
     }
   };
 
+  // Activity Type Configurations
+  const activityTypes: ActivityTypeConfig[] = [
+    {
+      id: 'nlj',
+      name: 'NLJs',
+      icon: <NLJIcon />,
+      color: 'primary',
+      uploadLabel: 'Upload NLJ',
+      uploadDescription: 'Upload a .json file containing an NLJ scenario',
+      uploadAccept: '.json',
+      samplesLabel: 'Sample Scenarios',
+      samplesDescription: 'Try one of the included NLJ demo scenarios',
+      samples: SAMPLE_SCENARIOS,
+      loadSampleFunction: loadSampleScenario,
+    },
+    {
+      id: 'trivie',
+      name: 'Trivie Quizzes',
+      icon: <QuizIcon />,
+      color: 'secondary',
+      uploadLabel: 'Upload Trivie Quiz',
+      uploadDescription: 'Upload an .xlsx file containing a Trivie quiz',
+      uploadAccept: '.xlsx,.xls',
+      samplesLabel: 'Sample Quizzes',
+      samplesDescription: 'Try converted Trivie quiz formats',
+      samples: SAMPLE_TRIVIE_QUIZZES,
+      loadSampleFunction: loadSampleTrivieQuiz,
+    },
+    {
+      id: 'survey',
+      name: 'Surveys',
+      icon: <SurveyIcon />,
+      color: 'info',
+      uploadLabel: 'Upload Survey',
+      uploadDescription: 'Upload a .json file containing a survey',
+      uploadAccept: '.json',
+      samplesLabel: 'Sample Surveys',
+      samplesDescription: 'Try automotive and cross-industry survey examples',
+      samples: SAMPLE_SURVEYS,
+      loadSampleFunction: loadSampleSurvey,
+    },
+  ];
+
+  const currentActivityType = activityTypes.find(type => type.id === selectedActivityType)!;
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: ActivityType) => {
+    setSelectedActivityType(newValue);
+  };
+
+  const renderUploadCard = () => (
+    <Card sx={{ width: '100%' }}>
+      <CardContent sx={{ p: 4 }}>
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <UploadIcon sx={{ fontSize: 48, color: `${currentActivityType.color}.main`, mb: 2 }} />
+          <Typography gutterBottom sx={{ fontWeight: 600 }}>
+            {currentActivityType.uploadLabel}
+          </Typography>
+          <Typography color="text.secondary">
+            {currentActivityType.uploadDescription}
+          </Typography>
+        </Box>
+        <Button
+          component="label"
+          variant="contained"
+          startIcon={<UploadIcon />}
+          disabled={loading}
+          fullWidth
+          size="large"
+          color={currentActivityType.color}
+        >
+          Choose File
+          <input
+            type="file"
+            accept={currentActivityType.uploadAccept}
+            onChange={handleFileUpload}
+            hidden
+          />
+        </Button>
+      </CardContent>
+    </Card>
+  );
+
+  const renderSamplesCard = () => (
+    <Card sx={{ width: '100%', height: '100%' }}>
+      <CardContent sx={{ p: 4 }}>
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <PlayIcon sx={{ fontSize: 48, color: `${currentActivityType.color}.main`, mb: 2 }} />
+          <Typography gutterBottom sx={{ fontWeight: 600 }}>
+            {currentActivityType.samplesLabel}
+          </Typography>
+          <Typography color="text.secondary">
+            {currentActivityType.samplesDescription}
+          </Typography>
+        </Box>
+        <Box sx={{ 
+          display: 'grid', 
+          gap: 2,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+        }}>
+          {currentActivityType.samples.map((filename) => (
+            <Button
+              key={filename}
+              onClick={() => currentActivityType.loadSampleFunction(filename)}
+              disabled={loading}
+              variant="outlined"
+              color={currentActivityType.color}
+              startIcon={<PlayIcon />}
+              sx={{
+                justifyContent: 'flex-start',
+                textAlign: 'left',
+                textTransform: 'none',
+                py: 2,
+                px: 3,
+                borderRadius: 2,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: '0.95rem',
+                  fontWeight: 500,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {selectedActivityType === 'nlj' ? 
+                  filename.replace('.json', '').replace(/^nls\./, '') :
+                selectedActivityType === 'trivie' ?
+                  filename.replace('.xlsx', '').replace(/^quizzes_export_/, 'Quiz Export ') :
+                  filename.replace('.json', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+                }
+              </Typography>
+            </Button>
+          ))}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <Box sx={{ 
       minHeight: '100vh', 
       width: '100%',
       backgroundColor: 'background.default',
       display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      py: 4 
+      flexDirection: 'column',
     }}>
-      <Container maxWidth="md" sx={{ 
-        minHeight: '600px',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center'
+      {/* Fixed Header */}
+      <Box sx={{ 
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000,
+        backgroundColor: 'background.default',
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+        py: 2,
+        px: 4
       }}>
-        <Box sx={{ textAlign: 'center', mb: 4, position: 'relative' }}>
-          <Box sx={{ position: 'absolute', top: 0, right: 0, display: 'flex', alignItems: 'center' }}>
-            <SoundToggle />
-            <ThemeToggle />
-          </Box>
-          <Typography gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
-            {themeMode === 'unfiltered' ? 'Interactive Training' : 'NLJ Training'}
-          </Typography>
-          <Typography color="text.secondary" sx={{ mb: 1 }}>
-            {themeMode === 'unfiltered' ? 'Unfiltered Learning Experience' : 'Interactive Learning Experience'}
-          </Typography>
-          <Typography color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
-            Load a Non-Linear Journey scenario to begin your personalized training experience.
-          </Typography>
-        </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-          <CircularProgress />
-        </Box>
-      )}
-
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {/* NLJ Scenarios Section */}
-          <Box>
-            <Typography gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-              NLJ Scenarios
-            </Typography>
-            <Box sx={{ 
-              display: 'flex', 
-              gap: 3, 
-              alignItems: 'stretch',
-              flexDirection: { xs: 'column', md: 'row' }
-            }}>
-              {/* Upload NLJ */}
-              <Card sx={{ flex: 1 }}>
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ textAlign: 'center', mb: 3 }}>
-                    <UploadIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-                    <Typography gutterBottom sx={{ fontWeight: 600 }}>
-                      Upload NLJ
-                    </Typography>
-                    <Typography color="text.secondary">
-                      Upload a .json file containing an NLJ scenario
-                    </Typography>
-                  </Box>
-                  <Button
-                    
-                    component="label"
-                    startIcon={<UploadIcon />}
-                    disabled={loading}
-                    fullWidth
-                    size="large"
-                  >
-                    Choose JSON File
-                    <input
-                      type="file"
-                      accept=".json"
-                      onChange={handleFileUpload}
-                      hidden
-                    />
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Sample Scenarios */}
-              <Card sx={{ flex: 1 }}>
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ textAlign: 'center', mb: 3 }}>
-                    <PlayIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-                    <Typography gutterBottom sx={{ fontWeight: 600 }}>
-                      Sample Scenarios
-                    </Typography>
-                    <Typography color="text.secondary">
-                      Try one of the included NLJ demo scenarios
-                    </Typography>
-                  </Box>
-                  <List>
-                    {SAMPLE_SCENARIOS.map((filename) => (
-                      <ListItem key={filename} disablePadding sx={{ mb: 1 }}>
-                        <ListItemButton
-                          onClick={() => loadSampleScenario(filename)}
-                          disabled={loading}
-                          sx={{ 
-                            borderRadius: 2,
-                            '&:hover': { backgroundColor: 'action.hover' }
-                          }}
-                        >
-                          <PlayIcon sx={{ mr: 2, fontSize: 20, color: 'primary.main' }} />
-                          <ListItemText 
-                            primary={filename.replace('.json', '').replace(/^nls\./, '')}
-                            slotProps={{
-                              primary: {
-                                style: {
-                                  fontSize: '0.95rem',
-                                  fontWeight: 500
-                                }
-                              }
-                            }}
-                          />
-                        </ListItemButton>
-                      </ListItem>
-                    ))}
-                  </List>
-                </CardContent>
-              </Card>
-            </Box>
-          </Box>
-
-          {/* Trivie Quizzes Section */}
-          <Box>
-            <Typography gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-              Trivie Quizzes & Surveys
-            </Typography>
-            <Box sx={{ 
-              display: 'flex', 
-              gap: 3, 
-              alignItems: 'stretch',
-              flexDirection: { xs: 'column', md: 'row' }
-            }}>
-              {/* Upload Trivie */}
-              <Card sx={{ flex: 1 }}>
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ textAlign: 'center', mb: 3 }}>
-                    <UploadIcon sx={{ fontSize: 48, color: 'secondary.main', mb: 2 }} />
-                    <Typography gutterBottom sx={{ fontWeight: 600 }}>
-                      Upload Trivie Quiz
-                    </Typography>
-                    <Typography color="text.secondary">
-                      Upload an .xlsx file containing a Trivie quiz
-                    </Typography>
-                  </Box>
-                  <Button
-                    
-                    component="label"
-                    startIcon={<UploadIcon />}
-                    disabled={loading}
-                    fullWidth
-                    size="large"
-                    color="secondary"
-                  >
-                    Choose Excel File
-                    <input
-                      type="file"
-                      accept=".xlsx,.xls"
-                      onChange={handleFileUpload}
-                      hidden
-                    />
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Sample Trivie Quizzes */}
-              <Card sx={{ flex: 1 }}>
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ textAlign: 'center', mb: 3 }}>
-                    <PlayIcon sx={{ fontSize: 48, color: 'secondary.main', mb: 2 }} />
-                    <Typography gutterBottom sx={{ fontWeight: 600 }}>
-                      Sample Quizzes
-                    </Typography>
-                    <Typography color="text.secondary">
-                      Try converted Trivie quiz formats
-                    </Typography>
-                  </Box>
-                  <List>
-                    {SAMPLE_TRIVIE_QUIZZES.map((filename) => (
-                      <ListItem key={filename} disablePadding sx={{ mb: 1 }}>
-                        <ListItemButton
-                          onClick={() => loadSampleTrivieQuiz(filename)}
-                          disabled={loading}
-                          sx={{ 
-                            borderRadius: 2,
-                            '&:hover': { backgroundColor: 'action.hover' }
-                          }}
-                        >
-                          <PlayIcon sx={{ mr: 2, fontSize: 20, color: 'secondary.main' }} />
-                          <ListItemText 
-                            primary={filename.replace('.xlsx', '').replace(/^quizzes_export_/, 'Quiz Export ')}
-                            slotProps={{
-                              primary: {
-                                style: {
-                                  fontSize: '0.95rem',
-                                  fontWeight: 500
-                                }
-                              }
-                            }}
-                          />
-                        </ListItemButton>
-                      </ListItem>
-                    ))}
-                  </List>
-                </CardContent>
-              </Card>
-            </Box>
-            
-            {/* Sample Surveys Subsection */}
-            <Box sx={{ mt: 3 }}>
-              <Typography gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-                Sample Surveys
+        <Container maxWidth="md">
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ textAlign: 'center', flex: 1 }}>
+              <Typography gutterBottom sx={{ fontWeight: 700, mb: 0 }}>
+                NLJ Viewer - Internal Testing Tool
               </Typography>
-              <Card>
-                <CardContent sx={{ p: 3 }}>
-                  <Box sx={{ textAlign: 'center', mb: 3 }}>
-                    <PlayIcon sx={{ fontSize: 40, color: 'info.main', mb: 2 }} />
-                    <Typography gutterBottom sx={{ fontWeight: 600 }}>
-                      Employee Feedback Surveys
-                    </Typography>
-                    <Typography color="text.secondary">
-                      Try automotive and cross-industry survey examples
-                    </Typography>
-                  </Box>
-                  <List>
-                    {SAMPLE_SURVEYS.map((filename) => (
-                      <ListItem key={filename} disablePadding sx={{ mb: 1 }}>
-                        <ListItemButton
-                          onClick={() => loadSampleSurvey(filename)}
-                          disabled={loading}
-                          sx={{ 
-                            borderRadius: 2,
-                            '&:hover': { backgroundColor: 'action.hover' }
-                          }}
-                        >
-                          <PlayIcon sx={{ mr: 2, fontSize: 20, color: 'info.main' }} />
-                          <ListItemText 
-                            primary={filename.replace('.json', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            slotProps={{
-                              primary: {
-                                style: {
-                                  fontSize: '0.95rem',
-                                  fontWeight: 500
-                                }
-                              }
-                            }}
-                          />
-                        </ListItemButton>
-                      </ListItem>
-                    ))}
-                  </List>
-                </CardContent>
-              </Card>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <SoundToggle />
+              <ThemeToggle />
             </Box>
           </Box>
-        </Box>
-      </Container>
+          
+          <Box sx={{ textAlign: 'center', mb: 2 }}>
+            <Typography color="text.secondary" sx={{ fontSize: '0.9rem', maxWidth: 600, mx: 'auto' }}>
+              Test different activity types in a unified web/mobile responsive player. 
+              Appearance may differ from native mobile implementations.
+            </Typography>
+          </Box>
+          
+          {/* Activity Type Tabs */}
+          <Box sx={{ width: '100%' }}>
+            <Tabs
+              value={selectedActivityType}
+              onChange={handleTabChange}
+              centered
+              sx={{
+                '& .MuiTabs-indicator': {
+                  height: 3,
+                },
+              }}
+            >
+              {activityTypes.map((type) => (
+                <Tab
+                  key={type.id}
+                  value={type.id}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {type.icon}
+                      <Typography sx={{ fontWeight: 600 }}>
+                        {type.name}
+                      </Typography>
+                    </Box>
+                  }
+                  sx={{
+                    minWidth: 120,
+                    textTransform: 'none',
+                    color: `${type.color}.main`,
+                    '&.Mui-selected': {
+                      color: `${type.color}.main`,
+                    },
+                  }}
+                />
+              ))}
+            </Tabs>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Main Content Area */}
+      <Box sx={{ flex: 1, py: 4 }}>
+        <Container maxWidth="md">
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {loading && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <CircularProgress />
+            </Box>
+          )}
+
+          {/* Side-by-Side Content */}
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 3, 
+            alignItems: 'stretch',
+            flexDirection: { xs: 'column', md: 'row' }
+          }}>
+            {/* Upload Section */}
+            <Box sx={{ flex: 1 }}>
+              {renderUploadCard()}
+            </Box>
+
+            {/* Samples Section */}
+            <Box sx={{ flex: 1 }}>
+              {renderSamplesCard()}
+            </Box>
+          </Box>
+        </Container>
+      </Box>
 
       {/* Enhanced Error Modal */}
       {errorDetails && (
