@@ -6,6 +6,7 @@ import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useXAPI } from '../contexts/XAPIContext';
+import { useIsMobile } from '../utils/mobileDetection';
 
 interface MatchingNodeProps {
   question: MatchingNodeType;
@@ -33,6 +34,7 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
   const { playSound } = useAudio();
   const { trackQuestionAnswered } = useXAPI();
   const theme = useTheme();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -579,13 +581,15 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
         </Box>
       )}
       
-      {/* Keyboard Controls Helper */}
-      <FormHelperText sx={{ textAlign: 'center', mt: 2, fontSize: '0.75rem', opacity: 0.7 }}>
-        {showFeedback ? 
-          'Press Enter to continue' : 
-          'Use arrow keys to navigate • Enter/Space to select • Tab to switch columns • Escape to clear • Delete to remove matches • S to submit'
-        }
-      </FormHelperText>
+      {/* Keyboard Controls Helper - Hide on mobile */}
+      {!isMobile && (
+        <FormHelperText sx={{ textAlign: 'center', mt: 2, fontSize: '0.75rem', opacity: 0.7 }}>
+          {showFeedback ? 
+            'Press Enter to continue' : 
+            'Use arrow keys to navigate • Enter/Space to select • Tab to switch columns • Escape to clear • Delete to remove matches • S to submit'
+          }
+        </FormHelperText>
+      )}
     </NodeCard>
   );
 };

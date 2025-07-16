@@ -6,6 +6,7 @@ import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useXAPI } from '../contexts/XAPIContext';
+import { useIsMobile } from '../utils/mobileDetection';
 
 interface LikertScaleNodeProps {
   question: LikertScaleNodeType;
@@ -18,6 +19,7 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
   const { playSound } = useAudio();
   const { themeMode } = useTheme();
   const { trackSurveyResponse } = useXAPI();
+  const isMobile = useIsMobile();
 
   const handleValueSelect = useCallback((value: number) => {
     setSelectedValue(value);
@@ -237,10 +239,12 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
         </FormHelperText>
       )}
       
-      {/* Keyboard Controls Helper */}
-      <FormHelperText sx={{ textAlign: 'center', mt: 1, fontSize: '0.75rem', opacity: 0.7 }}>
-        Use number keys (1-{getScaleValues().length}) or arrow keys to select • Enter to submit
-      </FormHelperText>
+      {/* Keyboard Controls Helper - Hide on mobile */}
+      {!isMobile && (
+        <FormHelperText sx={{ textAlign: 'center', mt: 1, fontSize: '0.75rem', opacity: 0.7 }}>
+          Use number keys (1-{getScaleValues().length}) or arrow keys to select • Enter to submit
+        </FormHelperText>
+      )}
     </NodeCard>
   );
 };

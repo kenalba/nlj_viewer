@@ -16,6 +16,7 @@ import { MediaViewer } from './MediaViewer';
 import { useTheme } from '../contexts/ThemeContext';
 import { useXAPI } from '../contexts/XAPIContext';
 import { getAlertFeedbackColors } from '../utils/feedbackColors';
+import { useIsMobile } from '../utils/mobileDetection';
 
 interface UnifiedQuestionNodeProps {
   question: QuestionNode;
@@ -38,6 +39,7 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
   const { themeMode } = useTheme();
   const { trackQuestionAnswered } = useXAPI();
   const muiTheme = useMuiTheme();
+  const isMobile = useIsMobile();
 
   // Reset state when question changes (not when choices re-render)
   useEffect(() => {
@@ -370,8 +372,8 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
         </Box>
       )}
       
-      {/* Keyboard Controls Helper */}
-      {choices.length > 0 && !showFeedback && (
+      {/* Keyboard Controls Helper - Hide on mobile */}
+      {!isMobile && choices.length > 0 && !showFeedback && (
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', opacity: 0.7 }}>
             Use number keys (1-{Math.min(choices.length, 9)}) to select • Enter to submit

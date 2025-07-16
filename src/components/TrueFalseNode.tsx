@@ -6,6 +6,7 @@ import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useXAPI } from '../contexts/XAPIContext';
+import { useIsMobile } from '../utils/mobileDetection';
 
 interface TrueFalseNodeProps {
   question: TrueFalseNodeType;
@@ -18,6 +19,7 @@ export const TrueFalseNode: React.FC<TrueFalseNodeProps> = ({ question, onAnswer
   const [questionStartTime] = useState(new Date());
   const { playSound } = useAudio();
   const { trackQuestionAnswered } = useXAPI();
+  const isMobile = useIsMobile();
 
   // Keyboard support
   useEffect(() => {
@@ -228,8 +230,8 @@ export const TrueFalseNode: React.FC<TrueFalseNodeProps> = ({ question, onAnswer
         </Box>
       )}
 
-      {/* Keyboard Controls Helper */}
-      {!showFeedback && (
+      {/* Keyboard Controls Helper - Hide on mobile */}
+      {!isMobile && !showFeedback && (
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', opacity: 0.7 }}>
             Press 1 for True, 2 for False • Enter to submit

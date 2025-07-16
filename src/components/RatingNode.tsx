@@ -7,6 +7,7 @@ import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getStarColors } from '../utils/feedbackColors';
+import { useIsMobile } from '../utils/mobileDetection';
 
 interface RatingNodeProps {
   question: RatingNodeType;
@@ -19,6 +20,7 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
   const { playSound } = useAudio();
   const { themeMode } = useTheme();
   const muiTheme = useMuiTheme();
+  const isMobile = useIsMobile();
 
   const handleValueSelect = useCallback((value: number) => {
     console.log('handleValueSelect:', value, typeof value);
@@ -265,12 +267,14 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
         </FormHelperText>
       )}
       
-      {/* Keyboard Controls Helper */}
-      <FormHelperText sx={{ textAlign: 'center', mt: 1, fontSize: '0.75rem', opacity: 0.7 }}>
-        {question.ratingType === 'stars' ? `Use number keys (1-${question.range.max})` : 
-         question.ratingType === 'categorical' ? `Use number keys (1-${question.categories?.length || 0})` :
-         `Use number keys (${question.range.min}-${question.range.max})`} or click to select • Enter to submit
-      </FormHelperText>
+      {/* Keyboard Controls Helper - Hide on mobile */}
+      {!isMobile && (
+        <FormHelperText sx={{ textAlign: 'center', mt: 1, fontSize: '0.75rem', opacity: 0.7 }}>
+          {question.ratingType === 'stars' ? `Use number keys (1-${question.range.max})` : 
+           question.ratingType === 'categorical' ? `Use number keys (1-${question.categories?.length || 0})` :
+           `Use number keys (${question.range.min}-${question.range.max})`} or click to select • Enter to submit
+        </FormHelperText>
+      )}
     </NodeCard>
   );
 };

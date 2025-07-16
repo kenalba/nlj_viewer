@@ -5,6 +5,7 @@ import type { OrderingNode as OrderingNodeType, OrderingItem } from '../types/nl
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
+import { useIsMobile } from '../utils/mobileDetection';
 
 interface OrderingNodeProps {
   question: OrderingNodeType;
@@ -19,6 +20,7 @@ export const OrderingNode: React.FC<OrderingNodeProps> = ({ question, onAnswer }
   const [draggedItem, setDraggedItem] = useState<OrderingItem | null>(null);
   const [draggedOverIndex, setDraggedOverIndex] = useState<number | null>(null);
   const { playSound } = useAudio();
+  const isMobile = useIsMobile();
 
   const handleDragStart = (e: React.DragEvent, item: OrderingItem) => {
     setDraggedItem(item);
@@ -243,10 +245,12 @@ export const OrderingNode: React.FC<OrderingNodeProps> = ({ question, onAnswer }
         </Box>
       )}
       
-      {/* Keyboard Controls Helper */}
-      <FormHelperText sx={{ textAlign: 'center', mt: 1, fontSize: '0.75rem', opacity: 0.7 }}>
-        {showFeedback ? 'Press Enter to continue' : 'Press Enter to submit'}
-      </FormHelperText>
+      {/* Keyboard Controls Helper - Hide on mobile */}
+      {!isMobile && (
+        <FormHelperText sx={{ textAlign: 'center', mt: 1, fontSize: '0.75rem', opacity: 0.7 }}>
+          {showFeedback ? 'Press Enter to continue' : 'Press Enter to submit'}
+        </FormHelperText>
+      )}
     </NodeCard>
   );
 };
