@@ -31,8 +31,8 @@ describe('Bug Regression Tests', () => {
       const button3 = screen.getByRole('button', { name: /3/i });
       fireEvent.click(button3);
       
-      // Verify first question has selected value - button should be in contained variant
-      expect(button3).toHaveClass('MuiButton-contained');
+      // Verify first question has selected value - button should be selected
+      expect(button3).toHaveClass('selected');
 
       // Navigate to second question by re-rendering with new question
       rerender(
@@ -127,7 +127,7 @@ describe('Bug Regression Tests', () => {
       fireEvent.click(button5);
 
       // Verify selection
-      expect(button5).toHaveClass('MuiButton-contained');
+      expect(button5).toHaveClass('selected');
 
       // Navigate to second question of same type
       rerender(
@@ -271,7 +271,7 @@ describe('Bug Regression Tests', () => {
       });
     });
 
-    it('should log error when navigation fails due to missing links', async () => {
+    it('should complete scenario when no more links (end of survey)', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const mockCompleteScenario = vi.fn();
       const mockNavigateToNode = vi.fn();
@@ -319,10 +319,11 @@ describe('Bug Regression Tests', () => {
 
       // Wait for navigation logic to execute
       await waitFor(() => {
-        // Should log error and NOT complete scenario
-        expect(consoleSpy).toHaveBeenCalledWith('Navigation failed: Could not find next node for q1');
-        expect(mockCompleteScenario).not.toHaveBeenCalled();
+        // Should complete scenario when no more links (end of survey)
+        expect(mockCompleteScenario).toHaveBeenCalled();
         expect(mockNavigateToNode).not.toHaveBeenCalled();
+        // Should not log error for legitimate end of survey
+        expect(consoleSpy).not.toHaveBeenCalled();
       });
 
       consoleSpy.mockRestore();

@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Box, Typography, Button, useTheme as useMuiTheme, Stack } from '@mui/material';
 import { Analytics, Refresh } from '@mui/icons-material';
-import confetti from 'canvas-confetti';
 import type { NLJNode, NLJScenario, ChoiceNode, NodeResponseValue } from '../types/nlj';
 import { UnifiedQuestionNode } from './UnifiedQuestionNode';
 import { InterstitialPanel } from './InterstitialPanel';
@@ -16,6 +15,7 @@ import { SliderNode } from './SliderNode';
 import { TextAreaNode } from './TextAreaNode';
 import { MatrixNode } from './MatrixNode';
 import { XAPIResultsScreen } from './XAPIResultsScreen';
+import { CompletionModal } from './CompletionModal';
 import { useGameContext } from '../contexts/GameContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAudio } from '../contexts/AudioContext';
@@ -40,6 +40,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
   const { playSound } = useAudio();
   const { isEnabled: xapiEnabled } = useXAPI();
   const [showResults, setShowResults] = useState(false);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
 
   // Scroll to top when node changes
   useEffect(() => {
@@ -61,19 +62,15 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     }
   }, [node.id, node.type, state.completed, completeScenario]);
 
-  // Trigger confetti effect when completion screen is shown
+  // Show completion modal when scenario is completed
   useEffect(() => {
-    if (node.type === 'end' && state.completed) {
+    if (state.completed && !showCompletionModal) {
       const timer = setTimeout(() => {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
+        setShowCompletionModal(true);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [node.type, state.completed]);
+  }, [state.completed, showCompletionModal]);
 
   const handleChoiceSelect = useCallback((choice: ChoiceNode) => {
     // Play sound based on choice type
@@ -179,16 +176,59 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
         playSound('complete');
         completeScenario();
       } else {
-        // Navigation failed - this is likely a scenario structure issue
-        debugLog('Navigation Error', 'Could not find next node for survey question', {
-          currentNode: node.id,
-          nodeType: node.type,
-          availableLinks: scenario.links.filter(l => l.sourceNodeId === node.id),
-        });
-        console.error(`Navigation failed: Could not find next node for ${node.id}`);
+        // No next node found - this could be end of survey/quiz
+        // Check if this is the last question by looking at remaining links
+        const remainingLinks = scenario.links.filter(l => l.sourceNodeId === node.id);
+        if (remainingLinks.length === 0) {
+          // No more links, this is the end of the survey/quiz
+          debugLog('Completion', 'Survey/Quiz completed - no more questions', {
+            currentNode: node.id,
+            nodeType: node.type,
+          });
+          playSound('complete');
+          completeScenario();
+        } else {
+          // Navigation failed - this is likely a scenario structure issue
+          debugLog('Navigation Error', 'Could not find next node for survey question', {
+            currentNode: node.id,
+            nodeType: node.type,
+            availableLinks: remainingLinks,
+          });
+          console.error(`Navigation failed: Could not find next node for ${node.id}`);
+        }
       }
     }
   }, [node.id, node.type, state.score, scenario, navigateToNode, playSound, completeScenario]);
+
+  // Completion modal handlers
+  const handleGoHome = useCallback(() => {
+    // For now, just restart to go to landing page
+    // This could be enhanced to navigate to an actual home page
+    window.location.reload();
+  }, []);
+
+  const handleRestartFromModal = useCallback(() => {
+    handleRestart();
+  }, [handleRestart]);
+
+  const handleViewResultsFromModal = useCallback(() => {
+    setShowResults(true);
+  }, []);
+
+  // Add keyboard support for start screen
+  useEffect(() => {
+    if (node.type === 'start') {
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          handleContinue();
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [node.type, handleContinue]);
 
   switch (node.type) {
     case 'start':
@@ -408,4 +448,99 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
         </NodeCard>
       );
   }
+  
+  // Render completion modal alongside the node
+  return (
+    <>
+      {(() => {
+        switch (node.type) {
+          case 'start':
+            return (
+              <NodeCard variant="interstitial" animate={false}>
+                <Typography variant="h4" gutterBottom align="center">
+                  {scenario.name}
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 3 }} align="center">
+                  Welcome to this interactive training scenario.
+                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                  <Button
+                    variant="contained"
+                    onClick={handleRestart}
+                    size="large"
+                    sx={{
+                      borderRadius: (muiTheme.shape.borderRadius as number) * 3,
+                      boxShadow: themeMode === 'unfiltered' ? 
+                        '0 4px 16px rgba(246, 250, 36, 0.3)' : 
+                        'none',
+                      '&:hover': {
+                        ...(themeMode === 'unfiltered' && {
+                          boxShadow: '0 6px 20px rgba(246, 250, 36, 0.4)',
+                          transform: 'translateY(-2px)',
+                        }),
+                      },
+                    }}
+                  >
+                    Start Training
+                  </Button>
+                </Box>
+              </NodeCard>
+            );
+
+          case 'end': {
+            if (showResults && xapiEnabled) {
+              return (
+                <XAPIResultsScreen
+                  onBack={() => setShowResults(false)}
+                  scenarioName={scenario.name}
+                />
+              );
+            }
+
+            return (
+              <NodeCard variant="interstitial" animate={false}>
+                <Typography variant="h4" gutterBottom align="center" color="primary">
+                  Training Complete!
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 3 }} align="center">
+                  You have successfully completed the training scenario.
+                </Typography>
+                {state.score !== undefined && (
+                  <Typography variant="h6" align="center" sx={{ mt: 2 }}>
+                    Final Score: {state.score}
+                  </Typography>
+                )}
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Check the completion modal for options
+                  </Typography>
+                </Box>
+              </NodeCard>
+            );
+          }
+
+          default:
+            return (
+              <NodeCard variant="default" animate={false}>
+                <Typography variant="body1" color="error">
+                  Unknown node type: {node.type}
+                </Typography>
+              </NodeCard>
+            );
+        }
+      })()}
+      
+      {/* Completion Modal */}
+      <CompletionModal
+        open={showCompletionModal}
+        onClose={() => setShowCompletionModal(false)}
+        onRestart={handleRestartFromModal}
+        onGoHome={handleGoHome}
+        onViewResults={xapiEnabled ? handleViewResultsFromModal : undefined}
+        scenarioName={scenario.name}
+        score={state.score}
+        xapiEnabled={xapiEnabled}
+      />
+    </>
+  );
 };

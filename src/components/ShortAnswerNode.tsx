@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Box, Typography, TextField, Button, Alert } from '@mui/material';
 import { Edit } from '@mui/icons-material';
 import type { ShortAnswerNode as ShortAnswerNodeType } from '../types/nlj';
@@ -15,6 +15,14 @@ export const ShortAnswerNode: React.FC<ShortAnswerNodeProps> = ({ question, onAn
   const [userAnswer, setUserAnswer] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
   const { playSound } = useAudio();
+  const textFieldRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus the text field when component mounts
+  useEffect(() => {
+    if (textFieldRef.current) {
+      textFieldRef.current.focus();
+    }
+  }, []);
 
   const normalizeAnswer = (answer: string) => {
     let normalized = answer.trim();
@@ -129,6 +137,7 @@ export const ShortAnswerNode: React.FC<ShortAnswerNodeProps> = ({ question, onAn
           onKeyPress={handleKeyPress}
           disabled={showFeedback}
           placeholder="Enter your answer here..."
+          inputRef={textFieldRef}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: 2,

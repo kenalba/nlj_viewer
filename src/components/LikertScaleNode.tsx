@@ -96,32 +96,20 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
     return () => document.removeEventListener('keydown', handleKeyPress);
   }, [selectedValue, question.required, getScaleValues, handleValueSelect, handleSubmit]);
 
-  const getButtonVariant = (value: number) => {
-    return selectedValue === value ? 'contained' : 'outlined';
+  const getButtonVariant = () => {
+    return 'outlined' as const; // Always use outlined, selected state will be handled by className
   };
 
   const getButtonStyles = (value: number) => {
     const isSelected = selectedValue === value;
-    const isUnfiltered = themeMode === 'unfiltered';
     
     return {
       borderRadius: 3,
       minWidth: 60,
       minHeight: 48,
-      ...(isUnfiltered && {
-        borderColor: isSelected ? '#F6FA24' : '#333333',
-        backgroundColor: isSelected ? 'rgba(246, 250, 36, 0.1)' : 'transparent',
-        color: isSelected ? '#F6FA24' : '#FFFFFF',
-        '&:hover': {
-          borderColor: '#F6FA24',
-          backgroundColor: 'rgba(246, 250, 36, 0.05)',
-        },
-      }),
-      ...(isSelected && !isUnfiltered && {
-        backgroundColor: 'primary.main',
-        color: 'primary.contrastText',
-        '&:hover': {
-          backgroundColor: 'primary.dark',
+      ...(isSelected && {
+        '&.selected': {
+          // Theme-based selected styles will be applied via className
         },
       }),
     };
@@ -223,9 +211,10 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
           {scaleValues.map((value) => (
             <Button
               key={value}
-              variant={getButtonVariant(value)}
+              variant={getButtonVariant()}
               onClick={() => handleValueSelect(value)}
               sx={getButtonStyles(value)}
+              className={selectedValue === value ? 'selected' : ''}
             >
               {question.showNumbers !== false && (
                 <Typography variant="body2" fontWeight="bold">

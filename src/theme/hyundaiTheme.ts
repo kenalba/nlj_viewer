@@ -164,6 +164,16 @@ export const hyundaiTheme = createTheme({
             borderColor: '#0078D4',
             backgroundColor: '#F8F8F8',
           },
+          '&.selected': {
+            borderColor: '#0078D4',
+            backgroundColor: '#0078D4',
+            color: '#FFFFFF',
+            '&:hover': {
+              borderColor: '#005A9F',
+              backgroundColor: '#005A9F',
+              color: '#FFFFFF',
+            },
+          },
         },
       },
     },

@@ -104,7 +104,7 @@ describe('LikertScaleNode', () => {
     
     // Button 3 should be selected
     const button3 = screen.getByRole('button', { name: /3/i });
-    expect(button3).toHaveClass('MuiButton-contained');
+    expect(button3).toHaveClass('selected');
     
     // Submit button should show "Submit"
     expect(screen.getByRole('button', { name: /submit/i })).toBeInTheDocument();

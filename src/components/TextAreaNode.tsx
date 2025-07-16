@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Box, Typography, TextField, Button, Alert, FormHelperText } from '@mui/material';
 import type { TextAreaNode as TextAreaNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
@@ -17,6 +17,14 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
   const [validationError, setValidationError] = useState<string>('');
   const { playSound } = useAudio();
   const { themeMode } = useTheme();
+  const textFieldRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-focus the text field when component mounts
+  useEffect(() => {
+    if (textFieldRef.current) {
+      textFieldRef.current.focus();
+    }
+  }, []);
 
   const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = event.target.value;
@@ -111,6 +119,7 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
           placeholder={question.placeholder || 'Type your response here...'}
           fullWidth
           variant="outlined"
+          inputRef={textFieldRef}
           inputProps={{
             spellCheck: question.spellCheck !== false,
             style: { 

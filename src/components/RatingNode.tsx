@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Rating, Button, Alert, FormHelperText, ButtonGroup } from '@mui/material';
 import { Star, StarBorder } from '@mui/icons-material';
 import type { RatingNode as RatingNodeType } from '../types/nlj';
@@ -18,7 +18,7 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
   const { playSound } = useAudio();
   const { themeMode } = useTheme();
 
-  const handleValueSelect = (value: number) => {
+  const handleValueSelect = useCallback((value: number) => {
     console.log('handleValueSelect:', value, typeof value);
     const numValue = Number(value);
     if (!isNaN(numValue)) {
@@ -26,9 +26,9 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
       setShowValidation(false);
       playSound('click');
     }
-  };
+  }, [playSound]);
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     console.log('handleSubmit:', selectedValue, typeof selectedValue);
     if (question.required && selectedValue === null) {
       setShowValidation(true);
@@ -38,7 +38,54 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
 
     playSound('navigate');
     onAnswer(selectedValue);
-  };
+  }, [question.required, selectedValue, playSound, onAnswer]);
+
+  // Add keyboard controls for rating questions
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Handle Enter key to submit
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        handleSubmit();
+        return;
+      }
+
+      // Handle number keys based on rating type
+      if (question.ratingType === 'stars') {
+        if (event.key >= '1' && event.key <= '9') {
+          const keyValue = parseInt(event.key);
+          if (keyValue <= question.range.max) {
+            event.preventDefault();
+            handleValueSelect(keyValue);
+          }
+        }
+      } else if (question.ratingType === 'numeric') {
+        if (event.key >= '1' && event.key <= '9') {
+          const keyValue = parseInt(event.key);
+          const step = question.range.step || 1;
+          const values = [];
+          for (let i = question.range.min; i <= question.range.max; i += step) {
+            values.push(i);
+          }
+          if (values.includes(keyValue)) {
+            event.preventDefault();
+            handleValueSelect(keyValue);
+          }
+        }
+      } else if (question.ratingType === 'categorical') {
+        if (event.key >= '1' && event.key <= '9') {
+          const keyValue = parseInt(event.key) - 1; // Convert to 0-based index
+          if (question.categories && keyValue < question.categories.length) {
+            event.preventDefault();
+            handleValueSelect(keyValue);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [question, handleValueSelect, handleSubmit]);
 
   const renderStarRating = () => {
     const isUnfiltered = themeMode === 'unfiltered';
@@ -93,28 +140,13 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
           {values.map((value) => (
             <Button
               key={value}
-              variant={selectedValue === value ? 'contained' : 'outlined'}
+              variant="outlined"
               onClick={() => handleValueSelect(value)}
+              className={selectedValue === value ? 'selected' : ''}
               sx={{
                 borderRadius: 3,
                 minWidth: 60,
                 minHeight: 48,
-                ...(themeMode === 'unfiltered' && {
-                  borderColor: selectedValue === value ? '#F6FA24' : '#333333',
-                  backgroundColor: selectedValue === value ? 'rgba(246, 250, 36, 0.1)' : 'transparent',
-                  color: selectedValue === value ? '#F6FA24' : '#FFFFFF',
-                  '&:hover': {
-                    borderColor: '#F6FA24',
-                    backgroundColor: 'rgba(246, 250, 36, 0.05)',
-                  },
-                }),
-                ...(selectedValue === value && themeMode !== 'unfiltered' && {
-                  backgroundColor: 'primary.main',
-                  color: 'primary.contrastText',
-                  '&:hover': {
-                    backgroundColor: 'primary.dark',
-                  },
-                }),
               }}
             >
               {value}
@@ -135,29 +167,14 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
         {question.categories.map((category, index) => (
           <Button
             key={index}
-            variant={selectedValue === index ? 'contained' : 'outlined'}
+            variant="outlined"
             onClick={() => handleValueSelect(index)}
+            className={selectedValue === index ? 'selected' : ''}
             sx={{
               borderRadius: 3,
               minHeight: 48,
               justifyContent: 'flex-start',
               textAlign: 'left',
-              ...(themeMode === 'unfiltered' && {
-                borderColor: selectedValue === index ? '#F6FA24' : '#333333',
-                backgroundColor: selectedValue === index ? 'rgba(246, 250, 36, 0.1)' : 'transparent',
-                color: selectedValue === index ? '#F6FA24' : '#FFFFFF',
-                '&:hover': {
-                  borderColor: '#F6FA24',
-                  backgroundColor: 'rgba(246, 250, 36, 0.05)',
-                },
-              }),
-              ...(selectedValue === index && themeMode !== 'unfiltered' && {
-                backgroundColor: 'primary.main',
-                color: 'primary.contrastText',
-                '&:hover': {
-                  backgroundColor: 'primary.dark',
-                },
-              }),
             }}
           >
             {category}
@@ -252,6 +269,13 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
           * This question is required
         </FormHelperText>
       )}
+      
+      {/* Keyboard Controls Helper */}
+      <FormHelperText sx={{ textAlign: 'center', mt: 1, fontSize: '0.75rem', opacity: 0.7 }}>
+        {question.ratingType === 'stars' ? `Use number keys (1-${question.range.max})` : 
+         question.ratingType === 'categorical' ? `Use number keys (1-${question.categories?.length || 0})` :
+         `Use number keys (${question.range.min}-${question.range.max})`} or click to select • Enter to submit
+      </FormHelperText>
     </NodeCard>
   );
 };

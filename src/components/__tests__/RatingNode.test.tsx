@@ -166,7 +166,7 @@ describe('RatingNode', () => {
     render(<RatingNode question={question} onAnswer={mockOnAnswer} />);
     
     const button3 = screen.getByRole('button', { name: '3' });
-    expect(button3).toHaveClass('MuiButton-contained');
+    expect(button3).toHaveClass('selected');
     
     expect(screen.getByRole('button', { name: /submit/i })).toBeInTheDocument();
   });

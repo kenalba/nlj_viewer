@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, Slider, Button, Alert, FormHelperText } from '@mui/material';
 import type { SliderNode as SliderNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
@@ -37,6 +37,46 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
     playSound('navigate');
     onAnswer(selectedValue);
   };
+
+  // Add keyboard controls for slider
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const range = question.range.max - question.range.min;
+      
+      // Handle number keys (1-9) for percentage-based positioning
+      if (event.key >= '1' && event.key <= '9') {
+        event.preventDefault();
+        const percentage = parseInt(event.key) / 10; // 1 = 10%, 2 = 20%, etc.
+        const newValue = question.range.min + (range * percentage);
+        const clampedValue = Math.min(Math.max(newValue, question.range.min), question.range.max);
+        
+        // Respect the step value if it exists
+        const step = question.range.step || 1;
+        const steppedValue = Math.round(clampedValue / step) * step;
+        const finalValue = Math.min(Math.max(steppedValue, question.range.min), question.range.max);
+        
+        setSelectedValue(finalValue);
+        playSound('click');
+        return;
+      }
+      
+      // Handle other keys
+      switch (event.key) {
+        case '0':
+          event.preventDefault();
+          setSelectedValue(question.range.max); // 0 = 100%
+          playSound('click');
+          break;
+        case 'Enter':
+          event.preventDefault();
+          handleSubmit();
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedValue, question.range, playSound, handleSubmit]);
 
   const formatValue = (value: number) => {
     if (question.range.precision !== undefined) {
@@ -128,7 +168,15 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
       )}
 
       {/* Slider Component */}
-      <Box sx={{ px: 2, mb: 4 }}>
+      <Box sx={{ 
+        px: 2, 
+        mb: 6, // Increased from 4 to 6 to prevent label cutoff
+        position: 'relative',
+        overflow: 'hidden',
+        // Ensure proper containment
+        width: '100%',
+        boxSizing: 'border-box'
+      }}>
         <Slider
           value={selectedValue || question.range.min}
           onChange={handleValueChange}
@@ -141,8 +189,20 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
           track={question.continuous !== false ? "normal" : false}
           sx={{
             height: 8,
+            width: 'calc(100% - 24px)', // Account for thumb width
+            margin: '0 12px', // Center the slider and provide thumb space
+            // Ensure slider stays within bounds
+            '& .MuiSlider-root': {
+              width: '100%',
+            },
+            '& .MuiSlider-rail': {
+              color: themeMode === 'unfiltered' ? '#333333' : '#d0d0d0',
+              opacity: 1,
+              height: 8,
+            },
             '& .MuiSlider-track': {
               border: 'none',
+              height: 8,
               ...(themeMode === 'unfiltered' && {
                 backgroundColor: '#F6FA24',
               }),
@@ -152,6 +212,9 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
               width: 24,
               backgroundColor: themeMode === 'unfiltered' ? '#F6FA24' : 'primary.main',
               border: '2px solid currentColor',
+              // Reset default positioning
+              marginLeft: 0,
+              marginTop: 0,
               '&:focus, &:hover, &.Mui-active, &.Mui-focusVisible': {
                 boxShadow: `0px 0px 0px 8px ${
                   themeMode === 'unfiltered' ? 'rgba(246, 250, 36, 0.16)' : 'inherit'
@@ -181,10 +244,6 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
                 transform: 'rotate(45deg)',
               },
             },
-            '& .MuiSlider-rail': {
-              color: themeMode === 'unfiltered' ? '#333333' : '#d0d0d0',
-              opacity: 1,
-            },
             '& .MuiSlider-mark': {
               backgroundColor: themeMode === 'unfiltered' ? '#666666' : '#bfbfbf',
               height: 8,
@@ -197,6 +256,16 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
             '& .MuiSlider-markLabel': {
               color: 'text.secondary',
               fontSize: '0.75rem',
+              // Prevent label overflow
+              whiteSpace: 'nowrap',
+              transform: 'translateX(-50%)',
+              // Ensure labels don't go outside container
+              maxWidth: '100px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              // Add padding to prevent vertical cutoff
+              paddingTop: '8px',
+              paddingBottom: '8px',
             },
           }}
         />
@@ -236,11 +305,16 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
       </Box>
 
       {/* Helper Text */}
-      {question.required && (
-        <FormHelperText sx={{ textAlign: 'center', mt: 1 }}>
-          * This question is required
+      <Box sx={{ textAlign: 'center', mt: 1 }}>
+        {question.required && (
+          <FormHelperText sx={{ mb: 0.5 }}>
+            * This question is required
+          </FormHelperText>
+        )}
+        <FormHelperText sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+          Use number keys 1-9 for 10%-90%, 0 for 100%, Enter to submit
         </FormHelperText>
-      )}
+      </Box>
     </NodeCard>
   );
 };

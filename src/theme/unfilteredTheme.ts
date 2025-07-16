@@ -212,6 +212,16 @@ export const unfilteredTheme = createTheme({
             backgroundColor: 'rgba(246, 250, 36, 0.1)',
             color: '#FFD700',
           },
+          '&.selected': {
+            borderColor: '#F6FA24',
+            backgroundColor: '#F6FA24',
+            color: '#000000',
+            '&:hover': {
+              borderColor: '#FFD700',
+              backgroundColor: '#FFD700',
+              color: '#000000',
+            },
+          },
         },
         text: {
           color: '#FFFFFF',
