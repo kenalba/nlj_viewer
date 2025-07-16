@@ -17,6 +17,8 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useXAPI } from '../contexts/XAPIContext';
 import { getAlertFeedbackColors } from '../utils/feedbackColors';
 import { useIsMobile } from '../utils/mobileDetection';
+import { MarkdownRenderer } from './MarkdownRenderer';
+import { MediaDisplay } from './MediaDisplay';
 
 interface UnifiedQuestionNodeProps {
   question: QuestionNode;
@@ -140,7 +142,7 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
   };
 
   return (
-    <NodeCard variant="question" animate={false}>
+    <NodeCard animate={false}>
       {/* Question Media */}
       {question.media && (
         <Box sx={{ mb: 3 }}>
@@ -153,29 +155,28 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
       )}
 
       {/* Question Text */}
-      <Typography variant="h6" component="h2" gutterBottom sx={{ mb: 2 }}>
-        {question.text}
-      </Typography>
+      <MarkdownRenderer
+        content={question.text}
+        sx={{ mb: 2, color: 'text.primary' }}
+      />
 
       {/* Question Content */}
       {question.content && (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          {question.content}
-        </Typography>
+        <MarkdownRenderer
+          content={question.content}
+          sx={{ mb: 3, color: 'text.secondary' }}
+        />
       )}
 
       {/* Additional Media */}
       {question.additionalMediaList && question.additionalMediaList.length > 0 && (
         <Box sx={{ mb: 3 }}>
-          {question.additionalMediaList.map((media, index) => (
-            <Box key={media.id} sx={{ mb: 2 }}>
-              <MediaViewer 
-                media={media} 
-                alt={`Additional media ${index + 1}`}
-                size="medium"
-              />
-            </Box>
-          ))}
+          <MediaDisplay 
+            mediaList={question.additionalMediaList.map(wrapper => wrapper.media)}
+            size="medium"
+            showControls={true}
+            showCounter={true}
+          />
         </Box>
       )}
 
@@ -188,7 +189,7 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
       {choices.length > 0 && (
         <Box>
           <Typography 
-            variant="h6" 
+            
             gutterBottom 
             sx={{ 
               mb: 2,
@@ -242,17 +243,15 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
                     },
                   }}
                 />
-                <Typography 
-                  variant="body1" 
+                <MarkdownRenderer
+                  content={choice.text}
                   sx={{ 
                     fontSize: '0.95rem',
                     lineHeight: 1.5,
                     color: 'text.primary',
                     fontWeight: selectedChoice === choice.id ? 500 : 400,
                   }}
-                >
-                  {choice.text}
-                </Typography>
+                />
               </Box>
             ))}
           </Stack>
@@ -339,9 +338,10 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
                     },
                   }}
                 >
-                  <Typography variant="body1" sx={{ fontSize: '0.95rem', color: 'text.primary' }}>
-                    {selectedChoiceNode.feedback || 'Thank you for your response.'}
-                  </Typography>
+                  <MarkdownRenderer
+                    content={selectedChoiceNode.feedback || 'Thank you for your response.'}
+                    sx={{ fontSize: '0.95rem', color: 'text.primary' }}
+                  />
                 </Alert>
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
                   <Button
@@ -375,7 +375,7 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
       {/* Keyboard Controls Helper - Hide on mobile */}
       {!isMobile && choices.length > 0 && !showFeedback && (
         <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', opacity: 0.7 }}>
+          <Typography color="text.secondary" sx={{ fontSize: '0.75rem', opacity: 0.7 }}>
             Use number keys (1-{Math.min(choices.length, 9)}) to select • Enter to submit
           </Typography>
         </Box>

@@ -24,6 +24,19 @@ vi.mock('../../contexts/XAPIContext', () => ({
   }),
 }));
 
+// Mock the MarkdownRenderer to return plain text
+vi.mock('../MarkdownRenderer', () => ({
+  MarkdownRenderer: ({ content, sx, component = 'div' }: any) => {
+    const Component = component;
+    return <Component style={sx}>{content}</Component>;
+  },
+}));
+
+// Mock mobile detection
+vi.mock('../../utils/mobileDetection', () => ({
+  useIsMobile: () => false,
+}));
+
 // Test wrapper component
 const TestWrapper: React.FC<{ children: React.ReactNode; theme?: 'hyundai' | 'unfiltered' }> = ({ 
   children, 
@@ -88,14 +101,16 @@ const mockQuestionWithAdditionalMedia: MatchingNodeType = {
   ...mockQuestion,
   additionalMediaList: [
     {
-      id: 'additional-media-1',
-      type: 'IMAGE',
-      fullPath: 'https://example.com/additional1.jpg',
-      title: 'Additional Image 1',
-      description: 'Additional test image',
-      fullThumbnail: 'https://example.com/additional1-thumb.jpg',
-      createTimestamp: '2023-01-01T00:00:00Z',
-      updateTimestamp: '2023-01-01T00:00:00Z',
+      media: {
+        id: 'additional-media-1',
+        type: 'IMAGE',
+        fullPath: 'https://example.com/additional1.jpg',
+        title: 'Additional Image 1',
+        description: 'Additional test image',
+        fullThumbnail: 'https://example.com/additional1-thumb.jpg',
+        createTimestamp: '2023-01-01T00:00:00Z',
+        updateTimestamp: '2023-01-01T00:00:00Z',
+      },
     },
   ],
 };
@@ -226,7 +241,7 @@ describe('MatchingNode', () => {
     expect(mockPlaySound).toHaveBeenCalledWith('click');
   });
 
-  it('creates match when left and right items are selected', () => {
+  it('creates match when left and right items are selected', async () => {
     render(
       <TestWrapper>
         <MatchingNode
@@ -246,7 +261,9 @@ describe('MatchingNode', () => {
     fireEvent.click(redItem);
 
     // Should show the match indicator
-    expect(screen.getByText('→ Red')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('→ Red')).toBeInTheDocument();
+    });
   });
 
   it('enables submit button when matches are created', () => {
@@ -270,7 +287,7 @@ describe('MatchingNode', () => {
     expect(submitButton).not.toBeDisabled();
   });
 
-  it('shows match indicator in left column', () => {
+  it('shows match indicator in left column', async () => {
     render(
       <TestWrapper>
         <MatchingNode
@@ -288,10 +305,12 @@ describe('MatchingNode', () => {
     fireEvent.click(redItem);
 
     // Should show the match indicator in left column
-    expect(screen.getByText('→ Red')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('→ Red')).toBeInTheDocument();
+    });
   });
 
-  it('shows match indicator in right column', () => {
+  it('shows match indicator in right column', async () => {
     render(
       <TestWrapper>
         <MatchingNode
@@ -309,10 +328,12 @@ describe('MatchingNode', () => {
     fireEvent.click(redItem);
 
     // Should show the match indicator in right column
-    expect(screen.getByText('← Apple')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('← Apple')).toBeInTheDocument();
+    });
   });
 
-  it('allows removing matches with close button', () => {
+  it('allows removing matches with close button', async () => {
     render(
       <TestWrapper>
         <MatchingNode
@@ -329,13 +350,20 @@ describe('MatchingNode', () => {
     fireEvent.click(appleItem);
     fireEvent.click(redItem);
 
+    // Wait for match to be created
+    await waitFor(() => {
+      expect(screen.getByText('→ Red')).toBeInTheDocument();
+    });
+
     // Find and click the close button
     const closeButton = screen.getByTestId('CloseIcon');
     fireEvent.click(closeButton);
 
     expect(mockPlaySound).toHaveBeenCalledWith('click');
     // Match indicator should be removed
-    expect(screen.queryByText('→ Red')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText('→ Red')).not.toBeInTheDocument();
+    });
   });
 
   it('deselects item when clicked twice', () => {
@@ -357,7 +385,7 @@ describe('MatchingNode', () => {
     expect(mockPlaySound).toHaveBeenCalledTimes(2);
   });
 
-  it('replaces existing match when creating new one', () => {
+  it('replaces existing match when creating new one', async () => {
     render(
       <TestWrapper>
         <MatchingNode
@@ -375,15 +403,19 @@ describe('MatchingNode', () => {
     fireEvent.click(appleItem);
     fireEvent.click(redItem);
     
-    expect(screen.getByText('→ Red')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('→ Red')).toBeInTheDocument();
+    });
 
     // Create new match with same left item
     fireEvent.click(appleItem);
     fireEvent.click(yellowItem);
 
     // Should show new match
-    expect(screen.getByText('→ Yellow')).toBeInTheDocument();
-    expect(screen.queryByText('→ Red')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('→ Yellow')).toBeInTheDocument();
+      expect(screen.queryByText('→ Red')).not.toBeInTheDocument();
+    });
   });
 
   it('shows feedback when submitted with correct matches', async () => {
@@ -837,6 +869,9 @@ describe('MatchingNode', () => {
 
     const appleItem = screen.getByText('Apple');
     const redItem = screen.getAllByText('Red')[0];
+
+    // Clear any previous calls
+    mockPlaySound.mockClear();
 
     // Select apple, then red, then apple again
     fireEvent.click(appleItem);

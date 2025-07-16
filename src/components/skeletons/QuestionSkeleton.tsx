@@ -43,13 +43,13 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
     <SkeletonWithPulse delay={0.1}>
       <Stack spacing={1} sx={{ mb: 3 }}>
         <Skeleton 
-          variant="text" 
+          
           height={36} 
           width="85%" 
           sx={{ fontSize: '1.5rem' }}
         />
         <Skeleton 
-          variant="text" 
+          
           height={24} 
           width="65%" 
           sx={{ fontSize: '1rem' }}
@@ -72,7 +72,7 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
           }}>
             <Box sx={{ position: 'relative' }}>
               <Skeleton 
-                variant="rectangular" 
+                
                 height={300}
                 sx={{ 
                   backgroundColor: theme.palette.grey[100],
@@ -94,13 +94,13 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
                 color: theme.palette.grey[400]
               }}>
                 <Skeleton 
-                  variant="circular" 
+                  
                   width={48} 
                   height={48} 
                   sx={{ mb: 1 }}
                 />
                 <Skeleton 
-                  variant="text" 
+                  
                   width={120} 
                   height={20}
                 />
@@ -114,7 +114,7 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
               {[1, 2].map((item) => (
                 <Box key={item} sx={{ flex: 1 }}>
                   <Skeleton 
-                    variant="rectangular" 
+                    
                     height={150}
                     sx={{ borderRadius: 2 }}
                   />
@@ -133,13 +133,13 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
         <SkeletonWithPulse delay={0.4}>
           <Stack direction="row" spacing={2} justifyContent="center" sx={{ mb: 3 }}>
             <Skeleton 
-              variant="rectangular" 
+              
               width={120} 
               height={48}
               sx={{ borderRadius: 3 }}
             />
             <Skeleton 
-              variant="rectangular" 
+              
               width={120} 
               height={48}
               sx={{ borderRadius: 3 }}
@@ -154,11 +154,11 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
         <SkeletonWithPulse delay={0.4}>
           <Box sx={{ mb: 3, px: 2 }}>
             <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>
-              <Skeleton variant="text" width={80} />
-              <Skeleton variant="text" width={80} />
+              <Skeleton width={80} />
+              <Skeleton width={80} />
             </Stack>
             <Skeleton 
-              variant="rectangular" 
+              
               height={8}
               sx={{ borderRadius: 4 }}
             />
@@ -170,7 +170,7 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
               justifyContent: 'center'
             }}>
               <Skeleton 
-                variant="circular" 
+                
                 width={24} 
                 height={24}
                 sx={{ 
@@ -197,7 +197,7 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
             {[1, 2, 3, 4, 5].map((star) => (
               <Skeleton 
                 key={star}
-                variant="circular" 
+                
                 width={32} 
                 height={32}
               />
@@ -220,7 +220,7 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
             {[1, 2, 3, 4, 5].map((item) => (
               <Skeleton 
                 key={item}
-                variant="rectangular" 
+                
                 width={60} 
                 height={48}
                 sx={{ borderRadius: 3 }}
@@ -235,23 +235,23 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
       return (
         <SkeletonWithPulse delay={0.4}>
           <Box sx={{ mb: 3 }}>
-            <Card variant="outlined" sx={{ borderRadius: 2 }}>
+            <Card sx={{ borderRadius: 2 }}>
               <CardContent>
                 {/* Matrix header */}
                 <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-                  <Skeleton variant="text" width={120} />
-                  <Skeleton variant="text" width={80} />
-                  <Skeleton variant="text" width={80} />
-                  <Skeleton variant="text" width={80} />
+                  <Skeleton width={120} />
+                  <Skeleton width={80} />
+                  <Skeleton width={80} />
+                  <Skeleton width={80} />
                 </Stack>
                 
                 {/* Matrix rows */}
                 {[1, 2, 3].map((row) => (
                   <Stack key={row} direction="row" spacing={2} sx={{ mb: 1 }}>
-                    <Skeleton variant="text" width={120} />
-                    <Skeleton variant="circular" width={24} height={24} />
-                    <Skeleton variant="circular" width={24} height={24} />
-                    <Skeleton variant="circular" width={24} height={24} />
+                    <Skeleton width={120} />
+                    <Skeleton width={24} height={24} />
+                    <Skeleton width={24} height={24} />
+                    <Skeleton width={24} height={24} />
                   </Stack>
                 ))}
               </CardContent>
@@ -266,7 +266,7 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
         <SkeletonWithPulse delay={0.4}>
           <Box sx={{ mb: 3 }}>
             <Skeleton 
-              variant="rectangular" 
+              
               height={questionType === 'textarea' ? 120 : 56}
               sx={{ borderRadius: 2 }}
             />
@@ -281,9 +281,9 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
           <Stack spacing={2} sx={{ mb: 3 }}>
             {Array.from({ length: Math.min(choiceCount, 5) }, (_, i) => (
               <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Skeleton variant="rectangular" width={32} height={32} sx={{ borderRadius: 1 }} />
-                <Skeleton variant="text" width={`${60 + (i * 10)}%`} height={48} />
-                <Skeleton variant="rectangular" width={24} height={24} sx={{ borderRadius: 1 }} />
+                <Skeleton width={32} height={32} sx={{ borderRadius: 1 }} />
+                <Skeleton width={`${60 + (i * 10)}%`} height={48} />
+                <Skeleton width={24} height={24} sx={{ borderRadius: 1 }} />
               </Box>
             ))}
           </Stack>
@@ -302,7 +302,7 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
                   {[1, 2, 3, 4].map((item) => (
                     <Skeleton 
                       key={item}
-                      variant="rectangular" 
+                      
                       height={56}
                       sx={{ borderRadius: 2 }}
                     />
@@ -316,7 +316,7 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
                   {[1, 2, 3, 4].map((item) => (
                     <Skeleton 
                       key={item}
-                      variant="rectangular" 
+                      
                       height={56}
                       sx={{ borderRadius: 2 }}
                     />
@@ -335,9 +335,9 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
         <Stack spacing={2} sx={{ mb: 3 }}>
           {Array.from({ length: Math.min(choiceCount, 6) }, (_, i) => (
             <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Skeleton variant="circular" width={32} height={32} />
+              <Skeleton width={32} height={32} />
               <Skeleton 
-                variant="text" 
+                
                 width={`${Math.max(40, 90 - (i * 10))}%`} 
                 height={48}
               />
@@ -352,7 +352,7 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
     <SkeletonWithPulse delay={0.6}>
       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
         <Skeleton 
-          variant="rectangular" 
+          
           width={120} 
           height={48}
           sx={{ borderRadius: 3 }}
@@ -365,13 +365,13 @@ export const QuestionSkeleton: React.FC<QuestionSkeletonProps> = ({
     <SkeletonWithPulse delay={0.7}>
       <Box sx={{ textAlign: 'center', mt: 2 }}>
         <Skeleton 
-          variant="text" 
+          
           width={200} 
           height={16}
           sx={{ margin: '0 auto', mb: 1 }}
         />
         <Skeleton 
-          variant="text" 
+          
           width={300} 
           height={14}
           sx={{ margin: '0 auto', opacity: 0.6 }}

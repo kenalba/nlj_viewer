@@ -108,7 +108,7 @@ export const MediaSkeleton: React.FC<MediaSkeletonProps> = ({
       {/* Main skeleton area */}
       <Box sx={{ position: 'relative', height: getHeight() }}>
         <Skeleton 
-          variant="rectangular" 
+          
           width="100%" 
           height="100%"
           sx={{ 
@@ -145,7 +145,7 @@ export const MediaSkeleton: React.FC<MediaSkeletonProps> = ({
           </Box>
           
           {/* Loading text */}
-          <Typography variant="body2" sx={{ 
+          <Typography sx={{ 
             fontWeight: 'medium',
             textAlign: 'center',
             ...pulseAnimation
@@ -155,7 +155,7 @@ export const MediaSkeleton: React.FC<MediaSkeletonProps> = ({
           
           {/* File name if provided */}
           {fileName && (
-            <Typography variant="caption" sx={{ 
+            <Typography sx={{ 
               opacity: 0.7,
               textAlign: 'center',
               px: 2,
@@ -198,22 +198,22 @@ export const MediaSkeleton: React.FC<MediaSkeletonProps> = ({
           <Stack spacing={1}>
             {/* Media metadata skeleton */}
             <Stack direction="row" spacing={2} alignItems="center">
-              <Skeleton variant="circular" width={24} height={24} />
+              <Skeleton width={24} height={24} />
               <Box sx={{ flex: 1 }}>
-                <Skeleton variant="text" width="40%" height={16} />
-                <Skeleton variant="text" width="60%" height={14} />
+                <Skeleton width="40%" height={16} />
+                <Skeleton width="60%" height={14} />
               </Box>
-              <Skeleton variant="text" width={80} height={14} />
+              <Skeleton width={80} height={14} />
             </Stack>
             
             {/* Media controls skeleton (for video) */}
             {mediaType === 'VIDEO' && (
               <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
-                <Skeleton variant="circular" width={32} height={32} />
+                <Skeleton width={32} height={32} />
                 <Box sx={{ flex: 1 }}>
-                  <Skeleton variant="rectangular" height={6} sx={{ borderRadius: 1 }} />
+                  <Skeleton height={6} sx={{ borderRadius: 1 }} />
                 </Box>
-                <Skeleton variant="text" width={60} height={14} />
+                <Skeleton width={60} height={14} />
               </Stack>
             )}
           </Stack>

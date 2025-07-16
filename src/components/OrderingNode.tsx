@@ -6,6 +6,8 @@ import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useIsMobile } from '../utils/mobileDetection';
+import { MarkdownRenderer } from './MarkdownRenderer';
+import { MediaDisplay } from './MediaDisplay';
 
 interface OrderingNodeProps {
   question: OrderingNodeType;
@@ -121,16 +123,19 @@ export const OrderingNode: React.FC<OrderingNodeProps> = ({ question, onAnswer }
   };
 
   return (
-    <NodeCard variant="question" animate={true}>
+    <NodeCard animate={true}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          {question.text}
-        </Typography>
+        <MarkdownRenderer
+          content={question.text}
+          sx={{ mb: 1, color: 'text.primary' }}
+        />
         
         {question.content && (
-          <Typography variant="body1" sx={{ mb: 2, color: 'text.secondary' }}>
-            {question.content}
-          </Typography>
+          <MarkdownRenderer
+            content={question.content}
+            
+            sx={{ mb: 2, color: 'text.secondary' }}
+          />
         )}
         
         {question.media && (
@@ -141,16 +146,17 @@ export const OrderingNode: React.FC<OrderingNodeProps> = ({ question, onAnswer }
         
         {question.additionalMediaList && question.additionalMediaList.length > 0 && (
           <Box sx={{ mb: 3 }}>
-            {question.additionalMediaList.map((media, index) => (
-              <Box key={`${media.id}-${index}`} sx={{ mb: 2 }}>
-                <MediaViewer media={media} size="small" />
-              </Box>
-            ))}
+            <MediaDisplay 
+              mediaList={question.additionalMediaList.map(wrapper => wrapper.media)}
+              size="small"
+              showControls={true}
+              showCounter={true}
+            />
           </Box>
         )}
       </Box>
 
-      <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+      <Typography sx={{ mb: 2, color: 'text.secondary' }}>
         Drag and drop the items below to arrange them in the correct order:
       </Typography>
 
@@ -189,7 +195,7 @@ export const OrderingNode: React.FC<OrderingNodeProps> = ({ question, onAnswer }
               <DragIndicator color={showFeedback ? 'disabled' : 'action'} />
             </IconButton>
             
-            <Typography variant="body1" sx={{ flex: 1 }}>
+            <Typography sx={{ flex: 1 }}>
               {index + 1}. {item.text}
             </Typography>
             

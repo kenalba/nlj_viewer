@@ -8,6 +8,7 @@ import { useAudio } from '../contexts/AudioContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getStarColors } from '../utils/feedbackColors';
 import { useIsMobile } from '../utils/mobileDetection';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface RatingNodeProps {
   question: RatingNodeType;
@@ -122,7 +123,7 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
           }}
         />
         {question.showValue && selectedValue !== null && selectedValue > 0 && (
-          <Typography variant="h6" sx={{ ml: 2, alignSelf: 'center' }}>
+          <Typography sx={{ ml: 2, alignSelf: 'center' }}>
             {selectedValue}/{question.range.max}
           </Typography>
         )}
@@ -149,7 +150,7 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
         {values.map((value) => (
           <Button
             key={value}
-            variant="outlined"
+            variant={selectedValue === value ? 'contained' : 'outlined'}
             onClick={() => handleValueSelect(value)}
             className={selectedValue === value ? 'selected' : ''}
             sx={{
@@ -175,7 +176,7 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
         {question.categories.map((category, index) => (
           <Button
             key={index}
-            variant="outlined"
+            variant={selectedValue === index ? 'contained' : 'outlined'}
             onClick={() => handleValueSelect(index)}
             className={selectedValue === index ? 'selected' : ''}
             sx={{
@@ -185,7 +186,7 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
               textAlign: 'left',
             }}
           >
-            {category}
+            <MarkdownRenderer content={category} />
           </Button>
         ))}
       </Box>
@@ -206,16 +207,19 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
   };
 
   return (
-    <NodeCard variant="question" animate={true}>
+    <NodeCard animate={true}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          {question.text}
-        </Typography>
+        <MarkdownRenderer
+          content={question.text}
+          sx={{ mb: 1, color: 'text.primary' }}
+        />
         
         {question.content && (
-          <Typography variant="body1" sx={{ mb: 2, color: 'text.secondary' }}>
-            {question.content}
-          </Typography>
+          <MarkdownRenderer
+            content={question.content}
+            
+            sx={{ mb: 2, color: 'text.secondary' }}
+          />
         )}
         
         {question.media && (
@@ -226,9 +230,9 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
         
         {question.additionalMediaList && question.additionalMediaList.length > 0 && (
           <Box sx={{ mb: 3 }}>
-            {question.additionalMediaList.map((media, index) => (
-              <Box key={`${media.id}-${index}`} sx={{ mb: 2 }}>
-                <MediaViewer media={media} size="small" />
+            {question.additionalMediaList.map((wrapper, index) => (
+              <Box key={`${wrapper.media.id}-${index}`} sx={{ mb: 2 }}>
+                <MediaViewer media={wrapper.media} size="small" />
               </Box>
             ))}
           </Box>

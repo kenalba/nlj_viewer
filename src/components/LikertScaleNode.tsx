@@ -7,6 +7,7 @@ import { useAudio } from '../contexts/AudioContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useXAPI } from '../contexts/XAPIContext';
 import { useIsMobile } from '../utils/mobileDetection';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface LikertScaleNodeProps {
   question: LikertScaleNodeType;
@@ -120,16 +121,19 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
   const scaleValues = getScaleValues();
 
   return (
-    <NodeCard variant="question" animate={true}>
+    <NodeCard animate={true}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          {question.text}
-        </Typography>
+        <MarkdownRenderer
+          content={question.text}
+          sx={{ mb: 1, color: 'text.primary' }}
+        />
         
         {question.content && (
-          <Typography variant="body1" sx={{ mb: 2, color: 'text.secondary' }}>
-            {question.content}
-          </Typography>
+          <MarkdownRenderer
+            content={question.content}
+            
+            sx={{ mb: 2, color: 'text.secondary' }}
+          />
         )}
         
         {question.media && (
@@ -140,9 +144,9 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
         
         {question.additionalMediaList && question.additionalMediaList.length > 0 && (
           <Box sx={{ mb: 3 }}>
-            {question.additionalMediaList.map((media, index) => (
-              <Box key={`${media.id}-${index}`} sx={{ mb: 2 }}>
-                <MediaViewer media={media} size="small" />
+            {question.additionalMediaList.map((wrapper, index) => (
+              <Box key={`${wrapper.media.id}-${index}`} sx={{ mb: 2 }}>
+                <MediaViewer media={wrapper.media} size="small" />
               </Box>
             ))}
           </Box>
@@ -151,15 +155,15 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
 
       {/* Scale Labels */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, px: 1 }}>
-        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', maxWidth: '30%' }}>
+        <Typography color="text.secondary" sx={{ textAlign: 'center', maxWidth: '30%' }}>
           {question.scale.labels.min}
         </Typography>
         {question.scale.labels.middle && (
-          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', maxWidth: '30%' }}>
+          <Typography color="text.secondary" sx={{ textAlign: 'center', maxWidth: '30%' }}>
             {question.scale.labels.middle}
           </Typography>
         )}
-        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', maxWidth: '30%' }}>
+        <Typography color="text.secondary" sx={{ textAlign: 'center', maxWidth: '30%' }}>
           {question.scale.labels.max}
         </Typography>
       </Box>
@@ -190,7 +194,7 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
             className={selectedValue === value ? 'selected' : ''}
           >
             {question.showNumbers !== false && (
-              <Typography variant="body2" fontWeight="bold">
+              <Typography fontWeight="bold">
                 {value}
               </Typography>
             )}

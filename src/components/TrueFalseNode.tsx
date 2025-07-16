@@ -7,6 +7,8 @@ import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useXAPI } from '../contexts/XAPIContext';
 import { useIsMobile } from '../utils/mobileDetection';
+import { MarkdownRenderer } from './MarkdownRenderer';
+import { MediaDisplay } from './MediaDisplay';
 
 interface TrueFalseNodeProps {
   question: TrueFalseNodeType;
@@ -107,16 +109,19 @@ export const TrueFalseNode: React.FC<TrueFalseNodeProps> = ({ question, onAnswer
   };
 
   return (
-    <NodeCard variant="question" animate={true}>
+    <NodeCard animate={true}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          {question.text}
-        </Typography>
+        <MarkdownRenderer
+          content={question.text}
+          sx={{ mb: 1, color: 'text.primary' }}
+        />
         
         {question.content && (
-          <Typography variant="body1" sx={{ mb: 2, color: 'text.secondary' }}>
-            {question.content}
-          </Typography>
+          <MarkdownRenderer
+            content={question.content}
+            
+            sx={{ mb: 2, color: 'text.secondary' }}
+          />
         )}
         
         {question.media && (
@@ -127,11 +132,12 @@ export const TrueFalseNode: React.FC<TrueFalseNodeProps> = ({ question, onAnswer
         
         {question.additionalMediaList && question.additionalMediaList.length > 0 && (
           <Box sx={{ mb: 3 }}>
-            {question.additionalMediaList.map((media, index) => (
-              <Box key={`${media.id}-${index}`} sx={{ mb: 2 }}>
-                <MediaViewer media={media} size="small" />
-              </Box>
-            ))}
+            <MediaDisplay 
+              mediaList={question.additionalMediaList.map(wrapper => wrapper.media)}
+              size="small"
+              showControls={true}
+              showCounter={true}
+            />
           </Box>
         )}
       </Box>
@@ -233,7 +239,7 @@ export const TrueFalseNode: React.FC<TrueFalseNodeProps> = ({ question, onAnswer
       {/* Keyboard Controls Helper - Hide on mobile */}
       {!isMobile && !showFeedback && (
         <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', opacity: 0.7 }}>
+          <Typography color="text.secondary" sx={{ fontSize: '0.75rem', opacity: 0.7 }}>
             Press 1 for True, 2 for False • Enter to submit
           </Typography>
         </Box>

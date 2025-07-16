@@ -168,7 +168,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
 
     return (
       <Box sx={{ mt: 2 }}>
-        <Typography variant="h6" gutterBottom>
+        <Typography gutterBottom>
           Suggested Solutions
         </Typography>
         <List dense>
@@ -190,7 +190,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
 
     return (
       <Box>
-        <Typography variant="h6" gutterBottom>
+        <Typography gutterBottom>
           Validation Errors
         </Typography>
         <List dense>
@@ -203,16 +203,16 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
                 primary={validationError.message}
                 secondary={
                   <Box>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography color="text.secondary">
                       Field: {validationError.field}
                     </Typography>
                     {validationError.line && (
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography color="text.secondary">
                         Line: {validationError.line}
                       </Typography>
                     )}
                     {validationError.column && (
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography color="text.secondary">
                         Column: {validationError.column}
                       </Typography>
                     )}
@@ -231,16 +231,16 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
 
     return (
       <Box>
-        <Typography variant="h6" gutterBottom>
+        <Typography gutterBottom>
           Detected Column Mappings
         </Typography>
-        <Paper variant="outlined" sx={{ p: 2, backgroundColor: 'background.default' }}>
+        <Paper sx={{ p: 2, backgroundColor: 'background.default' }}>
           {Object.entries(error.columnMappings).map(([expected, actual]) => (
             <Box key={expected} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography color="text.secondary">
                 {expected}:
               </Typography>
-              <Typography variant="body2" fontWeight="medium">
+              <Typography fontWeight="medium">
                 {actual}
               </Typography>
             </Box>
@@ -258,7 +258,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
     return (
       <Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          <Typography variant="h6">
+          <Typography >
             Raw Data Preview
           </Typography>
           <Tooltip title={copiedText === 'rawData' ? 'Copied!' : 'Copy to clipboard'}>
@@ -271,7 +271,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
           </Tooltip>
         </Box>
         <Paper
-          variant="outlined"
+          
           sx={{
             p: 2,
             backgroundColor: 'background.default',
@@ -301,7 +301,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
     return (
       <Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          <Typography variant="h6">
+          <Typography >
             Stack Trace
           </Typography>
           <Tooltip title={copiedText === 'stackTrace' ? 'Copied!' : 'Copy to clipboard'}>
@@ -314,7 +314,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
           </Tooltip>
         </Box>
         <Paper
-          variant="outlined"
+          
           sx={{
             p: 2,
             backgroundColor: 'background.default',
@@ -350,7 +350,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {categoryInfo.icon}
-            <Typography variant="h6">{categoryInfo.label}</Typography>
+            <Typography >{categoryInfo.label}</Typography>
           </Box>
           <IconButton onClick={onClose} size="small">
             <CloseIcon />
@@ -366,7 +366,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
           {error.fileName && (
             <Chip
               label={error.fileName}
-              variant="outlined"
+              
               size="small"
               sx={{ mr: 1 }}
             />
@@ -374,7 +374,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
           {error.fileSize && (
             <Chip
               label={`${(error.fileSize / 1024).toFixed(1)} KB`}
-              variant="outlined"
+              
               size="small"
             />
           )}
@@ -383,17 +383,17 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
 
       <DialogContent>
         <Alert severity={categoryInfo.color} sx={{ mb: 2 }}>
-          <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+          <Typography sx={{ fontWeight: 'medium' }}>
             {categoryInfo.description}
           </Typography>
         </Alert>
 
-        <Typography variant="body1" sx={{ mb: 2 }}>
+        <Typography sx={{ mb: 2 }}>
           {error.message}
         </Typography>
 
         {error.details && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography color="text.secondary" sx={{ mb: 2 }}>
             {error.details}
           </Typography>
         )}
@@ -418,19 +418,19 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
             {renderColumnMappings()}
             {error.fileType && (
               <Box>
-                <Typography variant="h6" gutterBottom>
+                <Typography gutterBottom>
                   File Information
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Typography variant="body2">
+                  <Typography >
                     <strong>Type:</strong> {error.fileType}
                   </Typography>
                   {error.fileSize && (
-                    <Typography variant="body2">
+                    <Typography >
                       <strong>Size:</strong> {(error.fileSize / 1024).toFixed(1)} KB
                     </Typography>
                   )}
-                  <Typography variant="body2">
+                  <Typography >
                     <strong>Timestamp:</strong> {new Date(error.timestamp).toLocaleString()}
                   </Typography>
                 </Box>
@@ -451,7 +451,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
         <Button
           startIcon={<DownloadIcon />}
           onClick={handleExportDebugInfo}
-          variant="outlined"
+          
         >
           Export Debug Info
         </Button>
@@ -459,12 +459,12 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
           <Button
             startIcon={<RefreshIcon />}
             onClick={onRetry}
-            variant="outlined"
+            
           >
             Retry
           </Button>
         )}
-        <Button onClick={onClose} variant="contained">
+        <Button onClick={onClose} >
           Close
         </Button>
       </DialogActions>

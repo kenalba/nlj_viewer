@@ -355,14 +355,16 @@ describe('UnifiedQuestionNode', () => {
       ...mockQuestion,
       additionalMediaList: [
         {
-          id: 'additional-media-1',
-          type: 'IMAGE',
-          fullPath: 'https://example.com/additional1.jpg',
-          title: 'Additional Image 1',
-          description: 'Additional test image',
-          fullThumbnail: 'https://example.com/additional1-thumb.jpg',
-          createTimestamp: '2023-01-01T00:00:00Z',
-          updateTimestamp: '2023-01-01T00:00:00Z',
+          media: {
+            id: 'additional-media-1',
+            type: 'IMAGE',
+            fullPath: 'https://example.com/additional1.jpg',
+            title: 'Additional Image 1',
+            description: 'Additional test image',
+            fullThumbnail: 'https://example.com/additional1-thumb.jpg',
+            createTimestamp: '2023-01-01T00:00:00Z',
+            updateTimestamp: '2023-01-01T00:00:00Z',
+          },
         },
       ],
     };
@@ -377,7 +379,7 @@ describe('UnifiedQuestionNode', () => {
       </TestWrapper>
     );
 
-    expect(screen.getByAltText('Additional media 1')).toBeInTheDocument();
+    expect(screen.getByAltText('Additional Image 1')).toBeInTheDocument();
   });
 
   it('handles keyboard navigation with number keys', () => {

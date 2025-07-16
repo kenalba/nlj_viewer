@@ -126,16 +126,16 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
         <DialogContent sx={{ textAlign: 'center', pt: 4, pb: 4 }}>
           {/* Celebration Icon */}
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h1" sx={{ fontSize: '4rem', mb: 1 }}>
+            <Typography sx={{ fontSize: '4rem', mb: 1 }}>
               🎉
             </Typography>
-            <Typography variant="h4" gutterBottom color="primary">
+            <Typography gutterBottom color="primary">
               Congratulations!
             </Typography>
-            <Typography variant="h6" color="text.secondary">
+            <Typography color="text.secondary">
               You have completed
             </Typography>
-            <Typography variant="h5" sx={{ mt: 1, mb: 2 }}>
+            <Typography sx={{ mt: 1, mb: 2 }}>
               {scenarioName}
             </Typography>
           </Box>
@@ -149,7 +149,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
               backgroundColor: themeMode === 'unfiltered' ? '#F6FA24' : 'primary.main',
               color: themeMode === 'unfiltered' ? '#000000' : '#ffffff',
             }}>
-              <Typography variant="h6">
+              <Typography >
                 Final Score: {score}
               </Typography>
             </Box>

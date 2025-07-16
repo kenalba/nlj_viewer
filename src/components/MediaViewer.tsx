@@ -40,7 +40,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
 
   // Calculate responsive height based on size and screen
   const getResponsiveHeight = () => {
-    if (height) return height; // Use explicit height if provided
+    if (height) return height - 16; // Subtract padding (8px top + 8px bottom)
     
     if (isMobile) {
       // Mobile heights
@@ -69,7 +69,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
         <Box 
           position="relative" 
           sx={{ 
-            p: 2,
+            p: 1,
             cursor: 'pointer',
             '&:hover': {
               backgroundColor: 'action.hover',
@@ -81,10 +81,10 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
           }}
           onClick={handleImageClick}
         >
-          <Box sx={{ position: 'relative', height: responsiveHeight }}>
+          <Box sx={{ position: 'relative', height: responsiveHeight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {!loaded && (
               <Skeleton 
-                variant="rectangular" 
+                
                 width="100%" 
                 height={responsiveHeight} 
                 sx={{ position: 'absolute', top: 0, left: 0, zIndex: 1 }}
@@ -92,7 +92,6 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
             )}
             <CardMedia
               component="img"
-              height={responsiveHeight}
               image={error ? media.fullThumbnail || '/placeholder.svg' : media.fullPath}
               alt={alt || media.title || 'Training content'}
               onLoad={handleLoad}
@@ -101,8 +100,9 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
                 objectFit: 'contain',
                 borderRadius: 1,
                 maxWidth: '100%',
+                maxHeight: '100%',
                 width: 'auto',
-                margin: '0 auto',
+                height: 'auto',
                 opacity: loaded ? 1 : 0,
                 transition: 'opacity 0.3s ease',
               }}
@@ -182,14 +182,14 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
       <Box 
         position="relative" 
         sx={{ 
-          p: 2,
+          p: 1,
           borderRadius: 2,
         }}
       >
-        <Box sx={{ position: 'relative', height: responsiveHeight }}>
+        <Box sx={{ position: 'relative', height: responsiveHeight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {!loaded && (
             <Skeleton 
-              variant="rectangular" 
+              
               width="100%" 
               height={responsiveHeight} 
               sx={{ position: 'absolute', top: 0, left: 0, zIndex: 1 }}
@@ -197,7 +197,6 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
           )}
           <CardMedia
             component="video"
-            height={responsiveHeight}
             src={media.fullPath}
             controls
             onLoadedData={handleLoad}
@@ -206,8 +205,9 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
               objectFit: 'contain',
               borderRadius: 1,
               maxWidth: '100%',
+              maxHeight: '100%',
               width: 'auto',
-              margin: '0 auto',
+              height: 'auto',
               opacity: loaded ? 1 : 0,
               transition: 'opacity 0.3s ease',
             }}

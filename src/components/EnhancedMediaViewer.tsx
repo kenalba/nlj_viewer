@@ -97,7 +97,7 @@ export const EnhancedMediaViewer: React.FC<EnhancedMediaViewerProps> = ({
     return (
       <Box sx={{ position: 'relative' }}>
         <Skeleton 
-          variant="rectangular" 
+          
           width="100%" 
           height={responsiveHeight}
           sx={{ 
@@ -126,11 +126,11 @@ export const EnhancedMediaViewer: React.FC<EnhancedMediaViewerProps> = ({
           ) : (
             <VideoIcon sx={{ fontSize: 40, opacity: 0.5 }} />
           )}
-          <Typography variant="caption" sx={{ opacity: 0.7 }}>
+          <Typography sx={{ opacity: 0.7 }}>
             Loading {media.type.toLowerCase()}...
           </Typography>
           {critical && (
-            <Typography variant="caption" sx={{ 
+            <Typography sx={{ 
               opacity: 0.5, 
               fontSize: '0.7rem',
               color: 'warning.main'

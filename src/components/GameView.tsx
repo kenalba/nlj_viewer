@@ -38,7 +38,7 @@ export const GameView: React.FC<GameViewProps> = ({ scenario, onHome }) => {
   if (!currentNode) {
     return (
       <Box sx={{ p: 2 }}>
-        <Typography variant="h6" color="error">
+        <Typography color="error">
           Node not found: {state.currentNodeId}
         </Typography>
       </Box>
@@ -64,7 +64,7 @@ export const GameView: React.FC<GameViewProps> = ({ scenario, onHome }) => {
           >
             <HomeIcon />
           </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600, color: 'white' }}>
+          <Typography component="div" sx={{ flexGrow: 1, fontWeight: 600, color: 'white' }}>
             {scenario.name}
           </Typography>
           <SoundToggle />

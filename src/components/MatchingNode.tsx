@@ -7,6 +7,7 @@ import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useXAPI } from '../contexts/XAPIContext';
 import { useIsMobile } from '../utils/mobileDetection';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface MatchingNodeProps {
   question: MatchingNodeType;
@@ -60,7 +61,7 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
     } else {
       setSelectedLeft(leftId);
       
-      // If right item is selected, create a match
+      // If right item is selected, create a match immediately
       if (selectedRight) {
         createMatch(leftId, selectedRight);
       }
@@ -77,7 +78,7 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
     } else {
       setSelectedRight(rightId);
       
-      // If left item is selected, create a match
+      // If left item is selected, create a match immediately
       if (selectedLeft) {
         createMatch(selectedLeft, rightId);
       }
@@ -91,7 +92,9 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
     );
     
     // Add new match
-    setUserMatches([...filteredMatches, { leftId, rightId }]);
+    const newMatch = { leftId, rightId };
+    const newMatches = [...filteredMatches, newMatch];
+    setUserMatches(newMatches);
     setSelectedLeft(null);
     setSelectedRight(null);
   };
@@ -356,16 +359,19 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
   }, [showFeedback, focusedColumn, focusedLeftIndex, focusedRightIndex, question.leftItems, question.rightItems, userMatches, selectedLeft, selectedRight, question.correctMatches, onAnswer, getMatchForLeft, getMatchForRight, handleLeftClick, handleRightClick, handleSubmit, removeMatch, handleContinue]);
 
   return (
-    <NodeCard variant="question" animate={true}>
+    <NodeCard animate={true}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          {question.text}
-        </Typography>
+        <MarkdownRenderer
+          content={question.text}
+          sx={{ mb: 1, color: 'text.primary' }}
+        />
         
         {question.content && (
-          <Typography variant="body1" sx={{ mb: 2, color: 'text.secondary' }}>
-            {question.content}
-          </Typography>
+          <MarkdownRenderer
+            content={question.content}
+            
+            sx={{ mb: 2, color: 'text.secondary' }}
+          />
         )}
         
         {question.media && (
@@ -376,16 +382,16 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
         
         {question.additionalMediaList && question.additionalMediaList.length > 0 && (
           <Box sx={{ mb: 3 }}>
-            {question.additionalMediaList.map((media, index) => (
-              <Box key={`${media.id}-${index}`} sx={{ mb: 2 }}>
-                <MediaViewer media={media} size="small" />
+            {question.additionalMediaList.map((wrapper, index) => (
+              <Box key={`${wrapper.media.id}-${index}`} sx={{ mb: 2 }}>
+                <MediaViewer media={wrapper.media} size="small" />
               </Box>
             ))}
           </Box>
         )}
       </Box>
 
-      <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+      <Typography sx={{ mb: 2, color: 'text.secondary' }}>
         Click on items from both columns to match them together, or use keyboard navigation:
       </Typography>
 
@@ -403,7 +409,7 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
         
         {/* Left Column */}
         <Box sx={{ flex: 1, position: 'relative', zIndex: 2 }}>
-          <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
+          <Typography sx={{ mb: 2, textAlign: 'center' }}>
             Column A
           </Typography>
           {question.leftItems.map((item, index) => {
@@ -438,9 +444,10 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Typography variant="body1">
-                    {item.text}
-                  </Typography>
+                  <MarkdownRenderer
+                    content={item.text}
+                    
+                  />
                   
                   {isMatched && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -464,7 +471,7 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
                 </Box>
                 
                 {isMatched && match && (
-                  <Typography variant="body2" sx={{ 
+                  <Typography sx={{ 
                     mt: 1, 
                     color: 'text.secondary', 
                     fontStyle: 'italic' 
@@ -479,7 +486,7 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
 
         {/* Right Column */}
         <Box sx={{ flex: 1, position: 'relative', zIndex: 2 }}>
-          <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
+          <Typography sx={{ mb: 2, textAlign: 'center' }}>
             Column B
           </Typography>
           {question.rightItems.map((item, index) => {
@@ -513,9 +520,10 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Typography variant="body1">
-                    {item.text}
-                  </Typography>
+                  <MarkdownRenderer
+                    content={item.text}
+                    
+                  />
                   
                   {isMatched && showFeedback && match && isMatchCorrect(match.leftId, item.id) && (
                     <CheckCircle color="success" fontSize="small" />
@@ -523,7 +531,7 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
                 </Box>
                 
                 {isMatched && match && (
-                  <Typography variant="body2" sx={{ 
+                  <Typography sx={{ 
                     mt: 1, 
                     color: 'text.secondary', 
                     fontStyle: 'italic' 
@@ -571,7 +579,7 @@ export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }
           {/* Continue Button */}
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
             <Button
-              variant="contained"
+              
               onClick={handleContinue}
               sx={{ borderRadius: 3, minWidth: 120 }}
             >

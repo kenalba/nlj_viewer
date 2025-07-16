@@ -23,6 +23,7 @@ import type { MatrixNode as MatrixNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface MatrixNodeProps {
   question: MatrixNodeType;
@@ -177,7 +178,7 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
               minWidth: isMobile ? 80 : 100,
             }}
           >
-            {column.text}
+            <MarkdownRenderer content={column.text} />
           </TableCell>
         ))}
       </TableRow>
@@ -196,7 +197,7 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
         fontWeight: 'medium',
         borderColor: 'divider',
       }}>
-        {row.text}
+        <MarkdownRenderer content={row.text} />
         {row.required !== false && (
           <Typography component="span" color="error" sx={{ ml: 0.5 }}>
             *
@@ -237,7 +238,7 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
         fontWeight: 'medium',
         borderColor: 'divider',
       }}>
-        {row.text}
+        <MarkdownRenderer content={row.text} />
         {row.required !== false && (
           <Typography component="span" color="error" sx={{ ml: 0.5 }}>
             *
@@ -303,7 +304,7 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
             transition: 'background-color 0.2s ease',
           }}
         >
-          <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'medium' }}>
+          <Typography sx={{ mb: 2, fontWeight: 'medium' }}>
             {row.text}
             {row.required !== false && (
               <Typography component="span" color="error" sx={{ ml: 0.5 }}>
@@ -350,16 +351,19 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
   );
 
   return (
-    <NodeCard variant="question" animate={true}>
+    <NodeCard animate={true}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          {question.text}
-        </Typography>
+        <MarkdownRenderer
+          content={question.text}
+          sx={{ mb: 1, color: 'text.primary' }}
+        />
         
         {question.content && (
-          <Typography variant="body1" sx={{ mb: 2, color: 'text.secondary' }}>
-            {question.content}
-          </Typography>
+          <MarkdownRenderer
+            content={question.content}
+            
+            sx={{ mb: 2, color: 'text.secondary' }}
+          />
         )}
         
         {question.media && (
@@ -370,9 +374,9 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
         
         {question.additionalMediaList && question.additionalMediaList.length > 0 && (
           <Box sx={{ mb: 3 }}>
-            {question.additionalMediaList.map((media, index) => (
-              <Box key={`${media.id}-${index}`} sx={{ mb: 2 }}>
-                <MediaViewer media={media} size="small" />
+            {question.additionalMediaList.map((wrapper, index) => (
+              <Box key={`${wrapper.media.id}-${index}`} sx={{ mb: 2 }}>
+                <MediaViewer media={wrapper.media} size="small" />
               </Box>
             ))}
           </Box>

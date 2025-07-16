@@ -108,38 +108,38 @@ export class ErrorBoundary extends Component<Props, State> {
               borderRadius: 2,
             }}
           >
-            <Typography variant="h4" gutterBottom color="error">
+            <Typography gutterBottom color="error">
               Something went wrong
             </Typography>
             
             <Alert severity="error" sx={{ mb: 3, textAlign: 'left' }}>
-              <Typography variant="body1">
+              <Typography >
                 {this.state.error?.message || 'An unexpected error occurred'}
               </Typography>
             </Alert>
 
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography color="text.secondary" sx={{ mb: 3 }}>
               A technical error occurred while rendering this page. This has been logged 
               and you can help us fix it by providing the error details below.
             </Typography>
 
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Button
-                variant="contained"
+                
                 onClick={this.handleRetry}
                 color="primary"
               >
                 Try Again
               </Button>
               <Button
-                variant="outlined"
+                
                 onClick={this.handleShowDetails}
                 color="secondary"
               >
                 Show Error Details
               </Button>
               <Button
-                variant="outlined"
+                
                 onClick={() => window.location.reload()}
                 color="info"
               >
@@ -147,7 +147,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </Button>
             </Box>
 
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
+            <Typography color="text.secondary" sx={{ mt: 2, display: 'block' }}>
               Error ID: {Date.now().toString(36)}
             </Typography>
           </Paper>

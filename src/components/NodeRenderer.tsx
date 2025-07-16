@@ -233,11 +233,11 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
   switch (node.type) {
     case 'start':
       return (
-        <NodeCard variant="interstitial" animate={false}>
-          <Typography variant="h4" gutterBottom align="center">
+        <NodeCard animate={false}>
+          <Typography gutterBottom align="center">
             {scenario.name}
           </Typography>
-          <Typography variant="body1" sx={{ mb: 3 }} align="center">
+          <Typography sx={{ mb: 3 }} align="center">
             Welcome to this interactive training scenario.
           </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
@@ -277,15 +277,15 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
 
 
       return (
-        <NodeCard variant="interstitial" animate={false}>
-          <Typography variant="h4" gutterBottom align="center" color="primary">
+        <NodeCard animate={false}>
+          <Typography gutterBottom align="center" color="primary">
             Training Complete!
           </Typography>
-          <Typography variant="body1" sx={{ mb: 3 }} align="center">
+          <Typography sx={{ mb: 3 }} align="center">
             You have successfully completed the training scenario.
           </Typography>
           {state.score !== undefined && (
-            <Typography variant="h6" align="center" sx={{ mt: 2 }}>
+            <Typography align="center" sx={{ mt: 2 }}>
               Final Score: {state.score}
             </Typography>
           )}
@@ -441,8 +441,8 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
 
     default:
       return (
-        <NodeCard variant="default" animate={false}>
-          <Typography variant="body1" color="error">
+        <NodeCard animate={false}>
+          <Typography color="error">
             Unknown node type: {node.type}
           </Typography>
         </NodeCard>
@@ -456,11 +456,11 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
         switch (node.type) {
           case 'start':
             return (
-              <NodeCard variant="interstitial" animate={false}>
-                <Typography variant="h4" gutterBottom align="center">
+              <NodeCard animate={false}>
+                <Typography gutterBottom align="center">
                   {scenario.name}
                 </Typography>
-                <Typography variant="body1" sx={{ mb: 3 }} align="center">
+                <Typography sx={{ mb: 3 }} align="center">
                   Welcome to this interactive training scenario.
                 </Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
@@ -498,20 +498,20 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
             }
 
             return (
-              <NodeCard variant="interstitial" animate={false}>
-                <Typography variant="h4" gutterBottom align="center" color="primary">
+              <NodeCard animate={false}>
+                <Typography gutterBottom align="center" color="primary">
                   Training Complete!
                 </Typography>
-                <Typography variant="body1" sx={{ mb: 3 }} align="center">
+                <Typography sx={{ mb: 3 }} align="center">
                   You have successfully completed the training scenario.
                 </Typography>
                 {state.score !== undefined && (
-                  <Typography variant="h6" align="center" sx={{ mt: 2 }}>
+                  <Typography align="center" sx={{ mt: 2 }}>
                     Final Score: {state.score}
                   </Typography>
                 )}
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography color="text.secondary">
                     Check the completion modal for options
                   </Typography>
                 </Box>
@@ -521,8 +521,8 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
 
           default:
             return (
-              <NodeCard variant="default" animate={false}>
-                <Typography variant="body1" color="error">
+              <NodeCard animate={false}>
+                <Typography color="error">
                   Unknown node type: {node.type}
                 </Typography>
               </NodeCard>

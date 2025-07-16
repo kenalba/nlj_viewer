@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import { Typography, Button, Box, useTheme as useMuiTheme } from '@mui/material';
+import { Button, Box, useTheme as useMuiTheme } from '@mui/material';
 import type { InterstitialPanelNode } from '../types/nlj';
 import { MediaViewer } from './MediaViewer';
 import { NodeCard } from './NodeCard';
 import { useTheme } from '../contexts/ThemeContext';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface InterstitialPanelProps {
   panel: InterstitialPanelNode;
@@ -31,7 +32,7 @@ export const InterstitialPanel: React.FC<InterstitialPanelProps> = ({
   }, [onContinue]);
 
   return (
-    <NodeCard variant="interstitial" animate={false} sx={{ mb: 2 }}>
+    <NodeCard animate={false} sx={{ mb: 2 }}>
       {panel.media && (
         <Box sx={{ mb: 2 }}>
           <MediaViewer 
@@ -42,9 +43,11 @@ export const InterstitialPanel: React.FC<InterstitialPanelProps> = ({
         </Box>
       )}
       {displayText && (
-        <Typography variant="body1" sx={{ mb: 2 }}>
-          {displayText}
-        </Typography>
+        <MarkdownRenderer
+          content={displayText}
+          
+          sx={{ mb: 2 }}
+        />
       )}
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
         <Button

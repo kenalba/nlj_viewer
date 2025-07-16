@@ -5,6 +5,7 @@ import type { ShortAnswerNode as ShortAnswerNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface ShortAnswerNodeProps {
   question: ShortAnswerNodeType;
@@ -90,14 +91,15 @@ export const ShortAnswerNode: React.FC<ShortAnswerNodeProps> = ({ question, onAn
   };
 
   return (
-    <NodeCard variant="question" animate={true}>
+    <NodeCard animate={true}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          {question.text}
-        </Typography>
+        <MarkdownRenderer
+          content={question.text}
+          sx={{ mb: 1, color: 'text.primary' }}
+        />
         
         {question.content && (
-          <Typography variant="body1" sx={{ mb: 2, color: 'text.secondary' }}>
+          <Typography sx={{ mb: 2, color: 'text.secondary' }}>
             {question.content}
           </Typography>
         )}
@@ -110,16 +112,16 @@ export const ShortAnswerNode: React.FC<ShortAnswerNodeProps> = ({ question, onAn
         
         {question.additionalMediaList && question.additionalMediaList.length > 0 && (
           <Box sx={{ mb: 3 }}>
-            {question.additionalMediaList.map((media, index) => (
-              <Box key={`${media.id}-${index}`} sx={{ mb: 2 }}>
-                <MediaViewer media={media} size="small" />
+            {question.additionalMediaList.map((wrapper, index) => (
+              <Box key={`${wrapper.media.id}-${index}`} sx={{ mb: 2 }}>
+                <MediaViewer media={wrapper.media} size="small" />
               </Box>
             ))}
           </Box>
         )}
       </Box>
 
-      <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+      <Typography sx={{ mb: 2, color: 'text.secondary' }}>
         {question.caseSensitive ? 
           'Type your answer below (case-sensitive):' : 
           'Type your answer below (case-insensitive):'
@@ -131,7 +133,7 @@ export const ShortAnswerNode: React.FC<ShortAnswerNodeProps> = ({ question, onAn
           fullWidth
           multiline
           rows={3}
-          variant="outlined"
+          
           value={userAnswer}
           onChange={(e) => setUserAnswer(e.target.value)}
           onKeyPress={handleKeyPress}
@@ -189,10 +191,10 @@ export const ShortAnswerNode: React.FC<ShortAnswerNodeProps> = ({ question, onAn
           }}
         >
           <Box>
-            <Typography variant="body1" gutterBottom>
+            <Typography gutterBottom>
               {getFeedbackMessage()}
             </Typography>
-            <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
+            <Typography sx={{ mt: 1, fontStyle: 'italic' }}>
               Your answer: "{userAnswer}"
             </Typography>
           </Box>

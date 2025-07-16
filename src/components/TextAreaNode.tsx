@@ -5,6 +5,7 @@ import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface TextAreaNodeProps {
   question: TextAreaNodeType;
@@ -80,16 +81,19 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
   };
 
   return (
-    <NodeCard variant="question" animate={true}>
+    <NodeCard animate={true}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          {question.text}
-        </Typography>
+        <MarkdownRenderer
+          content={question.text}
+          sx={{ mb: 1, color: 'text.primary' }}
+        />
         
         {question.content && (
-          <Typography variant="body1" sx={{ mb: 2, color: 'text.secondary' }}>
-            {question.content}
-          </Typography>
+          <MarkdownRenderer
+            content={question.content}
+            
+            sx={{ mb: 2, color: 'text.secondary' }}
+          />
         )}
         
         {question.media && (
@@ -100,9 +104,9 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
         
         {question.additionalMediaList && question.additionalMediaList.length > 0 && (
           <Box sx={{ mb: 3 }}>
-            {question.additionalMediaList.map((media, index) => (
-              <Box key={`${media.id}-${index}`} sx={{ mb: 2 }}>
-                <MediaViewer media={media} size="small" />
+            {question.additionalMediaList.map((wrapper, index) => (
+              <Box key={`${wrapper.media.id}-${index}`} sx={{ mb: 2 }}>
+                <MediaViewer media={wrapper.media} size="small" />
               </Box>
             ))}
           </Box>
@@ -118,7 +122,7 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
           onChange={handleTextChange}
           placeholder={question.placeholder || 'Type your response here...'}
           fullWidth
-          variant="outlined"
+          
           inputRef={textFieldRef}
           inputProps={{
             spellCheck: question.spellCheck !== false,
@@ -155,13 +159,13 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
       {(question.wordCount || question.maxLength) && (
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
           {question.wordCount && (
-            <Typography variant="caption" color="text.secondary">
+            <Typography color="text.secondary">
               Words: {getWordCount()}
             </Typography>
           )}
           {question.maxLength && (
             <Typography 
-              variant="caption" 
+              
               color={getCharacterCount() > question.maxLength * 0.9 ? 'warning.main' : 'text.secondary'}
             >
               Characters: {getCharacterCount()}/{question.maxLength}

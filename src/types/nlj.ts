@@ -32,6 +32,11 @@ export interface Media {
   updateTimestamp?: string;
 }
 
+// Interface for wrapped media items from external editor
+export interface MediaWrapper {
+  media: Media;
+}
+
 export interface VariableChange {
   variableId: string;
   value: number;
@@ -107,7 +112,7 @@ export interface QuestionNode extends BaseNode {
   text: string;
   content?: string;
   media?: Media;
-  additionalMediaList?: Media[];
+  additionalMediaList?: MediaWrapper[];
 }
 
 export interface ChoiceNode extends BaseNode {
@@ -133,7 +138,7 @@ export interface TrueFalseNode extends BaseNode {
   text: string;
   content?: string;
   media?: Media;
-  additionalMediaList?: Media[];
+  additionalMediaList?: MediaWrapper[];
   correctAnswer: boolean;
 }
 
@@ -142,7 +147,7 @@ export interface OrderingNode extends BaseNode {
   text: string;
   content?: string;
   media?: Media;
-  additionalMediaList?: Media[];
+  additionalMediaList?: MediaWrapper[];
   items: OrderingItem[];
 }
 
@@ -157,7 +162,7 @@ export interface MatchingNode extends BaseNode {
   text: string;
   content?: string;
   media?: Media;
-  additionalMediaList?: Media[];
+  additionalMediaList?: MediaWrapper[];
   leftItems: MatchingItem[];
   rightItems: MatchingItem[];
   correctMatches: MatchingPair[];
@@ -178,7 +183,7 @@ export interface ShortAnswerNode extends BaseNode {
   text: string;
   content?: string;
   media?: Media;
-  additionalMediaList?: Media[];
+  additionalMediaList?: MediaWrapper[];
   correctAnswers: string[];
   caseSensitive?: boolean;
 }
@@ -216,7 +221,7 @@ export interface LikertScaleNode extends BaseNode {
   text: string;
   content?: string;
   media?: Media;
-  additionalMediaList?: Media[];
+  additionalMediaList?: MediaWrapper[];
   scale: {
     min: number;
     max: number;
@@ -239,7 +244,7 @@ export interface RatingNode extends BaseNode {
   text: string;
   content?: string;
   media?: Media;
-  additionalMediaList?: Media[];
+  additionalMediaList?: MediaWrapper[];
   ratingType: 'stars' | 'numeric' | 'categorical';
   range: {
     min: number;
@@ -262,7 +267,7 @@ export interface MatrixNode extends BaseNode {
   text: string;
   content?: string;
   media?: Media;
-  additionalMediaList?: Media[];
+  additionalMediaList?: MediaWrapper[];
   rows: Array<{
     id: string;
     text: string;
@@ -286,7 +291,7 @@ export interface SliderNode extends BaseNode {
   text: string;
   content?: string;
   media?: Media;
-  additionalMediaList?: Media[];
+  additionalMediaList?: MediaWrapper[];
   range: {
     min: number;
     max: number;
@@ -310,7 +315,7 @@ export interface TextAreaNode extends BaseNode {
   text: string;
   content?: string;
   media?: Media;
-  additionalMediaList?: Media[];
+  additionalMediaList?: MediaWrapper[];
   placeholder?: string;
   maxLength?: number;
   minLength?: number;
@@ -328,7 +333,7 @@ export interface MultiSelectNode extends BaseNode {
   text: string;
   content?: string;
   media?: Media;
-  additionalMediaList?: Media[];
+  additionalMediaList?: MediaWrapper[];
   options: Array<{
     id: string;
     text: string;
@@ -346,7 +351,7 @@ export interface RankingNode extends BaseNode {
   text: string;
   content?: string;
   media?: Media;
-  additionalMediaList?: Media[];
+  additionalMediaList?: MediaWrapper[];
   items: Array<{
     id: string;
     text: string;

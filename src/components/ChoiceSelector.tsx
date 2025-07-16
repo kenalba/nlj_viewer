@@ -78,7 +78,7 @@ export const ChoiceSelector: React.FC<ChoiceSelectorProps> = ({
 
   return (
     <Box sx={{ mt: 3 }}>
-      <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+      <Typography gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
         Choose your response:
       </Typography>
       
@@ -117,7 +117,7 @@ export const ChoiceSelector: React.FC<ChoiceSelectorProps> = ({
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
         <Button
-          variant="contained"
+          
           onClick={handleSubmit}
           disabled={!selectedChoice || disabled || showFeedback}
           size="large"
@@ -134,13 +134,13 @@ export const ChoiceSelector: React.FC<ChoiceSelectorProps> = ({
               severity={getFeedbackSeverity(selectedChoiceNode.choiceType)}
               sx={{ borderRadius: 2, mb: 2 }}
             >
-              <Typography variant="body1" sx={{ fontSize: '1rem' }}>
+              <Typography sx={{ fontSize: '1rem' }}>
                 {selectedChoiceNode.feedback || 'Thank you for your response.'}
               </Typography>
             </Alert>
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
               <Button
-                variant="contained"
+                
                 onClick={handleContinue}
                 size="large"
                 sx={{ px: 4, py: 1.5 }}

@@ -4,6 +4,7 @@ import type { SliderNode as SliderNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface SliderNodeProps {
   question: SliderNodeType;
@@ -117,16 +118,19 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
   const marks = generateMarks();
 
   return (
-    <NodeCard variant="question" animate={true}>
+    <NodeCard animate={true}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          {question.text}
-        </Typography>
+        <MarkdownRenderer
+          content={question.text}
+          sx={{ mb: 1, color: 'text.primary' }}
+        />
         
         {question.content && (
-          <Typography variant="body1" sx={{ mb: 2, color: 'text.secondary' }}>
-            {question.content}
-          </Typography>
+          <MarkdownRenderer
+            content={question.content}
+            
+            sx={{ mb: 2, color: 'text.secondary' }}
+          />
         )}
         
         {question.media && (
@@ -137,9 +141,9 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
         
         {question.additionalMediaList && question.additionalMediaList.length > 0 && (
           <Box sx={{ mb: 3 }}>
-            {question.additionalMediaList.map((media, index) => (
-              <Box key={`${media.id}-${index}`} sx={{ mb: 2 }}>
-                <MediaViewer media={media} size="small" />
+            {question.additionalMediaList.map((wrapper, index) => (
+              <Box key={`${wrapper.media.id}-${index}`} sx={{ mb: 2 }}>
+                <MediaViewer media={wrapper.media} size="small" />
               </Box>
             ))}
           </Box>
@@ -157,10 +161,10 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
 
       {/* Slider Labels */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, px: 3 }}>
-        <Typography variant="body2" color="text.secondary">
+        <Typography color="text.secondary">
           {question.labels.min}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography color="text.secondary">
           {question.labels.max}
         </Typography>
       </Box>

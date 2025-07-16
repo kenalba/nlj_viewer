@@ -26,12 +26,14 @@ import { ErrorModal, type ErrorDetails } from './ErrorModal';
 
 // Sample scenarios for demo
 const SAMPLE_SCENARIOS = [
+  'nls.Markdown_and_Carousel_Test.json',
   'nls.FSA_102_1_40.json',
   'nls.FSA_102_2_10.json',
   'nls.FSA_102_3_20.json',
   'nls.FSA_102_4_30.json',
   'nls.Ioniq9_TestDrive_ProductKnowledge.json',
   'nls.Spend Now Save Later - Priscilla .json',
+  'nls.Testing NLJ Images.json',
 ];
 
 // Sample Trivie quizzes
@@ -395,13 +397,13 @@ export const ScenarioLoader: React.FC = () => {
             <SoundToggle />
             <ThemeToggle />
           </Box>
-          <Typography variant="h2" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
+          <Typography gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
             {themeMode === 'unfiltered' ? 'Interactive Training' : 'NLJ Training'}
           </Typography>
-          <Typography variant="h5" color="text.secondary" sx={{ mb: 1 }}>
+          <Typography color="text.secondary" sx={{ mb: 1 }}>
             {themeMode === 'unfiltered' ? 'Unfiltered Learning Experience' : 'Interactive Learning Experience'}
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
+          <Typography color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
             Load a Non-Linear Journey scenario to begin your personalized training experience.
           </Typography>
         </Box>
@@ -421,7 +423,7 @@ export const ScenarioLoader: React.FC = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {/* NLJ Scenarios Section */}
           <Box>
-            <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+            <Typography gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
               NLJ Scenarios
             </Typography>
             <Box sx={{ 
@@ -435,15 +437,15 @@ export const ScenarioLoader: React.FC = () => {
                 <CardContent sx={{ p: 4 }}>
                   <Box sx={{ textAlign: 'center', mb: 3 }}>
                     <UploadIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                    <Typography gutterBottom sx={{ fontWeight: 600 }}>
                       Upload NLJ
                     </Typography>
-                    <Typography variant="body1" color="text.secondary">
+                    <Typography color="text.secondary">
                       Upload a .json file containing an NLJ scenario
                     </Typography>
                   </Box>
                   <Button
-                    variant="contained"
+                    
                     component="label"
                     startIcon={<UploadIcon />}
                     disabled={loading}
@@ -466,10 +468,10 @@ export const ScenarioLoader: React.FC = () => {
                 <CardContent sx={{ p: 4 }}>
                   <Box sx={{ textAlign: 'center', mb: 3 }}>
                     <PlayIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                    <Typography gutterBottom sx={{ fontWeight: 600 }}>
                       Sample Scenarios
                     </Typography>
-                    <Typography variant="body1" color="text.secondary">
+                    <Typography color="text.secondary">
                       Try one of the included NLJ demo scenarios
                     </Typography>
                   </Box>
@@ -507,7 +509,7 @@ export const ScenarioLoader: React.FC = () => {
 
           {/* Trivie Quizzes Section */}
           <Box>
-            <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+            <Typography gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
               Trivie Quizzes & Surveys
             </Typography>
             <Box sx={{ 
@@ -521,15 +523,15 @@ export const ScenarioLoader: React.FC = () => {
                 <CardContent sx={{ p: 4 }}>
                   <Box sx={{ textAlign: 'center', mb: 3 }}>
                     <UploadIcon sx={{ fontSize: 48, color: 'secondary.main', mb: 2 }} />
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                    <Typography gutterBottom sx={{ fontWeight: 600 }}>
                       Upload Trivie Quiz
                     </Typography>
-                    <Typography variant="body1" color="text.secondary">
+                    <Typography color="text.secondary">
                       Upload an .xlsx file containing a Trivie quiz
                     </Typography>
                   </Box>
                   <Button
-                    variant="contained"
+                    
                     component="label"
                     startIcon={<UploadIcon />}
                     disabled={loading}
@@ -553,10 +555,10 @@ export const ScenarioLoader: React.FC = () => {
                 <CardContent sx={{ p: 4 }}>
                   <Box sx={{ textAlign: 'center', mb: 3 }}>
                     <PlayIcon sx={{ fontSize: 48, color: 'secondary.main', mb: 2 }} />
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                    <Typography gutterBottom sx={{ fontWeight: 600 }}>
                       Sample Quizzes
                     </Typography>
-                    <Typography variant="body1" color="text.secondary">
+                    <Typography color="text.secondary">
                       Try converted Trivie quiz formats
                     </Typography>
                   </Box>
@@ -593,17 +595,17 @@ export const ScenarioLoader: React.FC = () => {
             
             {/* Sample Surveys Subsection */}
             <Box sx={{ mt: 3 }}>
-              <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+              <Typography gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
                 Sample Surveys
               </Typography>
               <Card>
                 <CardContent sx={{ p: 3 }}>
                   <Box sx={{ textAlign: 'center', mb: 3 }}>
                     <PlayIcon sx={{ fontSize: 40, color: 'info.main', mb: 2 }} />
-                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                    <Typography gutterBottom sx={{ fontWeight: 600 }}>
                       Employee Feedback Surveys
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography color="text.secondary">
                       Try automotive and cross-industry survey examples
                     </Typography>
                   </Box>

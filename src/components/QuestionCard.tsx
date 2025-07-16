@@ -10,7 +10,7 @@ interface QuestionCardProps {
 
 export const QuestionCard: React.FC<QuestionCardProps> = ({ question }) => {
   return (
-    <NodeCard variant="question" animate={true} sx={{ mb: 2 }}>
+    <NodeCard animate={true} sx={{ mb: 2 }}>
       {question.media && (
         <Box sx={{ mb: 2 }}>
           <MediaViewer 
@@ -20,20 +20,20 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question }) => {
           />
         </Box>
       )}
-      <Typography variant="h6" component="h2" gutterBottom>
+      <Typography component="h2" gutterBottom>
         {question.text}
       </Typography>
       {question.content && (
-        <Typography variant="body2" color="text.secondary">
+        <Typography color="text.secondary">
           {question.content}
         </Typography>
       )}
       {question.additionalMediaList && question.additionalMediaList.length > 0 && (
         <Box sx={{ mt: 2 }}>
-          {question.additionalMediaList.map((media, index) => (
-            <Box key={media.id} sx={{ mb: 1 }}>
+          {question.additionalMediaList.map((wrapper, index) => (
+            <Box key={wrapper.media.id} sx={{ mb: 1 }}>
               <MediaViewer 
-                media={media} 
+                media={wrapper.media} 
                 alt={`Additional media ${index + 1}`}
                 size="small"
               />

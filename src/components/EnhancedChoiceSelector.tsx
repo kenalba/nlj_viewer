@@ -87,7 +87,7 @@ export const EnhancedChoiceSelector: React.FC<EnhancedChoiceSelectorProps> = ({
   return (
     <Box sx={{ mt: 4 }}>
       <Typography 
-        variant="h5" 
+        
         gutterBottom 
         sx={{ 
           fontWeight: 600, 
@@ -103,7 +103,7 @@ export const EnhancedChoiceSelector: React.FC<EnhancedChoiceSelectorProps> = ({
         {choices.map((choice, index) => (
           <NodeCard
             key={choice.id}
-            variant="choice"
+            
             interactive={!disabled && !showFeedback}
             selected={selectedChoice === choice.id}
             onClick={() => handleChoiceClick(choice)}
@@ -129,7 +129,7 @@ export const EnhancedChoiceSelector: React.FC<EnhancedChoiceSelectorProps> = ({
               />
               <Box sx={{ flex: 1 }}>
                 <Typography 
-                  variant="body1" 
+                  
                   sx={{ 
                     fontSize: '1rem',
                     lineHeight: 1.5,
@@ -147,7 +147,7 @@ export const EnhancedChoiceSelector: React.FC<EnhancedChoiceSelectorProps> = ({
 
       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
         <Button
-          variant="contained"
+          
           onClick={handleSubmit}
           disabled={!selectedChoice || disabled || showFeedback}
           size="large"
@@ -173,7 +173,7 @@ export const EnhancedChoiceSelector: React.FC<EnhancedChoiceSelectorProps> = ({
       <Collapse in={showFeedback}>
         {selectedChoiceNode && (
           <Box ref={feedbackRef} sx={{ mt: 3 }}>
-            <NodeCard variant="interstitial" animate={true}>
+            <NodeCard animate={true}>
               <Alert 
                 severity={getFeedbackSeverity(selectedChoiceNode.choiceType)}
                 sx={{ 
@@ -197,13 +197,13 @@ export const EnhancedChoiceSelector: React.FC<EnhancedChoiceSelectorProps> = ({
                   },
                 }}
               >
-                <Typography variant="body1" sx={{ fontSize: '1rem' }}>
+                <Typography sx={{ fontSize: '1rem' }}>
                   {selectedChoiceNode.feedback || 'Thank you for your response.'}
                 </Typography>
               </Alert>
               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                 <Button
-                  variant="contained"
+                  
                   onClick={handleContinue}
                   size="large"
                   sx={{ 

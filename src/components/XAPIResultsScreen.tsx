@@ -213,11 +213,11 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
           Back to Activity
         </Button>
         
-        <Typography variant="h4" gutterBottom>
+        <Typography gutterBottom>
           xAPI Learning Analytics
         </Typography>
         
-        <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+        <Typography color="text.secondary" gutterBottom>
           {scenarioName} • {analyticsData.activityType.charAt(0).toUpperCase() + analyticsData.activityType.slice(1)} • Session: {sessionId.split('-')[0]}
         </Typography>
         
@@ -225,25 +225,25 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
           <Chip 
             label={`${totalEvents} Events`} 
             color="primary" 
-            variant="outlined"
+            
           />
           {analyticsData.activityType === 'survey' ? (
             <Chip 
               label={`${analyticsData.totalSurveyResponses} Responses`} 
               color="success"
-              variant="outlined"
+              
             />
           ) : (
             <Chip 
               label={`${analyticsData.accuracy.toFixed(1)}% Accuracy`} 
               color={analyticsData.accuracy >= 70 ? 'success' : 'warning'}
-              variant="outlined"
+              
             />
           )}
           <Chip 
             label={`${formatDuration(analyticsData.sessionDuration)} Duration`} 
             color="info"
-            variant="outlined"
+            
           />
         </Stack>
       </Box>
@@ -273,7 +273,7 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
             Raw Data
           </Button>
           <Button
-            variant="outlined"
+            
             onClick={() => setExportDialogOpen(true)}
             startIcon={<FileDownload />}
           >
@@ -289,25 +289,25 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
             <Card sx={{ flex: 1 }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+                <Typography gutterBottom>
                   {analyticsData.activityType === 'survey' ? 'Response Summary' : 'Performance Summary'}
                 </Typography>
                 <Stack spacing={2}>
                   {analyticsData.activityType === 'survey' ? (
                     <>
                       <Box>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography color="text.secondary">
                           Survey Responses
                         </Typography>
-                        <Typography variant="h4">
+                        <Typography >
                           {analyticsData.totalSurveyResponses}
                         </Typography>
                       </Box>
                       <Box>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography color="text.secondary">
                           Completion Rate
                         </Typography>
-                        <Typography variant="h4" color="success.main">
+                        <Typography color="success.main">
                           100%
                         </Typography>
                       </Box>
@@ -315,18 +315,18 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
                   ) : (
                     <>
                       <Box>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography color="text.secondary">
                           Questions Answered
                         </Typography>
-                        <Typography variant="h4">
+                        <Typography >
                           {analyticsData.correctAnswers}/{analyticsData.totalQuestions}
                         </Typography>
                       </Box>
                       <Box>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography color="text.secondary">
                           Accuracy Rate
                         </Typography>
-                        <Typography variant="h4" color={analyticsData.accuracy >= 70 ? 'success.main' : 'warning.main'}>
+                        <Typography color={analyticsData.accuracy >= 70 ? 'success.main' : 'warning.main'}>
                           {analyticsData.accuracy.toFixed(1)}%
                         </Typography>
                       </Box>
@@ -338,23 +338,23 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
 
             <Card sx={{ flex: 1 }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+                <Typography gutterBottom>
                   Activity Overview
                 </Typography>
                 <Stack spacing={2}>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography color="text.secondary">
                       Total Events
                     </Typography>
-                    <Typography variant="h4">
+                    <Typography >
                       {totalEvents}
                     </Typography>
                   </Box>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography color="text.secondary">
                       Session Duration
                     </Typography>
-                    <Typography variant="h4">
+                    <Typography >
                       {formatDuration(analyticsData.sessionDuration)}
                     </Typography>
                   </Box>
@@ -366,7 +366,7 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
           {/* Event Types Breakdown */}
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <Typography gutterBottom>
                 Event Types
               </Typography>
               <Stack direction="row" flexWrap="wrap" spacing={1}>
@@ -376,7 +376,7 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
                     icon={getVerbIcon(verbId)}
                     label={`${verbId.split('/').pop()} (${count})`}
                     color={getVerbColor(verbId)}
-                    variant="outlined"
+                    
                   />
                 ))}
               </Stack>
@@ -386,7 +386,7 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
           {/* Recent Events */}
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <Typography gutterBottom>
                 Recent Events
               </Typography>
               <List>
@@ -404,7 +404,7 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
                         size="small"
                         label={stmt.result.success ? 'Success' : 'Failed'}
                         color={stmt.result.success ? 'success' : 'error'}
-                        variant="outlined"
+                        
                       />
                     )}
                   </ListItem>
@@ -419,7 +419,7 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
       {viewMode === 'detailed' && (
         <Card>
           <CardContent>
-            <Typography variant="h6" gutterBottom>
+            <Typography gutterBottom>
               All Events
             </Typography>
             <TableContainer>
@@ -443,13 +443,13 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
                       <TableCell>
                         <Stack direction="row" spacing={1} alignItems="center">
                           {getVerbIcon(stmt.verb.id)}
-                          <Typography variant="body2">
+                          <Typography >
                             {stmt.verb.display['en-US'] || stmt.verb.id.split('/').pop()}
                           </Typography>
                         </Stack>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" noWrap>
+                        <Typography noWrap>
                           {stmt.object?.id || 'Unknown'}
                         </Typography>
                       </TableCell>
@@ -459,7 +459,7 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
                             size="small"
                             label={stmt.result.success ? 'Success' : 'Failed'}
                             color={stmt.result.success ? 'success' : 'error'}
-                            variant="outlined"
+                            
                           />
                         ) : (
                           '-'
@@ -491,10 +491,10 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
       {viewMode === 'raw' && (
         <Card>
           <CardContent>
-            <Typography variant="h6" gutterBottom>
+            <Typography gutterBottom>
               Raw xAPI Statements ({statements.length} statements)
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography color="text.secondary" sx={{ mb: 2 }}>
               All captured xAPI statements in JSON format
             </Typography>
             <Box
@@ -561,19 +561,19 @@ export const XAPIResultsScreen: React.FC<XAPIResultsScreenProps> = ({
           Export xAPI Data
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography color="text.secondary" sx={{ mb: 2 }}>
             Export all captured xAPI statements for analysis or archival.
           </Typography>
           <Stack spacing={2}>
             <Button
-              variant="outlined"
+              
               onClick={() => handleExport('json')}
               startIcon={<Download />}
             >
               Export as JSON
             </Button>
             <Button
-              variant="outlined"
+              
               onClick={() => handleExport('csv')}
               startIcon={<Download />}
             >
