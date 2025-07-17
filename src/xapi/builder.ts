@@ -22,7 +22,8 @@ import type {
   LearningActivityEvent,
   QuestionEvent,
   SurveyEvent,
-  ConnectionsEvent
+  ConnectionsEvent,
+  WordleEvent
 } from './types';
 
 // ============================================================================
@@ -462,6 +463,77 @@ export function connectionsEventToStatement(event: ConnectionsEvent): XAPIStatem
   return builder.build();
 }
 
+/**
+ * Convert a wordle event to an xAPI statement
+ */
+export function wordleEventToStatement(event: WordleEvent): XAPIStatement {
+  const verb = getVerbForWordleEventType(event.type);
+  
+  const activity = createActivity({
+    id: event.gameId,
+    name: `Wordle Game: ${event.gameTitle}`,
+    type: XAPI_ACTIVITY_TYPES.SIMULATION,
+    extensions: {
+      'http://nlj-viewer.com/extensions/game-title': event.gameTitle,
+      'http://nlj-viewer.com/extensions/word-length': event.wordLength,
+      'http://nlj-viewer.com/extensions/max-attempts': event.maxAttempts,
+      'http://nlj-viewer.com/extensions/hard-mode': event.hardMode,
+      'http://nlj-viewer.com/extensions/hints-used': event.hintsUsed,
+      'http://nlj-viewer.com/extensions/final-score': event.finalScore,
+      ...event.extensions
+    }
+  });
+
+  const builder = createStatement()
+    .setActor(event.actor)
+    .setVerb(verb)
+    .setObject(activity)
+    .setTimestamp(event.timestamp);
+
+  // Add result information based on event type
+  if (event.type === 'game_completed' || event.type === 'game_failed') {
+    builder.setResult(createResult({
+      success: event.type === 'game_completed',
+      completion: true,
+      score: event.finalScore ? { raw: event.finalScore } : undefined,
+      duration: event.timeSpent,
+      extensions: {
+        'http://nlj-viewer.com/extensions/total-guesses': event.totalGuesses,
+        'http://nlj-viewer.com/extensions/hints-used': event.hintsUsed,
+        'http://nlj-viewer.com/extensions/hard-mode': event.hardMode,
+      }
+    }));
+  } else if (event.type === 'guess_made' || event.type === 'word_guessed') {
+    builder.setResult(createResult({
+      success: event.type === 'word_guessed',
+      response: event.currentGuess,
+      extensions: {
+        'http://nlj-viewer.com/extensions/guess-number': event.guessNumber,
+        'http://nlj-viewer.com/extensions/feedback': event.feedback,
+        'http://nlj-viewer.com/extensions/word-length': event.wordLength
+      }
+    }));
+  } else if (event.type === 'hint_used') {
+    builder.setResult(createResult({
+      success: true,
+      extensions: {
+        'http://nlj-viewer.com/extensions/hints-used': event.hintsUsed,
+        'http://nlj-viewer.com/extensions/guess-number': event.guessNumber
+      }
+    }));
+  }
+
+  if (event.result) {
+    builder.setResult(event.result);
+  }
+
+  if (event.context) {
+    builder.setContext(event.context);
+  }
+
+  return builder.build();
+}
+
 // ============================================================================
 // Utility Functions
 // ============================================================================
@@ -490,6 +562,19 @@ function getVerbForConnectionsEventType(type: string): XAPIVerb {
     game_started: XAPI_VERBS.LAUNCHED,
     group_found: XAPI_VERBS.GROUPED,
     mistake_made: XAPI_VERBS.MISTAKEN,
+    game_completed: XAPI_VERBS.COMPLETED,
+    game_failed: XAPI_VERBS.FAILED
+  };
+
+  return verbMap[type] || XAPI_VERBS.EXPERIENCED;
+}
+
+function getVerbForWordleEventType(type: string): XAPIVerb {
+  const verbMap: Record<string, XAPIVerb> = {
+    game_started: XAPI_VERBS.LAUNCHED,
+    guess_made: XAPI_VERBS.GUESSED,
+    word_guessed: XAPI_VERBS.ANSWERED,
+    hint_used: XAPI_VERBS.HINTED,
     game_completed: XAPI_VERBS.COMPLETED,
     game_failed: XAPI_VERBS.FAILED
   };

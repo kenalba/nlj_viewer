@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { useGameEngine } from '../hooks/useGameEngine';
 import { useXAPI } from './XAPIContext';
 import type { GameState, NLJScenario, NodeResponseValue } from '../types/nlj';
-import { isConnectionsResponse, calculateConnectionsScore } from '../types/nlj';
+import { isConnectionsResponse, calculateConnectionsScore, isWordleResponse, calculateWordleScore } from '../types/nlj';
 
 interface GameContextValue {
   state: GameState;
@@ -16,6 +16,11 @@ interface GameContextValue {
   calculateConnectionsGameScore: (
     response: NodeResponseValue,
     scoring?: { correctGroupPoints?: number; completionBonus?: number; mistakePenalty?: number }
+  ) => number;
+  // Helper function for wordle-specific score calculation
+  calculateWordleGameScore: (
+    response: NodeResponseValue,
+    scoring?: { basePoints?: number; bonusPerRemainingAttempt?: number; hintPenalty?: number }
   ) => number;
 }
 
@@ -46,6 +51,15 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     return calculateConnectionsScore(response, scoring);
   }, []);
 
+  // Helper function for wordle-specific score calculation
+  const calculateWordleGameScore = useCallback((
+    response: NodeResponseValue,
+    scoring?: { basePoints?: number; bonusPerRemainingAttempt?: number; hintPenalty?: number }
+  ): number => {
+    if (!isWordleResponse(response)) return 0;
+    return calculateWordleScore(response, scoring);
+  }, []);
+
   // Enhanced complete scenario with xAPI tracking
   const completeScenario = useCallback((score?: number) => {
     // Get current scenario from state to track completion
@@ -70,7 +84,8 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
   const contextValue: GameContextValue = {
     ...gameEngine,
     completeScenario,
-    calculateConnectionsGameScore
+    calculateConnectionsGameScore,
+    calculateWordleGameScore
   };
 
   return (

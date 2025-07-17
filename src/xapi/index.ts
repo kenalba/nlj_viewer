@@ -65,7 +65,8 @@ export type {
   QuestionEvent,
   SurveyEvent,
   GameEvent,
-  ConnectionsEvent
+  ConnectionsEvent,
+  WordleEvent
 } from './types';
 
 // ============================================================================
@@ -83,6 +84,7 @@ export {
   questionEventToStatement,
   surveyEventToStatement,
   connectionsEventToStatement,
+  wordleEventToStatement,
   validateStatement
 } from './builder';
 

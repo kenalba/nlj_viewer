@@ -287,6 +287,15 @@ export const XAPI_VERBS = {
     id: 'http://nlj-viewer.com/xapi/verbs/mistaken',
     display: { 'en-US': 'mistaken' }
   },
+  // Wordle game specific verbs
+  GUESSED: {
+    id: 'http://nlj-viewer.com/xapi/verbs/guessed',
+    display: { 'en-US': 'guessed' }
+  },
+  HINTED: {
+    id: 'http://nlj-viewer.com/xapi/verbs/hinted',
+    display: { 'en-US': 'hinted' }
+  },
   
   // Extended verbs for surveys and assessments
   SUBMITTED: {
@@ -432,6 +441,22 @@ export interface ConnectionsEvent extends GameEvent {
     words: string[];
     difficulty: 'yellow' | 'green' | 'blue' | 'purple';
   };
+  timeSpent?: number;
+  finalScore?: number;
+}
+
+export interface WordleEvent extends GameEvent {
+  type: 'game_started' | 'guess_made' | 'word_guessed' | 'hint_used' | 'game_completed' | 'game_failed';
+  gameId: string;
+  gameTitle: string;
+  currentGuess?: string;
+  guessNumber?: number;
+  totalGuesses?: number;
+  maxAttempts?: number;
+  wordLength?: number;
+  hardMode?: boolean;
+  feedback?: Array<'correct' | 'present' | 'absent'>;
+  hintsUsed?: number;
   timeSpent?: number;
   finalScore?: number;
 }

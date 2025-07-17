@@ -14,6 +14,7 @@ import {
   eventToStatement,
   questionEventToStatement,
   surveyEventToStatement,
+  wordleEventToStatement,
   createXAPIClient,
   createMockXAPIClient,
   XAPIClient,
@@ -27,7 +28,8 @@ import type {
   QuestionEvent,
   SurveyEvent,
   GameEvent,
-  ConnectionsEvent
+  ConnectionsEvent,
+  WordleEvent
 } from '../xapi';
 import type { NLJScenario } from '../types/nlj';
 
@@ -127,6 +129,52 @@ export interface XAPIContextActions {
     finalScore?: number
   ) => void;
   
+  // Wordle game tracking
+  trackWordleGameStarted: (gameId: string, gameTitle: string, wordLength: number, maxAttempts: number, hardMode: boolean) => void;
+  trackWordleGuessMade: (
+    gameId: string,
+    gameTitle: string,
+    guess: string,
+    guessNumber: number,
+    feedback: Array<'correct' | 'present' | 'absent'>,
+    wordLength: number,
+    hardMode: boolean
+  ) => void;
+  trackWordleWordGuessed: (
+    gameId: string,
+    gameTitle: string,
+    guess: string,
+    guessNumber: number,
+    totalGuesses: number,
+    hardMode: boolean
+  ) => void;
+  trackWordleHintUsed: (
+    gameId: string,
+    gameTitle: string,
+    hintsUsed: number,
+    guessNumber: number
+  ) => void;
+  trackWordleGameCompleted: (
+    gameId: string,
+    gameTitle: string,
+    totalGuesses: number,
+    maxAttempts: number,
+    timeSpent: number,
+    hintsUsed: number,
+    hardMode: boolean,
+    finalScore?: number
+  ) => void;
+  trackWordleGameFailed: (
+    gameId: string,
+    gameTitle: string,
+    totalGuesses: number,
+    maxAttempts: number,
+    timeSpent: number,
+    hintsUsed: number,
+    hardMode: boolean,
+    finalScore?: number
+  ) => void;
+  
   // Data export
   exportStatements: () => XAPIStatement[];
   exportJSON: () => string;
@@ -217,7 +265,7 @@ export const XAPIProvider: React.FC<XAPIProviderProps> = ({
   // ============================================================================
   
   
-  const trackEvent = useCallback((event: LearningActivityEvent | QuestionEvent | SurveyEvent | GameEvent) => {
+  const trackEvent = useCallback((event: LearningActivityEvent | QuestionEvent | SurveyEvent | GameEvent | WordleEvent) => {
     if (!isEnabled || !actor) {
       return;
     }
@@ -231,6 +279,9 @@ export const XAPIProvider: React.FC<XAPIProviderProps> = ({
       } else if ('surveyId' in event) {
         statement = surveyEventToStatement(event as SurveyEvent);
         console.log('📊 xAPI:', event.type, event.surveyId);
+      } else if ('gameId' in event && 'gameTitle' in event && 'wordLength' in event) {
+        statement = wordleEventToStatement(event as WordleEvent);
+        console.log('🎮 xAPI Wordle:', event.type, event.gameId, event.gameTitle);
       } else {
         statement = eventToStatement(event as LearningActivityEvent);
         console.log('🎯 xAPI:', event.type, event.activityId);
@@ -724,6 +775,226 @@ export const XAPIProvider: React.FC<XAPIProviderProps> = ({
     trackEvent(event);
   }, [actor, trackEvent]);
   
+  // Wordle game tracking functions
+  const trackWordleGameStarted = useCallback((gameId: string, gameTitle: string, wordLength: number, maxAttempts: number, hardMode: boolean) => {
+    if (!actor) return;
+    
+    const event: WordleEvent = {
+      type: 'game_started',
+      activityId: gameId,
+      activityName: `Wordle Game: ${gameTitle}`,
+      activityType: XAPI_ACTIVITY_TYPES.SIMULATION,
+      gameId,
+      gameTitle,
+      wordLength,
+      maxAttempts,
+      hardMode,
+      actor,
+      timestamp: new Date().toISOString(),
+      context: createXAPIContext({
+        registration: sessionId.current,
+        platform: 'NLJ Viewer',
+        language: 'en-US'
+      })
+    };
+    
+    trackEvent(event);
+  }, [actor, trackEvent]);
+  
+  const trackWordleGuessMade = useCallback((
+    gameId: string,
+    gameTitle: string,
+    guess: string,
+    guessNumber: number,
+    feedback: Array<'correct' | 'present' | 'absent'>,
+    wordLength: number,
+    hardMode: boolean
+  ) => {
+    if (!actor) return;
+    
+    const event: WordleEvent = {
+      type: 'guess_made',
+      activityId: gameId,
+      activityName: `Wordle Game: ${gameTitle}`,
+      activityType: XAPI_ACTIVITY_TYPES.SIMULATION,
+      gameId,
+      gameTitle,
+      currentGuess: guess,
+      guessNumber,
+      feedback,
+      wordLength,
+      hardMode,
+      actor,
+      timestamp: new Date().toISOString(),
+      result: createResult({
+        success: false,
+        response: guess
+      }),
+      context: createXAPIContext({
+        registration: sessionId.current,
+        platform: 'NLJ Viewer',
+        language: 'en-US'
+      })
+    };
+    
+    trackEvent(event);
+  }, [actor, trackEvent]);
+  
+  const trackWordleWordGuessed = useCallback((
+    gameId: string,
+    gameTitle: string,
+    guess: string,
+    guessNumber: number,
+    totalGuesses: number,
+    hardMode: boolean
+  ) => {
+    if (!actor) return;
+    
+    const event: WordleEvent = {
+      type: 'word_guessed',
+      activityId: gameId,
+      activityName: `Wordle Game: ${gameTitle}`,
+      activityType: XAPI_ACTIVITY_TYPES.SIMULATION,
+      gameId,
+      gameTitle,
+      currentGuess: guess,
+      guessNumber,
+      totalGuesses,
+      hardMode,
+      actor,
+      timestamp: new Date().toISOString(),
+      result: createResult({
+        success: true,
+        response: guess
+      }),
+      context: createXAPIContext({
+        registration: sessionId.current,
+        platform: 'NLJ Viewer',
+        language: 'en-US'
+      })
+    };
+    
+    trackEvent(event);
+  }, [actor, trackEvent]);
+  
+  const trackWordleHintUsed = useCallback((
+    gameId: string,
+    gameTitle: string,
+    hintsUsed: number,
+    guessNumber: number
+  ) => {
+    if (!actor) return;
+    
+    const event: WordleEvent = {
+      type: 'hint_used',
+      activityId: gameId,
+      activityName: `Wordle Game: ${gameTitle}`,
+      activityType: XAPI_ACTIVITY_TYPES.SIMULATION,
+      gameId,
+      gameTitle,
+      hintsUsed,
+      guessNumber,
+      actor,
+      timestamp: new Date().toISOString(),
+      result: createResult({
+        success: true
+      }),
+      context: createXAPIContext({
+        registration: sessionId.current,
+        platform: 'NLJ Viewer',
+        language: 'en-US'
+      })
+    };
+    
+    trackEvent(event);
+  }, [actor, trackEvent]);
+  
+  const trackWordleGameCompleted = useCallback((
+    gameId: string,
+    gameTitle: string,
+    totalGuesses: number,
+    maxAttempts: number,
+    timeSpent: number,
+    hintsUsed: number,
+    hardMode: boolean,
+    finalScore?: number
+  ) => {
+    if (!actor) return;
+    
+    const event: WordleEvent = {
+      type: 'game_completed',
+      activityId: gameId,
+      activityName: `Wordle Game: ${gameTitle}`,
+      activityType: XAPI_ACTIVITY_TYPES.SIMULATION,
+      gameId,
+      gameTitle,
+      totalGuesses,
+      maxAttempts,
+      timeSpent,
+      hintsUsed,
+      hardMode,
+      finalScore,
+      actor,
+      timestamp: new Date().toISOString(),
+      result: createResult({
+        success: true,
+        completion: true,
+        score: finalScore ? { raw: finalScore } : undefined,
+        duration: timeSpent
+      }),
+      context: createXAPIContext({
+        registration: sessionId.current,
+        platform: 'NLJ Viewer',
+        language: 'en-US'
+      })
+    };
+    
+    trackEvent(event);
+  }, [actor, trackEvent]);
+  
+  const trackWordleGameFailed = useCallback((
+    gameId: string,
+    gameTitle: string,
+    totalGuesses: number,
+    maxAttempts: number,
+    timeSpent: number,
+    hintsUsed: number,
+    hardMode: boolean,
+    finalScore?: number
+  ) => {
+    if (!actor) return;
+    
+    const event: WordleEvent = {
+      type: 'game_failed',
+      activityId: gameId,
+      activityName: `Wordle Game: ${gameTitle}`,
+      activityType: XAPI_ACTIVITY_TYPES.SIMULATION,
+      gameId,
+      gameTitle,
+      totalGuesses,
+      maxAttempts,
+      timeSpent,
+      hintsUsed,
+      hardMode,
+      finalScore,
+      actor,
+      timestamp: new Date().toISOString(),
+      result: createResult({
+        success: false,
+        completion: true,
+        score: finalScore ? { raw: finalScore } : undefined,
+        duration: timeSpent
+      }),
+      context: createXAPIContext({
+        registration: sessionId.current,
+        platform: 'NLJ Viewer',
+        language: 'en-US'
+      })
+    };
+    
+    trackEvent(event);
+  }, [actor, trackEvent]);
+  
   // Data export functions
   const exportStatements = useCallback(() => {
     return [...statements];
@@ -800,6 +1071,12 @@ export const XAPIProvider: React.FC<XAPIProviderProps> = ({
     trackConnectionsMistake,
     trackConnectionsGameCompleted,
     trackConnectionsGameFailed,
+    trackWordleGameStarted,
+    trackWordleGuessMade,
+    trackWordleWordGuessed,
+    trackWordleHintUsed,
+    trackWordleGameCompleted,
+    trackWordleGameFailed,
     exportStatements,
     exportJSON,
     exportCSV,
