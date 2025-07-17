@@ -61,7 +61,7 @@ export interface Link {
 }
 
 // Activity and theme-related types
-export type ActivityType = 'training' | 'survey' | 'assessment' | 'mixed';
+export type ActivityType = 'training' | 'survey' | 'assessment' | 'mixed' | 'game';
 
 export interface ThemeConfiguration {
   mode: 'hyundai' | 'unfiltered' | 'custom';
@@ -500,8 +500,8 @@ export const calculateWordleScore = (
 ): number => {
   if (!isWordleResponse(response)) return 0;
   
-  const { guesses, attempts, completed, won } = response;
-  const { basePoints = 50, bonusPerRemainingAttempt = 10, hintPenalty = 5 } = scoring || {};
+  const { attempts, won } = response;
+  const { basePoints = 50, bonusPerRemainingAttempt = 10 } = scoring || {};
   
   let score = 0;
   

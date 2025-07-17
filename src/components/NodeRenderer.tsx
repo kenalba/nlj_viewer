@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Box, Typography, Button, useTheme as useMuiTheme, Stack } from '@mui/material';
 import { Analytics, Refresh } from '@mui/icons-material';
-import type { NLJNode, NLJScenario, ChoiceNode, NodeResponseValue, ConnectionsNode as ConnectionsNodeType, WordleNode as WordleNodeType } from '../types/nlj';
+import type { NLJNode, NLJScenario, ChoiceNode, NodeResponseValue } from '../types/nlj';
 import { isConnectionsNode, isConnectionsResponse, calculateConnectionsScore, isWordleNode, isWordleResponse, calculateWordleScore } from '../types/nlj';
 import { UnifiedQuestionNode } from './UnifiedQuestionNode';
 import { InterstitialPanel } from './InterstitialPanel';
@@ -157,7 +157,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     });
 
     // Handle connections-specific scoring
-    if (isConnectionsNode(node) && isConnectionsResponse(response)) {
+    if (isConnectionsNode(node) && response && isConnectionsResponse(response)) {
       const connectionsScore = calculateConnectionsScore(response, node.scoring);
       debugLog('Connections Score', `Connections game completed with score: ${connectionsScore}`, {
         foundGroups: response.foundGroups.length,
@@ -173,7 +173,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     }
 
     // Handle wordle-specific scoring
-    if (isWordleNode(node) && isWordleResponse(response)) {
+    if (isWordleNode(node) && response && isWordleResponse(response)) {
       const wordleScore = calculateWordleScore(response, node.scoring);
       debugLog('Wordle Score', `Wordle game completed with score: ${wordleScore}`, {
         attempts: response.attempts,

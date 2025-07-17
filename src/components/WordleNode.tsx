@@ -1,19 +1,14 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Box, 
   Typography, 
   Button, 
   Alert, 
-  Card, 
   CardContent, 
-  Grid, 
   LinearProgress,
   Chip,
-  Slide,
-  Grow,
   TextField,
   Paper,
-  Stack,
   useMediaQuery
 } from '@mui/material';
 import { 
@@ -29,7 +24,6 @@ import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useXAPI } from '../contexts/XAPIContext';
 import { useGameContext } from '../contexts/GameContext';
-import { useIsMobile } from '../utils/mobileDetection';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { MediaDisplay } from './MediaDisplay';
 import { useTheme } from '@mui/material/styles';
@@ -92,10 +86,9 @@ const isValidWord = (word: string, wordLength: number, validWords?: string[]): b
 
 export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) => {
   const theme = useTheme();
-  const isMobile = useIsMobile();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const { playSound } = useAudio();
-  const { resetGame } = useGameContext();
+  const { reset } = useGameContext();
   const { 
     trackActivityLaunched, 
     trackQuestionAnswered, 
@@ -108,11 +101,10 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
   const [gameWon, setGameWon] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
-  const [startTime] = useState(Date.now());
   
   const inputRef = useRef<HTMLInputElement>(null);
   
-  const { gameData, hardMode = false, colorblindMode = false, allowHints = false } = question;
+  const { gameData, hardMode = false, allowHints = false } = question;
   const { targetWord, wordLength, maxAttempts, validWords, hints } = gameData;
   
   // Track game start
@@ -185,8 +177,6 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
       setGameWon(true);
       setGameComplete(true);
       playSound('correct');
-      
-      const timeSpent = (Date.now() - startTime) / 1000;
       const gameScenario = {
         id: question.id,
         name: question.text,
@@ -207,8 +197,6 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
     } else if (newGuesses.length >= maxAttempts) {
       setGameComplete(true);
       playSound('incorrect');
-      
-      const timeSpent = (Date.now() - startTime) / 1000;
       const gameScenario = {
         id: question.id,
         name: question.text,
@@ -251,7 +239,7 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
       
       for (let j = 0; j < wordLength; j++) {
         const letter = guess.word[j] || '';
-        const feedback = guess.feedback[j] || 'default';
+        const feedback = guess.feedback[j] || 'absent';
         
         row.push(
           <Paper
@@ -263,9 +251,9 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: letterColors[feedback],
-              color: feedback === 'default' ? 'text.primary' : 'white',
-              border: feedback === 'default' ? '1px solid #d3d6da' : 'none',
+              backgroundColor: letterColors[feedback as keyof typeof letterColors] || letterColors.default,
+              color: feedback === 'absent' ? 'text.primary' : 'white',
+              border: feedback === 'absent' ? '1px solid #d3d6da' : 'none',
               fontSize: isSmallScreen ? '14px' : '16px',
               fontWeight: 'bold'
             }}
@@ -370,12 +358,16 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
         
         {question.media && (
           <Box sx={{ my: 2 }}>
-            <MediaDisplay media={question.media} />
+            <MediaDisplay mediaList={[question.media]} />
           </Box>
         )}
         
         {question.additionalMediaList && question.additionalMediaList.length > 0 && (
-          <MediaViewer mediaList={question.additionalMediaList} />
+          <Box sx={{ my: 2 }}>
+            {question.additionalMediaList.map((wrapper, index) => (
+              <MediaViewer key={index} media={wrapper.media} />
+            ))}
+          </Box>
         )}
         
         {/* Game Status */}
@@ -505,7 +497,7 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
           {gameComplete && (
             <Button
               variant="outlined"
-              onClick={() => resetGame()}
+              onClick={() => reset()}
               startIcon={<RefreshIcon />}
             >
               Return to Menu

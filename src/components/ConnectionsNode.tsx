@@ -6,7 +6,6 @@ import {
   Alert, 
   Card, 
   CardContent, 
-  Grid, 
   LinearProgress,
   Chip,
   Slide,
@@ -180,9 +179,10 @@ export const ConnectionsNode: React.FC<ConnectionsNodeProps> = ({ question, onAn
     if (gameComplete) {
       trackQuestionAnswered(
         question.id,
-        { foundGroups, mistakes, completed: foundGroups.length === gameData.groups.length },
+        'connections',
+        `${foundGroups.length} groups found, ${mistakes} mistakes`,
         foundGroups.length === gameData.groups.length,
-        questionStartTime
+        Date.now() - questionStartTime.getTime()
       );
     }
   }, [gameComplete, foundGroups, mistakes, question.id, trackQuestionAnswered, questionStartTime, gameData.groups.length]);
@@ -319,7 +319,7 @@ export const ConnectionsNode: React.FC<ConnectionsNodeProps> = ({ question, onAn
         
         {question.additionalMediaList && question.additionalMediaList.length > 0 && (
           <Box sx={{ mb: 2 }}>
-            <MediaDisplay mediaList={question.additionalMediaList} />
+            <MediaDisplay mediaList={question.additionalMediaList.map(wrapper => wrapper.media)} />
           </Box>
         )}
         
