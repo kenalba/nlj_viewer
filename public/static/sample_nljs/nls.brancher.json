@@ -1,0 +1,2624 @@
+{
+  "id": "681931f41ebe90607b9e47cc",
+  "name": "5 question less branching then Video Review",
+  "orientation": "vertical",
+  "nodes": [
+    {
+      "type": "choice",
+      "id": "58a49542-e158-4090-8830-0b2abb438f7d",
+      "parentId": "556fd039-b180-4e0f-ac33-2f2f87b7ae32",
+      "text": "Correct Answer",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "x": 156,
+      "y": 2094,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "62734294-8a49-4b9f-a478-cdec815f74c4",
+      "x": 342,
+      "y": 2862,
+      "width": 215,
+      "height": 130,
+      "content": "4/5\n5/5 correct"
+    },
+    {
+      "type": "choice",
+      "id": "a9cc1ae8-7042-4fa5-8f92-b3b70b8f4013",
+      "parentId": "1f0ef6ec-1bd7-41ed-866c-e3242b13b2b2",
+      "text": "Neutral Answer",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 1807,
+      "y": 2094,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "2cae44c7-a9ad-4e70-8ed9-731dcc829677",
+      "content": "4\n0/3\n1/3 correct\n",
+      "additionalMediaList": [],
+      "x": 2396,
+      "y": 1864,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "d12bdd5f-8954-4810-818e-af3a79512584",
+      "parentId": "b101c318-441c-4a46-a3f9-ee9633265488",
+      "text": "Neutral Answer",
+      "value": 0,
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": 0
+        }
+      ],
+      "x": 2133,
+      "y": 1578,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "6a61f39f-8184-4d29-9b49-f46b0b2a3133",
+      "parentId": "8b4db172-778e-491e-8514-a7be97d42456",
+      "text": "Correct Answer",
+      "value": 1,
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": 1
+        }
+      ],
+      "x": 1038,
+      "y": 1084,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "5e60b1aa-78ae-4cfd-a090-8522f7209dd5",
+      "text": "3 - 1/2 correct",
+      "content": "",
+      "additionalMediaList": [],
+      "x": 2603,
+      "y": 1338,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "5ad03447-1b5b-4554-8176-628d94266125",
+      "parentId": "33689fc8-e82e-496e-b82e-d1c0cd789312",
+      "text": "Correct Answer",
+      "value": 1,
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": 1
+        }
+      ],
+      "x": 2603,
+      "y": 1084,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "5263c09e-95d6-4d0a-9650-714f0b31cba5",
+      "parentId": "b101c318-441c-4a46-a3f9-ee9633265488",
+      "text": "Incorrect Answer",
+      "value": -1,
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": -1
+        }
+      ],
+      "x": 1663,
+      "y": 1578,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "2821e729-6092-43d2-9181-1f5b8463ac89",
+      "parentId": "22f6370c-3ff7-4009-8ccb-ef920568672f",
+      "text": "Correct Answer",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "x": 1816,
+      "y": 2598,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "a14e19fc-8826-426d-84dd-5257a5bc1a5c",
+      "parentId": "10f18c57-fde3-4131-9c81-9f6ea46da4e5",
+      "text": "Incorrect Answer",
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "x": 951,
+      "y": 2598,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "b5b4c8d4-fceb-4ab3-9109-d1de7ad3bf72",
+      "parentId": "2cae44c7-a9ad-4e70-8ed9-731dcc829677",
+      "text": "Incorrect Answer",
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "x": 2385,
+      "y": 2094,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "556fd039-b180-4e0f-ac33-2f2f87b7ae32",
+      "text": "4 - 3/3 correct",
+      "additionalMediaList": [],
+      "x": 526,
+      "y": 1857,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "996b32c0-e477-4930-a07a-7add85283351",
+      "parentId": "556fd039-b180-4e0f-ac33-2f2f87b7ae32",
+      "text": "Neutral Answer",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 840,
+      "y": 2094,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "e7d32e45-e54d-4bc3-98b2-5ae96c5da413",
+      "text": "5 - 4/4 correct",
+      "additionalMediaList": [],
+      "x": 156,
+      "y": 2358,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "6d2491a2-5c2c-4fe2-a516-bb05a4e13e94",
+      "parentId": "ea3586f0-6139-4af1-af9e-f620dcc18067",
+      "text": "Neutral Answer",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": 0
+        }
+      ],
+      "x": 1428,
+      "y": 1578,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "cbc68c45-00fe-407a-9879-b97b548ae740",
+      "parentId": "5e60b1aa-78ae-4cfd-a090-8522f7209dd5",
+      "text": "Neutral Answer",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": 0
+        }
+      ],
+      "x": 2838,
+      "y": 1578,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "c5d3b167-23c5-4d9d-91f3-309cb7cf5e5d",
+      "parentId": "10f18c57-fde3-4131-9c81-9f6ea46da4e5",
+      "text": "Correct Answer",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "x": 717,
+      "y": 2598,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "05957253-149b-4847-b997-d9c2ef53bbe3",
+      "parentId": "8b4db172-778e-491e-8514-a7be97d42456",
+      "text": "Neutral Answer",
+      "value": 0,
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": 0
+        }
+      ],
+      "x": 1780,
+      "y": 1084,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "3848dbf2-90f6-423e-9629-cfd8d6c1225a",
+      "parentId": "e7d32e45-e54d-4bc3-98b2-5ae96c5da413",
+      "text": "Incorrect Answer",
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "x": 12,
+      "y": 2598,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "8b4db172-778e-491e-8514-a7be97d42456",
+      "text": "2- 1/1 correct",
+      "additionalMediaList": [],
+      "x": 1374,
+      "y": 844,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "e0f75226-28e8-42d6-ae02-95fe71be2244",
+      "parentId": "5e60b1aa-78ae-4cfd-a090-8522f7209dd5",
+      "text": "Correct Answer",
+      "value": 1,
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": 1
+        }
+      ],
+      "x": 2368,
+      "y": 1578,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "end",
+      "id": "2",
+      "x": 1016,
+      "y": 3362,
+      "width": 70,
+      "height": 50
+    },
+    {
+      "type": "question",
+      "id": "b101c318-441c-4a46-a3f9-ee9633265488",
+      "text": "3 - 0/2 correct",
+      "content": "",
+      "additionalMediaList": [],
+      "x": 1898,
+      "y": 1338,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "4484f8a7-77c5-4826-b377-342633fb157c",
+      "parentId": "2cae44c7-a9ad-4e70-8ed9-731dcc829677",
+      "text": "Neutral Answer",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 2150,
+      "y": 2094,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "329877ae-4363-4c46-b066-a4e80481bd0e",
+      "parentId": "e7d32e45-e54d-4bc3-98b2-5ae96c5da413",
+      "text": "Correct Answer",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "x": 247,
+      "y": 2598,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "start",
+      "id": "1",
+      "x": 2150,
+      "y": 12,
+      "width": 70,
+      "height": 50
+    },
+    {
+      "type": "question",
+      "id": "d4739b5e-f573-4eed-8b7b-0fbdc7828a53",
+      "text": "1 - in Text Box",
+      "content": "This is Text in Editor\nand TOASTUI img\n![image.png](data:image/png;base64,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)",
+      "feedback": "General Feedback",
+      "media": {
+        "id": "114",
+        "type": "IMAGE",
+        "fullPath": "https://prod-anderai-newsfeed.s3.amazonaws.com/img/Ted%20Lasso%20Image.jpg",
+        "title": "Ted Lasso on Leadership",
+        "description": "Media object for newsfeed item Ted Lasso on Leadership",
+        "fullThumbnail": "https://prod-anderai-newsfeed.s3.amazonaws.com/thumbnails/Ted%20Lasso%20Image.jpg",
+        "createTimestamp": "2022-03-11T19:17:06.677717Z",
+        "updateTimestamp": "2024-01-31T13:30:31.378961Z"
+      },
+      "mediaNote": "This is uploaded media",
+      "additionalMediaList": [
+        {
+          "media": {
+            "id": "261",
+            "type": "IMAGE",
+            "fullPath": "https://prod-anderai-newsfeed.s3.amazonaws.com/img/a%20car.jpg",
+            "title": "50 Fun Car Facts",
+            "description": "Media object for newsfeed item 50 Fun Car Facts",
+            "fullThumbnail": "https://prod-anderai-newsfeed.s3.amazonaws.com/thumbnails/a%20car.jpg",
+            "createTimestamp": "2022-03-21T20:28:12.819725Z",
+            "updateTimestamp": "2024-01-31T13:30:33.971827Z"
+          },
+          "mediaNote": "This is in Carousel"
+        },
+        {
+          "media": {
+            "id": "262",
+            "type": "IMAGE",
+            "fullPath": "https://prod-anderai-newsfeed.s3.amazonaws.com/img/Communication%20post.jpg",
+            "title": "Great Customer Service",
+            "description": "Media object for newsfeed item Great Customer Service",
+            "fullThumbnail": "https://prod-anderai-newsfeed.s3.amazonaws.com/thumbnails/Communication%20post.jpg",
+            "createTimestamp": "2022-03-21T20:36:12.786040Z",
+            "updateTimestamp": "2024-01-31T13:30:34.019317Z"
+          },
+          "mediaNote": "And this is in Carousel"
+        }
+      ],
+      "x": 2077,
+      "y": 360,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "a6bb1505-223b-42b8-856c-db8788a953f0",
+      "x": 1745,
+      "y": 3106,
+      "width": 215,
+      "height": 130,
+      "text": "Video Review"
+    },
+    {
+      "type": "question",
+      "id": "33689fc8-e82e-496e-b82e-d1c0cd789312",
+      "text": "2 - 0/1 correct",
+      "additionalMediaList": [],
+      "x": 2357,
+      "y": 844,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "00e39ebd-35d1-4e66-a9cc-0d2588c5771f",
+      "parentId": "ea3586f0-6139-4af1-af9e-f620dcc18067",
+      "text": "Correct Answer",
+      "value": 1,
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": 1
+        }
+      ],
+      "x": 526,
+      "y": 1578,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "a280644f-f1ca-4b74-9e6c-ea47845fea3f",
+      "parentId": "10f18c57-fde3-4131-9c81-9f6ea46da4e5",
+      "text": "Neutral Answer",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 1356,
+      "y": 2598,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "22f6370c-3ff7-4009-8ccb-ef920568672f",
+      "content": "5\n0/4\n1/4\n2/4 correct\n",
+      "additionalMediaList": [],
+      "x": 2015,
+      "y": 2358,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "2e8438d0-88d0-4a29-bcae-163737a2ff95",
+      "parentId": "e7d32e45-e54d-4bc3-98b2-5ae96c5da413",
+      "text": "Neutral Answer",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 482,
+      "y": 2598,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "6bb2573e-0636-4e66-acb8-352032532952",
+      "parentId": "d4739b5e-f573-4eed-8b7b-0fbdc7828a53",
+      "text": "Neutral Answer",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": 0
+        }
+      ],
+      "x": 2475,
+      "y": 600,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "7032d52e-f9d6-4921-8d93-24ed7d65d578",
+      "parentId": "8b4db172-778e-491e-8514-a7be97d42456",
+      "text": "Incorrect Answer",
+      "value": -1,
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": -1
+        }
+      ],
+      "x": 1283,
+      "y": 1084,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "243fe5e3-e320-4b5d-b3ff-7c7700e24a32",
+      "x": 1780,
+      "y": 2862,
+      "width": 215,
+      "height": 130,
+      "text": "",
+      "content": "0/5\n1/5\n2/5\n3/5 correct\n"
+    },
+    {
+      "type": "choice",
+      "id": "c76fbf08-3726-434c-bd65-9f52cc35e34f",
+      "parentId": "1f0ef6ec-1bd7-41ed-866c-e3242b13b2b2",
+      "text": "Incorrect Answer",
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "x": 1310,
+      "y": 2094,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "0b1ede81-6f23-4b6c-805e-fa603a484b8a",
+      "parentId": "b101c318-441c-4a46-a3f9-ee9633265488",
+      "text": "Correct Answer",
+      "value": 1,
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": 1
+        }
+      ],
+      "x": 1898,
+      "y": 1578,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "f0dfbf70-0919-4a79-bd05-bde4ebb8e492",
+      "parentId": "1f0ef6ec-1bd7-41ed-866c-e3242b13b2b2",
+      "text": "Correct Answer",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "x": 1075,
+      "y": 2094,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "688a2a5e-6358-4a3f-b0de-34fe4d3129ff",
+      "parentId": "ea3586f0-6139-4af1-af9e-f620dcc18067",
+      "text": "Incorrect Answer",
+      "value": -1,
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": -1
+        }
+      ],
+      "x": 1193,
+      "y": 1578,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "b0584de7-8c9a-470b-92a3-7cafc0c28080",
+      "parentId": "22f6370c-3ff7-4009-8ccb-ef920568672f",
+      "text": "Neutral Answer",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "x": 2295,
+      "y": 2598,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "ccd2bb76-b2b8-494f-8ca9-89236c8ccaa5",
+      "parentId": "33689fc8-e82e-496e-b82e-d1c0cd789312",
+      "text": "Neutral Answer",
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": 0
+        }
+      ],
+      "x": 2015,
+      "y": 1084,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "5327f9b2-31ea-4549-a326-4acc1d3a239f",
+      "parentId": "556fd039-b180-4e0f-ac33-2f2f87b7ae32",
+      "text": "Incorrect Answer",
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "x": 488,
+      "y": 2094,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "f5907080-09c1-42bc-9296-ab186fff4ccf",
+      "x": 2077,
+      "y": 146,
+      "width": 215,
+      "height": 130,
+      "text": "Intro\nText in Text Box\nInterstitial",
+      "content": "Text and embedded (pasted) TOASTUI img in WYSIWYG editor \n\n![image.png](data:image/png;base64,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)",
+      "media": {
+        "id": "13036",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/files/26c4ded2-2101-41ea-9c3f-83adcbb7a9bb",
+        "title": "Test_1080x1920px.png",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/26c4ded2-2101-41ea-9c3f-83adcbb7a9bb",
+        "createTimestamp": "2024-09-13T19:25:22.273567Z",
+        "updateTimestamp": "2024-09-13T19:25:22.745127Z"
+      },
+      "mediaNote": "This is a media Note"
+    },
+    {
+      "type": "choice",
+      "id": "6058ed11-c457-4c2e-9941-92ad56cd4acf",
+      "parentId": "2cae44c7-a9ad-4e70-8ed9-731dcc829677",
+      "text": "Correct Answer",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "x": 2620,
+      "y": 2094,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "dbb6c716-40df-4854-911a-5dcfd5362442",
+      "parentId": "d4739b5e-f573-4eed-8b7b-0fbdc7828a53",
+      "text": "Correct Answer",
+      "value": 1,
+      "feedback": "This answer as Unique feedback",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": 1
+        }
+      ],
+      "x": 1374,
+      "y": 600,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "10f18c57-fde3-4131-9c81-9f6ea46da4e5",
+      "text": "5 - 3/4 correct",
+      "additionalMediaList": [],
+      "x": 861,
+      "y": 2358,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "0fdcde6a-c26d-4311-8a86-886e82d071b5",
+      "parentId": "33689fc8-e82e-496e-b82e-d1c0cd789312",
+      "text": "Incorrect Answer",
+      "value": -1,
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": -1
+        }
+      ],
+      "x": 2357,
+      "y": 1084,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "2acbb719-a632-4678-a28c-571ac20b1b36",
+      "parentId": "d4739b5e-f573-4eed-8b7b-0fbdc7828a53",
+      "text": "Incorrect Answer",
+      "value": -1,
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": -1
+        }
+      ],
+      "x": 2240,
+      "y": 600,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "dd58d934-b2ba-432a-8820-307a9135687d",
+      "parentId": "22f6370c-3ff7-4009-8ccb-ef920568672f",
+      "text": "Incorrect Answer",
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "x": 2060,
+      "y": 2598,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "3b46243a-0e4f-47ef-9207-e9d140ebf5d5",
+      "parentId": "5e60b1aa-78ae-4cfd-a090-8522f7209dd5",
+      "text": "Incorrect Answer",
+      "value": -1,
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "variableChanges": [
+        {
+          "variableId": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+          "value": -1
+        }
+      ],
+      "x": 2603,
+      "y": 1578,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "1f0ef6ec-1bd7-41ed-866c-e3242b13b2b2",
+      "text": "4 - 2/3 correct",
+      "content": "\n",
+      "additionalMediaList": [],
+      "x": 1310,
+      "y": 1853,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "ea3586f0-6139-4af1-af9e-f620dcc18067",
+      "text": "3 - 2/2 correct",
+      "additionalMediaList": [],
+      "x": 1038,
+      "y": 1338,
+      "width": 215,
+      "height": 130
+    }
+  ],
+  "links": [
+    {
+      "id": "fe210648-656b-4e01-ba9a-c355cfc75d5b",
+      "type": "link",
+      "sourceNodeId": "a9cc1ae8-7042-4fa5-8f92-b3b70b8f4013",
+      "targetNodeId": "22f6370c-3ff7-4009-8ccb-ef920568672f",
+      "probability": 100,
+      "startPoint": {
+        "x": 1915,
+        "y": 2224
+      },
+      "endPoint": {
+        "x": 2087,
+        "y": 2358
+      },
+      "bendPoints": [
+        {
+          "x": 1915,
+          "y": 2274
+        },
+        {
+          "x": 2087,
+          "y": 2274
+        }
+      ]
+    },
+    {
+      "id": "83656cc9-5e8c-4e55-ad84-b851e142c1fc",
+      "type": "link",
+      "sourceNodeId": "329877ae-4363-4c46-b066-a4e80481bd0e",
+      "targetNodeId": "62734294-8a49-4b9f-a478-cdec815f74c4",
+      "probability": 100,
+      "startPoint": {
+        "x": 354,
+        "y": 2728
+      },
+      "endPoint": {
+        "x": 428,
+        "y": 2862
+      },
+      "bendPoints": [
+        {
+          "x": 354,
+          "y": 2778
+        },
+        {
+          "x": 428,
+          "y": 2778
+        }
+      ]
+    },
+    {
+      "id": "45182c2c-5443-4722-84a2-507bb80b7f8b",
+      "type": "parent-child",
+      "sourceNodeId": "d4739b5e-f573-4eed-8b7b-0fbdc7828a53",
+      "targetNodeId": "2acbb719-a632-4678-a28c-571ac20b1b36",
+      "startPoint": {
+        "x": 2185,
+        "y": 490
+      },
+      "endPoint": {
+        "x": 2347,
+        "y": 600
+      },
+      "bendPoints": [
+        {
+          "x": 2185,
+          "y": 550
+        },
+        {
+          "x": 2347,
+          "y": 550
+        }
+      ]
+    },
+    {
+      "id": "d44b4fe1-3b15-48a9-b4f9-9251e3f94c63",
+      "type": "link",
+      "sourceNodeId": "0fdcde6a-c26d-4311-8a86-886e82d071b5",
+      "targetNodeId": "b101c318-441c-4a46-a3f9-ee9633265488",
+      "probability": 100,
+      "startPoint": {
+        "x": 2465,
+        "y": 1214
+      },
+      "endPoint": {
+        "x": 2070,
+        "y": 1338
+      },
+      "bendPoints": [
+        {
+          "x": 2465,
+          "y": 1274
+        },
+        {
+          "x": 2070,
+          "y": 1274
+        }
+      ]
+    },
+    {
+      "id": "66b3f4d7-b262-4384-94c6-2459837f8474",
+      "type": "link",
+      "sourceNodeId": "e0f75226-28e8-42d6-ae02-95fe71be2244",
+      "targetNodeId": "2cae44c7-a9ad-4e70-8ed9-731dcc829677",
+      "probability": 100,
+      "startPoint": {
+        "x": 2475,
+        "y": 1708
+      },
+      "endPoint": {
+        "x": 2519,
+        "y": 1864
+      },
+      "bendPoints": [
+        {
+          "x": 2475,
+          "y": 1758
+        },
+        {
+          "x": 2519,
+          "y": 1758
+        }
+      ]
+    },
+    {
+      "id": "02636476-04d1-472a-bb13-109e99239e6d",
+      "type": "link",
+      "sourceNodeId": "cbc68c45-00fe-407a-9879-b97b548ae740",
+      "targetNodeId": "2cae44c7-a9ad-4e70-8ed9-731dcc829677",
+      "probability": 100,
+      "startPoint": {
+        "x": 2945,
+        "y": 1708
+      },
+      "endPoint": {
+        "x": 2580,
+        "y": 1864
+      },
+      "bendPoints": [
+        {
+          "x": 2945,
+          "y": 1768
+        },
+        {
+          "x": 2580,
+          "y": 1768
+        }
+      ]
+    },
+    {
+      "id": "fce24700-b13f-4b1b-809b-efa49bf04ce5",
+      "type": "parent-child",
+      "sourceNodeId": "22f6370c-3ff7-4009-8ccb-ef920568672f",
+      "targetNodeId": "dd58d934-b2ba-432a-8820-307a9135687d",
+      "startPoint": {
+        "x": 2123,
+        "y": 2488
+      },
+      "endPoint": {
+        "x": 2167,
+        "y": 2598
+      },
+      "bendPoints": [
+        {
+          "x": 2123,
+          "y": 2548
+        },
+        {
+          "x": 2167,
+          "y": 2548
+        }
+      ]
+    },
+    {
+      "id": "11f6b326-59e6-4d92-9207-661fc6e29493",
+      "type": "parent-child",
+      "sourceNodeId": "22f6370c-3ff7-4009-8ccb-ef920568672f",
+      "targetNodeId": "2821e729-6092-43d2-9181-1f5b8463ac89",
+      "startPoint": {
+        "x": 2069,
+        "y": 2488
+      },
+      "endPoint": {
+        "x": 1923,
+        "y": 2598
+      },
+      "bendPoints": [
+        {
+          "x": 2069,
+          "y": 2538
+        },
+        {
+          "x": 1923,
+          "y": 2538
+        }
+      ]
+    },
+    {
+      "id": "32bf3f61-f620-4374-b09e-7a9988b1c1ba",
+      "type": "link",
+      "sourceNodeId": "dd58d934-b2ba-432a-8820-307a9135687d",
+      "targetNodeId": "243fe5e3-e320-4b5d-b3ff-7c7700e24a32",
+      "probability": 100,
+      "startPoint": {
+        "x": 2167,
+        "y": 2728
+      },
+      "endPoint": {
+        "x": 1924,
+        "y": 2862
+      },
+      "bendPoints": [
+        {
+          "x": 2167,
+          "y": 2788
+        },
+        {
+          "x": 1924,
+          "y": 2788
+        }
+      ]
+    },
+    {
+      "id": "7c9ea5f2-7e84-44bc-93a5-a9b32a8e1232",
+      "type": "link",
+      "sourceNodeId": "b5b4c8d4-fceb-4ab3-9109-d1de7ad3bf72",
+      "targetNodeId": "22f6370c-3ff7-4009-8ccb-ef920568672f",
+      "probability": 100,
+      "startPoint": {
+        "x": 2492,
+        "y": 2224
+      },
+      "endPoint": {
+        "x": 2159,
+        "y": 2358
+      },
+      "bendPoints": [
+        {
+          "x": 2492,
+          "y": 2284
+        },
+        {
+          "x": 2159,
+          "y": 2284
+        }
+      ]
+    },
+    {
+      "id": "f9adf4b4-e607-4ae2-933e-a4c535a6eb97",
+      "type": "parent-child",
+      "sourceNodeId": "d4739b5e-f573-4eed-8b7b-0fbdc7828a53",
+      "targetNodeId": "6bb2573e-0636-4e66-acb8-352032532952",
+      "startPoint": {
+        "x": 2238,
+        "y": 490
+      },
+      "endPoint": {
+        "x": 2582,
+        "y": 600
+      },
+      "bendPoints": [
+        {
+          "x": 2238,
+          "y": 540
+        },
+        {
+          "x": 2582,
+          "y": 540
+        }
+      ]
+    },
+    {
+      "id": "c57e0158-33d2-45b3-8294-b70527eccfd6",
+      "type": "parent-child",
+      "sourceNodeId": "33689fc8-e82e-496e-b82e-d1c0cd789312",
+      "targetNodeId": "5ad03447-1b5b-4554-8176-628d94266125",
+      "startPoint": {
+        "x": 2518,
+        "y": 974
+      },
+      "endPoint": {
+        "x": 2710,
+        "y": 1084
+      },
+      "bendPoints": [
+        {
+          "x": 2518,
+          "y": 1024
+        },
+        {
+          "x": 2710,
+          "y": 1024
+        }
+      ]
+    },
+    {
+      "id": "e4c6183b-cef1-422b-b1ee-4f31aa6f76a7",
+      "type": "link",
+      "sourceNodeId": "2821e729-6092-43d2-9181-1f5b8463ac89",
+      "targetNodeId": "243fe5e3-e320-4b5d-b3ff-7c7700e24a32",
+      "probability": 100,
+      "startPoint": {
+        "x": 1923,
+        "y": 2728
+      },
+      "endPoint": {
+        "x": 1888,
+        "y": 2862
+      },
+      "bendPoints": [
+        {
+          "x": 1923,
+          "y": 2778
+        },
+        {
+          "x": 1888,
+          "y": 2778
+        }
+      ]
+    },
+    {
+      "id": "b7acc484-04a7-4731-b067-44ad9fc52cda",
+      "type": "parent-child",
+      "sourceNodeId": "8b4db172-778e-491e-8514-a7be97d42456",
+      "targetNodeId": "05957253-149b-4847-b997-d9c2ef53bbe3",
+      "startPoint": {
+        "x": 1535,
+        "y": 974
+      },
+      "endPoint": {
+        "x": 1888,
+        "y": 1084
+      },
+      "bendPoints": [
+        {
+          "x": 1535,
+          "y": 1024
+        },
+        {
+          "x": 1888,
+          "y": 1024
+        }
+      ]
+    },
+    {
+      "id": "15bb1cbc-070f-4a29-b248-5ffcd65bf76a",
+      "type": "parent-child",
+      "sourceNodeId": "556fd039-b180-4e0f-ac33-2f2f87b7ae32",
+      "targetNodeId": "5327f9b2-31ea-4549-a326-4acc1d3a239f",
+      "startPoint": {
+        "x": 634,
+        "y": 1987
+      },
+      "endPoint": {
+        "x": 595,
+        "y": 2094
+      },
+      "bendPoints": [
+        {
+          "x": 634,
+          "y": 2044
+        },
+        {
+          "x": 595,
+          "y": 2044
+        }
+      ]
+    },
+    {
+      "id": "b35cfb80-1dd8-4e05-b14a-dd59ab6a9db9",
+      "type": "link",
+      "sourceNodeId": "f5907080-09c1-42bc-9296-ab186fff4ccf",
+      "targetNodeId": "d4739b5e-f573-4eed-8b7b-0fbdc7828a53",
+      "probability": 100,
+      "startPoint": {
+        "x": 2185,
+        "y": 276
+      },
+      "endPoint": {
+        "x": 2185,
+        "y": 360
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "bf3dd2af-227d-4666-bed6-d8e8fed4b11a",
+      "type": "parent-child",
+      "sourceNodeId": "5e60b1aa-78ae-4cfd-a090-8522f7209dd5",
+      "targetNodeId": "cbc68c45-00fe-407a-9879-b97b548ae740",
+      "startPoint": {
+        "x": 2764,
+        "y": 1468
+      },
+      "endPoint": {
+        "x": 2945,
+        "y": 1578
+      },
+      "bendPoints": [
+        {
+          "x": 2764,
+          "y": 1518
+        },
+        {
+          "x": 2945,
+          "y": 1518
+        }
+      ]
+    },
+    {
+      "id": "60f4b1bd-0abf-4180-90c3-6bd5fe29015a",
+      "type": "parent-child",
+      "sourceNodeId": "ea3586f0-6139-4af1-af9e-f620dcc18067",
+      "targetNodeId": "00e39ebd-35d1-4e66-a9cc-0d2588c5771f",
+      "startPoint": {
+        "x": 1091,
+        "y": 1468
+      },
+      "endPoint": {
+        "x": 634,
+        "y": 1578
+      },
+      "bendPoints": [
+        {
+          "x": 1091,
+          "y": 1518
+        },
+        {
+          "x": 634,
+          "y": 1518
+        }
+      ]
+    },
+    {
+      "id": "f4c3ac14-e10c-4472-a30d-0ff44e4b099d",
+      "type": "parent-child",
+      "sourceNodeId": "22f6370c-3ff7-4009-8ccb-ef920568672f",
+      "targetNodeId": "b0584de7-8c9a-470b-92a3-7cafc0c28080",
+      "startPoint": {
+        "x": 2177,
+        "y": 2488
+      },
+      "endPoint": {
+        "x": 2402,
+        "y": 2598
+      },
+      "bendPoints": [
+        {
+          "x": 2177,
+          "y": 2538
+        },
+        {
+          "x": 2402,
+          "y": 2538
+        }
+      ]
+    },
+    {
+      "id": "92214077-2c36-4298-ae7e-dbf814ab3a8a",
+      "type": "link",
+      "sourceNodeId": "6bb2573e-0636-4e66-acb8-352032532952",
+      "targetNodeId": "33689fc8-e82e-496e-b82e-d1c0cd789312",
+      "probability": 100,
+      "startPoint": {
+        "x": 2582,
+        "y": 730
+      },
+      "endPoint": {
+        "x": 2500,
+        "y": 844
+      },
+      "bendPoints": [
+        {
+          "x": 2582,
+          "y": 780
+        },
+        {
+          "x": 2500,
+          "y": 780
+        }
+      ]
+    },
+    {
+      "id": "e4e995e7-4bff-40c7-a1cf-9a3aa776f393",
+      "type": "parent-child",
+      "sourceNodeId": "b101c318-441c-4a46-a3f9-ee9633265488",
+      "targetNodeId": "0b1ede81-6f23-4b6c-805e-fa603a484b8a",
+      "startPoint": {
+        "x": 2005,
+        "y": 1468
+      },
+      "endPoint": {
+        "x": 2005,
+        "y": 1578
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "0ed58935-8a84-4dbd-ac73-bc164f0c4139",
+      "type": "link",
+      "sourceNodeId": "4484f8a7-77c5-4826-b377-342633fb157c",
+      "targetNodeId": "22f6370c-3ff7-4009-8ccb-ef920568672f",
+      "probability": 100,
+      "startPoint": {
+        "x": 2257,
+        "y": 2224
+      },
+      "endPoint": {
+        "x": 2123,
+        "y": 2358
+      },
+      "bendPoints": [
+        {
+          "x": 2257,
+          "y": 2274
+        },
+        {
+          "x": 2123,
+          "y": 2274
+        }
+      ]
+    },
+    {
+      "id": "495c32e7-d397-42c6-a41d-aca8a2a127bb",
+      "type": "parent-child",
+      "sourceNodeId": "8b4db172-778e-491e-8514-a7be97d42456",
+      "targetNodeId": "7032d52e-f9d6-4921-8d93-24ed7d65d578",
+      "startPoint": {
+        "x": 1481,
+        "y": 974
+      },
+      "endPoint": {
+        "x": 1391,
+        "y": 1084
+      },
+      "bendPoints": [
+        {
+          "x": 1481,
+          "y": 1034
+        },
+        {
+          "x": 1391,
+          "y": 1034
+        }
+      ]
+    },
+    {
+      "id": "599ad92c-915e-486a-b1ba-af0c129b727a",
+      "type": "parent-child",
+      "sourceNodeId": "1f0ef6ec-1bd7-41ed-866c-e3242b13b2b2",
+      "targetNodeId": "c76fbf08-3726-434c-bd65-9f52cc35e34f",
+      "startPoint": {
+        "x": 1418,
+        "y": 1983
+      },
+      "endPoint": {
+        "x": 1418,
+        "y": 2094
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "afcca16f-3c71-460e-8ecf-21af9362610d",
+      "type": "parent-child",
+      "sourceNodeId": "d4739b5e-f573-4eed-8b7b-0fbdc7828a53",
+      "targetNodeId": "dbb6c716-40df-4854-911a-5dcfd5362442",
+      "startPoint": {
+        "x": 2131,
+        "y": 490
+      },
+      "endPoint": {
+        "x": 1481,
+        "y": 600
+      },
+      "bendPoints": [
+        {
+          "x": 2131,
+          "y": 540
+        },
+        {
+          "x": 1481,
+          "y": 540
+        }
+      ]
+    },
+    {
+      "id": "9c0913fa-e6c3-41cf-aa22-f1ba0eb16d13",
+      "type": "parent-child",
+      "sourceNodeId": "e7d32e45-e54d-4bc3-98b2-5ae96c5da413",
+      "targetNodeId": "2e8438d0-88d0-4a29-bcae-163737a2ff95",
+      "startPoint": {
+        "x": 317,
+        "y": 2488
+      },
+      "endPoint": {
+        "x": 589,
+        "y": 2598
+      },
+      "bendPoints": [
+        {
+          "x": 317,
+          "y": 2538
+        },
+        {
+          "x": 589,
+          "y": 2538
+        }
+      ]
+    },
+    {
+      "id": "0a136bbf-5630-4718-8dd3-3d4f160c928c",
+      "type": "parent-child",
+      "sourceNodeId": "2cae44c7-a9ad-4e70-8ed9-731dcc829677",
+      "targetNodeId": "6058ed11-c457-4c2e-9941-92ad56cd4acf",
+      "startPoint": {
+        "x": 2557,
+        "y": 1994
+      },
+      "endPoint": {
+        "x": 2727,
+        "y": 2094
+      },
+      "bendPoints": [
+        {
+          "x": 2557,
+          "y": 2044
+        },
+        {
+          "x": 2727,
+          "y": 2044
+        }
+      ]
+    },
+    {
+      "id": "d8d7f849-dfb8-4de8-8ca7-9676c898a4e9",
+      "type": "parent-child",
+      "sourceNodeId": "5e60b1aa-78ae-4cfd-a090-8522f7209dd5",
+      "targetNodeId": "3b46243a-0e4f-47ef-9207-e9d140ebf5d5",
+      "startPoint": {
+        "x": 2710,
+        "y": 1468
+      },
+      "endPoint": {
+        "x": 2710,
+        "y": 1578
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "aec679aa-bff8-4169-9326-58c4988eed86",
+      "type": "parent-child",
+      "sourceNodeId": "1f0ef6ec-1bd7-41ed-866c-e3242b13b2b2",
+      "targetNodeId": "a9cc1ae8-7042-4fa5-8f92-b3b70b8f4013",
+      "startPoint": {
+        "x": 1472,
+        "y": 1983
+      },
+      "endPoint": {
+        "x": 1915,
+        "y": 2094
+      },
+      "bendPoints": [
+        {
+          "x": 1472,
+          "y": 2044
+        },
+        {
+          "x": 1915,
+          "y": 2044
+        }
+      ]
+    },
+    {
+      "id": "9270efa7-b950-4e0a-b77d-3033d1f9a447",
+      "type": "parent-child",
+      "sourceNodeId": "2cae44c7-a9ad-4e70-8ed9-731dcc829677",
+      "targetNodeId": "4484f8a7-77c5-4826-b377-342633fb157c",
+      "startPoint": {
+        "x": 2450,
+        "y": 1994
+      },
+      "endPoint": {
+        "x": 2257,
+        "y": 2094
+      },
+      "bendPoints": [
+        {
+          "x": 2450,
+          "y": 2044
+        },
+        {
+          "x": 2257,
+          "y": 2044
+        }
+      ]
+    },
+    {
+      "id": "3a7501a0-d2d0-45a2-b4e7-fd3c838ecbb6",
+      "type": "parent-child",
+      "sourceNodeId": "e7d32e45-e54d-4bc3-98b2-5ae96c5da413",
+      "targetNodeId": "329877ae-4363-4c46-b066-a4e80481bd0e",
+      "startPoint": {
+        "x": 263,
+        "y": 2488
+      },
+      "endPoint": {
+        "x": 354,
+        "y": 2598
+      },
+      "bendPoints": [
+        {
+          "x": 263,
+          "y": 2548
+        },
+        {
+          "x": 354,
+          "y": 2548
+        }
+      ]
+    },
+    {
+      "id": "7e03bbaf-6410-4fa7-bbbb-3e68500d7d70",
+      "type": "parent-child",
+      "sourceNodeId": "556fd039-b180-4e0f-ac33-2f2f87b7ae32",
+      "targetNodeId": "58a49542-e158-4090-8830-0b2abb438f7d",
+      "startPoint": {
+        "x": 580,
+        "y": 1987
+      },
+      "endPoint": {
+        "x": 263,
+        "y": 2094
+      },
+      "bendPoints": [
+        {
+          "x": 580,
+          "y": 2044
+        },
+        {
+          "x": 263,
+          "y": 2044
+        }
+      ]
+    },
+    {
+      "id": "38e61aa2-38c1-4262-9eac-28162394ae8b",
+      "type": "link",
+      "sourceNodeId": "0b1ede81-6f23-4b6c-805e-fa603a484b8a",
+      "targetNodeId": "2cae44c7-a9ad-4e70-8ed9-731dcc829677",
+      "probability": 100,
+      "startPoint": {
+        "x": 2005,
+        "y": 1708
+      },
+      "endPoint": {
+        "x": 2457,
+        "y": 1864
+      },
+      "bendPoints": [
+        {
+          "x": 2005,
+          "y": 1778
+        },
+        {
+          "x": 2457,
+          "y": 1778
+        }
+      ]
+    },
+    {
+      "id": "c32e7e06-d529-4e86-9f21-f8bc24a23e30",
+      "type": "parent-child",
+      "sourceNodeId": "10f18c57-fde3-4131-9c81-9f6ea46da4e5",
+      "targetNodeId": "a280644f-f1ca-4b74-9e6c-ea47845fea3f",
+      "startPoint": {
+        "x": 1022,
+        "y": 2488
+      },
+      "endPoint": {
+        "x": 1464,
+        "y": 2598
+      },
+      "bendPoints": [
+        {
+          "x": 1022,
+          "y": 2538
+        },
+        {
+          "x": 1464,
+          "y": 2538
+        }
+      ]
+    },
+    {
+      "id": "78454dde-bc23-4756-96a3-1c16ccc48118",
+      "type": "link",
+      "sourceNodeId": "ccd2bb76-b2b8-494f-8ca9-89236c8ccaa5",
+      "targetNodeId": "b101c318-441c-4a46-a3f9-ee9633265488",
+      "probability": 100,
+      "startPoint": {
+        "x": 2123,
+        "y": 1214
+      },
+      "endPoint": {
+        "x": 2027,
+        "y": 1338
+      },
+      "bendPoints": [
+        {
+          "x": 2123,
+          "y": 1264
+        },
+        {
+          "x": 2027,
+          "y": 1264
+        }
+      ]
+    },
+    {
+      "id": "34d3473a-8b01-42ef-afdd-5df29b78eb6d",
+      "type": "link",
+      "sourceNodeId": "6d2491a2-5c2c-4fe2-a516-bb05a4e13e94",
+      "targetNodeId": "1f0ef6ec-1bd7-41ed-866c-e3242b13b2b2",
+      "probability": 100,
+      "startPoint": {
+        "x": 1535,
+        "y": 1708
+      },
+      "endPoint": {
+        "x": 1454,
+        "y": 1853
+      },
+      "bendPoints": [
+        {
+          "x": 1535,
+          "y": 1758
+        },
+        {
+          "x": 1454,
+          "y": 1758
+        }
+      ]
+    },
+    {
+      "id": "96638ae1-c489-49fd-b075-a556531bb04e",
+      "type": "link",
+      "sourceNodeId": "58a49542-e158-4090-8830-0b2abb438f7d",
+      "targetNodeId": "e7d32e45-e54d-4bc3-98b2-5ae96c5da413",
+      "probability": 100,
+      "startPoint": {
+        "x": 263,
+        "y": 2224
+      },
+      "endPoint": {
+        "x": 263,
+        "y": 2358
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "8eb3b308-fd09-46e7-864f-939239004deb",
+      "type": "link",
+      "sourceNodeId": "2acbb719-a632-4678-a28c-571ac20b1b36",
+      "targetNodeId": "33689fc8-e82e-496e-b82e-d1c0cd789312",
+      "probability": 100,
+      "startPoint": {
+        "x": 2347,
+        "y": 730
+      },
+      "endPoint": {
+        "x": 2429,
+        "y": 844
+      },
+      "bendPoints": [
+        {
+          "x": 2347,
+          "y": 780
+        },
+        {
+          "x": 2429,
+          "y": 780
+        }
+      ]
+    },
+    {
+      "id": "2e9d5465-dffc-44a7-8635-7acac43ec57c",
+      "type": "link",
+      "sourceNodeId": "d12bdd5f-8954-4810-818e-af3a79512584",
+      "targetNodeId": "2cae44c7-a9ad-4e70-8ed9-731dcc829677",
+      "probability": 100,
+      "startPoint": {
+        "x": 2240,
+        "y": 1708
+      },
+      "endPoint": {
+        "x": 2488,
+        "y": 1864
+      },
+      "bendPoints": [
+        {
+          "x": 2240,
+          "y": 1768
+        },
+        {
+          "x": 2488,
+          "y": 1768
+        }
+      ]
+    },
+    {
+      "id": "9384fa48-d97e-4175-a20e-c0f41fb23238",
+      "type": "link",
+      "sourceNodeId": "6a61f39f-8184-4d29-9b49-f46b0b2a3133",
+      "targetNodeId": "ea3586f0-6139-4af1-af9e-f620dcc18067",
+      "probability": 100,
+      "startPoint": {
+        "x": 1145,
+        "y": 1214
+      },
+      "endPoint": {
+        "x": 1145,
+        "y": 1338
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "c8f6f219-148f-4f17-89a2-5b83f4dffb64",
+      "type": "link",
+      "sourceNodeId": "5327f9b2-31ea-4549-a326-4acc1d3a239f",
+      "targetNodeId": "10f18c57-fde3-4131-9c81-9f6ea46da4e5",
+      "probability": 100,
+      "startPoint": {
+        "x": 595,
+        "y": 2224
+      },
+      "endPoint": {
+        "x": 915,
+        "y": 2358
+      },
+      "bendPoints": [
+        {
+          "x": 595,
+          "y": 2274
+        },
+        {
+          "x": 915,
+          "y": 2274
+        }
+      ]
+    },
+    {
+      "id": "2475835a-8c77-4a5f-833e-bf8fb33e405e",
+      "type": "parent-child",
+      "sourceNodeId": "10f18c57-fde3-4131-9c81-9f6ea46da4e5",
+      "targetNodeId": "c5d3b167-23c5-4d9d-91f3-309cb7cf5e5d",
+      "startPoint": {
+        "x": 915,
+        "y": 2488
+      },
+      "endPoint": {
+        "x": 824,
+        "y": 2598
+      },
+      "bendPoints": [
+        {
+          "x": 915,
+          "y": 2538
+        },
+        {
+          "x": 824,
+          "y": 2538
+        }
+      ]
+    },
+    {
+      "id": "3d6cfca0-6165-408e-a855-8031b261d29a",
+      "type": "link",
+      "sourceNodeId": "7032d52e-f9d6-4921-8d93-24ed7d65d578",
+      "targetNodeId": "b101c318-441c-4a46-a3f9-ee9633265488",
+      "probability": 100,
+      "startPoint": {
+        "x": 1391,
+        "y": 1214
+      },
+      "endPoint": {
+        "x": 1941,
+        "y": 1338
+      },
+      "bendPoints": [
+        {
+          "x": 1391,
+          "y": 1274
+        },
+        {
+          "x": 1941,
+          "y": 1274
+        }
+      ]
+    },
+    {
+      "id": "f400b7f8-8b33-4453-bdde-de2fb03fb879",
+      "type": "link",
+      "sourceNodeId": "1",
+      "targetNodeId": "f5907080-09c1-42bc-9296-ab186fff4ccf",
+      "probability": 100,
+      "startPoint": {
+        "x": 2185,
+        "y": 62
+      },
+      "endPoint": {
+        "x": 2185,
+        "y": 146
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "aec6ce0f-748c-4d95-a2e7-97ef94bd65fb",
+      "type": "parent-child",
+      "sourceNodeId": "b101c318-441c-4a46-a3f9-ee9633265488",
+      "targetNodeId": "d12bdd5f-8954-4810-818e-af3a79512584",
+      "startPoint": {
+        "x": 2059,
+        "y": 1468
+      },
+      "endPoint": {
+        "x": 2240,
+        "y": 1578
+      },
+      "bendPoints": [
+        {
+          "x": 2059,
+          "y": 1518
+        },
+        {
+          "x": 2240,
+          "y": 1518
+        }
+      ]
+    },
+    {
+      "id": "946005e9-ff8c-4a47-bc1b-146026b94f1f",
+      "type": "link",
+      "sourceNodeId": "05957253-149b-4847-b997-d9c2ef53bbe3",
+      "targetNodeId": "b101c318-441c-4a46-a3f9-ee9633265488",
+      "probability": 100,
+      "startPoint": {
+        "x": 1888,
+        "y": 1214
+      },
+      "endPoint": {
+        "x": 1984,
+        "y": 1338
+      },
+      "bendPoints": [
+        {
+          "x": 1888,
+          "y": 1264
+        },
+        {
+          "x": 1984,
+          "y": 1264
+        }
+      ]
+    },
+    {
+      "id": "dc398d27-bcfe-4941-8387-6fc2e8d47044",
+      "type": "link",
+      "sourceNodeId": "a280644f-f1ca-4b74-9e6c-ea47845fea3f",
+      "targetNodeId": "243fe5e3-e320-4b5d-b3ff-7c7700e24a32",
+      "probability": 100,
+      "startPoint": {
+        "x": 1464,
+        "y": 2728
+      },
+      "endPoint": {
+        "x": 1852,
+        "y": 2862
+      },
+      "bendPoints": [
+        {
+          "x": 1464,
+          "y": 2778
+        },
+        {
+          "x": 1852,
+          "y": 2778
+        }
+      ]
+    },
+    {
+      "id": "5f35e331-cf07-4ba3-9a9b-82002ba1f3e0",
+      "type": "link",
+      "sourceNodeId": "3b46243a-0e4f-47ef-9207-e9d140ebf5d5",
+      "targetNodeId": "2cae44c7-a9ad-4e70-8ed9-731dcc829677",
+      "probability": 100,
+      "startPoint": {
+        "x": 2710,
+        "y": 1708
+      },
+      "endPoint": {
+        "x": 2550,
+        "y": 1864
+      },
+      "bendPoints": [
+        {
+          "x": 2710,
+          "y": 1758
+        },
+        {
+          "x": 2550,
+          "y": 1758
+        }
+      ]
+    },
+    {
+      "id": "5f0b3d17-9548-48e0-94ce-bee55ade460f",
+      "type": "parent-child",
+      "sourceNodeId": "ea3586f0-6139-4af1-af9e-f620dcc18067",
+      "targetNodeId": "688a2a5e-6358-4a3f-b0de-34fe4d3129ff",
+      "startPoint": {
+        "x": 1145,
+        "y": 1468
+      },
+      "endPoint": {
+        "x": 1300,
+        "y": 1578
+      },
+      "bendPoints": [
+        {
+          "x": 1145,
+          "y": 1528
+        },
+        {
+          "x": 1300,
+          "y": 1528
+        }
+      ]
+    },
+    {
+      "id": "6c2ccd5b-922a-4030-820b-829aa578accd",
+      "type": "link",
+      "sourceNodeId": "688a2a5e-6358-4a3f-b0de-34fe4d3129ff",
+      "targetNodeId": "1f0ef6ec-1bd7-41ed-866c-e3242b13b2b2",
+      "probability": 100,
+      "startPoint": {
+        "x": 1300,
+        "y": 1708
+      },
+      "endPoint": {
+        "x": 1382,
+        "y": 1853
+      },
+      "bendPoints": [
+        {
+          "x": 1300,
+          "y": 1758
+        },
+        {
+          "x": 1382,
+          "y": 1758
+        }
+      ]
+    },
+    {
+      "id": "96abf916-f654-4e49-ae22-607b914b963e",
+      "type": "link",
+      "sourceNodeId": "00e39ebd-35d1-4e66-a9cc-0d2588c5771f",
+      "targetNodeId": "556fd039-b180-4e0f-ac33-2f2f87b7ae32",
+      "probability": 100,
+      "startPoint": {
+        "x": 634,
+        "y": 1708
+      },
+      "endPoint": {
+        "x": 634,
+        "y": 1857
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "c8200129-ac41-4137-a66e-a9c8299a95c1",
+      "type": "parent-child",
+      "sourceNodeId": "ea3586f0-6139-4af1-af9e-f620dcc18067",
+      "targetNodeId": "6d2491a2-5c2c-4fe2-a516-bb05a4e13e94",
+      "startPoint": {
+        "x": 1199,
+        "y": 1468
+      },
+      "endPoint": {
+        "x": 1535,
+        "y": 1578
+      },
+      "bendPoints": [
+        {
+          "x": 1199,
+          "y": 1518
+        },
+        {
+          "x": 1535,
+          "y": 1518
+        }
+      ]
+    },
+    {
+      "id": "de2eb133-49f3-4536-9339-2d103dcb12f9",
+      "type": "link",
+      "sourceNodeId": "62734294-8a49-4b9f-a478-cdec815f74c4",
+      "targetNodeId": "2",
+      "probability": 75,
+      "startPoint": {
+        "x": 413,
+        "y": 2992
+      },
+      "endPoint": {
+        "x": 1039,
+        "y": 3362
+      },
+      "bendPoints": [
+        {
+          "x": 413,
+          "y": 3164
+        },
+        {
+          "x": 413,
+          "y": 3286
+        },
+        {
+          "x": 1039,
+          "y": 3286
+        }
+      ]
+    },
+    {
+      "id": "c3df4f16-6774-4383-a9db-004b77e257ec",
+      "type": "link",
+      "sourceNodeId": "5263c09e-95d6-4d0a-9650-714f0b31cba5",
+      "targetNodeId": "2cae44c7-a9ad-4e70-8ed9-731dcc829677",
+      "probability": 100,
+      "startPoint": {
+        "x": 1770,
+        "y": 1708
+      },
+      "endPoint": {
+        "x": 2427,
+        "y": 1864
+      },
+      "bendPoints": [
+        {
+          "x": 1770,
+          "y": 1788
+        },
+        {
+          "x": 2427,
+          "y": 1788
+        }
+      ]
+    },
+    {
+      "id": "d799853c-f19f-4267-ba71-239d2f5eea71",
+      "type": "link",
+      "sourceNodeId": "dbb6c716-40df-4854-911a-5dcfd5362442",
+      "targetNodeId": "8b4db172-778e-491e-8514-a7be97d42456",
+      "probability": 100,
+      "startPoint": {
+        "x": 1481,
+        "y": 730
+      },
+      "endPoint": {
+        "x": 1481,
+        "y": 844
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "2b877c40-bb81-40e2-bdaf-883eb14e918a",
+      "type": "link",
+      "sourceNodeId": "2e8438d0-88d0-4a29-bcae-163737a2ff95",
+      "targetNodeId": "62734294-8a49-4b9f-a478-cdec815f74c4",
+      "probability": 100,
+      "startPoint": {
+        "x": 589,
+        "y": 2728
+      },
+      "endPoint": {
+        "x": 471,
+        "y": 2862
+      },
+      "bendPoints": [
+        {
+          "x": 589,
+          "y": 2778
+        },
+        {
+          "x": 471,
+          "y": 2778
+        }
+      ]
+    },
+    {
+      "id": "940899b8-aff9-4097-9b3b-86b528058ffe",
+      "type": "parent-child",
+      "sourceNodeId": "8b4db172-778e-491e-8514-a7be97d42456",
+      "targetNodeId": "6a61f39f-8184-4d29-9b49-f46b0b2a3133",
+      "startPoint": {
+        "x": 1428,
+        "y": 974
+      },
+      "endPoint": {
+        "x": 1145,
+        "y": 1084
+      },
+      "bendPoints": [
+        {
+          "x": 1428,
+          "y": 1024
+        },
+        {
+          "x": 1145,
+          "y": 1024
+        }
+      ]
+    },
+    {
+      "id": "e86df5bf-e0bd-418e-a9a0-927e8d9333c4",
+      "type": "parent-child",
+      "sourceNodeId": "33689fc8-e82e-496e-b82e-d1c0cd789312",
+      "targetNodeId": "ccd2bb76-b2b8-494f-8ca9-89236c8ccaa5",
+      "startPoint": {
+        "x": 2411,
+        "y": 974
+      },
+      "endPoint": {
+        "x": 2123,
+        "y": 1084
+      },
+      "bendPoints": [
+        {
+          "x": 2411,
+          "y": 1024
+        },
+        {
+          "x": 2123,
+          "y": 1024
+        }
+      ]
+    },
+    {
+      "id": "de72eceb-edfd-4d04-a502-78e761c143e1",
+      "type": "link",
+      "sourceNodeId": "5ad03447-1b5b-4554-8176-628d94266125",
+      "targetNodeId": "5e60b1aa-78ae-4cfd-a090-8522f7209dd5",
+      "probability": 100,
+      "startPoint": {
+        "x": 2710,
+        "y": 1214
+      },
+      "endPoint": {
+        "x": 2710,
+        "y": 1338
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "2b8f8ab2-b4de-4aaf-8bd3-a72cc78ea314",
+      "type": "link",
+      "sourceNodeId": "3848dbf2-90f6-423e-9629-cfd8d6c1225a",
+      "targetNodeId": "62734294-8a49-4b9f-a478-cdec815f74c4",
+      "probability": 100,
+      "startPoint": {
+        "x": 119,
+        "y": 2728
+      },
+      "endPoint": {
+        "x": 385,
+        "y": 2862
+      },
+      "bendPoints": [
+        {
+          "x": 119,
+          "y": 2788
+        },
+        {
+          "x": 385,
+          "y": 2788
+        }
+      ]
+    },
+    {
+      "id": "f748f5fd-ba30-441c-9dd7-26f90a0f5788",
+      "type": "link",
+      "sourceNodeId": "996b32c0-e477-4930-a07a-7add85283351",
+      "targetNodeId": "10f18c57-fde3-4131-9c81-9f6ea46da4e5",
+      "probability": 100,
+      "startPoint": {
+        "x": 948,
+        "y": 2224
+      },
+      "endPoint": {
+        "x": 968,
+        "y": 2358
+      },
+      "bendPoints": [
+        {
+          "x": 948,
+          "y": 2274
+        },
+        {
+          "x": 968,
+          "y": 2274
+        }
+      ]
+    },
+    {
+      "id": "55287c6d-9e2c-48a6-bc8e-60defd323b7b",
+      "type": "link",
+      "sourceNodeId": "c76fbf08-3726-434c-bd65-9f52cc35e34f",
+      "targetNodeId": "22f6370c-3ff7-4009-8ccb-ef920568672f",
+      "probability": 100,
+      "startPoint": {
+        "x": 1418,
+        "y": 2224
+      },
+      "endPoint": {
+        "x": 2051,
+        "y": 2358
+      },
+      "bendPoints": [
+        {
+          "x": 1418,
+          "y": 2284
+        },
+        {
+          "x": 2051,
+          "y": 2284
+        }
+      ]
+    },
+    {
+      "id": "2b7a5381-57b5-4103-ac1e-82ab31c7e2c9",
+      "type": "parent-child",
+      "sourceNodeId": "5e60b1aa-78ae-4cfd-a090-8522f7209dd5",
+      "targetNodeId": "e0f75226-28e8-42d6-ae02-95fe71be2244",
+      "startPoint": {
+        "x": 2657,
+        "y": 1468
+      },
+      "endPoint": {
+        "x": 2475,
+        "y": 1578
+      },
+      "bendPoints": [
+        {
+          "x": 2657,
+          "y": 1518
+        },
+        {
+          "x": 2475,
+          "y": 1518
+        }
+      ]
+    },
+    {
+      "id": "7a921369-3d3e-41be-9c12-c4025e8e8265",
+      "type": "link",
+      "sourceNodeId": "b0584de7-8c9a-470b-92a3-7cafc0c28080",
+      "targetNodeId": "243fe5e3-e320-4b5d-b3ff-7c7700e24a32",
+      "probability": 100,
+      "startPoint": {
+        "x": 2402,
+        "y": 2728
+      },
+      "endPoint": {
+        "x": 1960,
+        "y": 2862
+      },
+      "bendPoints": [
+        {
+          "x": 2402,
+          "y": 2798
+        },
+        {
+          "x": 1960,
+          "y": 2798
+        }
+      ]
+    },
+    {
+      "id": "a815c1bc-0ada-4bad-a4c3-9272ae75bfb2",
+      "type": "parent-child",
+      "sourceNodeId": "2cae44c7-a9ad-4e70-8ed9-731dcc829677",
+      "targetNodeId": "b5b4c8d4-fceb-4ab3-9109-d1de7ad3bf72",
+      "startPoint": {
+        "x": 2504,
+        "y": 1994
+      },
+      "endPoint": {
+        "x": 2492,
+        "y": 2094
+      },
+      "bendPoints": [
+        {
+          "x": 2504,
+          "y": 2044
+        },
+        {
+          "x": 2492,
+          "y": 2044
+        }
+      ]
+    },
+    {
+      "id": "9e9eac00-9f74-4d61-9028-e4223572b0af",
+      "type": "link",
+      "sourceNodeId": "f0dfbf70-0919-4a79-bd05-bde4ebb8e492",
+      "targetNodeId": "10f18c57-fde3-4131-9c81-9f6ea46da4e5",
+      "probability": 100,
+      "startPoint": {
+        "x": 1183,
+        "y": 2224
+      },
+      "endPoint": {
+        "x": 1022,
+        "y": 2358
+      },
+      "bendPoints": [
+        {
+          "x": 1183,
+          "y": 2274
+        },
+        {
+          "x": 1022,
+          "y": 2274
+        }
+      ]
+    },
+    {
+      "id": "d120c552-45d8-4a14-bd52-d13cf703c81e",
+      "type": "link",
+      "sourceNodeId": "a6bb1505-223b-42b8-856c-db8788a953f0",
+      "targetNodeId": "2",
+      "probability": 100,
+      "startPoint": {
+        "x": 1852,
+        "y": 3236
+      },
+      "endPoint": {
+        "x": 1062,
+        "y": 3362
+      },
+      "bendPoints": [
+        {
+          "x": 1852,
+          "y": 3286
+        },
+        {
+          "x": 1062,
+          "y": 3286
+        }
+      ]
+    },
+    {
+      "id": "4fb0071c-931a-4800-9115-d42c2fc4dd12",
+      "type": "link",
+      "sourceNodeId": "243fe5e3-e320-4b5d-b3ff-7c7700e24a32",
+      "targetNodeId": "a6bb1505-223b-42b8-856c-db8788a953f0",
+      "probability": 100,
+      "startPoint": {
+        "x": 1888,
+        "y": 2992
+      },
+      "endPoint": {
+        "x": 1888,
+        "y": 3106
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "53faa7aa-b2fd-4885-8b81-539063d265ae",
+      "type": "parent-child",
+      "sourceNodeId": "1f0ef6ec-1bd7-41ed-866c-e3242b13b2b2",
+      "targetNodeId": "f0dfbf70-0919-4a79-bd05-bde4ebb8e492",
+      "startPoint": {
+        "x": 1364,
+        "y": 1983
+      },
+      "endPoint": {
+        "x": 1183,
+        "y": 2094
+      },
+      "bendPoints": [
+        {
+          "x": 1364,
+          "y": 2044
+        },
+        {
+          "x": 1183,
+          "y": 2044
+        }
+      ]
+    },
+    {
+      "id": "c70e0368-78f1-44b4-9b36-0e0050151fc8",
+      "type": "link",
+      "sourceNodeId": "c5d3b167-23c5-4d9d-91f3-309cb7cf5e5d",
+      "targetNodeId": "62734294-8a49-4b9f-a478-cdec815f74c4",
+      "probability": 100,
+      "startPoint": {
+        "x": 824,
+        "y": 2728
+      },
+      "endPoint": {
+        "x": 514,
+        "y": 2862
+      },
+      "bendPoints": [
+        {
+          "x": 824,
+          "y": 2788
+        },
+        {
+          "x": 514,
+          "y": 2788
+        }
+      ]
+    },
+    {
+      "id": "e53ddec8-4251-4d89-ba29-3207820846a1",
+      "type": "link",
+      "sourceNodeId": "6058ed11-c457-4c2e-9941-92ad56cd4acf",
+      "targetNodeId": "22f6370c-3ff7-4009-8ccb-ef920568672f",
+      "probability": 100,
+      "startPoint": {
+        "x": 2727,
+        "y": 2224
+      },
+      "endPoint": {
+        "x": 2195,
+        "y": 2358
+      },
+      "bendPoints": [
+        {
+          "x": 2727,
+          "y": 2294
+        },
+        {
+          "x": 2195,
+          "y": 2294
+        }
+      ]
+    },
+    {
+      "id": "7d06e565-ec90-47e4-a408-b43deb8f477e",
+      "type": "parent-child",
+      "sourceNodeId": "b101c318-441c-4a46-a3f9-ee9633265488",
+      "targetNodeId": "5263c09e-95d6-4d0a-9650-714f0b31cba5",
+      "startPoint": {
+        "x": 1952,
+        "y": 1468
+      },
+      "endPoint": {
+        "x": 1770,
+        "y": 1578
+      },
+      "bendPoints": [
+        {
+          "x": 1952,
+          "y": 1518
+        },
+        {
+          "x": 1770,
+          "y": 1518
+        }
+      ]
+    },
+    {
+      "id": "2733ba9c-90b8-459d-946f-8d4b74c7157a",
+      "type": "link",
+      "sourceNodeId": "a14e19fc-8826-426d-84dd-5257a5bc1a5c",
+      "targetNodeId": "243fe5e3-e320-4b5d-b3ff-7c7700e24a32",
+      "probability": 100,
+      "startPoint": {
+        "x": 1059,
+        "y": 2728
+      },
+      "endPoint": {
+        "x": 1816,
+        "y": 2862
+      },
+      "bendPoints": [
+        {
+          "x": 1059,
+          "y": 2788
+        },
+        {
+          "x": 1816,
+          "y": 2788
+        }
+      ]
+    },
+    {
+      "id": "d2d28c97-08fe-4e68-bfa8-98eeef979ce8",
+      "type": "parent-child",
+      "sourceNodeId": "10f18c57-fde3-4131-9c81-9f6ea46da4e5",
+      "targetNodeId": "a14e19fc-8826-426d-84dd-5257a5bc1a5c",
+      "startPoint": {
+        "x": 968,
+        "y": 2488
+      },
+      "endPoint": {
+        "x": 1059,
+        "y": 2598
+      },
+      "bendPoints": [
+        {
+          "x": 968,
+          "y": 2548
+        },
+        {
+          "x": 1059,
+          "y": 2548
+        }
+      ]
+    },
+    {
+      "id": "0585c2ec-3254-4655-8202-5e144ab07704",
+      "type": "parent-child",
+      "sourceNodeId": "556fd039-b180-4e0f-ac33-2f2f87b7ae32",
+      "targetNodeId": "996b32c0-e477-4930-a07a-7add85283351",
+      "startPoint": {
+        "x": 688,
+        "y": 1987
+      },
+      "endPoint": {
+        "x": 948,
+        "y": 2094
+      },
+      "bendPoints": [
+        {
+          "x": 688,
+          "y": 2044
+        },
+        {
+          "x": 948,
+          "y": 2044
+        }
+      ]
+    },
+    {
+      "id": "04045561-f202-493b-a7f1-6ff3bf07c4fd",
+      "type": "parent-child",
+      "sourceNodeId": "e7d32e45-e54d-4bc3-98b2-5ae96c5da413",
+      "targetNodeId": "3848dbf2-90f6-423e-9629-cfd8d6c1225a",
+      "startPoint": {
+        "x": 210,
+        "y": 2488
+      },
+      "endPoint": {
+        "x": 119,
+        "y": 2598
+      },
+      "bendPoints": [
+        {
+          "x": 210,
+          "y": 2538
+        },
+        {
+          "x": 119,
+          "y": 2538
+        }
+      ]
+    },
+    {
+      "id": "cb32b520-3703-4a1b-bd04-bedc602ec82f",
+      "type": "link",
+      "sourceNodeId": "62734294-8a49-4b9f-a478-cdec815f74c4",
+      "targetNodeId": "a6bb1505-223b-42b8-856c-db8788a953f0",
+      "probability": 25,
+      "startPoint": {
+        "x": 485,
+        "y": 2992
+      },
+      "endPoint": {
+        "x": 1816,
+        "y": 3106
+      },
+      "bendPoints": [
+        {
+          "x": 485,
+          "y": 3042
+        },
+        {
+          "x": 1816,
+          "y": 3042
+        }
+      ]
+    },
+    {
+      "id": "aafc28af-a5bb-4e46-b4d1-2ad594b7826e",
+      "type": "parent-child",
+      "sourceNodeId": "33689fc8-e82e-496e-b82e-d1c0cd789312",
+      "targetNodeId": "0fdcde6a-c26d-4311-8a86-886e82d071b5",
+      "startPoint": {
+        "x": 2465,
+        "y": 974
+      },
+      "endPoint": {
+        "x": 2465,
+        "y": 1084
+      },
+      "bendPoints": []
+    }
+  ],
+  "variableDefinitions": [
+    {
+      "id": "ff10183b-97fa-40bd-b24a-9c72ad5f6235",
+      "name": "Test Variable 1",
+      "type": "integer"
+    }
+  ],
+  "goals": [
+    {
+      "id": "e66312d5-8f3a-42d9-b9d5-95eca651750b",
+      "name": "Complete the quiz and show video if needed",
+      "description": "",
+      "script": "celebrate = false",
+      "tagValues": [
+        {
+          "id": "7fb98ead-efd7-4592-9489-b386b6e6acdb",
+          "tagDefinitionId": "25000",
+          "value": "QuizAndVideo"
+        }
+      ]
+    }
+  ]
+}

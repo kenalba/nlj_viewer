@@ -56,22 +56,33 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     ),
     
     // Images
-    img: ({ src, alt, ...props }: any) => (
-      <Box
-        component="img"
-        src={src}
-        alt={alt}
-        sx={{
-          maxWidth: '100%',
-          height: 'auto',
-          display: 'block',
-          margin: '1rem 0',
-          borderRadius: 1,
-          ...props.sx,
-        }}
-        {...props}
-      />
-    ),
+    img: ({ src, alt, ...props }: any) => {
+      // Don't render if src is empty or invalid
+      if (!src || src.trim() === '') {
+        return null;
+      }
+      
+      return (
+        <Box
+          component="img"
+          src={src}
+          alt={alt || ''}
+          sx={{
+            maxWidth: '100%',
+            height: 'auto',
+            display: 'block',
+            margin: '1rem 0',
+            borderRadius: 1,
+            ...props.sx,
+          }}
+          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+            // Hide broken images
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+          {...props}
+        />
+      );
+    },
     
     // Lists
     ul: ({ children, ...props }: any) => (

@@ -348,14 +348,6 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
   return (
     <NodeCard>
       <CardContent>
-        <Typography variant="h6" gutterBottom>
-          {question.text}
-        </Typography>
-        
-        {question.content && (
-          <MarkdownRenderer content={question.content} />
-        )}
-        
         {question.media && (
           <Box sx={{ my: 2 }}>
             <MediaDisplay mediaList={[question.media]} />
@@ -368,6 +360,14 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
               <MediaViewer key={index} media={wrapper.media} />
             ))}
           </Box>
+        )}
+        
+        <Typography variant="h6" gutterBottom>
+          {question.text}
+        </Typography>
+        
+        {question.content && (
+          <MarkdownRenderer content={question.content} />
         )}
         
         {/* Game Status */}

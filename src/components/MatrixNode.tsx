@@ -353,19 +353,6 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
   return (
     <NodeCard animate={true}>
       <Box sx={{ mb: 3 }}>
-        <MarkdownRenderer
-          content={question.text}
-          sx={{ mb: 1, color: 'text.primary' }}
-        />
-        
-        {question.content && (
-          <MarkdownRenderer
-            content={question.content}
-            
-            sx={{ mb: 2, color: 'text.secondary' }}
-          />
-        )}
-        
         {question.media && (
           <Box sx={{ mb: 3 }}>
             <MediaViewer media={question.media} size="medium" />
@@ -380,6 +367,18 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
               </Box>
             ))}
           </Box>
+        )}
+        
+        <MarkdownRenderer
+          content={question.text}
+          sx={{ mb: 1, color: 'text.primary' }}
+        />
+        
+        {question.content && (
+          <MarkdownRenderer
+            content={question.content}
+            sx={{ mb: 2, color: 'text.secondary' }}
+          />
         )}
       </Box>
 

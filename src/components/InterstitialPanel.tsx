@@ -15,7 +15,6 @@ export const InterstitialPanel: React.FC<InterstitialPanelProps> = ({
   panel,
   onContinue,
 }) => {
-  const displayText = panel.text || panel.content || '';
   const { themeMode } = useTheme();
   const muiTheme = useMuiTheme();
 
@@ -42,10 +41,15 @@ export const InterstitialPanel: React.FC<InterstitialPanelProps> = ({
           />
         </Box>
       )}
-      {displayText && (
+      {panel.text && (
         <MarkdownRenderer
-          content={displayText}
-          
+          content={panel.text}
+          sx={{ mb: 2 }}
+        />
+      )}
+      {panel.content && (
+        <MarkdownRenderer
+          content={panel.content}
           sx={{ mb: 2 }}
         />
       )}

@@ -293,6 +293,19 @@ export const ConnectionsNode: React.FC<ConnectionsNodeProps> = ({ question, onAn
   return (
     <NodeCard>
       <Box sx={{ maxWidth: 600, mx: 'auto' }}>
+        {/* Media */}
+        {question.media && (
+          <Box sx={{ mb: 2 }}>
+            <MediaViewer media={question.media} />
+          </Box>
+        )}
+        
+        {question.additionalMediaList && question.additionalMediaList.length > 0 && (
+          <Box sx={{ mb: 2 }}>
+            <MediaDisplay mediaList={question.additionalMediaList.map(wrapper => wrapper.media)} />
+          </Box>
+        )}
+        
         {/* Header */}
         <Typography variant="h5" gutterBottom textAlign="center" fontWeight="bold">
           {gameData.title}
@@ -307,19 +320,6 @@ export const ConnectionsNode: React.FC<ConnectionsNodeProps> = ({ question, onAn
         {question.content && (
           <Box sx={{ mb: 2 }}>
             <MarkdownRenderer content={question.content} />
-          </Box>
-        )}
-        
-        {/* Media */}
-        {question.media && (
-          <Box sx={{ mb: 2 }}>
-            <MediaViewer media={question.media} />
-          </Box>
-        )}
-        
-        {question.additionalMediaList && question.additionalMediaList.length > 0 && (
-          <Box sx={{ mb: 2 }}>
-            <MediaDisplay mediaList={question.additionalMediaList.map(wrapper => wrapper.media)} />
           </Box>
         )}
         
