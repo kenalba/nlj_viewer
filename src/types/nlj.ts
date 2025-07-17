@@ -363,6 +363,38 @@ export interface RankingNode extends BaseNode {
   required?: boolean;
 }
 
+// Connections game node types
+export interface ConnectionsGroup {
+  category: string;
+  words: [string, string, string, string]; // Exactly 4 words
+  difficulty: 'yellow' | 'green' | 'blue' | 'purple';
+}
+
+export interface ConnectionsGameData {
+  title: string;
+  instructions: string;
+  groups: [ConnectionsGroup, ConnectionsGroup, ConnectionsGroup, ConnectionsGroup]; // Exactly 4 groups
+  maxMistakes?: number; // Default: 4
+  shuffleWords?: boolean; // Default: true
+  showProgress?: boolean; // Default: true
+}
+
+export interface ConnectionsNode extends BaseNode {
+  type: 'connections';
+  text: string;
+  content?: string;
+  media?: Media;
+  additionalMediaList?: MediaWrapper[];
+  gameData: ConnectionsGameData;
+  scoring?: {
+    correctGroupPoints?: number; // Points for finding a correct group
+    completionBonus?: number; // Bonus for completing all groups
+    mistakePenalty?: number; // Points deducted for mistakes
+  };
+  timeLimit?: number; // Time limit in seconds (optional)
+  required?: boolean;
+}
+
 // Updated union type to include all node types
 export type NLJNode = 
   | StartNode 
@@ -380,16 +412,18 @@ export type NLJNode =
   | SliderNode
   | TextAreaNode
   | MultiSelectNode
-  | RankingNode;
+  | RankingNode
+  | ConnectionsNode;
 
 // Type guards for node types
 export const isQuestionNode = (node: NLJNode): node is QuestionNode => node.type === 'question';
 export const isSurveyNode = (node: NLJNode): node is LikertScaleNode | RatingNode | MatrixNode | SliderNode | TextAreaNode => 
   ['likert_scale', 'rating', 'matrix', 'slider', 'text_area'].includes(node.type);
-export const isInteractiveNode = (node: NLJNode): node is QuestionNode | TrueFalseNode | OrderingNode | MatchingNode | ShortAnswerNode | LikertScaleNode | RatingNode | MatrixNode | SliderNode | TextAreaNode | MultiSelectNode | RankingNode => 
+export const isInteractiveNode = (node: NLJNode): node is QuestionNode | TrueFalseNode | OrderingNode | MatchingNode | ShortAnswerNode | LikertScaleNode | RatingNode | MatrixNode | SliderNode | TextAreaNode | MultiSelectNode | RankingNode | ConnectionsNode => 
   !['start', 'end', 'choice', 'interstitial_panel'].includes(node.type);
-export const isAssessmentNode = (node: NLJNode): node is TrueFalseNode | OrderingNode | MatchingNode | ShortAnswerNode | QuestionNode | MultiSelectNode | RankingNode => 
-  ['true_false', 'ordering', 'matching', 'short_answer', 'question', 'multi_select', 'ranking'].includes(node.type);
+export const isAssessmentNode = (node: NLJNode): node is TrueFalseNode | OrderingNode | MatchingNode | ShortAnswerNode | QuestionNode | MultiSelectNode | RankingNode | ConnectionsNode => 
+  ['true_false', 'ordering', 'matching', 'short_answer', 'question', 'multi_select', 'ranking', 'connections'].includes(node.type);
+export const isConnectionsNode = (node: NLJNode): node is ConnectionsNode => node.type === 'connections';
 
 // Activity metadata and configuration
 export interface ActivityMetadata {

@@ -17,6 +17,7 @@ import {
   Quiz as QuizIcon,
   Poll as SurveyIcon,
   Assignment as NLJIcon,
+  Link as ConnectionsIcon,
 } from '@mui/icons-material';
 import type { NLJScenario } from '../types/nlj';
 import { validateScenario } from '../utils/scenarioUtils';
@@ -28,7 +29,7 @@ import { SoundToggle } from './SoundToggle';
 import { ErrorModal, type ErrorDetails } from './ErrorModal';
 
 // Activity Types
-type ActivityType = 'nlj' | 'trivie' | 'survey';
+type ActivityType = 'nlj' | 'trivie' | 'survey' | 'connections';
 
 // Activity Type Configuration
 interface ActivityTypeConfig {
@@ -66,6 +67,12 @@ const SAMPLE_SURVEYS = [
   'employee_engagement.json',
   'manager_effectiveness.json',
   'work_life_balance.json',
+];
+
+const SAMPLE_CONNECTIONS = [
+  'sample_connections_game.json',
+  'science_connections.json',
+  'general_knowledge.json',
 ];
 
 export const ScenarioLoader: React.FC = () => {
@@ -388,6 +395,38 @@ export const ScenarioLoader: React.FC = () => {
     }
   }, [loadScenario, playSound]);
 
+  const loadSampleConnections = useCallback(async (filename: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${import.meta.env.BASE_URL}static/sample_connections/${filename}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const scenario: NLJScenario = await response.json();
+      
+      // Validate scenario
+      const validationErrors = validateScenario(scenario);
+      if (validationErrors.length > 0) {
+        playSound('error');
+        setError(`Validation errors: ${validationErrors.join(', ')}`);
+        return;
+      }
+      
+      // Store scenario data in localStorage
+      localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
+      playSound('navigate');
+      loadScenario(scenario);
+    } catch (err) {
+      playSound('error');
+      setError(err instanceof Error ? err.message : 'Failed to load sample connections game');
+    } finally {
+      setLoading(false);
+    }
+  }, [loadScenario, playSound]);
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -435,6 +474,19 @@ export const ScenarioLoader: React.FC = () => {
       samplesDescription: 'Try automotive and cross-industry survey examples',
       samples: SAMPLE_SURVEYS,
       loadSampleFunction: loadSampleSurvey,
+    },
+    {
+      id: 'connections',
+      name: 'Connections',
+      icon: <ConnectionsIcon />,
+      color: 'secondary',
+      uploadLabel: 'Upload Connections Game',
+      uploadDescription: 'Upload a .json file containing a Connections word puzzle',
+      uploadAccept: '.json',
+      samplesLabel: 'Sample Connections',
+      samplesDescription: 'Try sample Connections word puzzle games',
+      samples: SAMPLE_CONNECTIONS,
+      loadSampleFunction: loadSampleConnections,
     },
   ];
 
@@ -578,10 +630,21 @@ export const ScenarioLoader: React.FC = () => {
             <Tabs
               value={selectedActivityType}
               onChange={handleTabChange}
-              centered
+              variant="fullWidth"
+              scrollButtons="auto"
+              allowScrollButtonsMobile
               sx={{
                 '& .MuiTabs-indicator': {
                   height: 3,
+                },
+                '& .MuiTabs-flexContainer': {
+                  justifyContent: 'center',
+                },
+                '& .MuiTab-root': {
+                  minWidth: { xs: 80, sm: 120 },
+                  minHeight: { xs: 56, sm: 64 },
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  px: { xs: 1, sm: 2 },
                 },
               }}
             >
@@ -590,15 +653,29 @@ export const ScenarioLoader: React.FC = () => {
                   key={type.id}
                   value={type.id}
                   label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {type.icon}
-                      <Typography sx={{ fontWeight: 600 }}>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: { xs: 0.5, sm: 1 },
+                      flexDirection: { xs: 'column', sm: 'row' }
+                    }}>
+                      <Box sx={{ 
+                        fontSize: { xs: '1rem', sm: '1.2rem' },
+                        lineHeight: 1
+                      }}>
+                        {type.icon}
+                      </Box>
+                      <Typography sx={{ 
+                        fontWeight: 600,
+                        fontSize: { xs: '0.65rem', sm: '0.875rem' },
+                        lineHeight: { xs: 1.2, sm: 1.5 },
+                        textAlign: 'center'
+                      }}>
                         {type.name}
                       </Typography>
                     </Box>
                   }
                   sx={{
-                    minWidth: 120,
                     textTransform: 'none',
                     color: `${type.color}.main`,
                     '&.Mui-selected': {

@@ -14,6 +14,7 @@ import { RatingNode } from './RatingNode';
 import { SliderNode } from './SliderNode';
 import { TextAreaNode } from './TextAreaNode';
 import { MatrixNode } from './MatrixNode';
+import { ConnectionsNode } from './ConnectionsNode';
 import { XAPIResultsScreen } from './XAPIResultsScreen';
 import { CompletionModal } from './CompletionModal';
 import { useGameContext } from '../contexts/GameContext';
@@ -433,6 +434,15 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     case 'matrix':
       return (
         <MatrixNode 
+          key={node.id}
+          question={node} 
+          onAnswer={(response) => handleQuestionAnswer(true, response)}
+        />
+      );
+
+    case 'connections':
+      return (
+        <ConnectionsNode 
           key={node.id}
           question={node} 
           onAnswer={(response) => handleQuestionAnswer(true, response)}
