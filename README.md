@@ -28,6 +28,7 @@ A modern, responsive TypeScript React application for playing interactive Non-Li
 - **Deployment-Ready**: All TypeScript build errors resolved with pre-deployment verification
 - **Keyboard Navigation**: Full accessibility support with keyboard controls
 - **xAPI Integration**: Comprehensive learning event tracking with post-activity analytics
+- **LLM Content Generation**: Comprehensive prompt generation system for creating NLJ scenarios with LLMs
 - **Production-Ready**: Optimized build process with comprehensive error checking
 
 ## 🎯 Quick Start
@@ -54,7 +55,8 @@ Visit `http://localhost:5173` to load scenarios and begin training.
 1. **Upload NLJ Scenario**: Upload your own NLJ JSON file
 2. **Upload Trivie Excel**: Load Trivie quiz Excel files (automatically converted)
 3. **Upload Survey**: Load survey JSON files
-4. **Sample Content**: Try included demo content:
+4. **Generate LLM Prompt**: Create customized prompts for LLM-powered content generation
+5. **Sample Content**: Try included demo content:
    - **NLJ Scenarios**: FSA sales training modules, Hyundai Ioniq9 product knowledge, Interactive decision trees
    - **Trivie Quizzes**: Excel format quiz samples
    - **Survey Templates**: Automotive Sales Department, Employee Engagement, Manager Effectiveness, Work-Life Balance
@@ -80,7 +82,7 @@ Visit `http://localhost:5173` to load scenarios and begin training.
 ### Core Components
 - **GameEngine** (`useGameEngine.ts`): State management for scenario progression using React Context + useReducer
 - **NodeRenderer**: Dynamic rendering of all question types and interstitial panel nodes
-- **ScenarioLoader**: File upload and sample scenario selection with Trivie Excel support
+- **ScenarioLoader**: File upload, sample scenario selection, and LLM prompt generation with Trivie Excel support
 - **GameView**: Main gameplay interface with navigation and progress tracking
 - **MediaViewer**: Responsive media display with click-to-enlarge functionality
 - **Question Components**: Specialized components for each question type
@@ -182,6 +184,8 @@ src/
 │   ├── GameView.tsx    # Main game interface
 │   ├── NodeRenderer.tsx # Dynamic node rendering
 │   ├── MediaViewer.tsx  # Responsive media display
+│   ├── ScenarioLoader.tsx # File loading and LLM integration
+│   ├── LLMPromptGenerator.tsx # LLM prompt generation system
 │   └── ...
 ├── contexts/           # React contexts
 │   └── GameContext.tsx # Game state management
@@ -192,7 +196,8 @@ src/
 ├── utils/              # Utility functions
 │   ├── debug.ts        # Debug logging system
 │   ├── scenarioUtils.ts # Scenario processing
-│   └── trivieInterpreter.ts # Trivie Excel parsing and conversion
+│   ├── trivieInterpreter.ts # Trivie Excel parsing and conversion
+│   └── schemaDocGenerator.ts # LLM documentation system
 ├── theme/              # Material UI theme
 │   └── hyundaiTheme.ts # Custom Hyundai theme
 └── static/             # Static assets
@@ -262,6 +267,12 @@ All TypeScript build errors have been resolved as of the latest commits:
 ## 🔮 Future Enhancements
 
 ### ✅ Recently Completed
+- **LLM Content Generation System**: Comprehensive prompt generation for LLM-powered scenario creation
+  - ✅ Interactive prompt customization with audience personas and learning objectives
+  - ✅ Complete schema documentation generator with all 18+ node types
+  - ✅ Bloom's taxonomy integration and difficulty scaling
+  - ✅ Multiple export formats (Markdown, JSON, examples)
+  - ✅ Real-time preview and validation system
 - **xAPI/TinCan Integration**: Comprehensive learning event emission for LRS integration
   - ✅ Phase 1: Basic xAPI statement generation and results display
   - Phase 2: Advanced analytics, CSV/JSON export, PDF reporting
@@ -272,10 +283,10 @@ All TypeScript build errors have been resolved as of the latest commits:
 ### 📋 Planned Features
 - **Enhanced Post-Activity Experience**: Comprehensive analytics dashboard with detailed performance metrics
 - **Offline Support**: Service worker implementation for offline scenario access
-- **Scenario Authoring Tools**: Built-in visual editor for creating NLJ scenarios
+- **Node Grammar Extensions**: Fill-in-the-blank, classification, hotspot, and memory game question types
 - **Multi-language Support**: Internationalization framework for global deployment
 - **Advanced Media Features**: 360° images, interactive hotspots, AR content integration
-- **Extended Question Types**: Fill-in-the-blank, hotspot questions, drag-and-drop interactions
+- **LLM Integration Enhancements**: Direct API integration with OpenAI, Claude, and other LLM providers
 - **Enterprise Features**: Multi-tenant support, advanced security, compliance reporting
 
 ## 🤝 Contributing

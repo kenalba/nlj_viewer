@@ -20,6 +20,7 @@ import {
   Link as ConnectionsIcon,
   Games as WordleIcon,
   Download as DownloadIcon,
+  Code as LLMIcon,
 } from '@mui/icons-material';
 import type { NLJScenario } from '../types/nlj';
 import { validateScenario } from '../utils/scenarioUtils';
@@ -29,9 +30,15 @@ import { useAudio } from '../contexts/AudioContext';
 import { ThemeToggle } from './ThemeToggle';
 import { SoundToggle } from './SoundToggle';
 import { ErrorModal, type ErrorDetails } from './ErrorModal';
+import { LLMPromptGenerator } from './LLMPromptGenerator';
+import { 
+  generateSchemaDocumentation, 
+  generateBloomsTaxonomyReference, 
+  generateExampleScenarios 
+} from '../utils/schemaDocGenerator';
 
 // Activity Types
-type ActivityType = 'nlj' | 'trivie' | 'survey' | 'connections' | 'wordle';
+type ActivityType = 'nlj' | 'trivie' | 'survey' | 'connections' | 'wordle' | 'llm_docs';
 
 // Activity Type Configuration
 interface ActivityTypeConfig {
@@ -91,6 +98,7 @@ export const ScenarioLoader: React.FC = () => {
   const [errorDetails, setErrorDetails] = useState<ErrorDetails | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [selectedActivityType, setSelectedActivityType] = useState<ActivityType>('nlj');
+  const [showLLMPromptGenerator, setShowLLMPromptGenerator] = useState(false);
 
   const createErrorDetails = (
     category: ErrorDetails['category'],
@@ -611,6 +619,19 @@ export const ScenarioLoader: React.FC = () => {
       samples: SAMPLE_WORDLE,
       loadSampleFunction: loadSampleWordle,
     },
+    {
+      id: 'llm_docs',
+      name: 'LLM Docs',
+      icon: <LLMIcon />,
+      color: 'primary',
+      uploadLabel: 'Generate LLM Prompt',
+      uploadDescription: 'Create customized prompts for LLM content generation',
+      uploadAccept: '',
+      samplesLabel: 'Documentation Tools',
+      samplesDescription: 'Generate prompts and documentation for LLM-based content creation',
+      samples: [],
+      loadSampleFunction: async () => {},
+    },
   ];
 
   const currentActivityType = activityTypes.find(type => type.id === selectedActivityType)!;
@@ -619,65 +640,188 @@ export const ScenarioLoader: React.FC = () => {
     setSelectedActivityType(newValue);
   };
 
-  const renderUploadCard = () => (
-    <Card sx={{ width: '100%' }}>
-      <CardContent sx={{ p: 4 }}>
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
-          <UploadIcon sx={{ fontSize: 48, color: `${currentActivityType.color}.main`, mb: 2 }} />
-          <Typography gutterBottom sx={{ fontWeight: 600 }}>
-            {currentActivityType.uploadLabel}
-          </Typography>
-          <Typography color="text.secondary">
-            {currentActivityType.uploadDescription}
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Button
-            component="label"
-            variant="contained"
-            startIcon={<UploadIcon />}
-            disabled={loading}
-            fullWidth
-            size="large"
-            color={currentActivityType.color}
-          >
-            Choose File
-            <input
-              type="file"
-              accept={currentActivityType.uploadAccept}
-              onChange={handleFileUpload}
-              hidden
-            />
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            onClick={() => downloadSampleJSON(currentActivityType.id)}
-            disabled={loading}
-            fullWidth
-            size="large"
-            color={currentActivityType.color}
-            sx={{ textTransform: 'none' }}
-          >
-            Download Sample JSON
-          </Button>
-        </Box>
-      </CardContent>
-    </Card>
-  );
+  const renderUploadCard = () => {
+    if (selectedActivityType === 'llm_docs') {
+      return (
+        <Card sx={{ width: '100%' }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ textAlign: 'center', mb: 3 }}>
+              <LLMIcon sx={{ fontSize: 48, color: `${currentActivityType.color}.main`, mb: 2 }} />
+              <Typography gutterBottom sx={{ fontWeight: 600 }}>
+                {currentActivityType.uploadLabel}
+              </Typography>
+              <Typography color="text.secondary">
+                {currentActivityType.uploadDescription}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Button
+                variant="contained"
+                startIcon={<LLMIcon />}
+                disabled={loading}
+                fullWidth
+                size="large"
+                color={currentActivityType.color}
+                onClick={() => setShowLLMPromptGenerator(true)}
+              >
+                Generate LLM Prompt
+              </Button>
+              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+                Create customized prompts for content generation with OpenAI, Claude, Gemini, and other LLMs
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+      );
+    }
+    
+    return (
+      <Card sx={{ width: '100%' }}>
+        <CardContent sx={{ p: 4 }}>
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <UploadIcon sx={{ fontSize: 48, color: `${currentActivityType.color}.main`, mb: 2 }} />
+            <Typography gutterBottom sx={{ fontWeight: 600 }}>
+              {currentActivityType.uploadLabel}
+            </Typography>
+            <Typography color="text.secondary">
+              {currentActivityType.uploadDescription}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Button
+              component="label"
+              variant="contained"
+              startIcon={<UploadIcon />}
+              disabled={loading}
+              fullWidth
+              size="large"
+              color={currentActivityType.color}
+            >
+              Choose File
+              <input
+                type="file"
+                accept={currentActivityType.uploadAccept}
+                onChange={handleFileUpload}
+                hidden
+              />
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={() => downloadSampleJSON(currentActivityType.id)}
+              disabled={loading}
+              fullWidth
+              size="large"
+              color={currentActivityType.color}
+              sx={{ textTransform: 'none' }}
+            >
+              Download Sample JSON
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  };
 
-  const renderSamplesCard = () => (
-    <Card sx={{ width: '100%', height: '100%' }}>
-      <CardContent sx={{ p: 4 }}>
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
-          <PlayIcon sx={{ fontSize: 48, color: `${currentActivityType.color}.main`, mb: 2 }} />
-          <Typography gutterBottom sx={{ fontWeight: 600 }}>
-            {currentActivityType.samplesLabel}
-          </Typography>
-          <Typography color="text.secondary">
-            {currentActivityType.samplesDescription}
-          </Typography>
-        </Box>
+  const renderSamplesCard = () => {
+    if (selectedActivityType === 'llm_docs') {
+      return (
+        <Card sx={{ width: '100%', height: '100%' }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ textAlign: 'center', mb: 3 }}>
+              <DownloadIcon sx={{ fontSize: 48, color: `${currentActivityType.color}.main`, mb: 2 }} />
+              <Typography gutterBottom sx={{ fontWeight: 600 }}>
+                {currentActivityType.samplesLabel}
+              </Typography>
+              <Typography color="text.secondary">
+                {currentActivityType.samplesDescription}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Button
+                variant="outlined"
+                startIcon={<DownloadIcon />}
+                disabled={loading}
+                fullWidth
+                size="large"
+                color={currentActivityType.color}
+                onClick={() => {
+                  const doc = generateSchemaDocumentation();
+                  const blob = new Blob([doc], { type: 'text/markdown' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `nlj-schema-documentation-${Date.now()}.md`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                Download Schema Documentation
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<DownloadIcon />}
+                disabled={loading}
+                fullWidth
+                size="large"
+                color={currentActivityType.color}
+                onClick={() => {
+                  const doc = generateBloomsTaxonomyReference();
+                  const blob = new Blob([doc], { type: 'text/markdown' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `nlj-blooms-taxonomy-${Date.now()}.md`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                Download Bloom's Taxonomy Guide
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<DownloadIcon />}
+                disabled={loading}
+                fullWidth
+                size="large"
+                color={currentActivityType.color}
+                onClick={() => {
+                  const doc = generateExampleScenarios();
+                  const blob = new Blob([doc], { type: 'text/markdown' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `nlj-example-scenarios-${Date.now()}.md`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                Download Example Scenarios
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      );
+    }
+    
+    return (
+      <Card sx={{ width: '100%', height: '100%' }}>
+        <CardContent sx={{ p: 4 }}>
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <PlayIcon sx={{ fontSize: 48, color: `${currentActivityType.color}.main`, mb: 2 }} />
+            <Typography gutterBottom sx={{ fontWeight: 600 }}>
+              {currentActivityType.samplesLabel}
+            </Typography>
+            <Typography color="text.secondary">
+              {currentActivityType.samplesDescription}
+            </Typography>
+          </Box>
         <Box sx={{ 
           display: 'grid', 
           gap: 2,
@@ -721,7 +865,8 @@ export const ScenarioLoader: React.FC = () => {
         </Box>
       </CardContent>
     </Card>
-  );
+    );
+  };
 
   return (
     <Box sx={{ 
@@ -877,6 +1022,12 @@ export const ScenarioLoader: React.FC = () => {
           }}
         />
       )}
+      
+      {/* LLM Prompt Generator Modal */}
+      <LLMPromptGenerator
+        open={showLLMPromptGenerator}
+        onClose={() => setShowLLMPromptGenerator(false)}
+      />
     </Box>
   );
 };

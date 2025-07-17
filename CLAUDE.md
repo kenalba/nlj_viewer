@@ -6,6 +6,7 @@ A TypeScript React application for playing interactive Non-Linear Journey (NLJ) 
 
 - **Unified Activity System**: Support for training scenarios, surveys, assessments, Connections word puzzles, and Wordle games in a single platform
 - **Complete Question Type Support**: True/False, Multiple Choice, Ordering, Matching, Short Answer, Likert Scales, Rating Questions, Matrix Questions, Sliders, Text Areas, Connections Games, and Wordle Games
+- **LLM Content Generation**: Comprehensive prompt generation system for creating NLJ scenarios with Large Language Models
 - **Mobile-Responsive Design**: Built with Material UI for optimal mobile/desktop experience
 - **Real-time Feedback**: Immediate response validation and scoring with audio feedback
 - **Visual Interactions**: Drag-and-drop ordering, visual connection lines for matching
@@ -38,7 +39,7 @@ Visit `http://localhost:5173` to load scenarios.
 
 - **GameEngine** (`useGameEngine.ts`): State management for scenario progression
 - **NodeRenderer**: Dynamic rendering of all question types and panel nodes
-- **ScenarioLoader**: File upload and sample scenario selection with Trivie Excel support
+- **ScenarioLoader**: File upload, sample scenario selection, and LLM prompt generation with Trivie Excel support
 - **GameView**: Main gameplay interface with progress tracking
 - **Question Components**: Specialized components for each question type
   - `TrueFalseNode`: Interactive True/False buttons with submit/continue workflow and keyboard support
@@ -78,9 +79,10 @@ React Context + useReducer pattern for:
 ## Usage
 
 1. **Load Scenario**: Upload NLJ JSON file, Trivie Excel file, or select sample
-2. **Navigate**: Progress through various question types with interactive elements
-3. **Receive Feedback**: Immediate validation, scoring, and audio feedback
-4. **Track Progress**: Visual completion indicators and scenario completion
+2. **Generate LLM Prompts**: Create customized prompts for LLM-powered content generation
+3. **Navigate**: Progress through various question types with interactive elements
+4. **Receive Feedback**: Immediate validation, scoring, and audio feedback
+5. **Track Progress**: Visual completion indicators and scenario completion
 
 ## Development
 
@@ -161,6 +163,11 @@ Supports comprehensive activity schema including:
 ✅ **Enhanced Features**: Download Sample JSON buttons for LLM context generation
 ✅ **Game State Management**: Wordle-specific score calculation and game state handling integrated into GameContext
 ✅ **Wordle xAPI Tracking**: Comprehensive event tracking for wordle games including game starts, guess attempts, hint usage, and completion events
+✅ **LLM Content Generation**: Comprehensive prompt generation system for creating NLJ scenarios with Large Language Models
+  - Interactive prompt customization with audience personas, learning objectives, and content styles
+  - Complete schema documentation generator with all 18+ node types and Bloom's taxonomy integration
+  - Multiple export formats (Markdown prompts, JSON schemas, reference guides)
+  - Real-time preview and validation system with professional Material-UI interface
 
 ## xAPI Integration - Phase 1 Complete
 
@@ -183,8 +190,10 @@ Supports comprehensive activity schema including:
 
 ## Future Enhancements
 
+- **Node Grammar Extensions**: Fill-in-the-blank, classification, hotspot, and memory game question types
 - **Advanced xAPI Features**: Statement batching, offline storage, custom authentication
 - **Offline capability**: Service worker and local storage sync
 - **Enhanced Post-Scenario Experience**: Comprehensive analytics dashboard
+- **LLM Integration Enhancements**: Direct API integration with OpenAI, Claude, and other LLM providers
 - **SCORM Integration**: Package activities as SCORM content
 - **Multi-tenant Support**: Enterprise-ready features
