@@ -102,6 +102,10 @@
       "height": 300,
       "text": "How satisfied are you with the number of hours that you are required to work to meet or exceed performance expectations?",
       "ratingType": "categorical",
+      "range": {
+        "min": 1,
+        "max": 5
+      },
       "categories": ["Very Dissatisfied", "Dissatisfied", "Neutral", "Satisfied", "Very Satisfied"],
       "required": true,
       "tags": ["work-life-balance", "hours-satisfaction"]

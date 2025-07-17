@@ -46,6 +46,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
   const { isEnabled: xapiEnabled } = useXAPI();
   const [showResults, setShowResults] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [completionModalDismissed, setCompletionModalDismissed] = useState(false);
 
   // Scroll to top when node changes
   useEffect(() => {
@@ -69,13 +70,13 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
 
   // Show completion modal when scenario is completed
   useEffect(() => {
-    if (state.completed && !showCompletionModal) {
+    if (state.completed && !showCompletionModal && !completionModalDismissed) {
       const timer = setTimeout(() => {
         setShowCompletionModal(true);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [state.completed, showCompletionModal]);
+  }, [state.completed, showCompletionModal, completionModalDismissed]);
 
   const handleChoiceSelect = useCallback((choice: ChoiceNode) => {
     // Play sound based on choice type
@@ -143,6 +144,11 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
       currentNode: node.id,
       scenarioId: scenario.id,
     });
+
+    // Reset modal state
+    setShowCompletionModal(false);
+    setCompletionModalDismissed(false);
+    setShowResults(false);
 
     const startNode = scenario.nodes.find(n => n.type === 'start');
     if (startNode) {
@@ -246,6 +252,8 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
   }, [handleRestart]);
 
   const handleViewResultsFromModal = useCallback(() => {
+    setShowCompletionModal(false);
+    setCompletionModalDismissed(true);
     setShowResults(true);
   }, []);
 
@@ -525,7 +533,10 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
       {renderNodeContent()}
       <CompletionModal
         open={showCompletionModal}
-        onClose={() => setShowCompletionModal(false)}
+        onClose={() => {
+          setShowCompletionModal(false);
+          setCompletionModalDismissed(true);
+        }}
         onRestart={handleRestartFromModal}
         onGoHome={handleGoHome}
         onViewResults={xapiEnabled ? handleViewResultsFromModal : undefined}

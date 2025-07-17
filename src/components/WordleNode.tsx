@@ -74,10 +74,16 @@ const getFeedback = (guess: string, target: string): Array<'correct' | 'present'
 };
 
 // Helper function to check if a word is valid (basic check)
-const isValidWord = (word: string, wordLength: number, validWords?: string[]): boolean => {
-  // If validWords array is provided, use it as additional custom words (not strict mode)
-  if (validWords && validWords.length > 0) {
-    return validateWord(word, wordLength, { customWords: validWords, strictMode: false });
+const isValidWord = (word: string, wordLength: number, validWords?: string[], targetWord?: string): boolean => {
+  // Always include the target word in the custom words list to ensure it's valid
+  const customWords = validWords ? [...validWords] : [];
+  if (targetWord && !customWords.includes(targetWord.toUpperCase())) {
+    customWords.push(targetWord.toUpperCase());
+  }
+  
+  // If custom words array is provided, use it as additional custom words (not strict mode)
+  if (customWords.length > 0) {
+    return validateWord(word, wordLength, { customWords, strictMode: false });
   }
   
   // Otherwise, use the built-in word validation
@@ -130,7 +136,7 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
       return;
     }
     
-    if (!isValidWord(currentGuess, wordLength, validWords)) {
+    if (!isValidWord(currentGuess, wordLength, validWords, targetWord)) {
       setError('Not a valid word');
       return;
     }

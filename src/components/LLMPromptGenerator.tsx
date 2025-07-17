@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -92,39 +92,85 @@ const SOURCE_CONTENT_TYPES = [
   'case_studies', 'best_practices', 'compliance_requirements', 'technical_documentation'
 ];
 
-export const LLMPromptGenerator: React.FC<LLMPromptGeneratorProps> = ({ open, onClose }) => {
+const TabPanel = React.memo(({ children, value, index }: { children: React.ReactNode; value: number; index: number }) => (
+  <div hidden={value !== index} style={{ padding: '20px 0' }}>
+    {value === index && children}
+  </div>
+));
+TabPanel.displayName = 'TabPanel';
+
+export const LLMPromptGenerator: React.FC<LLMPromptGeneratorProps> = React.memo(({ open, onClose }) => {
   const [config, setConfig] = useState<PromptConfiguration>(DEFAULT_CONFIG);
   const [currentTab, setCurrentTab] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   const [generatedPrompt, setGeneratedPrompt] = useState<string>('');
   const [copySuccess, setCopySuccess] = useState(false);
 
-  const handleConfigChange = (key: keyof PromptConfiguration, value: unknown) => {
+  const handleConfigChange = useCallback((key: keyof PromptConfiguration, value: unknown) => {
     setConfig(prev => ({ ...prev, [key]: value }));
-  };
+  }, []);
 
-  const handleBloomsLevelChange = (level: string, checked: boolean) => {
-    const newLevels = checked 
-      ? [...config.bloomsLevels, level]
-      : config.bloomsLevels.filter(l => l !== level);
-    handleConfigChange('bloomsLevels', newLevels);
-  };
+  const handleAudiencePersonaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleConfigChange('audiencePersona', e.target.value);
+  }, [handleConfigChange]);
 
-  const handleNodeTypeChange = (nodeType: string, included: boolean) => {
-    if (included) {
-      const newIncluded = [...config.includedNodeTypes, nodeType];
-      const newExcluded = config.excludedNodeTypes.filter(t => t !== nodeType);
-      handleConfigChange('includedNodeTypes', newIncluded);
-      handleConfigChange('excludedNodeTypes', newExcluded);
-    } else {
-      const newIncluded = config.includedNodeTypes.filter(t => t !== nodeType);
-      const newExcluded = [...config.excludedNodeTypes, nodeType];
-      handleConfigChange('includedNodeTypes', newIncluded);
-      handleConfigChange('excludedNodeTypes', newExcluded);
-    }
-  };
+  const handleLearningObjectiveChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleConfigChange('learningObjective', e.target.value);
+  }, [handleConfigChange]);
 
-  const generatePrompt = (): string => {
+  const handleContentStyleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleConfigChange('contentStyle', e.target.value);
+  }, [handleConfigChange]);
+
+  const handleComplexityLevelChange = useCallback((_: Event, value: number | number[]) => {
+    handleConfigChange('complexityLevel', value);
+  }, [handleConfigChange]);
+
+  const handleDomainContextChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleConfigChange('domainContext', e.target.value);
+  }, [handleConfigChange]);
+
+  const handleSourceContentTypeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleConfigChange('sourceContentType', e.target.value);
+  }, [handleConfigChange]);
+
+  const handleIncludeMediaPlaceholdersChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleConfigChange('includeMediaPlaceholders', e.target.checked);
+  }, [handleConfigChange]);
+
+  const handleIncludeVariablesChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleConfigChange('includeVariables', e.target.checked);
+  }, [handleConfigChange]);
+
+  const handleIncludeXAPIChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleConfigChange('includeXAPI', e.target.checked);
+  }, [handleConfigChange]);
+
+  const handleBloomsLevelChange = useCallback((level: string, checked: boolean) => {
+    setConfig(prev => {
+      const newLevels = checked 
+        ? [...prev.bloomsLevels, level]
+        : prev.bloomsLevels.filter(l => l !== level);
+      return { ...prev, bloomsLevels: newLevels };
+    });
+  }, []);
+
+  const handleNodeTypeChange = useCallback((nodeType: string, included: boolean) => {
+    setConfig(prev => {
+      if (included) {
+        const newIncluded = [...prev.includedNodeTypes, nodeType];
+        const newExcluded = prev.excludedNodeTypes.filter(t => t !== nodeType);
+        return { ...prev, includedNodeTypes: newIncluded, excludedNodeTypes: newExcluded };
+      } else {
+        const newIncluded = prev.includedNodeTypes.filter(t => t !== nodeType);
+        const newExcluded = [...prev.excludedNodeTypes, nodeType];
+        return { ...prev, includedNodeTypes: newIncluded, excludedNodeTypes: newExcluded };
+      }
+    });
+  }, []);
+
+  const generatePrompt = useCallback((currentConfig?: PromptConfiguration): string => {
+    const configToUse = currentConfig || config;
     const schemaDoc = generateSchemaDocumentation();
     const bloomsRef = generateBloomsTaxonomyReference();
     const validationRef = generateValidationReference();
@@ -138,19 +184,19 @@ export const LLMPromptGenerator: React.FC<LLMPromptGeneratorProps> = ({ open, on
         return true;
       }
       
-      if (config.includedNodeTypes.length > 0) {
-        return config.includedNodeTypes.includes(node.nodeType);
+      if (configToUse.includedNodeTypes.length > 0) {
+        return configToUse.includedNodeTypes.includes(node.nodeType);
       }
-      return !config.excludedNodeTypes.includes(node.nodeType);
+      return !configToUse.excludedNodeTypes.includes(node.nodeType);
     });
 
     const nodeTypeList = availableNodeTypes.map(node => 
       `- **${node.displayName}** (\`${node.nodeType}\`): ${node.description}`
     ).join('\n');
 
-    const complexityGuidance = getComplexityGuidance(config.complexityLevel);
-    const styleGuidance = getStyleGuidance(config.contentStyle);
-    const domainGuidance = getDomainGuidance(config.domainContext);
+    const complexityGuidance = getComplexityGuidance(configToUse.complexityLevel);
+    const styleGuidance = getStyleGuidance(configToUse.contentStyle);
+    const domainGuidance = getDomainGuidance(configToUse.domainContext);
 
     return `# NLJ Scenario Generation Prompt
 
@@ -160,13 +206,13 @@ Generate a valid NLJ JSON scenario based on the provided source material and req
 
 ## Target Configuration
 
-- **Audience Persona**: ${config.audiencePersona}
-- **Learning Objective**: ${config.learningObjective}
-- **Content Style**: ${config.contentStyle}
-- **Complexity Level**: ${config.complexityLevel}/10
-- **Target Bloom's Levels**: ${config.bloomsLevels.join(', ')}
-- **Domain Context**: ${config.domainContext}
-- **Source Content Type**: ${config.sourceContentType}
+- **Audience Persona**: ${configToUse.audiencePersona}
+- **Learning Objective**: ${configToUse.learningObjective}
+- **Content Style**: ${configToUse.contentStyle}
+- **Complexity Level**: ${configToUse.complexityLevel}/10
+- **Target Bloom's Levels**: ${configToUse.bloomsLevels.join(', ')}
+- **Domain Context**: ${configToUse.domainContext}
+- **Source Content Type**: ${configToUse.sourceContentType}
 
 ## Content Style Guidelines
 
@@ -243,7 +289,7 @@ ${validationRef}
 
 ${examples}
 
-${config.includeMediaPlaceholders ? `## Media Placeholder Guidelines
+${configToUse.includeMediaPlaceholders ? `## Media Placeholder Guidelines
 
 When including media in your scenarios:
 
@@ -255,7 +301,7 @@ When including media in your scenarios:
 
 ` : ''}
 
-${config.includeVariables ? `## Variable Usage Guidelines
+${configToUse.includeVariables ? `## Variable Usage Guidelines
 
 Keep variable usage simple and purposeful:
 
@@ -282,7 +328,7 @@ Example variable definitions:
 
 ` : ''}
 
-${config.includeXAPI ? `## xAPI Integration Guidelines
+${configToUse.includeXAPI ? `## xAPI Integration Guidelines
 
 Include xAPI configuration for learning analytics:
 
@@ -351,7 +397,7 @@ Provide ONLY valid JSON in the following structure:
 ---
 
 Now generate the NLJ scenario based on the above requirements and your source material.`;
-  };
+  }, []);
 
   const getComplexityGuidance = (level: number): string => {
     if (level <= 3) {
@@ -394,14 +440,14 @@ Now generate the NLJ scenario based on the above requirements and your source ma
     return domainMap[domain] || domainMap.other;
   };
 
-  const handleGeneratePrompt = () => {
-    const prompt = generatePrompt();
+  const handleGeneratePrompt = useCallback(() => {
+    const prompt = generatePrompt(config);
     setGeneratedPrompt(prompt);
     setShowPreview(true);
-  };
+  }, [generatePrompt, config]);
 
-  const handleDownloadPrompt = () => {
-    const prompt = generatedPrompt || generatePrompt();
+  const handleDownloadPrompt = useCallback(() => {
+    const prompt = generatedPrompt || generatePrompt(config);
     const blob = new Blob([prompt], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -411,10 +457,10 @@ Now generate the NLJ scenario based on the above requirements and your source ma
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  };
+  }, [generatedPrompt, generatePrompt, config]);
 
-  const handleCopyPrompt = async () => {
-    const prompt = generatedPrompt || generatePrompt();
+  const handleCopyPrompt = useCallback(async () => {
+    const prompt = generatedPrompt || generatePrompt(config);
     try {
       await navigator.clipboard.writeText(prompt);
       setCopySuccess(true);
@@ -439,13 +485,8 @@ Now generate the NLJ scenario based on the above requirements and your source ma
       }
       document.body.removeChild(textArea);
     }
-  };
+  }, [generatedPrompt, generatePrompt, config]);
 
-  const TabPanel = ({ children, value, index }: { children: React.ReactNode; value: number; index: number }) => (
-    <div hidden={value !== index} style={{ padding: '20px 0' }}>
-      {value === index && children}
-    </div>
-  );
 
   return (
     <Dialog 
@@ -494,7 +535,7 @@ Now generate the NLJ scenario based on the above requirements and your source ma
             <TextField
               label="Audience Persona"
               value={config.audiencePersona}
-              onChange={(e) => handleConfigChange('audiencePersona', e.target.value)}
+              onChange={handleAudiencePersonaChange}
               fullWidth
               placeholder="e.g., New employees in automotive sales"
               helperText="Describe your target learners - their role, experience level, and context"
@@ -503,7 +544,7 @@ Now generate the NLJ scenario based on the above requirements and your source ma
             <TextField
               label="Learning Objective"
               value={config.learningObjective}
-              onChange={(e) => handleConfigChange('learningObjective', e.target.value)}
+              onChange={handleLearningObjectiveChange}
               fullWidth
               placeholder="e.g., Master product knowledge and customer interaction skills"
               helperText="What should learners be able to do after completing this scenario?"
@@ -535,7 +576,7 @@ Now generate the NLJ scenario based on the above requirements and your source ma
               <FormLabel component="legend">Content Style</FormLabel>
               <RadioGroup
                 value={config.contentStyle}
-                onChange={(e) => handleConfigChange('contentStyle', e.target.value)}
+                onChange={handleContentStyleChange}
               >
                 {CONTENT_STYLES.map(style => (
                   <FormControlLabel
@@ -559,7 +600,7 @@ Now generate the NLJ scenario based on the above requirements and your source ma
               <Typography gutterBottom>Complexity Level: {config.complexityLevel}/10</Typography>
               <Slider
                 value={config.complexityLevel}
-                onChange={(_, value) => handleConfigChange('complexityLevel', value)}
+                onChange={handleComplexityLevelChange}
                 min={1}
                 max={10}
                 step={1}
@@ -575,7 +616,7 @@ Now generate the NLJ scenario based on the above requirements and your source ma
               <FormLabel>Domain Context</FormLabel>
               <RadioGroup
                 value={config.domainContext}
-                onChange={(e) => handleConfigChange('domainContext', e.target.value)}
+                onChange={handleDomainContextChange}
                 row
               >
                 {DOMAIN_CONTEXTS.map(domain => (
@@ -638,7 +679,7 @@ Now generate the NLJ scenario based on the above requirements and your source ma
               control={
                 <Checkbox
                   checked={config.includeMediaPlaceholders}
-                  onChange={(e) => handleConfigChange('includeMediaPlaceholders', e.target.checked)}
+                  onChange={handleIncludeMediaPlaceholdersChange}
                 />
               }
               label="Include Media Placeholder Guidelines"
@@ -648,7 +689,7 @@ Now generate the NLJ scenario based on the above requirements and your source ma
               control={
                 <Checkbox
                   checked={config.includeVariables}
-                  onChange={(e) => handleConfigChange('includeVariables', e.target.checked)}
+                  onChange={handleIncludeVariablesChange}
                 />
               }
               label="Include Variable Usage Guidelines"
@@ -658,7 +699,7 @@ Now generate the NLJ scenario based on the above requirements and your source ma
               control={
                 <Checkbox
                   checked={config.includeXAPI}
-                  onChange={(e) => handleConfigChange('includeXAPI', e.target.checked)}
+                  onChange={handleIncludeXAPIChange}
                 />
               }
               label="Include xAPI Integration Guidelines"
@@ -668,7 +709,7 @@ Now generate the NLJ scenario based on the above requirements and your source ma
               <FormLabel>Source Content Type</FormLabel>
               <RadioGroup
                 value={config.sourceContentType}
-                onChange={(e) => handleConfigChange('sourceContentType', e.target.value)}
+                onChange={handleSourceContentTypeChange}
               >
                 {SOURCE_CONTENT_TYPES.map(type => (
                   <FormControlLabel
@@ -722,4 +763,4 @@ Now generate the NLJ scenario based on the above requirements and your source ma
       </DialogActions>
     </Dialog>
   );
-};
+});

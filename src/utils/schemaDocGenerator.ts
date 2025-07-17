@@ -245,7 +245,7 @@ const NODE_SCHEMAS: Record<string, NodeTypeDocumentation> = {
   ordering: {
     nodeType: 'ordering',
     displayName: 'Ordering Question',
-    description: 'Drag-and-drop question for sequencing items.',
+    description: 'Drag-and-drop question for sequencing items, ranking priorities, or arranging by importance.',
     bloomsLevel: ['Understand', 'Apply', 'Analyze'],
     category: 'question',
     schemaExample: {
@@ -277,8 +277,9 @@ const NODE_SCHEMAS: Record<string, NodeTypeDocumentation> = {
     },
     usageNotes: [
       'Drag-and-drop interface for reordering',
-      'Validates against correctOrder property',
-      'Supports partial credit scoring'
+      'Validates against correctOrder property', 
+      'Supports partial credit scoring',
+      'Ideal for ranking items by priority, importance, or sequence'
     ],
     commonProps: COMMON_NODE_PROPS,
     specificProps: ['text', 'content', 'media', 'additionalMediaList', 'items'],
@@ -287,7 +288,7 @@ const NODE_SCHEMAS: Record<string, NodeTypeDocumentation> = {
       'Must have text property',
       'Must have items array with correctOrder values'
     ],
-    exampleUsage: 'Use for process sequences, chronological ordering, and procedural training.'
+    exampleUsage: 'Use for process sequences, chronological ordering, procedural training, priority ranking, and importance evaluation.'
   },
   
   matching: {
@@ -452,7 +453,7 @@ const NODE_SCHEMAS: Record<string, NodeTypeDocumentation> = {
   matrix: {
     nodeType: 'matrix',
     displayName: 'Matrix Question',
-    description: 'Grid-based question with multiple options for each row item.',
+    description: 'Grid-based question with multiple criteria evaluation for each row item. Best for multi-dimensional assessments, not for ranking or prioritization.',
     bloomsLevel: ['Understand', 'Apply', 'Evaluate'],
     category: 'survey',
     schemaExample: {
@@ -482,17 +483,19 @@ const NODE_SCHEMAS: Record<string, NodeTypeDocumentation> = {
       'Grid-based layout with rows and columns',
       'Each cell can have different response types',
       'Supports numeric scales, ratings, and text responses',
-      'Responsive design adapts to screen size'
+      'Responsive design adapts to screen size',
+      'NOT for ranking or prioritization - use ordering node type instead'
     ],
     commonProps: COMMON_NODE_PROPS,
-    specificProps: ['text', 'content', 'media', 'additionalMediaList', 'rows', 'columns', 'scaleType', 'scaleRange', 'allowPartialResponse', 'required'],
+    specificProps: ['text', 'content', 'media', 'additionalMediaList', 'rows', 'columns', 'scaleType', 'scaleRange', 'matrixType', 'allowPartialResponse', 'required'],
     validationRules: [
       'Must have type: "matrix"',
       'Must have text property',
       'Must have rows and columns arrays',
-      'ScaleType must be valid (numeric, rating, text)'
+      'ScaleType must be valid (numeric, rating, text) OR use matrixType property',
+      'Supports both scaleType/scaleRange and matrixType patterns'
     ],
-    exampleUsage: 'Use for multi-dimensional evaluations, department ratings, and comparative assessments.'
+    exampleUsage: 'Use for multi-dimensional evaluations, department ratings, and comparative assessments. For ranking/prioritization tasks, use ordering node type instead.'
   },
   
   slider: {

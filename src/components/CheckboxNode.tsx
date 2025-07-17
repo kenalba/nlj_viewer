@@ -6,7 +6,6 @@ import {
   Alert, 
   FormHelperText, 
   FormGroup, 
-  FormControlLabel, 
   Checkbox 
 } from '@mui/material';
 import type { CheckboxNode as CheckboxNodeType } from '../types/nlj';
@@ -46,12 +45,8 @@ export const CheckboxNode: React.FC<CheckboxNodeProps> = ({ question, onAnswer }
 
   const validateSelections = useCallback(() => {
     const count = selectedIds.length;
-    const minSelections = question.minSelections || 1;
+    const minSelections = question.minSelections || 0; // Changed from 1 to 0
     const maxSelections = question.maxSelections || question.options.length;
-    
-    if (count === 0) {
-      return 'Please select at least one option';
-    }
     
     if (count < minSelections) {
       return `Please select at least ${minSelections} option${minSelections > 1 ? 's' : ''}`;
@@ -102,6 +97,27 @@ export const CheckboxNode: React.FC<CheckboxNodeProps> = ({ question, onAnswer }
   // Keyboard support
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Handle number keys (1-9) to toggle options
+      if (event.key >= '1' && event.key <= '9') {
+        const optionIndex = parseInt(event.key, 10) - 1;
+        if (optionIndex < question.options.length) {
+          event.preventDefault();
+          const option = question.options[optionIndex];
+          // Get current state to avoid stale closure
+          setSelectedIds(currentSelected => {
+            const isCurrentlySelected = currentSelected.includes(option.id);
+            const newIds = isCurrentlySelected
+              ? currentSelected.filter(id => id !== option.id)
+              : [...currentSelected, option.id];
+            
+            setShowValidation(false);
+            playSound('click');
+            return newIds;
+          });
+        }
+      }
+      
+      // Handle Enter key
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
         handleSubmit();
@@ -110,10 +126,10 @@ export const CheckboxNode: React.FC<CheckboxNodeProps> = ({ question, onAnswer }
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSubmit]);
+  }, [handleSubmit, playSound, question.options]);
 
   const validationError = validateSelections();
-  const minSelections = question.minSelections || 1;
+  const minSelections = question.minSelections || 0;
   const maxSelections = question.maxSelections || question.options.length;
 
   return (
@@ -135,24 +151,75 @@ export const CheckboxNode: React.FC<CheckboxNodeProps> = ({ question, onAnswer }
 
       <Box sx={{ mb: 3 }}>
         <FormGroup>
-          {question.options.map((option) => (
-            <FormControlLabel
+          {question.options.map((option, index) => (
+            <Box
               key={option.id}
-              control={
-                <Checkbox
-                  checked={selectedIds.includes(option.id)}
-                  onChange={(e) => handleValueChange(option.id, e.target.checked)}
-                  color="primary"
-                />
-              }
-              label={option.text}
+              onClick={() => handleValueChange(option.id, !selectedIds.includes(option.id))}
               sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                p: 2,
                 mb: 1,
-                '& .MuiFormControlLabel-label': {
-                  fontSize: isMobile ? '0.875rem' : '1rem',
+                border: '1px solid',
+                borderColor: selectedIds.includes(option.id) ? 
+                  (themeMode === 'unfiltered' ? '#F6FA24' : 'primary.main') : 
+                  (themeMode === 'unfiltered' ? '#333333' : 'divider'),
+                borderRadius: 2,
+                backgroundColor: selectedIds.includes(option.id) ? 
+                  (themeMode === 'unfiltered' ? 'rgba(246, 250, 36, 0.1)' : 'action.selected') : 
+                  'transparent',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  backgroundColor: selectedIds.includes(option.id) ? 
+                    (themeMode === 'unfiltered' ? 'rgba(246, 250, 36, 0.15)' : 'action.selected') : 
+                    (themeMode === 'unfiltered' ? 'rgba(246, 250, 36, 0.05)' : 'action.hover'),
+                  borderColor: themeMode === 'unfiltered' ? 'rgba(246, 250, 36, 0.5)' : 'primary.light',
                 },
               }}
-            />
+            >
+              <Checkbox
+                checked={selectedIds.includes(option.id)}
+                onChange={(e) => handleValueChange(option.id, e.target.checked)}
+                color="primary"
+                sx={{
+                  color: themeMode === 'unfiltered' ? '#666666' : 'text.secondary',
+                  '&.Mui-checked': {
+                    color: themeMode === 'unfiltered' ? '#F6FA24' : 'primary.main',
+                  },
+                }}
+              />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    minWidth: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    backgroundColor: themeMode === 'unfiltered' ? '#333333' : 'action.selected',
+                    color: themeMode === 'unfiltered' ? '#F6FA24' : 'primary.main',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.75rem',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  {index + 1}
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontSize: isMobile ? '0.875rem' : '1rem',
+                    fontWeight: selectedIds.includes(option.id) ? 500 : 400,
+                    color: 'text.primary',
+                  }}
+                >
+                  {option.text}
+                </Typography>
+              </Box>
+            </Box>
           ))}
         </FormGroup>
       </Box>
@@ -162,7 +229,7 @@ export const CheckboxNode: React.FC<CheckboxNodeProps> = ({ question, onAnswer }
         <Typography variant="body2" color="text.secondary">
           {selectedIds.length} selected
           {minSelections === maxSelections 
-            ? ` (select exactly ${minSelections})` 
+            ? (minSelections === 0 ? ` (select 0-${maxSelections})` : ` (select exactly ${minSelections})`)
             : ` (select ${minSelections}-${maxSelections})`
           }
         </Typography>
@@ -179,24 +246,28 @@ export const CheckboxNode: React.FC<CheckboxNodeProps> = ({ question, onAnswer }
           variant="contained"
           onClick={handleSubmit}
           size="large"
-          disabled={selectedIds.length === 0}
           sx={{
             minWidth: '120px',
             borderRadius: 3,
+            px: 4,
+            py: 1.5,
             ...(themeMode === 'unfiltered' && {
               background: 'linear-gradient(45deg, #FF6B6B, #4ECDC4)',
+              boxShadow: '0 4px 16px rgba(246, 250, 36, 0.3)',
               '&:hover': {
                 background: 'linear-gradient(45deg, #FF5252, #26C6DA)',
+                boxShadow: '0 6px 20px rgba(246, 250, 36, 0.4)',
+                transform: 'translateY(-2px)',
               },
             }),
           }}
         >
-          Submit
+          Submit Answer
         </Button>
       </Box>
 
       <FormHelperText sx={{ textAlign: 'center', mt: 2 }}>
-        Press Enter to submit
+        Press 1-{Math.min(9, question.options.length)} to toggle options • Press Enter to submit
       </FormHelperText>
     </NodeCard>
   );

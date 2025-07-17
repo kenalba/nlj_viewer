@@ -100,6 +100,7 @@ export const CompletionModal: React.FC<CompletionModalProps> = ({
       maxWidth="sm"
       fullWidth
       sx={{
+        zIndex: 2000, // Ensure it appears above other modals
         '& .MuiDialog-paper': {
           borderRadius: 3,
           ...(themeMode === 'unfiltered' && {

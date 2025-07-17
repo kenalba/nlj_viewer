@@ -188,6 +188,12 @@ const validateNodeStructure = (node: any): string[] => {
       }
       break;
       
+    case 'matrix':
+      if (!Array.isArray(node.rows) || !Array.isArray(node.columns)) {
+        errors.push(`Matrix node "${node.id}" missing required 'rows' and 'columns' arrays`);
+      }
+      break;
+      
     case 'multi_select':
     case 'checkbox':
       if (!Array.isArray(node.options) || node.options.length === 0) {
