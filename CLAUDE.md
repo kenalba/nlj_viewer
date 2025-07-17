@@ -4,8 +4,8 @@ A TypeScript React application for playing interactive Non-Linear Journey (NLJ) 
 
 ## Features
 
-- **Unified Activity System**: Support for training scenarios, surveys, and assessments in a single platform
-- **Complete Question Type Support**: True/False, Multiple Choice, Ordering, Matching, Short Answer, Likert Scales, Rating Questions, Matrix Questions, Sliders, and Text Areas
+- **Unified Activity System**: Support for training scenarios, surveys, assessments, and Connections word puzzles in a single platform
+- **Complete Question Type Support**: True/False, Multiple Choice, Ordering, Matching, Short Answer, Likert Scales, Rating Questions, Matrix Questions, Sliders, Text Areas, and Connections Games
 - **Mobile-Responsive Design**: Built with Material UI for optimal mobile/desktop experience
 - **Real-time Feedback**: Immediate response validation and scoring with audio feedback
 - **Visual Interactions**: Drag-and-drop ordering, visual connection lines for matching
@@ -14,7 +14,7 @@ A TypeScript React application for playing interactive Non-Linear Journey (NLJ) 
 - **Survey System**: Comprehensive survey question types with automotive and cross-industry templates
 - **Media Support**: Images, videos, and rich content integration
 - **Type-Safe**: Full TypeScript coverage for robust development
-- **Comprehensive Testing**: Full test suite with VSCode integration (203 tests passing)
+- **Comprehensive Testing**: Full test suite with VSCode integration (221 tests passing)
 - **Deployment-Ready**: All TypeScript build errors resolved and pre-deployment verification script included
 - **Keyboard Navigation**: Full keyboard support for accessibility (arrow keys, Enter, number keys)
   - **UnifiedQuestionNode**: Number keys (1-9) for choice selection, Enter to submit/continue
@@ -51,6 +51,7 @@ Visit `http://localhost:5173` to load scenarios.
   - `MatrixNode`: Grid-based questions with responsive design
   - `SliderNode`: Continuous scale input with custom ranges
   - `TextAreaNode`: Long-form text input with validation
+  - `ConnectionsNode`: NYT-style word puzzle games with 4x4 grid, difficulty-based color coding, and category grouping
 
 ### Type System
 
@@ -112,6 +113,7 @@ Sample content available:
 - **NLJ Scenarios** (`/static/sample_nljs/`): FSA sales training modules, product knowledge scenarios, interactive decision trees
 - **Trivie Quizzes** (`/static/sample_trivie_quiz/`): Excel format quiz exports
 - **Survey Templates** (`/static/sample_surveys/`): Automotive and cross-industry employee feedback surveys
+- **Connections Games** (`/static/sample_connections/`): NYT-style word puzzle games with category grouping
 
 ## Schema Support
 
@@ -124,7 +126,9 @@ Supports comprehensive activity schema including:
   - Matrix Questions (grid-based with responsive design)
   - Sliders (continuous scale input)
   - Text Areas (long-form responses with validation)
-- **Interactive Elements**: Drag-and-drop, visual connections, text input, continuous scales
+- **Game Types**: 
+  - Connections Games (4x4 word puzzle grids with difficulty-based color coding)
+- **Interactive Elements**: Drag-and-drop, visual connections, text input, continuous scales, word selection
 - **Media Integration**: Images, videos, and rich content
 - **Variable tracking and conditions**: Dynamic scenario progression
 - **Interstitial panels**: Informational content between questions
@@ -140,7 +144,7 @@ Supports comprehensive activity schema including:
 ## Current Development Status
 
 ✅ **Core System**: Fully functional with all question types implemented
-✅ **Testing**: 203 tests passing, comprehensive test coverage including TrueFalseNode, OrderingNode, and MatchingNode
+✅ **Testing**: 221 tests passing, comprehensive test coverage including TrueFalseNode, OrderingNode, MatchingNode, and ConnectionsNode
 ✅ **Deployment**: TypeScript build errors resolved, deployment-ready
 ✅ **UI/UX**: Responsive design, enhanced keyboard navigation, audio feedback
 ✅ **xAPI Integration**: Complete event tracking system with learning analytics
@@ -149,6 +153,8 @@ Supports comprehensive activity schema including:
   - React error #310 in completion screen fixed (hooks moved to top-level)
   - TrueFalseNode enhanced with submit/continue workflow and keyboard controls (1 for True, 2 for False)
   - MatchingNode auto-proceeding fixed with manual continue button
+✅ **Connections Games**: NYT-style word puzzle games with 4x4 grid, difficulty-based color coding, and comprehensive test coverage
+✅ **Enhanced Features**: Download Sample JSON buttons for LLM context generation
 
 ## xAPI Integration - Phase 1 Complete
 

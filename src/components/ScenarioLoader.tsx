@@ -18,6 +18,7 @@ import {
   Poll as SurveyIcon,
   Assignment as NLJIcon,
   Link as ConnectionsIcon,
+  Download as DownloadIcon,
 } from '@mui/icons-material';
 import type { NLJScenario } from '../types/nlj';
 import { validateScenario } from '../utils/scenarioUtils';
@@ -434,6 +435,69 @@ export const ScenarioLoader: React.FC = () => {
     }
   };
 
+  const downloadSampleJSON = useCallback(async (activityType: ActivityType) => {
+    try {
+      let sampleData: any;
+      let filename: string;
+      
+      switch (activityType) {
+        case 'nlj':
+          // Download the first sample NLJ scenario
+          const nlj = await fetch(`${import.meta.env.BASE_URL}static/sample_nljs/${SAMPLE_SCENARIOS[0]}`);
+          sampleData = await nlj.json();
+          filename = 'sample_nlj_scenario.json';
+          break;
+          
+        case 'survey':
+          // Download the first sample survey
+          const survey = await fetch(`${import.meta.env.BASE_URL}static/sample_surveys/${SAMPLE_SURVEYS[0]}`);
+          sampleData = await survey.json();
+          filename = 'sample_survey.json';
+          break;
+          
+        case 'connections':
+          // Download the first sample connections game
+          const connections = await fetch(`${import.meta.env.BASE_URL}static/sample_connections/${SAMPLE_CONNECTIONS[0]}`);
+          sampleData = await connections.json();
+          filename = 'sample_connections_game.json';
+          break;
+          
+        case 'trivie':
+          // For Trivie, we'll create a simple template since it's Excel-based
+          sampleData = {
+            "note": "This is a JSON template for reference. Trivie quizzes should be uploaded as Excel (.xlsx) files with columns: Question, Type, Answer, Choice1, Choice2, Choice3, Choice4, etc.",
+            "example_structure": {
+              "question": "What is the capital of France?",
+              "type": "multiple_choice",
+              "correct_answer": "Paris",
+              "choices": ["London", "Paris", "Berlin", "Madrid"]
+            }
+          };
+          filename = 'trivie_quiz_template.json';
+          break;
+          
+        default:
+          return;
+      }
+      
+      // Create and download the file
+      const blob = new Blob([JSON.stringify(sampleData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      playSound('click');
+    } catch (error) {
+      console.error('Failed to download sample JSON:', error);
+      playSound('error');
+    }
+  }, [playSound]);
+
   // Activity Type Configurations
   const activityTypes: ActivityTypeConfig[] = [
     {
@@ -508,23 +572,37 @@ export const ScenarioLoader: React.FC = () => {
             {currentActivityType.uploadDescription}
           </Typography>
         </Box>
-        <Button
-          component="label"
-          variant="contained"
-          startIcon={<UploadIcon />}
-          disabled={loading}
-          fullWidth
-          size="large"
-          color={currentActivityType.color}
-        >
-          Choose File
-          <input
-            type="file"
-            accept={currentActivityType.uploadAccept}
-            onChange={handleFileUpload}
-            hidden
-          />
-        </Button>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Button
+            component="label"
+            variant="contained"
+            startIcon={<UploadIcon />}
+            disabled={loading}
+            fullWidth
+            size="large"
+            color={currentActivityType.color}
+          >
+            Choose File
+            <input
+              type="file"
+              accept={currentActivityType.uploadAccept}
+              onChange={handleFileUpload}
+              hidden
+            />
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={() => downloadSampleJSON(currentActivityType.id)}
+            disabled={loading}
+            fullWidth
+            size="large"
+            color={currentActivityType.color}
+            sx={{ textTransform: 'none' }}
+          >
+            Download Sample JSON
+          </Button>
+        </Box>
       </CardContent>
     </Card>
   );
