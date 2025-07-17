@@ -349,16 +349,26 @@ describe('WordleNode', () => {
     await waitFor(() => {
       expect(screen.getByText(/Congratulations!/)).toBeInTheDocument();
       expect(screen.getByText(/You solved it in 1 attempt!/)).toBeInTheDocument();
+      expect(screen.getByText('Continue')).toBeInTheDocument();
       expect(screen.getByText('Return to Menu')).toBeInTheDocument();
     });
 
     expect(mockPlaySound).toHaveBeenCalledWith('correct');
     expect(mockTrackActivityCompleted).toHaveBeenCalled();
-    expect(mockOnAnswer).toHaveBeenCalledWith({
-      guesses: expect.any(Array),
-      attempts: 1,
-      completed: true,
-      won: true
+    
+    // onAnswer should not be called until user clicks Continue
+    expect(mockOnAnswer).not.toHaveBeenCalled();
+    
+    // Click Continue button to proceed
+    fireEvent.click(screen.getByText('Continue'));
+    
+    await waitFor(() => {
+      expect(mockOnAnswer).toHaveBeenCalledWith({
+        guesses: expect.any(Array),
+        attempts: 1,
+        completed: true,
+        won: true
+      });
     });
   });
 
@@ -381,16 +391,26 @@ describe('WordleNode', () => {
       expect(screen.getByText(/Game Over!/)).toBeInTheDocument();
       expect(screen.getByText(/The word was:/)).toBeInTheDocument();
       expect(screen.getByText('REACT')).toBeInTheDocument();
+      expect(screen.getByText('Continue')).toBeInTheDocument();
       expect(screen.getByText('Return to Menu')).toBeInTheDocument();
     });
 
     expect(mockPlaySound).toHaveBeenCalledWith('incorrect');
     expect(mockTrackActivityCompleted).toHaveBeenCalled();
-    expect(mockOnAnswer).toHaveBeenCalledWith({
-      guesses: expect.any(Array),
-      attempts: 1,
-      completed: true,
-      won: false
+    
+    // onAnswer should not be called until user clicks Continue
+    expect(mockOnAnswer).not.toHaveBeenCalled();
+    
+    // Click Continue button to proceed
+    fireEvent.click(screen.getByText('Continue'));
+    
+    await waitFor(() => {
+      expect(mockOnAnswer).toHaveBeenCalledWith({
+        guesses: expect.any(Array),
+        attempts: 1,
+        completed: true,
+        won: false
+      });
     });
   });
 

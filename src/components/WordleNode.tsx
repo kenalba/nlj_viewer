@@ -101,6 +101,7 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
   const [gameWon, setGameWon] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -176,6 +177,7 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
     if (currentGuess.toLowerCase() === targetWord.toLowerCase()) {
       setGameWon(true);
       setGameComplete(true);
+      setShowResults(true);
       playSound('correct');
       const gameScenario = {
         id: question.id,
@@ -186,16 +188,9 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
         activityType: 'game' as const
       };
       trackActivityCompleted(gameScenario, calculateScore(newGuesses.length, maxAttempts));
-      
-      // Call parent callback
-      onAnswer({
-        guesses: newGuesses,
-        attempts: newGuesses.length,
-        completed: true,
-        won: true
-      });
     } else if (newGuesses.length >= maxAttempts) {
       setGameComplete(true);
+      setShowResults(true);
       playSound('incorrect');
       const gameScenario = {
         id: question.id,
@@ -206,14 +201,6 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
         activityType: 'game' as const
       };
       trackActivityCompleted(gameScenario, 0);
-      
-      // Call parent callback
-      onAnswer({
-        guesses: newGuesses,
-        attempts: newGuesses.length,
-        completed: true,
-        won: false
-      });
     }
   };
   
@@ -221,6 +208,16 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
     const { basePoints = 50, bonusPerRemainingAttempt = 10 } = question.scoring || {};
     const remainingAttempts = maxAttempts - attempts;
     return basePoints + (remainingAttempts * bonusPerRemainingAttempt);
+  };
+
+  const handleContinue = () => {
+    // Call parent callback to proceed to next node
+    onAnswer({
+      guesses,
+      attempts: guesses.length,
+      completed: true,
+      won: gameWon
+    });
   };
   
   const handleShowHint = () => {
@@ -423,10 +420,14 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
             {gameWon ? (
               <>
                 <strong>Congratulations!</strong> You solved it in {guesses.length} attempt{guesses.length === 1 ? '' : 's'}!
+                {question.scoring && (
+                  <><br />Score: {calculateScore(guesses.length, maxAttempts)} points</>
+                )}
               </>
             ) : (
               <>
                 <strong>Game Over!</strong> The word was: <strong>{targetWord.toUpperCase()}</strong>
+                <br />You used all {maxAttempts} attempts.
               </>
             )}
           </Alert>
@@ -495,13 +496,22 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
           )}
           
           {gameComplete && (
-            <Button
-              variant="outlined"
-              onClick={() => reset()}
-              startIcon={<RefreshIcon />}
-            >
-              Return to Menu
-            </Button>
+            <>
+              <Button
+                variant="contained"
+                onClick={handleContinue}
+                sx={{ mr: 1 }}
+              >
+                Continue
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => reset()}
+                startIcon={<RefreshIcon />}
+              >
+                Return to Menu
+              </Button>
+            </>
           )}
         </Box>
       </CardContent>
