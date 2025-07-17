@@ -12,10 +12,10 @@ class MockResizeObserver {
   disconnect = vi.fn();
 }
 
-global.ResizeObserver = MockResizeObserver as any;
+globalThis.ResizeObserver = MockResizeObserver;
 
 // Mock crypto.randomUUID
-Object.defineProperty(global, 'crypto', {
+Object.defineProperty(globalThis as any, 'crypto', {
   value: {
     randomUUID: () => 'test-uuid-1234-5678-9012-3456',
   },
@@ -75,10 +75,10 @@ vi.mock('../../contexts/ThemeContext', () => ({
 }));
 
 // Mock file reading
-global.fetch = vi.fn();
+globalThis.fetch = vi.fn();
 
 // Mock DOM methods
-Object.defineProperty(global, 'URL', {
+Object.defineProperty(globalThis as any, 'URL', {
   value: {
     createObjectURL: vi.fn(() => 'blob:test'),
     revokeObjectURL: vi.fn(),
@@ -145,7 +145,7 @@ describe('ScenarioLoader', () => {
     vi.clearAllMocks();
     
     // Mock successful fetch responses
-    (global.fetch as any).mockResolvedValue({
+    (globalThis.fetch as any).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({
         id: 'test-scenario',
@@ -263,7 +263,7 @@ describe('ScenarioLoader', () => {
     fireEvent.click(sampleButton);
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('nls.FSA_102_1_40.json'));
+      expect(globalThis.fetch).toHaveBeenCalledWith(expect.stringContaining('nls.FSA_102_1_40.json'));
     });
     
     await waitFor(() => {
@@ -307,7 +307,7 @@ describe('ScenarioLoader', () => {
 
   it('shows loading state during file operations', async () => {
     // Mock a delayed response
-    (global.fetch as any).mockImplementation(() => 
+    (globalThis.fetch as any).mockImplementation(() => 
       new Promise(resolve => setTimeout(() => resolve({
         ok: true,
         json: () => Promise.resolve({
@@ -340,7 +340,7 @@ describe('ScenarioLoader', () => {
   });
 
   it('handles fetch errors gracefully', async () => {
-    (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+    (globalThis.fetch as any).mockRejectedValueOnce(new Error('Network error'));
 
     render(
       <TestWrapper>
@@ -357,7 +357,7 @@ describe('ScenarioLoader', () => {
   });
 
   it('handles invalid JSON gracefully', async () => {
-    (global.fetch as any).mockResolvedValueOnce({
+    (globalThis.fetch as any).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.reject(new Error('Invalid JSON'))
     });
@@ -418,7 +418,7 @@ describe('ScenarioLoader', () => {
     
     // Verify the download link was created and clicked
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('sample_nljs'));
+      expect(globalThis.fetch).toHaveBeenCalledWith(expect.stringContaining('sample_nljs'));
     });
   });
 
@@ -465,7 +465,7 @@ describe('ScenarioLoader', () => {
     fireEvent.click(trivieButton);
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('quizzes_export_2025-07-15.xlsx'));
+      expect(globalThis.fetch).toHaveBeenCalledWith(expect.stringContaining('quizzes_export_2025-07-15.xlsx'));
     });
   });
 
@@ -488,12 +488,12 @@ describe('ScenarioLoader', () => {
     fireEvent.click(surveyButton);
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('automotive_sales_department.json'));
+      expect(globalThis.fetch).toHaveBeenCalledWith(expect.stringContaining('automotive_sales_department.json'));
     });
   });
 
   it('shows error message in alert for network failures', async () => {
-    (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+    (globalThis.fetch as any).mockRejectedValueOnce(new Error('Network error'));
 
     render(
       <TestWrapper>

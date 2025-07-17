@@ -424,6 +424,7 @@ const NodeRenderer: React.FC<{ node: NLJNode }> = ({ node }) => {
 - **Real-time Collaboration**: Multi-user interactions for group activities
 - **Enhanced Analytics**: Detailed interaction tracking and performance metrics
 - **Plugin Architecture**: Allow third-party node type extensions
+- **Integrated base64 images**: We still can't see images that were pasted in as base64 elements.
 
 ### **Integration Opportunities**
 

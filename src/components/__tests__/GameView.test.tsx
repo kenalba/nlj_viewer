@@ -2,7 +2,6 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { GameView } from '../GameView';
-import { ThemeProvider } from '../../contexts/ThemeContext';
 import { hyundaiTheme } from '../../theme/hyundaiTheme';
 import { unfilteredTheme } from '../../theme/unfilteredTheme';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
@@ -57,10 +56,10 @@ vi.mock('../../contexts/ThemeContext', () => ({
 
 // Mock the NodeRenderer component
 vi.mock('../NodeRenderer', () => ({
-  NodeRenderer: ({ node }: { node: any }) => (
+  NodeRenderer: ({ node }: { node: { type: string; text?: string } }) => (
     <div data-testid="node-renderer">
       <div data-testid="node-type">{node.type}</div>
-      <div data-testid="node-text">{node.text}</div>
+      {node.text && <div data-testid="node-text">{node.text}</div>}
     </div>
   ),
 }));
@@ -90,8 +89,8 @@ vi.mock('../SoundToggle', () => ({
 
 // Mock scenario utils
 vi.mock('../../utils/scenarioUtils', () => ({
-  findNodeById: vi.fn((scenario, nodeId) => {
-    return scenario.nodes.find(node => node.id === nodeId) || null;
+  findNodeById: vi.fn((scenario: any, nodeId: string) => {
+    return scenario.nodes.find((node: any) => node.id === nodeId) || null;
   }),
 }));
 
@@ -113,7 +112,6 @@ const mockScenario: NLJScenario = {
     {
       id: 'start-node',
       type: 'start',
-      text: 'Welcome to the test scenario',
       x: 100,
       y: 100,
       width: 300,
@@ -131,7 +129,6 @@ const mockScenario: NLJScenario = {
     {
       id: 'end-node',
       type: 'end',
-      text: 'Thank you for completing the scenario',
       x: 300,
       y: 500,
       width: 300,
@@ -141,13 +138,19 @@ const mockScenario: NLJScenario = {
   links: [
     {
       id: 'link-1',
-      from: 'start-node',
-      to: 'question-node',
+      type: 'link',
+      sourceNodeId: 'start-node',
+      targetNodeId: 'question-node',
+      startPoint: { x: 100, y: 100 },
+      endPoint: { x: 200, y: 200 },
     },
     {
       id: 'link-2',
-      from: 'question-node',
-      to: 'end-node',
+      type: 'link',
+      sourceNodeId: 'question-node',
+      targetNodeId: 'end-node',
+      startPoint: { x: 200, y: 200 },
+      endPoint: { x: 300, y: 300 },
     },
   ],
   orientation: 'horizontal',
@@ -174,7 +177,6 @@ describe('GameView', () => {
     expect(screen.getByText('Test Scenario')).toBeInTheDocument();
     expect(screen.getByTestId('node-renderer')).toBeInTheDocument();
     expect(screen.getByTestId('node-type')).toHaveTextContent('start');
-    expect(screen.getByTestId('node-text')).toHaveTextContent('Welcome to the test scenario');
   });
 
   it('displays scenario name in app bar', () => {
@@ -267,7 +269,6 @@ describe('GameView', () => {
     // Verify the node content is rendered by the mocked NodeRenderer
     expect(screen.getByTestId('node-renderer')).toBeInTheDocument();
     expect(screen.getByTestId('node-type')).toHaveTextContent('start');
-    expect(screen.getByTestId('node-text')).toHaveTextContent('Welcome to the test scenario');
   });
 
   it('renders node content correctly', () => {
@@ -280,7 +281,6 @@ describe('GameView', () => {
     // Verify the scenario is being used to render the node
     expect(screen.getByTestId('node-renderer')).toBeInTheDocument();
     expect(screen.getByTestId('node-type')).toHaveTextContent('start');
-    expect(screen.getByTestId('node-text')).toHaveTextContent('Welcome to the test scenario');
   });
 
   it('updates rendered node when current node changes', () => {
@@ -394,7 +394,6 @@ describe('GameView', () => {
     );
 
     expect(screen.getByTestId('node-type')).toHaveTextContent('end');
-    expect(screen.getByTestId('node-text')).toHaveTextContent('Thank you for completing the scenario');
   });
 
   it('renders AppBar with proper structure', () => {

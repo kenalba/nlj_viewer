@@ -195,6 +195,7 @@ describe('Bug Regression Tests', () => {
         loadScenario: vi.fn(),
         reset: vi.fn(),
         calculateConnectionsGameScore: vi.fn(() => 0),
+        calculateWordleGameScore: vi.fn(() => 0),
       };
 
       render(
@@ -251,6 +252,7 @@ describe('Bug Regression Tests', () => {
         loadScenario: vi.fn(),
         reset: vi.fn(),
         calculateConnectionsGameScore: vi.fn(() => 0),
+        calculateWordleGameScore: vi.fn(() => 0),
       };
 
       render(
@@ -305,6 +307,7 @@ describe('Bug Regression Tests', () => {
         loadScenario: vi.fn(),
         reset: vi.fn(),
         calculateConnectionsGameScore: vi.fn(() => 0),
+        calculateWordleGameScore: vi.fn(() => 0),
       };
 
       render(

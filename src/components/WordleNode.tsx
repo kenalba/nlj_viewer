@@ -101,7 +101,6 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
   const [gameWon, setGameWon] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
-  const [showResults, setShowResults] = useState(false);
   
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -177,7 +176,6 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
     if (currentGuess.toLowerCase() === targetWord.toLowerCase()) {
       setGameWon(true);
       setGameComplete(true);
-      setShowResults(true);
       playSound('correct');
       const gameScenario = {
         id: question.id,
@@ -190,7 +188,6 @@ export const WordleNode: React.FC<WordleNodeProps> = ({ question, onAnswer }) =>
       trackActivityCompleted(gameScenario, calculateScore(newGuesses.length, maxAttempts));
     } else if (newGuesses.length >= maxAttempts) {
       setGameComplete(true);
-      setShowResults(true);
       playSound('incorrect');
       const gameScenario = {
         id: question.id,
