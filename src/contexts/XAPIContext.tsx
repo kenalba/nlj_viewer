@@ -14,7 +14,6 @@ import {
   eventToStatement,
   questionEventToStatement,
   surveyEventToStatement,
-  connectionsEventToStatement,
   createXAPIClient,
   createMockXAPIClient,
   XAPIClient,
@@ -27,6 +26,7 @@ import type {
   LearningActivityEvent,
   QuestionEvent,
   SurveyEvent,
+  GameEvent,
   ConnectionsEvent
 } from '../xapi';
 import type { NLJScenario } from '../types/nlj';
@@ -217,7 +217,7 @@ export const XAPIProvider: React.FC<XAPIProviderProps> = ({
   // ============================================================================
   
   
-  const trackEvent = useCallback((event: LearningActivityEvent | QuestionEvent | SurveyEvent) => {
+  const trackEvent = useCallback((event: LearningActivityEvent | QuestionEvent | SurveyEvent | GameEvent) => {
     if (!isEnabled || !actor) {
       return;
     }

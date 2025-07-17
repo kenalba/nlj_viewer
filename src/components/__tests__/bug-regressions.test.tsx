@@ -194,6 +194,7 @@ describe('Bug Regression Tests', () => {
         updateVariable: vi.fn(),
         loadScenario: vi.fn(),
         reset: vi.fn(),
+        calculateConnectionsGameScore: vi.fn(() => 0),
       };
 
       render(
@@ -249,6 +250,7 @@ describe('Bug Regression Tests', () => {
         updateVariable: vi.fn(),
         loadScenario: vi.fn(),
         reset: vi.fn(),
+        calculateConnectionsGameScore: vi.fn(() => 0),
       };
 
       render(
@@ -302,6 +304,7 @@ describe('Bug Regression Tests', () => {
         updateVariable: vi.fn(),
         loadScenario: vi.fn(),
         reset: vi.fn(),
+        calculateConnectionsGameScore: vi.fn(() => 0),
       };
 
       render(

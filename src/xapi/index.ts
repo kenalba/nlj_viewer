@@ -64,6 +64,7 @@ export type {
   LearningActivityEvent,
   QuestionEvent,
   SurveyEvent,
+  GameEvent,
   ConnectionsEvent
 } from './types';
 

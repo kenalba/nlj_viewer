@@ -135,10 +135,10 @@ describe('ConnectionsNode', () => {
       </TestWrapper>
     );
 
-    expect(screen.getByText((content, element) => {
+    expect(screen.getByText((_, element) => {
       return element?.textContent === 'Mistakes: 0/4';
     })).toBeInTheDocument();
-    expect(screen.getByText((content, element) => {
+    expect(screen.getByText((_, element) => {
       return element?.textContent === 'Groups found: 0/4';
     })).toBeInTheDocument();
   });
@@ -254,7 +254,7 @@ describe('ConnectionsNode', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Correct! Dogs')).toBeInTheDocument();
-      expect(screen.getByText((content, element) => {
+      expect(screen.getByText((_, element) => {
         return element?.textContent === 'Groups found: 1/4';
       })).toBeInTheDocument();
     });
@@ -287,7 +287,7 @@ describe('ConnectionsNode', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Incorrect. 3 mistakes remaining.')).toBeInTheDocument();
-      expect(screen.getByText((content, element) => {
+      expect(screen.getByText((_, element) => {
         return element?.textContent === 'Mistakes: 1/4';
       })).toBeInTheDocument();
     });
@@ -395,7 +395,7 @@ describe('ConnectionsNode', () => {
 
     // Check that mistakes counter is updated
     await waitFor(() => {
-      expect(screen.getByText((content, element) => {
+      expect(screen.getByText((_, element) => {
         return element?.textContent === 'Mistakes: 1/4';
       })).toBeInTheDocument();
     });

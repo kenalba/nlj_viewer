@@ -407,7 +407,19 @@ export interface SurveyEvent extends LearningActivityEvent {
   sectionId?: string;
 }
 
-export interface ConnectionsEvent extends LearningActivityEvent {
+export interface GameEvent {
+  type: string;
+  activityId: string;
+  activityName: string;
+  activityType: string;
+  actor: XAPIActor;
+  result?: XAPIResult;
+  context?: XAPIContext;
+  timestamp?: string;
+  extensions?: XAPIExtensions;
+}
+
+export interface ConnectionsEvent extends GameEvent {
   type: 'game_started' | 'group_found' | 'mistake_made' | 'game_completed' | 'game_failed';
   gameId: string;
   gameTitle: string;
