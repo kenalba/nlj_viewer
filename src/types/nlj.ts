@@ -19,7 +19,9 @@ export type NodeResponseValue =
   | string[] 
   | Array<{ id: string; value: string }>
   | Array<{ leftId: string; rightId: string }>
-  | Record<string, string | string[]>;
+  | Record<string, string | string[]>
+  | { foundGroups: ConnectionsGroup[]; mistakes: number; completed: boolean }
+  | { guesses: WordleGuess[]; attempts: number; completed: boolean; won: boolean };
 
 export interface Media {
   id: string;
@@ -395,6 +397,39 @@ export interface ConnectionsNode extends BaseNode {
   required?: boolean;
 }
 
+// Wordle Game Types
+export interface WordleGuess {
+  word: string;
+  feedback: Array<'correct' | 'present' | 'absent'>;
+  timestamp: string;
+}
+
+export interface WordleGameData {
+  targetWord: string;
+  wordLength: number;
+  maxAttempts: number;
+  validWords?: string[];
+  hints?: string[];
+}
+
+export interface WordleNode extends BaseNode {
+  type: 'wordle';
+  text: string;
+  content?: string;
+  media?: Media;
+  additionalMediaList?: MediaWrapper[];
+  gameData: WordleGameData;
+  hardMode?: boolean;
+  showKeyboard?: boolean;
+  colorblindMode?: boolean;
+  allowHints?: boolean;
+  scoring?: {
+    basePoints?: number;
+    bonusPerRemainingAttempt?: number;
+    hintPenalty?: number;
+  };
+}
+
 // Updated union type to include all node types
 export type NLJNode = 
   | StartNode 
@@ -413,17 +448,77 @@ export type NLJNode =
   | TextAreaNode
   | MultiSelectNode
   | RankingNode
-  | ConnectionsNode;
+  | ConnectionsNode
+  | WordleNode;
 
 // Type guards for node types
 export const isQuestionNode = (node: NLJNode): node is QuestionNode => node.type === 'question';
 export const isSurveyNode = (node: NLJNode): node is LikertScaleNode | RatingNode | MatrixNode | SliderNode | TextAreaNode => 
   ['likert_scale', 'rating', 'matrix', 'slider', 'text_area'].includes(node.type);
-export const isInteractiveNode = (node: NLJNode): node is QuestionNode | TrueFalseNode | OrderingNode | MatchingNode | ShortAnswerNode | LikertScaleNode | RatingNode | MatrixNode | SliderNode | TextAreaNode | MultiSelectNode | RankingNode | ConnectionsNode => 
+export const isInteractiveNode = (node: NLJNode): node is QuestionNode | TrueFalseNode | OrderingNode | MatchingNode | ShortAnswerNode | LikertScaleNode | RatingNode | MatrixNode | SliderNode | TextAreaNode | MultiSelectNode | RankingNode | ConnectionsNode | WordleNode => 
   !['start', 'end', 'choice', 'interstitial_panel'].includes(node.type);
-export const isAssessmentNode = (node: NLJNode): node is TrueFalseNode | OrderingNode | MatchingNode | ShortAnswerNode | QuestionNode | MultiSelectNode | RankingNode | ConnectionsNode => 
-  ['true_false', 'ordering', 'matching', 'short_answer', 'question', 'multi_select', 'ranking', 'connections'].includes(node.type);
+export const isAssessmentNode = (node: NLJNode): node is TrueFalseNode | OrderingNode | MatchingNode | ShortAnswerNode | QuestionNode | MultiSelectNode | RankingNode | ConnectionsNode | WordleNode => 
+  ['true_false', 'ordering', 'matching', 'short_answer', 'question', 'multi_select', 'ranking', 'connections', 'wordle'].includes(node.type);
 export const isConnectionsNode = (node: NLJNode): node is ConnectionsNode => node.type === 'connections';
+export const isConnectionsResponse = (response: NodeResponseValue): response is { foundGroups: ConnectionsGroup[]; mistakes: number; completed: boolean } => 
+  typeof response === 'object' && response !== null && 'foundGroups' in response && 'mistakes' in response && 'completed' in response;
+
+export const isWordleNode = (node: NLJNode): node is WordleNode => node.type === 'wordle';
+export const isWordleResponse = (response: NodeResponseValue): response is { guesses: WordleGuess[]; attempts: number; completed: boolean; won: boolean } => 
+  typeof response === 'object' && response !== null && 'guesses' in response && 'attempts' in response && 'completed' in response && 'won' in response;
+
+// Utility function for calculating connections game score
+export const calculateConnectionsScore = (
+  response: { foundGroups: ConnectionsGroup[]; mistakes: number; completed: boolean },
+  scoring?: { correctGroupPoints?: number; completionBonus?: number; mistakePenalty?: number }
+): number => {
+  if (!isConnectionsResponse(response)) return 0;
+  
+  const { foundGroups, mistakes, completed } = response;
+  const { correctGroupPoints = 10, completionBonus = 20, mistakePenalty = 2 } = scoring || {};
+  
+  let score = 0;
+  
+  // Points for found groups
+  score += foundGroups.length * correctGroupPoints;
+  
+  // Completion bonus
+  if (completed && foundGroups.length > 0) {
+    score += completionBonus;
+  }
+  
+  // Mistake penalty
+  score -= mistakes * mistakePenalty;
+  
+  return Math.max(0, score); // Ensure score is not negative
+};
+
+// Utility function for calculating wordle game score
+export const calculateWordleScore = (
+  response: { guesses: WordleGuess[]; attempts: number; completed: boolean; won: boolean },
+  scoring?: { basePoints?: number; bonusPerRemainingAttempt?: number; hintPenalty?: number }
+): number => {
+  if (!isWordleResponse(response)) return 0;
+  
+  const { guesses, attempts, completed, won } = response;
+  const { basePoints = 50, bonusPerRemainingAttempt = 10, hintPenalty = 5 } = scoring || {};
+  
+  let score = 0;
+  
+  // Base points for winning
+  if (won) {
+    score += basePoints;
+    
+    // Bonus for remaining attempts
+    const maxAttempts = 6; // Standard Wordle max attempts
+    const remainingAttempts = maxAttempts - attempts;
+    score += remainingAttempts * bonusPerRemainingAttempt;
+  }
+  
+  // TODO: Add hint penalty if hints are used (would need to track hint usage)
+  
+  return Math.max(0, score); // Ensure score is not negative
+};
 
 // Activity metadata and configuration
 export interface ActivityMetadata {

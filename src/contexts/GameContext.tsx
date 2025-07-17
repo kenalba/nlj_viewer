@@ -2,7 +2,8 @@ import React, { createContext, useContext, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { useGameEngine } from '../hooks/useGameEngine';
 import { useXAPI } from './XAPIContext';
-import type { GameState, NLJScenario } from '../types/nlj';
+import type { GameState, NLJScenario, NodeResponseValue } from '../types/nlj';
+import { isConnectionsResponse, calculateConnectionsScore } from '../types/nlj';
 
 interface GameContextValue {
   state: GameState;
@@ -11,6 +12,11 @@ interface GameContextValue {
   updateVariable: (variableId: string, value: number) => void;
   completeScenario: (score?: number) => void;
   reset: () => void;
+  // Helper function for connections-specific score calculation
+  calculateConnectionsGameScore: (
+    response: NodeResponseValue,
+    scoring?: { correctGroupPoints?: number; completionBonus?: number; mistakePenalty?: number }
+  ) => number;
 }
 
 export const GameContext = createContext<GameContextValue | undefined>(undefined);
@@ -30,6 +36,15 @@ interface GameProviderProps {
 export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
   const gameEngine = useGameEngine();
   const { trackActivityCompleted } = useXAPI();
+
+  // Helper function for connections-specific score calculation
+  const calculateConnectionsGameScore = useCallback((
+    response: NodeResponseValue,
+    scoring?: { correctGroupPoints?: number; completionBonus?: number; mistakePenalty?: number }
+  ): number => {
+    if (!isConnectionsResponse(response)) return 0;
+    return calculateConnectionsScore(response, scoring);
+  }, []);
 
   // Enhanced complete scenario with xAPI tracking
   const completeScenario = useCallback((score?: number) => {
@@ -54,7 +69,8 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
 
   const contextValue: GameContextValue = {
     ...gameEngine,
-    completeScenario
+    completeScenario,
+    calculateConnectionsGameScore
   };
 
   return (

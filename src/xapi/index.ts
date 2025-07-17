@@ -63,7 +63,8 @@ export type {
   // Event Types
   LearningActivityEvent,
   QuestionEvent,
-  SurveyEvent
+  SurveyEvent,
+  ConnectionsEvent
 } from './types';
 
 // ============================================================================
@@ -80,6 +81,7 @@ export {
   eventToStatement,
   questionEventToStatement,
   surveyEventToStatement,
+  connectionsEventToStatement,
   validateStatement
 } from './builder';
 

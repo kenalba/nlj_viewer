@@ -21,7 +21,8 @@ import type {
   XAPIValidationError,
   LearningActivityEvent,
   QuestionEvent,
-  SurveyEvent
+  SurveyEvent,
+  ConnectionsEvent
 } from './types';
 
 // ============================================================================
@@ -390,6 +391,77 @@ export function surveyEventToStatement(event: SurveyEvent): XAPIStatement {
   return builder.build();
 }
 
+/**
+ * Convert a connections event to an xAPI statement
+ */
+export function connectionsEventToStatement(event: ConnectionsEvent): XAPIStatement {
+  const verb = getVerbForConnectionsEventType(event.type);
+  
+  const activity = createActivity({
+    id: event.gameId,
+    name: `Connections Game: ${event.gameTitle}`,
+    type: XAPI_ACTIVITY_TYPES.SIMULATION,
+    extensions: {
+      'http://nlj-viewer.com/extensions/game-title': event.gameTitle,
+      'http://nlj-viewer.com/extensions/groups-found': event.groupsFound,
+      'http://nlj-viewer.com/extensions/total-groups': event.totalGroups,
+      'http://nlj-viewer.com/extensions/mistakes': event.mistakes,
+      'http://nlj-viewer.com/extensions/max-mistakes': event.maxMistakes,
+      'http://nlj-viewer.com/extensions/found-group': event.foundGroup,
+      'http://nlj-viewer.com/extensions/final-score': event.finalScore,
+      ...event.extensions
+    }
+  });
+
+  const builder = createStatement()
+    .setActor(event.actor)
+    .setVerb(verb)
+    .setObject(activity)
+    .setTimestamp(event.timestamp);
+
+  // Add result information based on event type
+  if (event.type === 'game_completed' || event.type === 'game_failed') {
+    builder.setResult(createResult({
+      success: event.type === 'game_completed',
+      completion: true,
+      score: event.finalScore ? { raw: event.finalScore } : undefined,
+      duration: event.timeSpent,
+      extensions: {
+        'http://nlj-viewer.com/extensions/groups-found': event.groupsFound,
+        'http://nlj-viewer.com/extensions/mistakes': event.mistakes,
+      }
+    }));
+  } else if (event.type === 'group_found' && event.foundGroup) {
+    builder.setResult(createResult({
+      success: true,
+      response: JSON.stringify(event.foundGroup),
+      extensions: {
+        'http://nlj-viewer.com/extensions/group-category': event.foundGroup.category,
+        'http://nlj-viewer.com/extensions/group-difficulty': event.foundGroup.difficulty,
+        'http://nlj-viewer.com/extensions/group-words': event.foundGroup.words
+      }
+    }));
+  } else if (event.type === 'mistake_made') {
+    builder.setResult(createResult({
+      success: false,
+      extensions: {
+        'http://nlj-viewer.com/extensions/mistakes': event.mistakes,
+        'http://nlj-viewer.com/extensions/max-mistakes': event.maxMistakes
+      }
+    }));
+  }
+
+  if (event.result) {
+    builder.setResult(event.result);
+  }
+
+  if (event.context) {
+    builder.setContext(event.context);
+  }
+
+  return builder.build();
+}
+
 // ============================================================================
 // Utility Functions
 // ============================================================================
@@ -408,6 +480,18 @@ function getVerbForEventType(type: string): XAPIVerb {
     abandoned: XAPI_VERBS.ABANDONED,
     submitted: XAPI_VERBS.SUBMITTED,
     reviewed: XAPI_VERBS.REVIEWED
+  };
+
+  return verbMap[type] || XAPI_VERBS.EXPERIENCED;
+}
+
+function getVerbForConnectionsEventType(type: string): XAPIVerb {
+  const verbMap: Record<string, XAPIVerb> = {
+    game_started: XAPI_VERBS.LAUNCHED,
+    group_found: XAPI_VERBS.GROUPED,
+    mistake_made: XAPI_VERBS.MISTAKEN,
+    game_completed: XAPI_VERBS.COMPLETED,
+    game_failed: XAPI_VERBS.FAILED
   };
 
   return verbMap[type] || XAPI_VERBS.EXPERIENCED;

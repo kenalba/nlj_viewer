@@ -14,6 +14,7 @@ import {
   eventToStatement,
   questionEventToStatement,
   surveyEventToStatement,
+  connectionsEventToStatement,
   createXAPIClient,
   createMockXAPIClient,
   XAPIClient,
@@ -25,7 +26,8 @@ import type {
   XAPIConfig,
   LearningActivityEvent,
   QuestionEvent,
-  SurveyEvent
+  SurveyEvent,
+  ConnectionsEvent
 } from '../xapi';
 import type { NLJScenario } from '../types/nlj';
 
@@ -86,6 +88,44 @@ export interface XAPIContextActions {
   
   // Navigation
   trackNodeVisited: (nodeId: string, nodeType: string) => void;
+  
+  // Connections game tracking
+  trackConnectionsGameStarted: (gameId: string, gameTitle: string) => void;
+  trackConnectionsGroupFound: (
+    gameId: string,
+    gameTitle: string,
+    foundGroup: {
+      category: string;
+      words: string[];
+      difficulty: 'yellow' | 'green' | 'blue' | 'purple';
+    },
+    groupsFound: number,
+    totalGroups: number
+  ) => void;
+  trackConnectionsMistake: (
+    gameId: string,
+    gameTitle: string,
+    mistakes: number,
+    maxMistakes: number
+  ) => void;
+  trackConnectionsGameCompleted: (
+    gameId: string,
+    gameTitle: string,
+    groupsFound: number,
+    totalGroups: number,
+    mistakes: number,
+    timeSpent: number,
+    finalScore?: number
+  ) => void;
+  trackConnectionsGameFailed: (
+    gameId: string,
+    gameTitle: string,
+    groupsFound: number,
+    totalGroups: number,
+    mistakes: number,
+    timeSpent: number,
+    finalScore?: number
+  ) => void;
   
   // Data export
   exportStatements: () => XAPIStatement[];
@@ -508,6 +548,182 @@ export const XAPIProvider: React.FC<XAPIProviderProps> = ({
     trackEvent(event);
   }, [actor, currentActivity, trackEvent]);
   
+  // Connections game tracking
+  const trackConnectionsGameStarted = useCallback((gameId: string, gameTitle: string) => {
+    if (!actor) return;
+    
+    const event: ConnectionsEvent = {
+      type: 'game_started',
+      activityId: gameId,
+      activityName: `Connections Game: ${gameTitle}`,
+      activityType: XAPI_ACTIVITY_TYPES.SIMULATION,
+      gameId,
+      gameTitle,
+      actor,
+      timestamp: new Date().toISOString(),
+      context: createXAPIContext({
+        registration: sessionId.current,
+        platform: 'NLJ Viewer',
+        language: 'en-US'
+      })
+    };
+    
+    trackEvent(event);
+  }, [actor, trackEvent]);
+  
+  const trackConnectionsGroupFound = useCallback((
+    gameId: string,
+    gameTitle: string,
+    foundGroup: {
+      category: string;
+      words: string[];
+      difficulty: 'yellow' | 'green' | 'blue' | 'purple';
+    },
+    groupsFound: number,
+    totalGroups: number
+  ) => {
+    if (!actor) return;
+    
+    const event: ConnectionsEvent = {
+      type: 'group_found',
+      activityId: gameId,
+      activityName: `Connections Game: ${gameTitle}`,
+      activityType: XAPI_ACTIVITY_TYPES.SIMULATION,
+      gameId,
+      gameTitle,
+      foundGroup,
+      groupsFound,
+      totalGroups,
+      actor,
+      timestamp: new Date().toISOString(),
+      result: createResult({
+        success: true,
+        response: JSON.stringify(foundGroup)
+      }),
+      context: createXAPIContext({
+        registration: sessionId.current,
+        platform: 'NLJ Viewer',
+        language: 'en-US'
+      })
+    };
+    
+    trackEvent(event);
+  }, [actor, trackEvent]);
+  
+  const trackConnectionsMistake = useCallback((
+    gameId: string,
+    gameTitle: string,
+    mistakes: number,
+    maxMistakes: number
+  ) => {
+    if (!actor) return;
+    
+    const event: ConnectionsEvent = {
+      type: 'mistake_made',
+      activityId: gameId,
+      activityName: `Connections Game: ${gameTitle}`,
+      activityType: XAPI_ACTIVITY_TYPES.SIMULATION,
+      gameId,
+      gameTitle,
+      mistakes,
+      maxMistakes,
+      actor,
+      timestamp: new Date().toISOString(),
+      result: createResult({
+        success: false
+      }),
+      context: createXAPIContext({
+        registration: sessionId.current,
+        platform: 'NLJ Viewer',
+        language: 'en-US'
+      })
+    };
+    
+    trackEvent(event);
+  }, [actor, trackEvent]);
+  
+  const trackConnectionsGameCompleted = useCallback((
+    gameId: string,
+    gameTitle: string,
+    groupsFound: number,
+    totalGroups: number,
+    mistakes: number,
+    timeSpent: number,
+    finalScore?: number
+  ) => {
+    if (!actor) return;
+    
+    const event: ConnectionsEvent = {
+      type: 'game_completed',
+      activityId: gameId,
+      activityName: `Connections Game: ${gameTitle}`,
+      activityType: XAPI_ACTIVITY_TYPES.SIMULATION,
+      gameId,
+      gameTitle,
+      groupsFound,
+      totalGroups,
+      mistakes,
+      timeSpent,
+      finalScore,
+      actor,
+      timestamp: new Date().toISOString(),
+      result: createResult({
+        success: true,
+        completion: true,
+        score: finalScore ? { raw: finalScore } : undefined,
+        duration: timeSpent
+      }),
+      context: createXAPIContext({
+        registration: sessionId.current,
+        platform: 'NLJ Viewer',
+        language: 'en-US'
+      })
+    };
+    
+    trackEvent(event);
+  }, [actor, trackEvent]);
+  
+  const trackConnectionsGameFailed = useCallback((
+    gameId: string,
+    gameTitle: string,
+    groupsFound: number,
+    totalGroups: number,
+    mistakes: number,
+    timeSpent: number,
+    finalScore?: number
+  ) => {
+    if (!actor) return;
+    
+    const event: ConnectionsEvent = {
+      type: 'game_failed',
+      activityId: gameId,
+      activityName: `Connections Game: ${gameTitle}`,
+      activityType: XAPI_ACTIVITY_TYPES.SIMULATION,
+      gameId,
+      gameTitle,
+      groupsFound,
+      totalGroups,
+      mistakes,
+      timeSpent,
+      finalScore,
+      actor,
+      timestamp: new Date().toISOString(),
+      result: createResult({
+        success: false,
+        completion: true,
+        score: finalScore ? { raw: finalScore } : undefined,
+        duration: timeSpent
+      }),
+      context: createXAPIContext({
+        registration: sessionId.current,
+        platform: 'NLJ Viewer',
+        language: 'en-US'
+      })
+    };
+    
+    trackEvent(event);
+  }, [actor, trackEvent]);
+  
   // Data export functions
   const exportStatements = useCallback(() => {
     return [...statements];
@@ -579,6 +795,11 @@ export const XAPIProvider: React.FC<XAPIProviderProps> = ({
     trackSurveyCompleted,
     trackSurveyResponse,
     trackNodeVisited,
+    trackConnectionsGameStarted,
+    trackConnectionsGroupFound,
+    trackConnectionsMistake,
+    trackConnectionsGameCompleted,
+    trackConnectionsGameFailed,
     exportStatements,
     exportJSON,
     exportCSV,

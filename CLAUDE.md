@@ -4,8 +4,8 @@ A TypeScript React application for playing interactive Non-Linear Journey (NLJ) 
 
 ## Features
 
-- **Unified Activity System**: Support for training scenarios, surveys, assessments, and Connections word puzzles in a single platform
-- **Complete Question Type Support**: True/False, Multiple Choice, Ordering, Matching, Short Answer, Likert Scales, Rating Questions, Matrix Questions, Sliders, Text Areas, and Connections Games
+- **Unified Activity System**: Support for training scenarios, surveys, assessments, Connections word puzzles, and Wordle games in a single platform
+- **Complete Question Type Support**: True/False, Multiple Choice, Ordering, Matching, Short Answer, Likert Scales, Rating Questions, Matrix Questions, Sliders, Text Areas, Connections Games, and Wordle Games
 - **Mobile-Responsive Design**: Built with Material UI for optimal mobile/desktop experience
 - **Real-time Feedback**: Immediate response validation and scoring with audio feedback
 - **Visual Interactions**: Drag-and-drop ordering, visual connection lines for matching
@@ -52,6 +52,7 @@ Visit `http://localhost:5173` to load scenarios.
   - `SliderNode`: Continuous scale input with custom ranges
   - `TextAreaNode`: Long-form text input with validation
   - `ConnectionsNode`: NYT-style word puzzle games with 4x4 grid, difficulty-based color coding, and category grouping
+  - `WordleNode`: Wordle-style word guessing games with comprehensive dictionary validation and native keyboard input
 
 ### Type System
 
@@ -114,6 +115,7 @@ Sample content available:
 - **Trivie Quizzes** (`/static/sample_trivie_quiz/`): Excel format quiz exports
 - **Survey Templates** (`/static/sample_surveys/`): Automotive and cross-industry employee feedback surveys
 - **Connections Games** (`/static/sample_connections/`): NYT-style word puzzle games with category grouping
+- **Wordle Games** (`/static/sample_wordle/`): Wordle-style word guessing games with comprehensive dictionary validation
 
 ## Schema Support
 
@@ -128,6 +130,7 @@ Supports comprehensive activity schema including:
   - Text Areas (long-form responses with validation)
 - **Game Types**: 
   - Connections Games (4x4 word puzzle grids with difficulty-based color coding)
+  - Wordle Games (word guessing with comprehensive Scrabble dictionary validation)
 - **Interactive Elements**: Drag-and-drop, visual connections, text input, continuous scales, word selection
 - **Media Integration**: Images, videos, and rich content
 - **Variable tracking and conditions**: Dynamic scenario progression
@@ -154,6 +157,7 @@ Supports comprehensive activity schema including:
   - TrueFalseNode enhanced with submit/continue workflow and keyboard controls (1 for True, 2 for False)
   - MatchingNode auto-proceeding fixed with manual continue button
 ✅ **Connections Games**: NYT-style word puzzle games with 4x4 grid, difficulty-based color coding, and comprehensive test coverage
+✅ **Wordle Games**: Word guessing games with comprehensive Scrabble dictionary validation (9,378+ words), native keyboard input, and Return to Menu functionality
 ✅ **Enhanced Features**: Download Sample JSON buttons for LLM context generation
 
 ## xAPI Integration - Phase 1 Complete

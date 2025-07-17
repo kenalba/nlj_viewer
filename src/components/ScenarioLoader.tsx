@@ -18,6 +18,7 @@ import {
   Poll as SurveyIcon,
   Assignment as NLJIcon,
   Link as ConnectionsIcon,
+  Games as WordleIcon,
   Download as DownloadIcon,
 } from '@mui/icons-material';
 import type { NLJScenario } from '../types/nlj';
@@ -30,7 +31,7 @@ import { SoundToggle } from './SoundToggle';
 import { ErrorModal, type ErrorDetails } from './ErrorModal';
 
 // Activity Types
-type ActivityType = 'nlj' | 'trivie' | 'survey' | 'connections';
+type ActivityType = 'nlj' | 'trivie' | 'survey' | 'connections' | 'wordle';
 
 // Activity Type Configuration
 interface ActivityTypeConfig {
@@ -74,6 +75,12 @@ const SAMPLE_CONNECTIONS = [
   'sample_connections_game.json',
   'science_connections.json',
   'general_knowledge.json',
+];
+
+const SAMPLE_WORDLE = [
+  'sample_wordle_game.json',
+  'easy_wordle.json',
+  'hard_wordle.json',
 ];
 
 export const ScenarioLoader: React.FC = () => {
@@ -428,6 +435,38 @@ export const ScenarioLoader: React.FC = () => {
     }
   }, [loadScenario, playSound]);
 
+  const loadSampleWordle = useCallback(async (filename: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${import.meta.env.BASE_URL}static/sample_wordle/${filename}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const scenario: NLJScenario = await response.json();
+      
+      // Validate scenario
+      const validationErrors = validateScenario(scenario);
+      if (validationErrors.length > 0) {
+        playSound('error');
+        setError(`Validation errors: ${validationErrors.join(', ')}`);
+        return;
+      }
+      
+      // Store scenario data in localStorage
+      localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
+      playSound('navigate');
+      loadScenario(scenario);
+    } catch (err) {
+      playSound('error');
+      setError(err instanceof Error ? err.message : 'Failed to load sample wordle game');
+    } finally {
+      setLoading(false);
+    }
+  }, [loadScenario, playSound]);
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -460,6 +499,13 @@ export const ScenarioLoader: React.FC = () => {
           const connections = await fetch(`${import.meta.env.BASE_URL}static/sample_connections/${SAMPLE_CONNECTIONS[0]}`);
           sampleData = await connections.json();
           filename = 'sample_connections_game.json';
+          break;
+          
+        case 'wordle':
+          // Download the first sample wordle game
+          const wordle = await fetch(`${import.meta.env.BASE_URL}static/sample_wordle/${SAMPLE_WORDLE[0]}`);
+          sampleData = await wordle.json();
+          filename = 'sample_wordle_game.json';
           break;
           
         case 'trivie':
@@ -551,6 +597,19 @@ export const ScenarioLoader: React.FC = () => {
       samplesDescription: 'Try sample Connections word puzzle games',
       samples: SAMPLE_CONNECTIONS,
       loadSampleFunction: loadSampleConnections,
+    },
+    {
+      id: 'wordle',
+      name: 'Wordle',
+      icon: <WordleIcon />,
+      color: 'info',
+      uploadLabel: 'Upload Wordle Game',
+      uploadDescription: 'Upload a .json file containing a Wordle word puzzle',
+      uploadAccept: '.json',
+      samplesLabel: 'Sample Wordle',
+      samplesDescription: 'Try sample Wordle word puzzle games',
+      samples: SAMPLE_WORDLE,
+      loadSampleFunction: loadSampleWordle,
     },
   ];
 

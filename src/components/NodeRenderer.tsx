@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Box, Typography, Button, useTheme as useMuiTheme, Stack } from '@mui/material';
 import { Analytics, Refresh } from '@mui/icons-material';
-import type { NLJNode, NLJScenario, ChoiceNode, NodeResponseValue } from '../types/nlj';
+import type { NLJNode, NLJScenario, ChoiceNode, NodeResponseValue, ConnectionsNode as ConnectionsNodeType, WordleNode as WordleNodeType } from '../types/nlj';
+import { isConnectionsNode, isConnectionsResponse, calculateConnectionsScore, isWordleNode, isWordleResponse, calculateWordleScore } from '../types/nlj';
 import { UnifiedQuestionNode } from './UnifiedQuestionNode';
 import { InterstitialPanel } from './InterstitialPanel';
 import { NodeCard } from './NodeCard';
@@ -15,6 +16,7 @@ import { SliderNode } from './SliderNode';
 import { TextAreaNode } from './TextAreaNode';
 import { MatrixNode } from './MatrixNode';
 import { ConnectionsNode } from './ConnectionsNode';
+import { WordleNode } from './WordleNode';
 import { XAPIResultsScreen } from './XAPIResultsScreen';
 import { CompletionModal } from './CompletionModal';
 import { useGameContext } from '../contexts/GameContext';
@@ -154,8 +156,37 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
       response,
     });
 
-    // Update score if applicable
-    if (state.score !== undefined) {
+    // Handle connections-specific scoring
+    if (isConnectionsNode(node) && isConnectionsResponse(response)) {
+      const connectionsScore = calculateConnectionsScore(response, node.scoring);
+      debugLog('Connections Score', `Connections game completed with score: ${connectionsScore}`, {
+        foundGroups: response.foundGroups.length,
+        mistakes: response.mistakes,
+        completed: response.completed,
+        score: connectionsScore,
+      });
+      
+      // Update the scenario score if applicable
+      if (state.score !== undefined) {
+        // Note: We could add a score update mechanism here if needed
+      }
+    }
+
+    // Handle wordle-specific scoring
+    if (isWordleNode(node) && isWordleResponse(response)) {
+      const wordleScore = calculateWordleScore(response, node.scoring);
+      debugLog('Wordle Score', `Wordle game completed with score: ${wordleScore}`, {
+        attempts: response.attempts,
+        completed: response.completed,
+        won: response.won,
+        score: wordleScore,
+      });
+      
+      // Update the scenario score if applicable
+      if (state.score !== undefined) {
+        // Note: We could add a score update mechanism here if needed
+      }
+    } else if (state.score !== undefined) {
       // Note: We could add a score update mechanism here if needed
     }
 
@@ -443,6 +474,15 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
     case 'connections':
       return (
         <ConnectionsNode 
+          key={node.id}
+          question={node} 
+          onAnswer={(response) => handleQuestionAnswer(true, response)}
+        />
+      );
+
+    case 'wordle':
+      return (
+        <WordleNode 
           key={node.id}
           question={node} 
           onAnswer={(response) => handleQuestionAnswer(true, response)}

@@ -274,6 +274,19 @@ export const XAPI_VERBS = {
     id: 'http://adlnet.gov/expapi/verbs/voided',
     display: { 'en-US': 'voided' }
   },
+  // Connections game specific verbs
+  CONNECTED: {
+    id: 'http://nlj-viewer.com/xapi/verbs/connected',
+    display: { 'en-US': 'connected' }
+  },
+  GROUPED: {
+    id: 'http://nlj-viewer.com/xapi/verbs/grouped',
+    display: { 'en-US': 'grouped' }
+  },
+  MISTAKEN: {
+    id: 'http://nlj-viewer.com/xapi/verbs/mistaken',
+    display: { 'en-US': 'mistaken' }
+  },
   
   // Extended verbs for surveys and assessments
   SUBMITTED: {
@@ -392,4 +405,21 @@ export interface SurveyEvent extends LearningActivityEvent {
   surveyType: string;
   anonymous?: boolean;
   sectionId?: string;
+}
+
+export interface ConnectionsEvent extends LearningActivityEvent {
+  type: 'game_started' | 'group_found' | 'mistake_made' | 'game_completed' | 'game_failed';
+  gameId: string;
+  gameTitle: string;
+  groupsFound?: number;
+  totalGroups?: number;
+  mistakes?: number;
+  maxMistakes?: number;
+  foundGroup?: {
+    category: string;
+    words: string[];
+    difficulty: 'yellow' | 'green' | 'blue' | 'purple';
+  };
+  timeSpent?: number;
+  finalScore?: number;
 }
