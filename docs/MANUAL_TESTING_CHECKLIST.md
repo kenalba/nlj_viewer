@@ -323,6 +323,39 @@ This comprehensive manual testing checklist covers all aspects of the NLJ Viewer
 
 ---
 
+## 11. Games Testing
+
+### 11.1 Connections Game Testing
+- [ ] **Game Display**: Verify 4x4 grid with 16 words
+- [ ] **Word Selection**: Test clicking words to select/deselect
+- [ ] **Submit Groups**: Test submitting 4-word groups
+- [ ] **Feedback System**: Verify correct/incorrect group feedback
+- [ ] **Difficulty Colors**: Test color coding for different difficulty levels
+- [ ] **Mistakes Counter**: Test mistake tracking and limits
+- [ ] **Completion Logic**: Test game completion when all groups found
+- [ ] **Hint System**: Test hint functionality if available
+- [ ] **Mobile Touch**: Test touch selection on mobile devices
+- [ ] **Keyboard Navigation**: Test keyboard controls for word selection
+- [ ] **Progress Tracking**: Test progress indicators and scoring
+- [ ] **Game Reset**: Test restarting the game functionality
+
+### 11.2 Wordle Game Testing
+- [ ] **Game Display**: Verify word grid and keyboard interface
+- [ ] **Word Input**: Test typing letters using on-screen or physical keyboard
+- [ ] **Word Validation**: Test dictionary validation for guesses
+- [ ] **Guess Feedback**: Verify green/yellow/gray color coding
+- [ ] **Attempt Tracking**: Test attempt counter and maximum attempts
+- [ ] **Completion Logic**: Test winning and losing conditions
+- [ ] **Hint System**: Test hint functionality if available
+- [ ] **Hard Mode**: Test hard mode constraints if enabled
+- [ ] **Mobile Input**: Test mobile keyboard integration
+- [ ] **Keyboard Events**: Test Enter for submit, Backspace for delete
+- [ ] **Progress Tracking**: Test progress bar and scoring
+- [ ] **Game Reset**: Test restarting the game functionality
+- [ ] **Dictionary Size**: Test with different word lengths if supported
+
+---
+
 ## Test Execution Guidelines
 
 ### Test Execution Order
