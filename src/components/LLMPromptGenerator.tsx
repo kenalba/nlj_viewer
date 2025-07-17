@@ -27,7 +27,8 @@ import {
 import {
   Download as DownloadIcon,
   Close as CloseIcon,
-  Preview as PreviewIcon
+  Preview as PreviewIcon,
+  ContentCopy as CopyIcon
 } from '@mui/icons-material';
 import { 
   generateSchemaDocumentation, 
@@ -35,7 +36,7 @@ import {
   generateValidationReference,
   generateExampleScenarios,
   getAllNodeTypes,
-  getNodeTypesByCategory
+  getOptionalNodeTypesByCategory
 } from '../utils/schemaDocGenerator';
 
 interface LLMPromptGeneratorProps {
@@ -96,6 +97,7 @@ export const LLMPromptGenerator: React.FC<LLMPromptGeneratorProps> = ({ open, on
   const [currentTab, setCurrentTab] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   const [generatedPrompt, setGeneratedPrompt] = useState<string>('');
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const handleConfigChange = (key: keyof PromptConfiguration, value: unknown) => {
     setConfig(prev => ({ ...prev, [key]: value }));
@@ -129,8 +131,13 @@ export const LLMPromptGenerator: React.FC<LLMPromptGeneratorProps> = ({ open, on
     const examples = generateExampleScenarios();
     const allNodeTypes = getAllNodeTypes();
     
-    // Filter node types based on selection
+    // Filter node types based on selection, but always include start and end nodes
     const availableNodeTypes = allNodeTypes.filter(node => {
+      // Always include start and end nodes
+      if (node.nodeType === 'start' || node.nodeType === 'end') {
+        return true;
+      }
+      
       if (config.includedNodeTypes.length > 0) {
         return config.includedNodeTypes.includes(node.nodeType);
       }
@@ -187,7 +194,48 @@ ${bloomsRef}
 
 ${schemaDoc}
 
+## CRITICAL: Link Types and Structure
+
+**Link Types:**
+- **"link"**: Standard navigation between nodes (start → question, choice → next_question, question → end)
+- **"parent-child"**: REQUIRED for connecting questions to their choices (question → choice)
+
+**Multiple Choice Questions MUST follow this structure:**
+1. Create a "question" node with the question text
+2. Create separate "choice" nodes for each answer option
+3. Connect question to choices using "parent-child" links
+4. Connect each choice to next node using "link" links
+
+**Example Multiple Choice Structure:**
+\`\`\`json
+{
+  "nodes": [
+    {"id": "q1", "type": "question", "text": "What is...?"},
+    {"id": "choice1", "type": "choice", "text": "Answer A", "isCorrect": true},
+    {"id": "choice2", "type": "choice", "text": "Answer B", "isCorrect": false}
+  ],
+  "links": [
+    {"type": "parent-child", "sourceNodeId": "q1", "targetNodeId": "choice1"},
+    {"type": "parent-child", "sourceNodeId": "q1", "targetNodeId": "choice2"},
+    {"type": "link", "sourceNodeId": "choice1", "targetNodeId": "next_node"},
+    {"type": "link", "sourceNodeId": "choice2", "targetNodeId": "next_node"}
+  ]
+}
+\`\`\`
+
 ## Validation Requirements
+
+**The NLJ Viewer includes comprehensive validation that will catch common errors:**
+
+- Questions without choices (missing parent-child links)
+- Choice nodes without parent questions  
+- Choice nodes without navigation links
+- Invalid link types
+- Links pointing to non-existent nodes
+- Missing start/end nodes
+- Orphaned nodes
+
+**If your generated JSON has validation errors, the system will provide detailed error messages to help you fix the structure.**
 
 ${validationRef}
 
@@ -365,6 +413,34 @@ Now generate the NLJ scenario based on the above requirements and your source ma
     URL.revokeObjectURL(url);
   };
 
+  const handleCopyPrompt = async () => {
+    const prompt = generatedPrompt || generatePrompt();
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      // Fallback for browsers that don't support clipboard API
+      const textArea = document.createElement('textarea');
+      textArea.value = prompt;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+      } catch (err) {
+        console.error('Fallback copy failed: ', err);
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
   const TabPanel = ({ children, value, index }: { children: React.ReactNode; value: number; index: number }) => (
     <div hidden={value !== index} style={{ padding: '20px 0' }}>
       {value === index && children}
@@ -386,6 +462,11 @@ Now generate the NLJ scenario based on the above requirements and your source ma
             <Tooltip title="Generate Preview">
               <IconButton onClick={handleGeneratePrompt} color="primary">
                 <PreviewIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={copySuccess ? "Copied!" : "Copy Prompt"}>
+              <IconButton onClick={handleCopyPrompt} color="primary">
+                <CopyIcon />
               </IconButton>
             </Tooltip>
             <Tooltip title="Download Prompt">
@@ -513,11 +594,12 @@ Now generate the NLJ scenario based on the above requirements and your source ma
         <TabPanel value={currentTab} index={2}>
           <Box display="flex" flexDirection="column" gap={3}>
             <Alert severity="info">
-              Select specific node types to include, or leave empty to include all available types.
+              Select specific node types to include, or leave empty to include all available types. 
+              Start and End nodes are always included automatically.
             </Alert>
             
             {(['structural', 'question', 'survey', 'game'] as const).map(category => {
-              const categoryNodes = getNodeTypesByCategory(category);
+              const categoryNodes = getOptionalNodeTypesByCategory(category);
               return (
                 <Box key={category}>
                   <Typography variant="h6" gutterBottom>
@@ -620,6 +702,14 @@ Now generate the NLJ scenario based on the above requirements and your source ma
         <Button onClick={onClose}>Cancel</Button>
         <Button onClick={handleGeneratePrompt} color="primary">
           Generate Preview
+        </Button>
+        <Button 
+          onClick={handleCopyPrompt} 
+          color="primary" 
+          variant="outlined"
+          startIcon={<CopyIcon />}
+        >
+          {copySuccess ? "Copied!" : "Copy Prompt"}
         </Button>
         <Button 
           onClick={handleDownloadPrompt} 

@@ -70,10 +70,166 @@ export const applyVariableChanges = (
 };
 
 /**
+ * Valid node types that are actually implemented in the system
+ */
+export const VALID_NODE_TYPES = [
+  'start',
+  'end',
+  'question',
+  'choice',
+  'interstitial_panel',
+  'true_false',
+  'ordering',
+  'matching',
+  'short_answer',
+  'likert_scale',
+  'rating',
+  'matrix',
+  'slider',
+  'text_area',
+  'multi_select',
+  'checkbox',
+  'connections',
+  'wordle'
+] as const;
+
+/**
+ * Check if a node type is valid
+ */
+export const isValidNodeType = (nodeType: string): boolean => {
+  return VALID_NODE_TYPES.includes(nodeType as any);
+};
+
+/**
+ * Node types that require text property
+ */
+const TEXT_REQUIRED_NODE_TYPES = [
+  'question',
+  'choice',
+  'interstitial_panel',
+  'true_false',
+  'ordering',
+  'matching',
+  'short_answer',
+  'likert_scale',
+  'rating',
+  'matrix',
+  'slider',
+  'text_area',
+  'multi_select',
+  'checkbox',
+  'connections',
+  'wordle'
+] as const;
+
+/**
+ * Validate individual node structure
+ */
+const validateNodeStructure = (node: any): string[] => {
+  const errors: string[] = [];
+  
+  // Check required base properties
+  if (!node.id) {
+    errors.push(`Node missing required 'id' property`);
+  }
+  if (!node.type) {
+    errors.push(`Node "${node.id || 'unknown'}" missing required 'type' property`);
+  }
+  
+  // Check if node type requires text property
+  if (node.type && TEXT_REQUIRED_NODE_TYPES.includes(node.type) && !node.text) {
+    errors.push(`Node "${node.id}" of type "${node.type}" missing required 'text' property`);
+  }
+  
+  // Type-specific validation
+  switch (node.type) {
+    case 'choice':
+      if (typeof node.isCorrect !== 'boolean') {
+        errors.push(`Choice node "${node.id}" missing required 'isCorrect' boolean property`);
+      }
+      break;
+      
+    case 'true_false':
+      if (typeof node.correctAnswer !== 'boolean') {
+        errors.push(`True/false node "${node.id}" missing required 'correctAnswer' boolean property`);
+      }
+      break;
+      
+    case 'ordering':
+      if (!Array.isArray(node.items) || node.items.length === 0) {
+        errors.push(`Ordering node "${node.id}" missing required 'items' array`);
+      }
+      break;
+      
+    case 'matching':
+      if (!Array.isArray(node.leftItems) || !Array.isArray(node.rightItems)) {
+        errors.push(`Matching node "${node.id}" missing required 'leftItems' and 'rightItems' arrays`);
+      }
+      if (!Array.isArray(node.correctMatches)) {
+        errors.push(`Matching node "${node.id}" missing required 'correctMatches' array`);
+      }
+      break;
+      
+    case 'short_answer':
+      if (!Array.isArray(node.correctAnswers)) {
+        errors.push(`Short answer node "${node.id}" missing required 'correctAnswers' array`);
+      }
+      break;
+      
+    case 'likert_scale':
+      if (!node.scale || typeof node.scale !== 'object') {
+        errors.push(`Likert scale node "${node.id}" missing required 'scale' object`);
+      }
+      break;
+      
+    case 'rating':
+      if (!node.ratingType || !node.range) {
+        errors.push(`Rating node "${node.id}" missing required 'ratingType' and 'range' properties`);
+      }
+      break;
+      
+    case 'multi_select':
+    case 'checkbox':
+      if (!Array.isArray(node.options) || node.options.length === 0) {
+        errors.push(`${node.type} node "${node.id}" missing required 'options' array`);
+      }
+      break;
+      
+    case 'connections':
+      if (!node.gameData || !node.gameData.groups) {
+        errors.push(`Connections node "${node.id}" missing required 'gameData.groups' property`);
+      }
+      break;
+      
+    case 'wordle':
+      if (!node.gameData || !node.gameData.targetWord) {
+        errors.push(`Wordle node "${node.id}" missing required 'gameData.targetWord' property`);
+      }
+      break;
+  }
+  
+  return errors;
+};
+
+/**
  * Validate NLJ scenario structure
  */
 export const validateScenario = (scenario: NLJScenario): string[] => {
   const errors: string[] = [];
+  
+  // Check for unknown node types
+  const unknownNodes = scenario.nodes.filter(node => !VALID_NODE_TYPES.includes(node.type as any));
+  if (unknownNodes.length > 0) {
+    unknownNodes.forEach(node => {
+      errors.push(`Unknown node type "${node.type}" for node "${node.id}". Valid types are: ${VALID_NODE_TYPES.join(', ')}`);
+    });
+  }
+  
+  // Validate each node's structure
+  scenario.nodes.forEach(node => {
+    const nodeErrors = validateNodeStructure(node);
+    errors.push(...nodeErrors);
+  });
   
   // Check for start node
   const startNodes = scenario.nodes.filter(n => n.type === 'start');
@@ -102,6 +258,57 @@ export const validateScenario = (scenario: NLJScenario): string[] => {
   if (orphanedNodes.length > 0) {
     errors.push(`Orphaned nodes: ${orphanedNodes.map(n => n.id).join(', ')}`);
   }
+  
+  // Check for multiple choice questions without choices
+  const questionNodes = scenario.nodes.filter(n => n.type === 'question');
+  questionNodes.forEach(questionNode => {
+    const choices = getChoicesForQuestion(scenario, questionNode.id);
+    if (choices.length === 0) {
+      errors.push(`Question node "${questionNode.id}" has no choice options. Multiple choice questions require at least one choice node connected via parent-child links.`);
+    }
+  });
+  
+  // Check for choice nodes without parent questions
+  const choiceNodes = scenario.nodes.filter(n => n.type === 'choice');
+  choiceNodes.forEach(choiceNode => {
+    const parentLinks = scenario.links.filter(
+      link => link.type === 'parent-child' && link.targetNodeId === choiceNode.id
+    );
+    if (parentLinks.length === 0) {
+      errors.push(`Choice node "${choiceNode.id}" is not connected to any question. Choice nodes must be connected from a question node via parent-child links.`);
+    } else if (parentLinks.length > 1) {
+      errors.push(`Choice node "${choiceNode.id}" has multiple parent questions. Each choice should belong to only one question.`);
+    }
+  });
+  
+  // Check for choice nodes without navigation links
+  choiceNodes.forEach(choiceNode => {
+    const navigationLinks = scenario.links.filter(
+      link => link.type === 'link' && link.sourceNodeId === choiceNode.id
+    );
+    if (navigationLinks.length === 0) {
+      errors.push(`Choice node "${choiceNode.id}" has no navigation link. Choice nodes must have a link to the next node in the scenario.`);
+    }
+  });
+  
+  // Check for invalid link types
+  const validLinkTypes = ['link', 'parent-child'];
+  scenario.links.forEach(link => {
+    if (!validLinkTypes.includes(link.type)) {
+      errors.push(`Invalid link type "${link.type}" for link "${link.id}". Valid types are: ${validLinkTypes.join(', ')}`);
+    }
+  });
+  
+  // Check for links pointing to non-existent nodes
+  const nodeIds = new Set(scenario.nodes.map(n => n.id));
+  scenario.links.forEach(link => {
+    if (!nodeIds.has(link.sourceNodeId)) {
+      errors.push(`Link "${link.id}" references non-existent source node "${link.sourceNodeId}"`);
+    }
+    if (!nodeIds.has(link.targetNodeId)) {
+      errors.push(`Link "${link.id}" references non-existent target node "${link.targetNodeId}"`);
+    }
+  });
   
   return errors;
 };

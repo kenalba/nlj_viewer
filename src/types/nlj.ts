@@ -348,22 +348,26 @@ export interface MultiSelectNode extends BaseNode {
   required?: boolean;
 }
 
-export interface RankingNode extends BaseNode {
-  type: 'ranking';
+export interface CheckboxNode extends BaseNode {
+  type: 'checkbox';
   text: string;
   content?: string;
   media?: Media;
   additionalMediaList?: MediaWrapper[];
-  items: Array<{
+  options: Array<{
     id: string;
     text: string;
-    correctRank?: number;
-    description?: string;
+    isCorrect: boolean;
   }>;
-  maxRankings?: number;
-  allowTies?: boolean;
-  required?: boolean;
+  minSelections?: number;
+  maxSelections?: number;
+  randomizeOptions?: boolean;
+  feedback?: {
+    correct?: string;
+    incorrect?: string;
+  };
 }
+
 
 // Connections game node types
 export interface ConnectionsGroup {
@@ -447,7 +451,7 @@ export type NLJNode =
   | SliderNode
   | TextAreaNode
   | MultiSelectNode
-  | RankingNode
+  | CheckboxNode
   | ConnectionsNode
   | WordleNode;
 
@@ -455,10 +459,10 @@ export type NLJNode =
 export const isQuestionNode = (node: NLJNode): node is QuestionNode => node.type === 'question';
 export const isSurveyNode = (node: NLJNode): node is LikertScaleNode | RatingNode | MatrixNode | SliderNode | TextAreaNode => 
   ['likert_scale', 'rating', 'matrix', 'slider', 'text_area'].includes(node.type);
-export const isInteractiveNode = (node: NLJNode): node is QuestionNode | TrueFalseNode | OrderingNode | MatchingNode | ShortAnswerNode | LikertScaleNode | RatingNode | MatrixNode | SliderNode | TextAreaNode | MultiSelectNode | RankingNode | ConnectionsNode | WordleNode => 
+export const isInteractiveNode = (node: NLJNode): node is QuestionNode | TrueFalseNode | OrderingNode | MatchingNode | ShortAnswerNode | LikertScaleNode | RatingNode | MatrixNode | SliderNode | TextAreaNode | MultiSelectNode | CheckboxNode | ConnectionsNode | WordleNode => 
   !['start', 'end', 'choice', 'interstitial_panel'].includes(node.type);
-export const isAssessmentNode = (node: NLJNode): node is TrueFalseNode | OrderingNode | MatchingNode | ShortAnswerNode | QuestionNode | MultiSelectNode | RankingNode | ConnectionsNode | WordleNode => 
-  ['true_false', 'ordering', 'matching', 'short_answer', 'question', 'multi_select', 'ranking', 'connections', 'wordle'].includes(node.type);
+export const isAssessmentNode = (node: NLJNode): node is TrueFalseNode | OrderingNode | MatchingNode | ShortAnswerNode | QuestionNode | MultiSelectNode | CheckboxNode | ConnectionsNode | WordleNode => 
+  ['true_false', 'ordering', 'matching', 'short_answer', 'question', 'multi_select', 'checkbox', 'connections', 'wordle'].includes(node.type);
 export const isConnectionsNode = (node: NLJNode): node is ConnectionsNode => node.type === 'connections';
 export const isConnectionsResponse = (response: NodeResponseValue): response is { foundGroups: ConnectionsGroup[]; mistakes: number; completed: boolean } => 
   typeof response === 'object' && response !== null && 'foundGroups' in response && 'mistakes' in response && 'completed' in response;

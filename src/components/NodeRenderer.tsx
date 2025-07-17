@@ -15,6 +15,8 @@ import { RatingNode } from './RatingNode';
 import { SliderNode } from './SliderNode';
 import { TextAreaNode } from './TextAreaNode';
 import { MatrixNode } from './MatrixNode';
+import { MultiSelectNode } from './MultiSelectNode';
+import { CheckboxNode } from './CheckboxNode';
 import { ConnectionsNode } from './ConnectionsNode';
 import { WordleNode } from './WordleNode';
 import { XAPIResultsScreen } from './XAPIResultsScreen';
@@ -468,6 +470,24 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
             key={node.id}
             question={node} 
             onAnswer={(response) => handleQuestionAnswer(true, response)}
+          />
+        );
+
+      case 'multi_select':
+        return (
+          <MultiSelectNode 
+            key={node.id}
+            question={node} 
+            onAnswer={(response) => handleQuestionAnswer(true, response)}
+          />
+        );
+
+      case 'checkbox':
+        return (
+          <CheckboxNode 
+            key={node.id}
+            question={node} 
+            onAnswer={handleQuestionAnswer}
           />
         );
 

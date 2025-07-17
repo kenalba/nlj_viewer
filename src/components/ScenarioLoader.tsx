@@ -10,6 +10,8 @@ import {
   Container,
   Tabs,
   Tab,
+  TextField,
+  Divider,
 } from '@mui/material';
 import { 
   Upload as UploadIcon, 
@@ -21,6 +23,7 @@ import {
   Games as WordleIcon,
   Download as DownloadIcon,
   Code as LLMIcon,
+  ContentPaste as PasteIcon,
 } from '@mui/icons-material';
 import type { NLJScenario } from '../types/nlj';
 import { validateScenario } from '../utils/scenarioUtils';
@@ -99,6 +102,7 @@ export const ScenarioLoader: React.FC = () => {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [selectedActivityType, setSelectedActivityType] = useState<ActivityType>('nlj');
   const [showLLMPromptGenerator, setShowLLMPromptGenerator] = useState(false);
+  const [pastedJson, setPastedJson] = useState<string>('');
 
   const createErrorDetails = (
     category: ErrorDetails['category'],
@@ -321,6 +325,91 @@ export const ScenarioLoader: React.FC = () => {
       setLoading(false);
     }
   }, [loadScenario, playSound]);
+
+  const handlePastedJson = useCallback(async () => {
+    if (!pastedJson.trim()) {
+      playSound('error');
+      setError('Please paste JSON content in the text area');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Parse and validate JSON
+      let scenario: NLJScenario;
+      try {
+        scenario = JSON.parse(pastedJson);
+      } catch (jsonError) {
+        handleError(createErrorDetails(
+          'file_format',
+          'Invalid JSON format',
+          `The pasted content contains invalid JSON: ${jsonError instanceof Error ? jsonError.message : 'Unknown error'}`,
+          [
+            'Check if the JSON is properly formatted',
+            'Validate the JSON syntax using a JSON validator',
+            'Ensure all brackets, quotes, and commas are correct',
+            'Make sure there are no trailing commas',
+          ],
+          undefined,
+          { 
+            rawData: pastedJson.substring(0, 1000) + (pastedJson.length > 1000 ? '...' : '')
+          }
+        ));
+        return;
+      }
+
+      // Validate scenario structure
+      const validationErrors = validateScenario(scenario);
+      if (validationErrors.length > 0) {
+        handleError(createErrorDetails(
+          'content_validation',
+          'Scenario validation failed',
+          `The pasted JSON contains ${validationErrors.length} validation error(s).`,
+          [
+            'Verify the JSON follows the NLJ scenario format',
+            'Check that all required fields are present',
+            'Ensure node IDs are unique and properly referenced',
+            'Verify links connect existing nodes',
+          ],
+          undefined,
+          { 
+            rawData: scenario,
+            validationErrors: validationErrors.map(error => ({ field: 'scenario', message: error }))
+          }
+        ));
+        return;
+      }
+
+      // Store scenario data in localStorage
+      localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
+      playSound('navigate');
+      loadScenario(scenario);
+      
+      // Clear the pasted JSON after successful load
+      setPastedJson('');
+      
+    } catch (err) {
+      handleError(createErrorDetails(
+        'unknown',
+        'Failed to process pasted JSON',
+        `An error occurred while processing the pasted content: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        [
+          'Try pasting the JSON again',
+          'Verify the JSON is complete and not truncated',
+          'Check for any special characters that might cause issues',
+          'Try using the file upload option instead',
+        ],
+        undefined,
+        { 
+          stackTrace: err instanceof Error ? err.stack : undefined
+        }
+      ));
+    } finally {
+      setLoading(false);
+    }
+  }, [pastedJson, loadScenario, playSound, handleError]);
 
   const loadSampleScenario = useCallback(async (filename: string) => {
     setLoading(true);
@@ -705,6 +794,48 @@ export const ScenarioLoader: React.FC = () => {
                 hidden
               />
             </Button>
+            
+            {/* Add paste functionality for JSON-based activities */}
+            {(selectedActivityType === 'nlj' || selectedActivityType === 'survey') && (
+              <>
+                <Divider sx={{ my: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    or
+                  </Typography>
+                </Divider>
+                
+                <TextField
+                  label="Paste JSON Content"
+                  multiline
+                  rows={4}
+                  value={pastedJson}
+                  onChange={(e) => setPastedJson(e.target.value)}
+                  placeholder="Paste your NLJ scenario JSON here..."
+                  disabled={loading}
+                  fullWidth
+                  variant="outlined"
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      fontFamily: 'monospace',
+                      fontSize: '0.875rem',
+                    },
+                  }}
+                />
+                
+                <Button
+                  variant="outlined"
+                  startIcon={<PasteIcon />}
+                  onClick={handlePastedJson}
+                  disabled={loading || !pastedJson.trim()}
+                  fullWidth
+                  size="large"
+                  color={currentActivityType.color}
+                >
+                  Load Pasted JSON
+                </Button>
+              </>
+            )}
+            
             <Button
               variant="outlined"
               startIcon={<DownloadIcon />}

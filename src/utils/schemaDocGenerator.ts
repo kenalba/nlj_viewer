@@ -168,6 +168,42 @@ const NODE_SCHEMAS: Record<string, NodeTypeDocumentation> = {
     exampleUsage: 'Use for knowledge checks, comprehension questions, and decision points.'
   },
   
+  choice: {
+    nodeType: 'choice',
+    displayName: 'Choice Option',
+    description: 'Individual choice option for multiple choice questions.',
+    bloomsLevel: ['Structure'],
+    category: 'choice',
+    schemaExample: {
+      id: 'choice1',
+      type: 'choice',
+      x: 500,
+      y: 100,
+      width: 300,
+      height: 80,
+      text: 'Paris',
+      isCorrect: true,
+      feedback: 'Correct! Paris is the capital of France.',
+      choiceType: 'CORRECT'
+    },
+    usageNotes: [
+      'Used as answer options for multiple choice questions',
+      'Must be connected to question node via parent-child links',
+      'Each choice should have navigation links to next node',
+      'Feedback is displayed after selection'
+    ],
+    commonProps: COMMON_NODE_PROPS,
+    specificProps: ['text', 'isCorrect', 'feedback', 'choiceType', 'variableChanges'],
+    validationRules: [
+      'Must have type: "choice"',
+      'Must have text property',
+      'Should have isCorrect boolean property',
+      'Should have feedback property',
+      'Must be linked from a question node via parent-child link'
+    ],
+    exampleUsage: 'Use as answer options for multiple choice questions with immediate feedback.'
+  },
+  
   true_false: {
     nodeType: 'true_false',
     displayName: 'True/False Question',
@@ -413,6 +449,223 @@ const NODE_SCHEMAS: Record<string, NodeTypeDocumentation> = {
     exampleUsage: 'Use for experience ratings, quality assessments, and preference measurements.'
   },
   
+  matrix: {
+    nodeType: 'matrix',
+    displayName: 'Matrix Question',
+    description: 'Grid-based question with multiple options for each row item.',
+    bloomsLevel: ['Understand', 'Apply', 'Evaluate'],
+    category: 'survey',
+    schemaExample: {
+      id: 'matrix1',
+      type: 'matrix',
+      x: 300,
+      y: 200,
+      width: 600,
+      height: 400,
+      text: 'How would you rate each department on the following criteria?',
+      content: 'Rate each department from 1 (Poor) to 5 (Excellent)',
+      rows: [
+        { id: 'sales', text: 'Sales Department' },
+        { id: 'support', text: 'Customer Support' },
+        { id: 'engineering', text: 'Engineering' }
+      ],
+      columns: [
+        { id: 'quality', text: 'Quality of Service' },
+        { id: 'responsiveness', text: 'Responsiveness' },
+        { id: 'knowledge', text: 'Knowledge' }
+      ],
+      scaleType: 'numeric',
+      scaleRange: { min: 1, max: 5 },
+      required: true
+    },
+    usageNotes: [
+      'Grid-based layout with rows and columns',
+      'Each cell can have different response types',
+      'Supports numeric scales, ratings, and text responses',
+      'Responsive design adapts to screen size'
+    ],
+    commonProps: COMMON_NODE_PROPS,
+    specificProps: ['text', 'content', 'media', 'additionalMediaList', 'rows', 'columns', 'scaleType', 'scaleRange', 'allowPartialResponse', 'required'],
+    validationRules: [
+      'Must have type: "matrix"',
+      'Must have text property',
+      'Must have rows and columns arrays',
+      'ScaleType must be valid (numeric, rating, text)'
+    ],
+    exampleUsage: 'Use for multi-dimensional evaluations, department ratings, and comparative assessments.'
+  },
+  
+  slider: {
+    nodeType: 'slider',
+    displayName: 'Slider Question',
+    description: 'Continuous scale input with draggable slider control.',
+    bloomsLevel: ['Evaluate'],
+    category: 'survey',
+    schemaExample: {
+      id: 'slider1',
+      type: 'slider',
+      x: 300,
+      y: 200,
+      width: 500,
+      height: 250,
+      text: 'How satisfied are you with your current work-life balance?',
+      content: 'Move the slider to indicate your satisfaction level.',
+      range: { min: 0, max: 100 },
+      step: 5,
+      defaultValue: 50,
+      labels: {
+        min: 'Very Dissatisfied',
+        max: 'Very Satisfied',
+        current: 'Current: {value}%'
+      },
+      showValue: true,
+      required: true
+    },
+    usageNotes: [
+      'Continuous scale with smooth interaction',
+      'Configurable range and step increments',
+      'Visual feedback with current value display',
+      'Supports custom labels and formatting'
+    ],
+    commonProps: COMMON_NODE_PROPS,
+    specificProps: ['text', 'content', 'media', 'additionalMediaList', 'range', 'step', 'defaultValue', 'labels', 'showValue', 'required'],
+    validationRules: [
+      'Must have type: "slider"',
+      'Must have text property',
+      'Must have range object with min and max values',
+      'Step must be positive number'
+    ],
+    exampleUsage: 'Use for satisfaction ratings, probability assessments, and continuous scale measurements.'
+  },
+  
+  text_area: {
+    nodeType: 'text_area',
+    displayName: 'Text Area Question',
+    description: 'Multi-line text input for long-form responses.',
+    bloomsLevel: ['Understand', 'Apply', 'Analyze', 'Evaluate', 'Create'],
+    category: 'survey',
+    schemaExample: {
+      id: 'textarea1',
+      type: 'text_area',
+      x: 300,
+      y: 200,
+      width: 500,
+      height: 350,
+      text: 'Please describe your experience with our customer service.',
+      content: 'Provide detailed feedback about your interactions.',
+      placeholder: 'Enter your detailed response here...',
+      minLength: 10,
+      maxLength: 500,
+      rows: 6,
+      required: true,
+      showCharacterCount: true
+    },
+    usageNotes: [
+      'Multi-line text input with validation',
+      'Configurable length limits and character counting',
+      'Supports placeholder text and formatting',
+      'Automatic text area resizing options'
+    ],
+    commonProps: COMMON_NODE_PROPS,
+    specificProps: ['text', 'content', 'media', 'additionalMediaList', 'placeholder', 'minLength', 'maxLength', 'rows', 'required', 'showCharacterCount'],
+    validationRules: [
+      'Must have type: "text_area"',
+      'Must have text property',
+      'MinLength and maxLength must be positive numbers',
+      'Rows must be positive integer'
+    ],
+    exampleUsage: 'Use for detailed feedback, essay questions, and open-ended responses.'
+  },
+  
+  multi_select: {
+    nodeType: 'multi_select',
+    displayName: 'Multi-Select Question',
+    description: 'Multiple choice question allowing selection of multiple options.',
+    bloomsLevel: ['Remember', 'Understand', 'Apply'],
+    category: 'survey',
+    schemaExample: {
+      id: 'multiselect1',
+      type: 'multi_select',
+      x: 300,
+      y: 200,
+      width: 450,
+      height: 400,
+      text: 'Which of the following programming languages do you use?',
+      content: 'Select all that apply.',
+      options: [
+        { id: 'js', text: 'JavaScript', value: 'javascript' },
+        { id: 'py', text: 'Python', value: 'python' },
+        { id: 'java', text: 'Java', value: 'java' },
+        { id: 'cpp', text: 'C++', value: 'cpp' },
+        { id: 'go', text: 'Go', value: 'go' }
+      ],
+      minSelections: 1,
+      maxSelections: 3,
+      required: true
+    },
+    usageNotes: [
+      'Allow multiple option selection with checkboxes',
+      'Configurable minimum and maximum selections',
+      'Validation for selection limits',
+      'Supports custom option values'
+    ],
+    commonProps: COMMON_NODE_PROPS,
+    specificProps: ['text', 'content', 'media', 'additionalMediaList', 'options', 'minSelections', 'maxSelections', 'required'],
+    validationRules: [
+      'Must have type: "multi_select"',
+      'Must have text property',
+      'Must have options array with at least one option',
+      'MinSelections and maxSelections must be positive numbers'
+    ],
+    exampleUsage: 'Use for skills assessment, preference selection, and multi-option surveys.'
+  },
+  
+  checkbox: {
+    nodeType: 'checkbox',
+    displayName: 'Checkbox Question',
+    description: 'Quiz-style multi-select question with correct/incorrect answers.',
+    bloomsLevel: ['Remember', 'Understand', 'Apply'],
+    category: 'question',
+    schemaExample: {
+      id: 'checkbox1',
+      type: 'checkbox',
+      x: 300,
+      y: 200,
+      width: 450,
+      height: 400,
+      text: 'Which of the following are programming languages?',
+      content: 'Select all correct answers.',
+      options: [
+        { id: 'js', text: 'JavaScript', isCorrect: true },
+        { id: 'py', text: 'Python', isCorrect: true },
+        { id: 'html', text: 'HTML', isCorrect: false },
+        { id: 'css', text: 'CSS', isCorrect: false }
+      ],
+      minSelections: 1,
+      maxSelections: 4,
+      feedback: {
+        correct: 'Excellent! You identified the programming languages correctly.',
+        incorrect: 'Not quite. JavaScript and Python are programming languages, while HTML and CSS are markup and styling languages.'
+      }
+    },
+    usageNotes: [
+      'Allow multiple option selection with scoring',
+      'Each option has isCorrect boolean flag',
+      'Validation for selection limits',
+      'Provides immediate feedback on correctness'
+    ],
+    commonProps: COMMON_NODE_PROPS,
+    specificProps: ['text', 'content', 'media', 'additionalMediaList', 'options', 'minSelections', 'maxSelections', 'feedback'],
+    validationRules: [
+      'Must have type: "checkbox"',
+      'Must have text property',
+      'Must have options array with at least one option',
+      'Each option must have isCorrect boolean property',
+      'MinSelections and maxSelections must be positive numbers'
+    ],
+    exampleUsage: 'Use for knowledge checks, comprehension questions, and multi-answer assessments.'
+  },
+  
   connections: {
     nodeType: 'connections',
     displayName: 'Connections Game',
@@ -541,6 +794,24 @@ export function getAllNodeTypes(): NodeTypeDocumentation[] {
  */
 export function getNodeTypesByCategory(category: NodeTypeDocumentation['category']): NodeTypeDocumentation[] {
   return Object.values(NODE_SCHEMAS).filter(node => node.category === category);
+}
+
+/**
+ * Required structural nodes that should always be included in scenarios
+ */
+const REQUIRED_STRUCTURAL_NODES = ['start', 'end'] as const;
+
+/**
+ * Get optional node types by category (excluding required structural nodes)
+ */
+export function getOptionalNodeTypesByCategory(category: NodeTypeDocumentation['category']): NodeTypeDocumentation[] {
+  return Object.values(NODE_SCHEMAS).filter(node => {
+    if (node.category !== category) return false;
+    if (category === 'structural' && REQUIRED_STRUCTURAL_NODES.includes(node.nodeType as any)) {
+      return false;
+    }
+    return true;
+  });
 }
 
 /**
@@ -743,6 +1014,136 @@ export function generateExampleScenarios(): string {
       "targetNodeId": "end",
       "startPoint": { "x": 800, "y": 150 },
       "endPoint": { "x": 800, "y": 150 }
+    }
+  ]
+}
+\`\`\`
+
+## Multiple Choice Question Example
+
+\`\`\`json
+{
+  "id": "multiple-choice-example",
+  "name": "Multiple Choice Example",
+  "orientation": "horizontal",
+  "activityType": "training",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "x": 100,
+      "y": 100,
+      "width": 200,
+      "height": 100
+    },
+    {
+      "id": "q1",
+      "type": "question",
+      "x": 400,
+      "y": 100,
+      "width": 400,
+      "height": 200,
+      "text": "What is the capital of France?",
+      "content": "Select the correct answer from the options below."
+    },
+    {
+      "id": "choice1",
+      "type": "choice",
+      "x": 500,
+      "y": 50,
+      "width": 200,
+      "height": 60,
+      "text": "Paris",
+      "isCorrect": true,
+      "feedback": "Correct! Paris is the capital of France."
+    },
+    {
+      "id": "choice2",
+      "type": "choice",
+      "x": 500,
+      "y": 120,
+      "width": 200,
+      "height": 60,
+      "text": "London",
+      "isCorrect": false,
+      "feedback": "Incorrect. London is the capital of England."
+    },
+    {
+      "id": "choice3",
+      "type": "choice",
+      "x": 500,
+      "y": 190,
+      "width": 200,
+      "height": 60,
+      "text": "Berlin",
+      "isCorrect": false,
+      "feedback": "Incorrect. Berlin is the capital of Germany."
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "x": 900,
+      "y": 100,
+      "width": 200,
+      "height": 100
+    }
+  ],
+  "links": [
+    {
+      "id": "start-q1",
+      "type": "link",
+      "sourceNodeId": "start",
+      "targetNodeId": "q1",
+      "startPoint": { "x": 300, "y": 150 },
+      "endPoint": { "x": 400, "y": 150 }
+    },
+    {
+      "id": "q1-choice1",
+      "type": "parent-child",
+      "sourceNodeId": "q1",
+      "targetNodeId": "choice1",
+      "startPoint": { "x": 600, "y": 100 },
+      "endPoint": { "x": 600, "y": 80 }
+    },
+    {
+      "id": "q1-choice2",
+      "type": "parent-child",
+      "sourceNodeId": "q1",
+      "targetNodeId": "choice2",
+      "startPoint": { "x": 600, "y": 150 },
+      "endPoint": { "x": 600, "y": 150 }
+    },
+    {
+      "id": "q1-choice3",
+      "type": "parent-child",
+      "sourceNodeId": "q1",
+      "targetNodeId": "choice3",
+      "startPoint": { "x": 600, "y": 200 },
+      "endPoint": { "x": 600, "y": 220 }
+    },
+    {
+      "id": "choice1-end",
+      "type": "link",
+      "sourceNodeId": "choice1",
+      "targetNodeId": "end",
+      "startPoint": { "x": 700, "y": 80 },
+      "endPoint": { "x": 900, "y": 150 }
+    },
+    {
+      "id": "choice2-end",
+      "type": "link",
+      "sourceNodeId": "choice2",
+      "targetNodeId": "end",
+      "startPoint": { "x": 700, "y": 150 },
+      "endPoint": { "x": 900, "y": 150 }
+    },
+    {
+      "id": "choice3-end",
+      "type": "link",
+      "sourceNodeId": "choice3",
+      "targetNodeId": "end",
+      "startPoint": { "x": 700, "y": 220 },
+      "endPoint": { "x": 900, "y": 150 }
     }
   ]
 }
