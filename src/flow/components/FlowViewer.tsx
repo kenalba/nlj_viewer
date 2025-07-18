@@ -42,7 +42,7 @@ import {
   Settings as SettingsIcon,
 } from '@mui/icons-material';
 
-import type { NLJScenario, NLJNode } from '../../types/nlj';
+import type { NLJScenario, NLJNode, ConnectionsGroup } from '../../types/nlj';
 import type { FlowNode, FlowEdge, FlowNodeData, FlowValidationResult, LayoutConfig, FlowNodeType } from '../types/flow';
 import { 
   nljScenarioToFlow, 
@@ -292,6 +292,7 @@ function FlowViewerContent({
           content: 'Enter your matching question here...',
           leftItems: [],
           rightItems: [],
+          correctMatches: [],
         };
         break;
       case 'short_answer':
@@ -317,9 +318,14 @@ function FlowViewerContent({
           type: 'likert_scale',
           text: 'Likert Scale Question',
           content: 'Enter your likert scale question here...',
-          scaleType: '1-5',
-          leftLabel: 'Strongly Disagree',
-          rightLabel: 'Strongly Agree',
+          scale: {
+            min: 1,
+            max: 5,
+            labels: {
+              min: 'Strongly Disagree',
+              max: 'Strongly Agree',
+            },
+          },
         };
         break;
       case 'rating':
@@ -329,7 +335,10 @@ function FlowViewerContent({
           text: 'Rating Question',
           content: 'Enter your rating question here...',
           ratingType: 'stars',
-          scale: 5,
+          range: {
+            min: 1,
+            max: 5,
+          },
         };
         break;
       case 'matrix':
@@ -338,8 +347,9 @@ function FlowViewerContent({
           type: 'matrix',
           text: 'Matrix Question',
           content: 'Enter your matrix question here...',
-          questions: [],
-          options: [],
+          rows: [],
+          columns: [],
+          matrixType: 'single',
         };
         break;
       case 'slider':
@@ -348,9 +358,15 @@ function FlowViewerContent({
           type: 'slider',
           text: 'Slider Question',
           content: 'Enter your slider question here...',
-          min: 0,
-          max: 100,
-          step: 1,
+          range: {
+            min: 0,
+            max: 100,
+            step: 1,
+          },
+          labels: {
+            min: 'Min',
+            max: 'Max',
+          },
         };
         break;
       case 'text_area':
@@ -387,13 +403,14 @@ function FlowViewerContent({
           text: 'Connections Game',
           content: 'Enter your connections game description here...',
           gameData: {
-            words: ['APPLE', 'BANANA', 'CHERRY', 'GRAPE', 'ORANGE', 'PEACH', 'PLUM', 'BERRY', 'RED', 'BLUE', 'GREEN', 'YELLOW', 'SMALL', 'LARGE', 'MEDIUM', 'HUGE'],
+            title: 'Connections Game',
+            instructions: 'Find groups of 4 related words',
             groups: [
-              { name: 'FRUITS', words: ['APPLE', 'BANANA', 'CHERRY', 'GRAPE'], difficulty: 'yellow' },
-              { name: 'COLORS', words: ['RED', 'BLUE', 'GREEN', 'YELLOW'], difficulty: 'green' },
-              { name: 'CITRUS', words: ['ORANGE', 'PEACH', 'PLUM', 'BERRY'], difficulty: 'blue' },
-              { name: 'SIZES', words: ['SMALL', 'LARGE', 'MEDIUM', 'HUGE'], difficulty: 'purple' }
-            ]
+              { category: 'FRUITS', words: ['APPLE', 'BANANA', 'CHERRY', 'GRAPE'] as [string, string, string, string], difficulty: 'yellow' },
+              { category: 'COLORS', words: ['RED', 'BLUE', 'GREEN', 'YELLOW'] as [string, string, string, string], difficulty: 'green' },
+              { category: 'CITRUS', words: ['ORANGE', 'PEACH', 'PLUM', 'BERRY'] as [string, string, string, string], difficulty: 'blue' },
+              { category: 'SIZES', words: ['SMALL', 'LARGE', 'MEDIUM', 'HUGE'] as [string, string, string, string], difficulty: 'purple' }
+            ] as [ConnectionsGroup, ConnectionsGroup, ConnectionsGroup, ConnectionsGroup]
           }
         };
         break;
@@ -415,6 +432,7 @@ function FlowViewerContent({
       default:
         nljNode = {
           ...createBaseNode(),
+          type: 'question',
           text: 'New Node',
           content: 'Enter content here...',
         };

@@ -69,13 +69,13 @@ export const convertNodeMarkdownToHtml = (node: NLJNode): NLJNode => {
   const convertedNode = { ...node };
   
   // Convert text field if it exists and is markdown
-  if (convertedNode.text && isMarkdownContent(convertedNode.text)) {
-    convertedNode.text = convertMarkdownToHtml(convertedNode.text);
+  if ((convertedNode as any).text && isMarkdownContent((convertedNode as any).text)) {
+    (convertedNode as any).text = convertMarkdownToHtml((convertedNode as any).text);
   }
   
   // Convert content field if it exists and is markdown
-  if (convertedNode.content && isMarkdownContent(convertedNode.content)) {
-    convertedNode.content = convertMarkdownToHtml(convertedNode.content);
+  if ((convertedNode as any).content && isMarkdownContent((convertedNode as any).content)) {
+    (convertedNode as any).content = convertMarkdownToHtml((convertedNode as any).content);
   }
   
   // Convert description field if it exists and is markdown
@@ -89,8 +89,8 @@ export const convertNodeMarkdownToHtml = (node: NLJNode): NLJNode => {
   }
   
   // Convert choice content if it exists (for choice nodes)
-  if (convertedNode.choices && Array.isArray(convertedNode.choices)) {
-    convertedNode.choices = convertedNode.choices.map((choice: ChoiceWithContent) => {
+  if ((convertedNode as any).choices && Array.isArray((convertedNode as any).choices)) {
+    (convertedNode as any).choices = (convertedNode as any).choices.map((choice: ChoiceWithContent) => {
       const convertedChoice = { ...choice };
       if (convertedChoice.text && isMarkdownContent(convertedChoice.text)) {
         convertedChoice.text = convertMarkdownToHtml(convertedChoice.text);

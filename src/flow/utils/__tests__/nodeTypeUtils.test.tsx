@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import type { FlowNodeType } from '../../../types/flow';
+import type { FlowNodeType } from '../../types/flow';
 
 // Mock Material-UI icons
 vi.mock('@mui/icons-material', () => ({

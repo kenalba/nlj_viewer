@@ -219,16 +219,16 @@ export const NodeEditSidebar: React.FC<NodeEditSidebarProps> = ({
                     Connected Choice Nodes: {choiceNodes.length}
                   </Typography>
                   {choiceNodes.length > 0 ? (
-                    choiceNodes.map((choice: FlowNode, index: number) => (
+                    choiceNodes.map((choice: FlowNode | undefined, index: number) => choice ? (
                       <Paper key={choice.id} sx={{ p: 1, bgcolor: 'action.hover' }}>
                         <Typography variant="body2" fontWeight="medium">
-                          Choice {index + 1}: {choice.data.nljNode.isCorrect ? '✓' : '✗'}
+                          Choice {index + 1}: {(choice.data.nljNode as any).isCorrect ? '✓' : '✗'}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {choice.data.nljNode.text || choice.data.label}
+                          {(choice.data.nljNode as any).text || choice.data.label}
                         </Typography>
                       </Paper>
-                    ))
+                    ) : null)
                   ) : (
                     <Typography variant="body2" color="text.secondary">
                       No choice nodes connected. Add choice nodes from the node palette and connect them to this question.

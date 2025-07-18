@@ -615,7 +615,7 @@ function calculateHierarchicalLayout(
 function calculateForceLayout(
   nodes: FlowNode[],
   edges: FlowEdge[],
-  config: LayoutConfig
+  _config: LayoutConfig
 ): { nodes: FlowNode[], edges: FlowEdge[] } {
   // Better force-directed layout for complex scenarios
   // Note: config parameter is available for future enhancements
@@ -662,7 +662,7 @@ function calculateForceLayout(
 function calculateCircularLayout(
   nodes: FlowNode[],
   edges: FlowEdge[],
-  config: LayoutConfig
+  _config: LayoutConfig
 ): { nodes: FlowNode[], edges: FlowEdge[] } {
   // Calculate radius accounting for node dimensions
   // Note: config parameter is available for future enhancements
