@@ -126,6 +126,8 @@ export interface ChoiceNode extends BaseNode {
   isCorrect: boolean;
   choiceType: 'CORRECT' | 'INCORRECT' | 'NEUTRAL';
   variableChanges?: VariableChange[];
+  matchingText?: string; // For matching questions
+  correctOrder?: number; // For ordering questions
 }
 
 export interface InterstitialPanelNode extends BaseNode {

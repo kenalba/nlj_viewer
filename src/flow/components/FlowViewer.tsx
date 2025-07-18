@@ -103,6 +103,7 @@ function FlowViewerContent({
   className,
   onValidate,
   onAutoLayout,
+  onShowSettings,
   showSettings = false,
   onCloseSettings,
 }: FlowViewerProps) {
@@ -114,7 +115,7 @@ function FlowViewerContent({
   const [isEditMode] = useState(!readOnly);
   const [_selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
-  const [pendingNodeId, setPendingNodeId] = useState<string | null>(null);
+  const [_pendingNodeId, setPendingNodeId] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showPalette, setShowPalette] = useState(true);
   const [showValidation, setShowValidation] = useState(false);
@@ -641,7 +642,7 @@ function FlowViewerContent({
                 
                 <Tooltip title="Flow Settings">
                   <IconButton 
-                    onClick={onShowSettings || (() => {})} 
+                    onClick={() => onShowSettings?.() || console.log('Settings clicked')} 
                     size="small"
                     color={showSettings ? 'primary' : 'default'}
                   >

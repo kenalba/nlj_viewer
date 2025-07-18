@@ -7,7 +7,6 @@ import {
   Box,
   Typography,
   Stack,
-  Paper,
 } from '@mui/material';
 
 import type { FlowNode } from '../../../types/flow';

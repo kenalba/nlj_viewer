@@ -7,7 +7,6 @@ import {
   Box,
   Typography,
   Stack,
-  Paper,
   Alert,
 } from '@mui/material';
 import {

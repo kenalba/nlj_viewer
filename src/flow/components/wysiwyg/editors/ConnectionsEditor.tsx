@@ -52,42 +52,36 @@ export const ConnectionsEditor: React.FC<ConnectionsEditorProps> = ({
 
   const handleAddGroup = () => {
     const newGroup: ConnectionsGroup = {
-      name: 'New Group',
-      words: ['', '', '', ''],
+      category: 'New Group',
+      words: ['', '', '', ''] as [string, string, string, string],
       difficulty: 'yellow'
     };
     handleUpdateGameData({
-      groups: [...gameData.groups, newGroup]
+      groups: [...gameData.groups.slice(0, 3), newGroup] as [ConnectionsGroup, ConnectionsGroup, ConnectionsGroup, ConnectionsGroup]
     });
   };
 
   const handleUpdateGroup = (index: number, updates: Partial<ConnectionsGroup>) => {
     const newGroups = [...gameData.groups];
     newGroups[index] = { ...newGroups[index], ...updates };
-    handleUpdateGameData({ groups: newGroups });
+    handleUpdateGameData({ groups: newGroups as [ConnectionsGroup, ConnectionsGroup, ConnectionsGroup, ConnectionsGroup] });
     
-    // Update words array based on all groups
-    const allWords = newGroups.flatMap(group => group.words);
-    handleUpdateGameData({ words: allWords });
+    // Words are managed within groups, no top-level words property
   };
 
   const handleDeleteGroup = (index: number) => {
     const newGroups = gameData.groups.filter((_, i) => i !== index);
-    handleUpdateGameData({ groups: newGroups });
+    handleUpdateGameData({ groups: newGroups as [ConnectionsGroup, ConnectionsGroup, ConnectionsGroup, ConnectionsGroup] });
     
-    // Update words array
-    const allWords = newGroups.flatMap(group => group.words);
-    handleUpdateGameData({ words: allWords });
+    // Words are managed within groups, no top-level words property
   };
 
   const handleUpdateWord = (groupIndex: number, wordIndex: number, word: string) => {
     const newGroups = [...gameData.groups];
     newGroups[groupIndex].words[wordIndex] = word.toUpperCase();
-    handleUpdateGameData({ groups: newGroups });
+    handleUpdateGameData({ groups: newGroups as [ConnectionsGroup, ConnectionsGroup, ConnectionsGroup, ConnectionsGroup] });
     
-    // Update words array
-    const allWords = newGroups.flatMap(group => group.words);
-    handleUpdateGameData({ words: allWords });
+    // Words are managed within groups, no top-level words property
   };
 
   return (
@@ -114,8 +108,8 @@ export const ConnectionsEditor: React.FC<ConnectionsEditorProps> = ({
               <Stack direction="row" alignItems="center" spacing={2}>
                 <TextField
                   label="Group Name"
-                  value={group.name}
-                  onChange={(e) => handleUpdateGroup(groupIndex, { name: e.target.value.toUpperCase() })}
+                  value={group.category}
+                  onChange={(e) => handleUpdateGroup(groupIndex, { category: e.target.value.toUpperCase() })}
                   size="small"
                   sx={{ flexGrow: 1 }}
                 />
@@ -194,8 +188,8 @@ export const ConnectionsEditor: React.FC<ConnectionsEditorProps> = ({
       {/* Game Statistics */}
       <Alert severity="info">
         <Typography variant="body2">
-          <strong>Current Setup:</strong> {gameData.groups.length} groups, {gameData.words.length} words total
-          {gameData.groups.length === 4 && gameData.words.length === 16 && (
+          <strong>Current Setup:</strong> {gameData.groups.length} groups, {gameData.groups.reduce((sum, group) => sum + group.words.length, 0)} words total
+          {gameData.groups.length === 4 && gameData.groups.reduce((sum, group) => sum + group.words.length, 0) === 16 && (
             <span style={{ color: 'green' }}> ✓ Ready to play!</span>
           )}
         </Typography>

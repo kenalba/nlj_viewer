@@ -25,7 +25,6 @@ import {
 import type { FlowNode } from '../../../types/flow';
 import type { NLJNode } from '../../../../types/nlj';
 import { InlineTextEditor } from './InlineTextEditor';
-import { MarkdownRenderer } from '../../../../components/MarkdownRenderer';
 
 interface ChoiceEditorProps {
   node: FlowNode;
@@ -37,7 +36,7 @@ interface ChoiceEditorProps {
 
 export const ChoiceEditor: React.FC<ChoiceEditorProps> = ({
   node,
-  onUpdate,
+  onUpdate: _onUpdate,
   allNodes,
   allEdges,
 }) => {

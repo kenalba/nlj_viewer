@@ -615,18 +615,18 @@ function calculateHierarchicalLayout(
 function calculateForceLayout(
   nodes: FlowNode[],
   edges: FlowEdge[],
-  config: LayoutConfig
+  _config: LayoutConfig
 ): { nodes: FlowNode[], edges: FlowEdge[] } {
   // Better force-directed layout for complex scenarios
   const updatedNodes = [...nodes];
   
-  // Try to identify start and end nodes for better positioning
-  const startNodes = nodes.filter(node => 
-    node.data.isStart || !edges.some(edge => edge.target === node.id)
-  );
-  const endNodes = nodes.filter(node => 
-    node.data.isEnd || !edges.some(edge => edge.source === node.id)
-  );
+  // Try to identify start and end nodes for better positioning (unused for now)
+  // const _startNodes = nodes.filter(node => 
+  //   node.data.isStart || !edges.some(edge => edge.target === node.id)
+  // );
+  // const _endNodes = nodes.filter(node => 
+  //   node.data.isEnd || !edges.some(edge => edge.source === node.id)
+  // );
   
   // Use a grid-based approach for better readability
   const cols = Math.ceil(Math.sqrt(nodes.length));
