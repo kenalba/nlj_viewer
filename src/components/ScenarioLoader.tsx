@@ -1090,9 +1090,13 @@ export const ScenarioLoader: React.FC = () => {
                   }
                   sx={{
                     textTransform: 'none',
-                    color: `${type.color}.main`,
+                    color: 'text.secondary', // Inactive color
                     '&.Mui-selected': {
-                      color: `${type.color}.main`,
+                      color: 'primary.main', // Active color uses main theme color
+                    },
+                    '&:hover': {
+                      color: 'primary.light', // Hover color uses theme color
+                      backgroundColor: 'action.hover',
                     },
                   }}
                 />

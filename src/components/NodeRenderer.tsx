@@ -318,6 +318,11 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
           );
         }
 
+        // If completion modal is showing, don't render the end node content
+        if (showCompletionModal) {
+          return null;
+        }
+
         return (
           <NodeCard animate={false}>
             <Typography gutterBottom align="center" color="primary">

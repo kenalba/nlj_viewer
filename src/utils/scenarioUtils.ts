@@ -101,9 +101,9 @@ export const isValidNodeType = (nodeType: string): boolean => {
 };
 
 /**
- * Node types that require text property
+ * Node types that require either text or content property (not both, just one)
  */
-const TEXT_REQUIRED_NODE_TYPES = [
+const CONTENT_REQUIRED_NODE_TYPES = [
   'question',
   'choice',
   'interstitial_panel',
@@ -136,9 +136,14 @@ const validateNodeStructure = (node: any): string[] => {
     errors.push(`Node "${node.id || 'unknown'}" missing required 'type' property`);
   }
   
-  // Check if node type requires text property
-  if (node.type && TEXT_REQUIRED_NODE_TYPES.includes(node.type) && !node.text) {
-    errors.push(`Node "${node.id}" of type "${node.type}" missing required 'text' property`);
+  // Check if node type requires either text or content property
+  if (node.type && CONTENT_REQUIRED_NODE_TYPES.includes(node.type)) {
+    const hasText = node.text && node.text.trim().length > 0;
+    const hasContent = node.content && node.content.trim().length > 0;
+    
+    if (!hasText && !hasContent) {
+      errors.push(`Node "${node.id}" of type "${node.type}" missing required content - must have either 'text' or 'content' property with non-empty value`);
+    }
   }
   
   // Type-specific validation
