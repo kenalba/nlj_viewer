@@ -24,6 +24,9 @@ interface InteractiveSectionProps {
   allNodes: FlowNode[];
   allEdges: any[];
   theme?: 'hyundai' | 'unfiltered' | 'custom';
+  onAddNode?: (node: FlowNode) => void;
+  onAddEdge?: (edge: any) => void;
+  onUpdateNode?: (nodeId: string, updates: Partial<FlowNode>) => void;
 }
 
 export const InteractiveSection: React.FC<InteractiveSectionProps> = ({
@@ -31,6 +34,9 @@ export const InteractiveSection: React.FC<InteractiveSectionProps> = ({
   onUpdate,
   allNodes,
   allEdges,
+  onAddNode,
+  onAddEdge,
+  onUpdateNode,
 }) => {
   const nodeType = node.data.nodeType;
 
@@ -89,6 +95,9 @@ export const InteractiveSection: React.FC<InteractiveSectionProps> = ({
           onUpdate={onUpdate}
           allNodes={allNodes}
           allEdges={allEdges}
+          onAddNode={onAddNode}
+          onAddEdge={onAddEdge}
+          onUpdateNode={onUpdateNode}
         />
       )}
 

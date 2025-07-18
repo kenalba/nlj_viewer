@@ -214,6 +214,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({
           flexDirection: 'column',
           height: `calc(100vh - ${headerHeight}px)`, // Account for header height
           top: headerHeight, // Start below header
+          overflowX: 'hidden', // Disable horizontal scrolling
         }
       }}
     >

@@ -14,7 +14,6 @@ import {
   Typography,
 } from '@mui/material';
 import {
-  Save as SaveIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   Preview as PreviewIcon,
@@ -31,6 +30,7 @@ import { InteractiveSection } from './components/InteractiveSection';
 import { FeedbackSection } from './components/FeedbackSection';
 import { SettingsDrawer } from './components/SettingsDrawer';
 import { AssessmentPreview } from './previews/AssessmentPreview';
+import { ChoiceNodeEditor } from './editors/ChoiceNodeEditor';
 
 interface WYSIWYGNodeEditorProps {
   node: FlowNode | null;
@@ -44,8 +44,11 @@ interface WYSIWYGNodeEditorProps {
   allNodes?: FlowNode[];
   allEdges?: any[];
   // For handling unsaved changes
-  onNodeSwitchRequest?: (newNodeId: string) => boolean;
   onUnsavedChanges?: (hasChanges: boolean) => void;
+  // For adding new nodes and edges
+  onAddNode?: (node: FlowNode) => void;
+  onAddEdge?: (edge: any) => void;
+  onUpdateNode?: (nodeId: string, updates: Partial<FlowNode>) => void;
 }
 
 export const WYSIWYGNodeEditor: React.FC<WYSIWYGNodeEditorProps> = ({
@@ -58,59 +61,18 @@ export const WYSIWYGNodeEditor: React.FC<WYSIWYGNodeEditorProps> = ({
   headerHeight = 120,
   allNodes = [],
   allEdges = [],
-  onNodeSwitchRequest,
   onUnsavedChanges,
+  onAddNode,
+  onAddEdge,
+  onUpdateNode,
 }) => {
   const [editedNode, setEditedNode] = useState<FlowNode | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [_showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [autosaveTimeout, setAutosaveTimeout] = useState<number | null>(null);
 
-  // Initialize edited node when node changes
-  useEffect(() => {
-    if (node) {
-      // Check if we have unsaved changes when switching nodes
-      if (hasChanges && editedNode && editedNode.id !== node.id) {
-        const confirmed = window.confirm('You have unsaved changes. Are you sure you want to switch nodes without saving?');
-        if (!confirmed) {
-          // Notify parent that the switch was cancelled
-          if (onNodeSwitchRequest) {
-            onNodeSwitchRequest(editedNode.id);
-          }
-          return;
-        }
-      }
-      
-      // Only update if the node ID is different to avoid infinite loops
-      if (!editedNode || editedNode.id !== node.id) {
-        setEditedNode(JSON.parse(JSON.stringify(node))); // Deep copy
-        setHasChanges(false);
-        setShowAdvancedSettings(false);
-        setActiveTab(0); // Reset to edit tab for new nodes
-      }
-    }
-  }, [node, hasChanges, editedNode?.id, onNodeSwitchRequest]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Handle node updates
-  const updateNLJNode = useCallback((updates: Partial<NLJNode>) => {
-    if (!editedNode) return;
-    
-    setEditedNode(prev => prev ? {
-      ...prev,
-      data: {
-        ...prev.data,
-        nljNode: { ...prev.data.nljNode, ...updates } as NLJNode
-      }
-    } : null);
-    setHasChanges(true);
-    
-    // Notify parent about unsaved changes
-    if (onUnsavedChanges) {
-      onUnsavedChanges(true);
-    }
-  }, [editedNode, onUnsavedChanges]);
-
-  // Handle save
+  // Handle save (now only used internally for autosave)
   const handleSave = useCallback(() => {
     if (editedNode) {
       onSave(editedNode);
@@ -118,26 +80,127 @@ export const WYSIWYGNodeEditor: React.FC<WYSIWYGNodeEditorProps> = ({
       if (onUnsavedChanges) {
         onUnsavedChanges(false);
       }
-      onClose();
+      // Clear autosave timeout when saving
+      if (autosaveTimeout) {
+        clearTimeout(autosaveTimeout);
+        setAutosaveTimeout(null);
+      }
     }
-  }, [editedNode, onSave, onClose, onUnsavedChanges]);
+  }, [editedNode, onSave, onUnsavedChanges, autosaveTimeout]);
+
+  // Initialize edited node when node changes
+  useEffect(() => {
+    if (node) {
+      // Autosave if we have unsaved changes when switching nodes
+      if (hasChanges && editedNode && editedNode.id !== node.id) {
+        console.log('Autosaving changes for node:', editedNode.id);
+        handleSave();
+      }
+      
+      // Only update if the node ID is different to avoid infinite loops
+      if (!editedNode || editedNode.id !== node.id) {
+        setEditedNode(JSON.parse(JSON.stringify(node))); // Deep copy
+        setHasChanges(false);
+        setShowAdvancedSettings(false);
+        
+        // Reset to edit tab for new nodes, but handle choice nodes differently
+        const newNodeType = node.data.nodeType;
+        if (newNodeType === 'choice') {
+          // For choice nodes, only allow Edit (0) or Settings (1)
+          setActiveTab(activeTab > 1 ? 0 : activeTab);
+        } else {
+          setActiveTab(0); // Reset to edit tab for new nodes
+        }
+      }
+    }
+  }, [node, hasChanges, editedNode?.id, handleSave, activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cleanup autosave timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (autosaveTimeout) {
+        clearTimeout(autosaveTimeout);
+      }
+    };
+  }, [autosaveTimeout]);
+
+  // Handle node updates
+  const updateNLJNode = useCallback((updates: Partial<NLJNode>) => {
+    if (!editedNode) return;
+    
+    const newEditedNode = {
+      ...editedNode,
+      data: {
+        ...editedNode.data,
+        nljNode: { ...editedNode.data.nljNode, ...updates } as NLJNode
+      }
+    };
+    
+    // Compare specific NLJNode properties instead of entire objects
+    const originalNljNode = node?.data.nljNode || {};
+    const newNljNode = newEditedNode.data.nljNode;
+    
+    // Check if there are actual changes in the NLJNode data
+    const hasActualChanges = Object.keys(newNljNode).some(key => {
+      const originalValue = originalNljNode[key as keyof typeof originalNljNode];
+      const newValue = newNljNode[key as keyof typeof newNljNode];
+      
+      // Handle undefined/null comparisons
+      if (originalValue === undefined && newValue === undefined) return false;
+      if (originalValue === null && newValue === null) return false;
+      if (originalValue === '' && newValue === '') return false;
+      if (originalValue === undefined && newValue === '') return false;
+      if (originalValue === '' && newValue === undefined) return false;
+      
+      return originalValue !== newValue;
+    });
+    
+    setEditedNode(newEditedNode);
+    setHasChanges(hasActualChanges);
+    
+    // Notify parent about unsaved changes
+    if (onUnsavedChanges) {
+      onUnsavedChanges(hasActualChanges);
+    }
+    
+    // Set up autosave with a delay
+    if (hasActualChanges) {
+      // Clear existing timeout
+      if (autosaveTimeout) {
+        clearTimeout(autosaveTimeout);
+      }
+      
+      // Set new timeout for autosave
+      const timeout = setTimeout(() => {
+        console.log('Autosaving after delay for node:', newEditedNode.id);
+        handleSave();
+      }, 1000); // 1 second delay
+      
+      setAutosaveTimeout(timeout);
+    }
+  }, [editedNode, node, onUnsavedChanges, autosaveTimeout, handleSave]);
 
   // Handle delete
   const handleDelete = useCallback(() => {
     if (node && onDelete) {
+      // Clear autosave timeout when deleting
+      if (autosaveTimeout) {
+        clearTimeout(autosaveTimeout);
+        setAutosaveTimeout(null);
+      }
       onDelete(node.id);
       onClose();
     }
-  }, [node, onDelete, onClose]);
+  }, [node, onDelete, onClose, autosaveTimeout]);
 
-  // Handle close with unsaved changes
+  // Handle close with autosave
   const handleClose = useCallback(() => {
-    if (hasChanges) {
-      const confirmed = window.confirm('You have unsaved changes. Are you sure you want to close?');
-      if (!confirmed) return;
+    if (hasChanges && editedNode) {
+      console.log('Autosaving changes before closing node:', editedNode.id);
+      handleSave();
     }
     onClose();
-  }, [hasChanges, onClose]);
+  }, [hasChanges, editedNode, handleSave, onClose]);
 
   // Check if node uses choice nodes
   // const usesChoiceNodes = (nodeType: string): boolean => {
@@ -209,6 +272,7 @@ export const WYSIWYGNodeEditor: React.FC<WYSIWYGNodeEditorProps> = ({
           flexDirection: 'column',
           height: `calc(100vh - ${headerHeight}px)`, // Account for header height
           top: headerHeight, // Start below header
+          overflowX: 'hidden', // Disable horizontal scrolling
         }
       }}
     >
@@ -217,7 +281,6 @@ export const WYSIWYGNodeEditor: React.FC<WYSIWYGNodeEditorProps> = ({
         {/* Header */}
         <NodeHeader
           node={editedNode}
-          onUpdate={updateNLJNode}
           onClose={handleClose}
           hasChanges={hasChanges}
           theme={theme}
@@ -230,6 +293,7 @@ export const WYSIWYGNodeEditor: React.FC<WYSIWYGNodeEditorProps> = ({
             onChange={(_, newValue) => setActiveTab(newValue)}
             variant="fullWidth"
             sx={{
+              minHeight: 36,
               '& .MuiTabs-indicator': {
                 backgroundColor: 'primary.main',
               },
@@ -241,36 +305,45 @@ export const WYSIWYGNodeEditor: React.FC<WYSIWYGNodeEditorProps> = ({
               iconPosition="start"
               sx={{ 
                 textTransform: 'none', 
-                minHeight: 40,
-                fontSize: '0.875rem',
+                minHeight: 36,
+                fontSize: '0.75rem',
+                py: 0.5,
                 '& .MuiTab-iconWrapper': {
-                  fontSize: '1rem'
+                  fontSize: '0.875rem',
+                  marginRight: '4px',
                 }
               }}
             />
-            <Tab
-              label="Preview"
-              icon={<PreviewIcon />}
-              iconPosition="start"
-              sx={{ 
-                textTransform: 'none', 
-                minHeight: 40,
-                fontSize: '0.875rem',
-                '& .MuiTab-iconWrapper': {
-                  fontSize: '1rem'
-                }
-              }}
-            />
+            {/* Hide Preview tab for choice nodes */}
+            {nodeType !== 'choice' && (
+              <Tab
+                label="Preview"
+                icon={<PreviewIcon />}
+                iconPosition="start"
+                sx={{ 
+                  textTransform: 'none', 
+                  minHeight: 36,
+                  fontSize: '0.75rem',
+                  py: 0.5,
+                  '& .MuiTab-iconWrapper': {
+                    fontSize: '0.875rem',
+                    marginRight: '4px',
+                  }
+                }}
+              />
+            )}
             <Tab
               label="Settings"
               icon={<SettingsIcon />}
               iconPosition="start"
               sx={{ 
                 textTransform: 'none', 
-                minHeight: 40,
-                fontSize: '0.875rem',
+                minHeight: 36,
+                fontSize: '0.75rem',
+                py: 0.5,
                 '& .MuiTab-iconWrapper': {
-                  fontSize: '1rem'
+                  fontSize: '0.875rem',
+                  marginRight: '4px',
                 }
               }}
             />
@@ -282,7 +355,7 @@ export const WYSIWYGNodeEditor: React.FC<WYSIWYGNodeEditorProps> = ({
           
           {/* Edit Tab */}
           {activeTab === 0 && (
-            <Stack spacing={3} sx={{ p: 3 }}>
+            <Stack spacing={2} sx={{ p: 2 }}>
               
               {/* Media Section */}
               {supportsMedia(nodeType) && (
@@ -293,44 +366,58 @@ export const WYSIWYGNodeEditor: React.FC<WYSIWYGNodeEditorProps> = ({
                 />
               )}
 
-              {/* Content Section */}
-              <ContentSection
-                node={editedNode}
-                onUpdate={updateNLJNode}
-                theme={theme}
-              />
-
-              {/* Interactive Elements Section */}
-              {hasInteractiveElements(nodeType) && (
-                <InteractiveSection
-                  node={editedNode}
-                  onUpdate={updateNLJNode}
-                  allNodes={allNodes}
-                  allEdges={allEdges}
-                  theme={theme}
-                />
-              )}
-
-              {/* Feedback Section */}
-              {hasFeedback(nodeType) && (
-                <FeedbackSection
+              {/* Choice Node Editor */}
+              {nodeType === 'choice' ? (
+                <ChoiceNodeEditor
                   node={editedNode}
                   onUpdate={updateNLJNode}
                   theme={theme}
                 />
+              ) : (
+                <>
+                  {/* Content Section */}
+                  <ContentSection
+                    node={editedNode}
+                    onUpdate={updateNLJNode}
+                    theme={theme}
+                  />
+
+                  {/* Interactive Elements Section */}
+                  {hasInteractiveElements(nodeType) && (
+                    <InteractiveSection
+                      node={editedNode}
+                      onUpdate={updateNLJNode}
+                      allNodes={allNodes}
+                      allEdges={allEdges}
+                      theme={theme}
+                      onAddNode={onAddNode}
+                      onAddEdge={onAddEdge}
+                      onUpdateNode={onUpdateNode}
+                    />
+                  )}
+
+                  {/* Feedback Section */}
+                  {hasFeedback(nodeType) && (
+                    <FeedbackSection
+                      node={editedNode}
+                      onUpdate={updateNLJNode}
+                      theme={theme}
+                    />
+                  )}
+                </>
               )}
 
             </Stack>
           )}
 
-          {/* Preview Tab */}
-          {activeTab === 1 && (
-            <Box sx={{ p: 3, height: '100%' }}>
-              <Typography variant="h6" color="text.primary" sx={{ mb: 2 }}>
+          {/* Preview Tab - only show for non-choice nodes */}
+          {nodeType !== 'choice' && activeTab === 1 && (
+            <Box sx={{ p: 2, height: '100%' }}>
+              <Typography variant="subtitle1" color="text.primary" sx={{ mb: 1.5, fontSize: '0.875rem' }}>
                 Node Preview
               </Typography>
               
-              <Box sx={{ height: 'calc(100% - 60px)' }}>
+              <Box sx={{ height: 'calc(100% - 40px)' }}>
                 <AssessmentPreview
                   node={editedNode}
                   allNodes={allNodes}
@@ -340,10 +427,10 @@ export const WYSIWYGNodeEditor: React.FC<WYSIWYGNodeEditorProps> = ({
             </Box>
           )}
 
-          {/* Settings Tab */}
-          {activeTab === 2 && (
-            <Box sx={{ p: 3 }}>
-              <Typography variant="h6" color="text.primary" sx={{ mb: 2 }}>
+          {/* Settings Tab - adjust index based on node type */}
+          {((nodeType === 'choice' && activeTab === 1) || (nodeType !== 'choice' && activeTab === 2)) && (
+            <Box sx={{ p: 2 }}>
+              <Typography variant="subtitle1" color="text.primary" sx={{ mb: 1.5, fontSize: '0.875rem' }}>
                 Node Settings
               </Typography>
               
@@ -359,25 +446,25 @@ export const WYSIWYGNodeEditor: React.FC<WYSIWYGNodeEditorProps> = ({
 
         </Box>
 
-        {/* Footer - Save/Delete Actions */}
-        <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
-          <Stack direction="row" spacing={2}>
-            <Button
-              variant="contained"
-              onClick={handleSave}
-              disabled={!hasChanges}
-              startIcon={<SaveIcon />}
-              fullWidth
-            >
-              Save Changes
-            </Button>
+        {/* Footer - Delete Action and Autosave Status */}
+        <Box sx={{ p: 1.5, borderTop: 1, borderColor: 'divider' }}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            {/* Autosave Status */}
+            <Box sx={{ flexGrow: 1 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                {hasChanges ? 'Autosaving...' : 'All changes saved'}
+              </Typography>
+            </Box>
             
+            {/* Delete Button */}
             {onDelete && (
               <Button
                 variant="outlined"
                 color="error"
                 onClick={handleDelete}
                 startIcon={<DeleteIcon />}
+                size="small"
+                sx={{ fontSize: '0.75rem' }}
               >
                 Delete
               </Button>

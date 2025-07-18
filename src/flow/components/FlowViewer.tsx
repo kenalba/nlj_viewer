@@ -201,17 +201,27 @@ function FlowViewerContent({
   }, []);
 
   // Handle node switch request from WYSIWYG editor
-  const handleNodeSwitchRequest = useCallback((fallbackNodeId: string) => {
-    // User cancelled the switch, revert to the original node
-    setEditingNodeId(fallbackNodeId);
-    setPendingNodeId(null);
-    return false;
-  }, []);
+  // Note: handleNodeSwitchRequest removed - now using autosave instead of manual confirmation
 
   // Handle changes in the WYSIWYG editor
   const handleUnsavedChanges = useCallback((hasChanges: boolean) => {
     setHasUnsavedChanges(hasChanges);
   }, []);
+
+  // Handle adding node from editor
+  const handleAddNodeFromEditor = useCallback((newNode: FlowNode) => {
+    setNodes((nds) => [...nds, newNode]);
+  }, [setNodes]);
+
+  // Handle adding edge from editor
+  const handleAddEdgeFromEditor = useCallback((newEdge: FlowEdge) => {
+    setEdges((eds) => [...eds, newEdge]);
+  }, [setEdges]);
+
+  // Handle updating node from editor
+  const handleUpdateNodeFromEditor = useCallback((nodeId: string, updates: Partial<FlowNode>) => {
+    setNodes((nds) => nds.map(n => n.id === nodeId ? { ...n, ...updates } : n));
+  }, [setNodes]);
 
   // Handle node deletion
   const onNodeDelete = useCallback((nodeId: string) => {
@@ -534,7 +544,7 @@ function FlowViewerContent({
   }), [onNodeEdit, onNodeDelete, isEditMode, theme]);
 
   return (
-    <Box className={className} sx={{ width: '100%', height: '100%', position: 'relative' }}>
+    <Box className={className} sx={{ width: '100%', height: '100%', position: 'relative', overflowX: 'hidden' }}>
 
       {/* React Flow Canvas */}
       <Box 
@@ -544,6 +554,7 @@ function FlowViewerContent({
           transition: 'margin 0.3s ease',
           marginLeft: showPalette ? '320px' : '0px',
           marginRight: Boolean(editingNodeId) ? '480px' : '0px',
+          overflow: 'hidden', // Prevent content from overflowing
         }}
       >
         <ReactFlow
@@ -699,8 +710,8 @@ function FlowViewerContent({
         node={editingNodeId ? nodes.find(n => n.id === editingNodeId) || null : null}
         isOpen={Boolean(editingNodeId)}
         onSave={(updatedNode) => {
+          // Only update node data, don't close editor (for autosave)
           setNodes(nodes.map(n => n.id === editingNodeId ? updatedNode : n));
-          setEditingNodeId(null);
           setHasUnsavedChanges(false);
         }}
         onClose={() => {
@@ -712,8 +723,10 @@ function FlowViewerContent({
         headerHeight={headerHeight}
         allNodes={nodes}
         allEdges={edges}
-        onNodeSwitchRequest={handleNodeSwitchRequest}
         onUnsavedChanges={handleUnsavedChanges}
+        onAddNode={handleAddNodeFromEditor}
+        onAddEdge={handleAddEdgeFromEditor}
+        onUpdateNode={handleUpdateNodeFromEditor}
       />
 
       {/* Validation Results Dialog */}

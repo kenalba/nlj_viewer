@@ -22,13 +22,10 @@ import {
 } from '@mui/icons-material';
 
 import type { FlowNode } from '../../../types/flow';
-import type { NLJNode } from '../../../../types/nlj';
 import { NODE_TYPE_INFO } from '../../../utils/flowUtils';
-import { InlineTextEditor } from '../editors/InlineTextEditor';
 
 interface NodeHeaderProps {
   node: FlowNode;
-  onUpdate: (updates: Partial<NLJNode>) => void;
   onClose: () => void;
   hasChanges: boolean;
   theme?: 'hyundai' | 'unfiltered' | 'custom';
@@ -36,12 +33,10 @@ interface NodeHeaderProps {
 
 export const NodeHeader: React.FC<NodeHeaderProps> = ({
   node,
-  onUpdate,
   onClose,
   hasChanges,
 }) => {
   const nodeType = node.data.nodeType;
-  const nljNode = node.data.nljNode;
   const nodeTypeInfo = NODE_TYPE_INFO[nodeType];
 
   // Get node icon
@@ -95,43 +90,46 @@ export const NodeHeader: React.FC<NodeHeaderProps> = ({
   };
 
   return (
-    <Box sx={{ p: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-      <Stack direction="row" alignItems="center" spacing={2}>
+    <Box sx={{ p: 1, borderBottom: 1, borderColor: 'divider' }}>
+      <Stack direction="row" alignItems="center" spacing={1}>
         
         {/* Node Type Badge */}
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Chip
-            icon={getNodeIcon()}
-            label={nodeTypeInfo?.label || nodeType}
-            color={getCategoryColor()}
-            size="small"
-            variant="outlined"
-          />
-        </Box>
+        <Chip
+          icon={getNodeIcon()}
+          label={nodeTypeInfo?.label || nodeType}
+          color={getCategoryColor()}
+          size="small"
+          variant="outlined"
+          sx={{ 
+            fontSize: '0.75rem',
+            height: '24px',
+            '& .MuiChip-icon': {
+              fontSize: '0.875rem',
+            },
+          }}
+        />
 
         {/* Spacer */}
         <Box sx={{ flexGrow: 1 }} />
 
         {/* Close Button */}
-        <IconButton onClick={onClose} size="small">
-          <CloseIcon />
+        <IconButton onClick={onClose} size="small" sx={{ p: 0.5 }}>
+          <CloseIcon sx={{ fontSize: '1rem' }} />
         </IconButton>
       </Stack>
 
-      {/* Node Title Editor */}
-      <Box sx={{ mt: 1.5 }}>
-        <InlineTextEditor
-          value={nljNode.title || ''}
-          onUpdate={(value) => onUpdate({ title: value })}
-          placeholder="Enter node title..."
-          variant="h6"
-          sx={{ fontWeight: 'medium' }}
-        />
-      </Box>
-
       {/* Unsaved Changes Alert */}
       {hasChanges && (
-        <Alert severity="info" sx={{ mt: 2 }}>
+        <Alert 
+          severity="info" 
+          sx={{ 
+            mt: 1,
+            py: 0.5,
+            '& .MuiAlert-message': {
+              fontSize: '0.75rem',
+            },
+          }}
+        >
           You have unsaved changes
         </Alert>
       )}

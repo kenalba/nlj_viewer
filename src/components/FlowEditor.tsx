@@ -7,12 +7,13 @@ import {
   Box,
   Paper,
   Typography,
-  Button,
   IconButton,
   Stack,
   Chip,
   Alert,
   Snackbar,
+  Tooltip,
+  Divider,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -199,67 +200,7 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
           </Box>
           
           <Stack direction="row" spacing={1}>
-            <Button
-              variant="outlined"
-              startIcon={<RestoreIcon />}
-              onClick={handleRestore}
-              disabled={!isDirty}
-              size="small"
-            >
-              Restore
-            </Button>
-            
-            <Button
-              variant="outlined"
-              startIcon={<DownloadIcon />}
-              onClick={() => handleExport('json')}
-              size="small"
-            >
-              Export
-            </Button>
-            
-            <Button
-              variant="outlined"
-              startIcon={<AutoLayoutIcon />}
-              onClick={() => {
-                // Trigger auto-layout via the global function
-                if ((window as any).flowAutoLayout) {
-                  (window as any).flowAutoLayout();
-                }
-              }}
-              size="small"
-            >
-              Layout
-            </Button>
-            
-            <Button
-              variant="outlined"
-              startIcon={<SettingsIcon />}
-              onClick={() => setShowSettings(true)}
-              size="small"
-            >
-              Settings
-            </Button>
-            
-            <Button
-              variant="outlined"
-              startIcon={<PlayIcon />}
-              onClick={handlePlayScenario}
-              size="small"
-              color="success"
-            >
-              Play
-            </Button>
-            
-            <Button
-              variant="contained"
-              startIcon={<SaveIcon />}
-              onClick={handleSave}
-              disabled={!isDirty}
-              size="small"
-            >
-              Save
-            </Button>
+            {/* Simplified header - just scenario name and status */}
           </Stack>
         </Stack>
       </Paper>
@@ -287,6 +228,101 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
           onCloseSettings={() => setShowSettings(false)}
         />
       </Box>
+
+      {/* Floating Bottom Toolbar */}
+      <Paper
+        elevation={8}
+        sx={{
+          position: 'fixed',
+          bottom: 20,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1300,
+          borderRadius: 6,
+          px: 2,
+          py: 1.5,
+          backgroundColor: 'background.paper',
+          backdropFilter: 'blur(10px)',
+          border: 1,
+          borderColor: 'divider',
+        }}
+      >
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Tooltip title="Restore Original">
+            <IconButton
+              onClick={handleRestore}
+              disabled={!isDirty}
+              size="small"
+              color={isDirty ? 'default' : 'inherit'}
+            >
+              <RestoreIcon />
+            </IconButton>
+          </Tooltip>
+          
+          <Tooltip title="Auto Layout">
+            <IconButton
+              onClick={() => {
+                // Trigger auto-layout via the global function
+                if ((window as any).flowAutoLayout) {
+                  (window as any).flowAutoLayout();
+                }
+              }}
+              size="small"
+            >
+              <AutoLayoutIcon />
+            </IconButton>
+          </Tooltip>
+          
+          <Tooltip title="Flow Settings">
+            <IconButton
+              onClick={() => setShowSettings(true)}
+              size="small"
+              color={showSettings ? 'primary' : 'default'}
+            >
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
+          
+          <Tooltip title="Export JSON">
+            <IconButton
+              onClick={() => handleExport('json')}
+              size="small"
+            >
+              <DownloadIcon />
+            </IconButton>
+          </Tooltip>
+          
+          <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+          
+          <Tooltip title="Play Scenario">
+            <IconButton
+              onClick={handlePlayScenario}
+              size="small"
+              color="success"
+            >
+              <PlayIcon />
+            </IconButton>
+          </Tooltip>
+          
+          <Tooltip title="Save Changes">
+            <IconButton
+              onClick={handleSave}
+              disabled={!isDirty}
+              size="small"
+              color={isDirty ? 'primary' : 'inherit'}
+              sx={{
+                backgroundColor: isDirty ? 'primary.main' : 'transparent',
+                color: isDirty ? 'primary.contrastText' : 'text.disabled',
+                '&:hover': {
+                  backgroundColor: isDirty ? 'primary.dark' : 'action.hover',
+                },
+              }}
+            >
+              <SaveIcon />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      </Paper>
 
       {/* Save Success Snackbar */}
       <Snackbar

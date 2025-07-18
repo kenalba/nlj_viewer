@@ -22,16 +22,20 @@ import {
   Cancel as IncorrectIcon,
 } from '@mui/icons-material';
 
-import type { FlowNode } from '../../../types/flow';
+import type { FlowNode, FlowEdge } from '../../../types/flow';
 import type { NLJNode } from '../../../../types/nlj';
-import { InlineTextEditor } from './InlineTextEditor';
+import { RichTextEditor } from './RichTextEditor';
+import { generateId, NODE_TYPE_INFO } from '../../../utils/flowUtils';
 
 interface ChoiceEditorProps {
   node: FlowNode;
   onUpdate: (updates: Partial<NLJNode>) => void;
   allNodes: FlowNode[];
-  allEdges: any[];
+  allEdges: FlowEdge[];
   theme?: 'hyundai' | 'unfiltered' | 'custom';
+  onAddNode?: (node: FlowNode) => void;
+  onAddEdge?: (edge: FlowEdge) => void;
+  onUpdateNode?: (nodeId: string, updates: Partial<FlowNode>) => void;
 }
 
 export const ChoiceEditor: React.FC<ChoiceEditorProps> = ({
@@ -39,6 +43,9 @@ export const ChoiceEditor: React.FC<ChoiceEditorProps> = ({
   onUpdate: _onUpdate,
   allNodes,
   allEdges,
+  onAddNode,
+  onAddEdge,
+  onUpdateNode: _onUpdateNode,
 }) => {
   const nodeType = node.data.nodeType;
 
@@ -125,21 +132,96 @@ export const ChoiceEditor: React.FC<ChoiceEditorProps> = ({
     handleUpdateChoiceNode(choiceNodeId, { isCorrect });
   };
 
+  // Handle adding a new choice node
+  const handleAddChoice = () => {
+    if (!onAddNode || !onAddEdge) {
+      console.log('Add choice clicked - missing callbacks');
+      return;
+    }
+
+    const choiceNodeId = generateId('choice');
+    const existingChoiceCount = choiceNodes.length;
+    
+    // Create choice node NLJ data
+    const choiceNljNode = {
+      id: choiceNodeId,
+      type: 'choice' as const,
+      x: node.position.x + 300, // Position to the right of the question node
+      y: node.position.y + (existingChoiceCount * 120), // Stack vertically
+      width: 200,
+      height: 80,
+      title: `Choice ${existingChoiceCount + 1}`,
+      text: `Choice ${existingChoiceCount + 1}`,
+      description: '',
+      parentId: node.id, // Required for ChoiceNode
+      isCorrect: false,
+      choiceType: 'INCORRECT' as const,
+      feedback: '',
+      value: 0,
+      ...(isMatching(nodeType) && { matchingText: '' }),
+      ...(isOrdering(nodeType) && { correctOrder: existingChoiceCount + 1 }),
+    };
+
+    // Create Flow node
+    const choiceFlowNode: FlowNode = {
+      id: choiceNodeId,
+      type: 'custom',
+      position: { x: node.position.x + 300, y: node.position.y + (existingChoiceCount * 120) },
+      data: {
+        nljNode: choiceNljNode,
+        label: NODE_TYPE_INFO.choice.label,
+        nodeType: 'choice',
+        isStart: false,
+        isEnd: false,
+        hasContent: true,
+        isInteractive: false,
+        questionType: 'choice',
+      },
+    };
+
+    // Create edge from question to choice
+    const edgeId = generateId('edge');
+    const choiceEdge: FlowEdge = {
+      id: edgeId,
+      source: node.id,
+      target: choiceNodeId,
+      type: 'custom',
+      data: {
+        nljLink: {
+          id: generateId('link'),
+          type: 'link',
+          sourceNodeId: node.id,
+          targetNodeId: choiceNodeId,
+          probability: 1.0,
+          startPoint: { x: 0, y: 0 },
+          endPoint: { x: 0, y: 0 },
+        },
+        probability: 1.0,
+        isSelected: false,
+        isHovered: false,
+      },
+    };
+
+    // Add the node and edge
+    onAddNode(choiceFlowNode);
+    onAddEdge(choiceEdge);
+  };
+
   return (
-    <Stack spacing={3}>
-      <Typography variant="subtitle2" color="text.secondary">
+    <Stack spacing={2}>
+      <Typography variant="subtitle1" color="text.primary" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
         {choiceLabel} ({choiceNodes.length})
       </Typography>
 
       {/* Choice List */}
       {choiceNodes.length > 0 ? (
-        <Stack spacing={2}>
+        <Stack spacing={1.5}>
           {choiceNodes.map((choiceNode: any, index: number) => (
             <Paper
               key={choiceNode.id}
               variant="outlined"
               sx={{
-                p: 2,
+                p: 1.5,
                 position: 'relative',
                 '&:hover': {
                   borderColor: 'primary.main',
@@ -149,13 +231,13 @@ export const ChoiceEditor: React.FC<ChoiceEditorProps> = ({
                 },
               }}
             >
-              <Stack spacing={2}>
+              <Stack spacing={1.5}>
                 
                 {/* Choice Header */}
-                <Stack direction="row" alignItems="center" spacing={2}>
+                <Stack direction="row" alignItems="center" spacing={1.5}>
                   <DragIcon sx={{ color: 'action.disabled', cursor: 'grab' }} />
                   
-                  <Typography variant="subtitle2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 500 }}>
                     {isMatching(nodeType) ? `Pair ${index + 1}` : 
                      isOrdering(nodeType) ? `Item ${index + 1}` : 
                      `Choice ${index + 1}`}
@@ -198,69 +280,54 @@ export const ChoiceEditor: React.FC<ChoiceEditorProps> = ({
 
                 {/* Choice Text */}
                 <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.75rem' }}>
                     {isMatching(nodeType) ? 'Left Item' : 'Choice Text'}
                   </Typography>
                   
-                  <InlineTextEditor
+                  <RichTextEditor
                     value={choiceNode.data.nljNode.text || ''}
                     onUpdate={(value) => handleUpdateChoiceNode(choiceNode.id, { text: value })}
                     placeholder="Click to edit choice text..."
                     multiline
-                    rows={2}
-                    sx={{ 
-                      p: 1.5, 
-                      bgcolor: 'action.hover', 
-                      borderRadius: 1,
-                      border: '1px solid',
-                      borderColor: 'divider',
-                    }}
+                    minHeight={50}
+                    showToolbar={false}
+                    autoFocus={false}
                   />
                 </Box>
 
                 {/* Matching Right Item */}
                 {isMatching(nodeType) && (
                   <Box>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.75rem' }}>
                       Right Item
                     </Typography>
                     
-                    <InlineTextEditor
+                    <RichTextEditor
                       value={choiceNode.data.nljNode.matchingText || ''}
                       onUpdate={(value) => handleUpdateChoiceNode(choiceNode.id, { matchingText: value })}
                       placeholder="Click to edit matching text..."
                       multiline
-                      rows={2}
-                      sx={{ 
-                        p: 1.5, 
-                        bgcolor: 'action.hover', 
-                        borderRadius: 1,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
+                      minHeight={50}
+                      showToolbar={false}
+                      autoFocus={false}
                     />
                   </Box>
                 )}
 
                 {/* Choice Feedback */}
                 <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.75rem' }}>
                     Feedback (Optional)
                   </Typography>
                   
-                  <InlineTextEditor
+                  <RichTextEditor
                     value={choiceNode.data.nljNode.feedback || ''}
                     onUpdate={(value) => handleUpdateChoiceNode(choiceNode.id, { feedback: value })}
                     placeholder="Click to add feedback for this choice..."
                     multiline
-                    rows={2}
-                    sx={{ 
-                      p: 1.5, 
-                      bgcolor: 'background.default', 
-                      borderRadius: 1,
-                      border: '1px solid',
-                      borderColor: 'divider',
-                    }}
+                    minHeight={50}
+                    showToolbar={false}
+                    autoFocus={false}
                   />
                 </Box>
               </Stack>
@@ -280,18 +347,16 @@ export const ChoiceEditor: React.FC<ChoiceEditorProps> = ({
       <Button
         variant="outlined"
         startIcon={<AddIcon />}
-        onClick={() => {
-          // TODO: Implement add choice functionality
-          console.log('Add choice clicked');
-        }}
+        onClick={handleAddChoice}
         sx={{ alignSelf: 'flex-start' }}
+        size="small"
       >
         {addButtonLabel}
       </Button>
 
       {/* Instructions */}
-      <Alert severity="info" sx={{ mt: 2 }}>
-        <Typography variant="body2">
+      <Alert severity="info" sx={{ mt: 1.5, py: 0.5 }}>
+        <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
           <strong>Tip:</strong> Click on any text field to edit it inline. 
           Click the correctness chips to toggle correct/incorrect answers.
           Use the node palette to add more choice nodes and connect them to this question.

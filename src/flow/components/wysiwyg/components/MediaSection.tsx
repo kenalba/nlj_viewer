@@ -93,26 +93,26 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
   }
 
   return (
-    <Stack spacing={3}>
-      <Typography variant="h6" color="text.primary">
+    <Stack spacing={2}>
+      <Typography variant="subtitle1" color="text.primary" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
         Media
       </Typography>
 
       {/* Primary Media */}
       {hasMediaField && (
         <Box>
-          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.75rem' }}>
             Primary Media
           </Typography>
           
           {nljNode.media ? (
-            <Paper variant="outlined" sx={{ p: 2 }}>
+            <Paper variant="outlined" sx={{ p: 1.5 }}>
               
               {/* Media Details */}
-              <Stack spacing={2}>
-                <Stack direction="row" alignItems="center" spacing={2}>
+              <Stack spacing={1.5}>
+                <Stack direction="row" alignItems="center" spacing={1.5}>
                   {getMediaIcon(nljNode.media.type)}
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
                     {nljNode.media.type}
                   </Typography>
                 </Stack>
@@ -147,7 +147,7 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
             <Paper
               variant="outlined"
               sx={{
-                p: 3,
+                p: 2,
                 textAlign: 'center',
                 borderStyle: 'dashed',
                 cursor: 'pointer',
@@ -157,11 +157,11 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
                 },
               }}
             >
-              <ImageIcon sx={{ fontSize: 48, color: 'action.disabled', mb: 2 }} />
-              <Typography variant="body2" color="text.secondary">
+              <ImageIcon sx={{ fontSize: 36, color: 'action.disabled', mb: 1.5 }} />
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
                 Click to add media or drag & drop files here
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                 Supports images, videos, and audio files
               </Typography>
             </Paper>
@@ -172,19 +172,19 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
       {/* Additional Media (Carousel) */}
       {hasAdditionalMediaField && (
         <Box>
-          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.75rem' }}>
             Additional Media (Carousel)
           </Typography>
           
           {(nljNode as any)?.additionalMediaList && (nljNode as any).additionalMediaList.length > 0 ? (
-            <Stack spacing={2}>
+            <Stack spacing={1.5}>
               
               {/* Individual Media Items */}
               {(nljNode as any).additionalMediaList.map((mediaItem: any, index: number) => (
-                <Paper key={index} variant="outlined" sx={{ p: 2 }}>
-                  <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
+                <Paper key={index} variant="outlined" sx={{ p: 1.5 }}>
+                  <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1.5 }}>
                     {getMediaIcon(mediaItem.media.type)}
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
                       Item {index + 1}: {mediaItem.media.type}
                     </Typography>
                     <Box sx={{ flexGrow: 1 }} />
@@ -197,7 +197,7 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
                     </IconButton>
                   </Stack>
                   
-                  <Stack spacing={2}>
+                  <Stack spacing={1.5}>
                     <TextField
                       label="Title"
                       value={mediaItem.media.title || ''}
@@ -221,7 +221,7 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
             <Paper
               variant="outlined"
               sx={{
-                p: 3,
+                p: 2,
                 textAlign: 'center',
                 borderStyle: 'dashed',
                 cursor: 'pointer',
@@ -231,11 +231,11 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
                 },
               }}
             >
-              <VideoIcon sx={{ fontSize: 48, color: 'action.disabled', mb: 2 }} />
-              <Typography variant="body2" color="text.secondary">
+              <VideoIcon sx={{ fontSize: 36, color: 'action.disabled', mb: 1.5 }} />
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
                 Click to add media carousel
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                 Multiple media items with navigation controls
               </Typography>
             </Paper>
@@ -244,8 +244,8 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
       )}
 
       {/* Media Upload Instructions */}
-      <Alert severity="info" sx={{ mt: 2 }}>
-        <Typography variant="body2">
+      <Alert severity="info" sx={{ mt: 1.5, py: 0.5 }}>
+        <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
           <strong>Media Upload:</strong> Currently you can edit media paths directly. 
           Drag & drop upload functionality will be added in a future update.
         </Typography>

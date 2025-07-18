@@ -11,7 +11,7 @@ import {
 
 import type { FlowNode } from '../../../types/flow';
 import type { NLJNode } from '../../../../types/nlj';
-import { InlineTextEditor } from '../editors/InlineTextEditor';
+import { RichTextEditor } from '../editors/RichTextEditor';
 
 interface ContentSectionProps {
   node: FlowNode;
@@ -67,39 +67,43 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
   };
 
   return (
-    <Stack spacing={3}>
-      <Typography variant="h6" color="text.primary">
+    <Stack spacing={2}>
+      <Typography variant="subtitle1" color="text.primary" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
         Content
       </Typography>
+
+      {/* Node Title Field */}
+      <Box>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.75rem' }}>
+          Node Title
+        </Typography>
+        
+        <RichTextEditor
+          value={nljNode.title || ''}
+          onUpdate={(value) => onUpdate({ title: value })}
+          placeholder="Enter node title..."
+          multiline
+          minHeight={40}
+          showToolbar={false}
+          autoFocus={false}
+        />
+      </Box>
 
       {/* Main Text Field */}
       {hasTextField && (
         <Box>
-          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.75rem' }}>
             {getTextLabel()}
           </Typography>
           
-          <InlineTextEditor
+          <RichTextEditor
             value={nljNode.text || ''}
             onUpdate={(value) => onUpdate({ text: value })}
             placeholder={`Enter ${getTextLabel().toLowerCase()}... (Markdown supported)`}
-            variant="body1"
             multiline
-            rows={4}
-            sx={{ 
-              p: 2,
-              minHeight: 120,
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 1,
-              '&:hover': {
-                borderColor: 'primary.main',
-              },
-              '& .MuiTypography-root': { 
-                lineHeight: 1.6,
-                fontSize: '1rem',
-              } 
-            }}
+            minHeight={100}
+            showToolbar={true}
+            autoFocus={false}
           />
           
         </Box>
@@ -108,27 +112,18 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
       {/* Additional Content Field */}
       {hasContentField && (
         <Box>
-          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.75rem' }}>
             {getContentLabel()}
           </Typography>
           
-          <InlineTextEditor
+          <RichTextEditor
             value={nljNode.content || ''}
             onUpdate={(value) => onUpdate({ content: value })}
             placeholder={`Enter ${getContentLabel().toLowerCase()}... (Markdown supported)`}
-            variant="body2"
             multiline
-            rows={3}
-            sx={{
-              p: 2,
-              minHeight: 80,
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 1,
-              '&:hover': {
-                borderColor: 'primary.main',
-              },
-            }}
+            minHeight={70}
+            showToolbar={true}
+            autoFocus={false}
           />
           
         </Box>
@@ -137,24 +132,25 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
       {/* Description Field */}
       {hasDescriptionField && (
         <Box>
-          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.75rem' }}>
             Description
           </Typography>
           
-          <InlineTextEditor
+          <RichTextEditor
             value={nljNode.description || ''}
             onUpdate={(value) => onUpdate({ description: value })}
             placeholder="Enter description for this node..."
-            variant="body2"
             multiline
-            rows={2}
+            minHeight={50}
+            showToolbar={false}
+            autoFocus={false}
           />
         </Box>
       )}
 
       {/* Show message if no content fields */}
       {!hasTextField && !hasContentField && !hasDescriptionField && (
-        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.75rem' }}>
           This node type doesn't have editable content fields.
         </Typography>
       )}
