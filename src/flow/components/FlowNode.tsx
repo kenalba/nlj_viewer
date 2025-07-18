@@ -139,28 +139,9 @@ export const FlowNode = memo(({
     return theme === 'hyundai' ? '#002c5f' : '#666';
   };
 
-  // Get text color based on background color for readability
+  // Always use white text for better readability
   const getTextColor = () => {
-    const backgroundColor = getNodeColor();
-    
-    // Convert hex to RGB if it's a hex color
-    const getRGBValues = (color: string) => {
-      if (color.startsWith('#')) {
-        const hex = color.slice(1);
-        const r = parseInt(hex.substr(0, 2), 16);
-        const g = parseInt(hex.substr(2, 2), 16);
-        const b = parseInt(hex.substr(4, 2), 16);
-        return [r, g, b];
-      }
-      return [128, 128, 128]; // Default gray
-    };
-    
-    // Calculate luminance to determine if text should be light or dark
-    const [r, g, b] = getRGBValues(backgroundColor);
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    
-    // Return white text for dark backgrounds, black text for light backgrounds
-    return luminance > 0.5 ? '#000' : '#fff';
+    return '#ffffff';
   };
 
   // Get node border color
@@ -278,7 +259,10 @@ export const FlowNode = memo(({
               fontWeight: 'medium',
               mb: 1,
               wordBreak: 'break-word',
-              lineHeight: 1.2,
+              lineHeight: 1.4,
+              color: getTextColor(),
+              textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+              fontSize: '0.875rem',
             }}
           >
             {nodeData?.label || 'Untitled'}

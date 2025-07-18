@@ -537,7 +537,8 @@ export const ScenarioLoader: React.FC<ScenarioLoaderProps> = ({ onFlowEdit }) =>
       
     } catch (err) {
       playSound('error');
-      setError(`Failed to load sample: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(`Failed to load sample: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -798,7 +799,7 @@ export const ScenarioLoader: React.FC<ScenarioLoaderProps> = ({ onFlowEdit }) =>
     },
     {
       id: 'trivie',
-      name: 'Trivie Quizzes',
+      name: 'Quizzes',
       icon: <QuizIcon />,
       color: 'secondary',
       uploadLabel: 'Upload Trivie Quiz',
@@ -1319,7 +1320,7 @@ export const ScenarioLoader: React.FC<ScenarioLoaderProps> = ({ onFlowEdit }) =>
 
           {loading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-              <CircularProgress />
+              <CircularProgress role="progressbar" />
             </Box>
           )}
 

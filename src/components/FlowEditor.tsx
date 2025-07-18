@@ -229,7 +229,7 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
               }}
               size="small"
             >
-              Auto Layout
+              Layout
             </Button>
             
             <Button

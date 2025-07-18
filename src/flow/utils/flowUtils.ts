@@ -14,7 +14,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Entry point of the scenario',
     icon: '🏁',
     category: 'structure',
-    color: '#4CAF50',
+    color: '#2E7D32', // Darker green
     isInteractive: false,
     hasChoices: false,
     supportsMedia: false,
@@ -25,7 +25,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Exit point of the scenario',
     icon: '🎯',
     category: 'structure',
-    color: '#F44336',
+    color: '#C62828', // Darker red
     isInteractive: false,
     hasChoices: false,
     supportsMedia: false,
@@ -36,7 +36,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Question with multiple choice answers',
     icon: '❓',
     category: 'assessment',
-    color: '#2196F3',
+    color: '#1565C0', // Darker blue
     isInteractive: true,
     hasChoices: true,
     supportsMedia: true,
@@ -47,7 +47,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Answer choice for questions',
     icon: '✓',
     category: 'assessment',
-    color: '#9C27B0',
+    color: '#6A1B9A', // Darker purple
     isInteractive: false,
     hasChoices: false,
     supportsMedia: false,
@@ -58,7 +58,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Information or content panel',
     icon: '📄',
     category: 'structure',
-    color: '#FF9800',
+    color: '#E65100', // Darker orange
     isInteractive: false,
     hasChoices: false,
     supportsMedia: true,
@@ -69,7 +69,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'True or False question',
     icon: '✅',
     category: 'assessment',
-    color: '#8BC34A',
+    color: '#558B2F', // Darker light green
     isInteractive: true,
     hasChoices: false,
     supportsMedia: true,
@@ -80,7 +80,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Drag and drop ordering question',
     icon: '📝',
     category: 'assessment',
-    color: '#00BCD4',
+    color: '#00838F', // Darker cyan
     isInteractive: true,
     hasChoices: false,
     supportsMedia: true,
@@ -91,7 +91,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Match items from two lists',
     icon: '🔗',
     category: 'assessment',
-    color: '#3F51B5',
+    color: '#283593', // Darker indigo
     isInteractive: true,
     hasChoices: false,
     supportsMedia: true,
@@ -102,7 +102,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Text input for short answers',
     icon: '✏️',
     category: 'assessment',
-    color: '#607D8B',
+    color: '#455A64', // Darker blue grey
     isInteractive: true,
     hasChoices: false,
     supportsMedia: true,
@@ -113,7 +113,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Rating scale question',
     icon: '📊',
     category: 'survey',
-    color: '#795548',
+    color: '#5D4037', // Darker brown
     isInteractive: true,
     hasChoices: false,
     supportsMedia: true,
@@ -124,7 +124,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Star or numeric rating',
     icon: '⭐',
     category: 'survey',
-    color: '#FFC107',
+    color: '#F57C00', // Darker amber
     isInteractive: true,
     hasChoices: false,
     supportsMedia: true,
@@ -135,7 +135,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Grid-based question',
     icon: '📋',
     category: 'survey',
-    color: '#9E9E9E',
+    color: '#616161', // Darker grey
     isInteractive: true,
     hasChoices: false,
     supportsMedia: true,
@@ -146,7 +146,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Continuous range input',
     icon: '🎚️',
     category: 'survey',
-    color: '#673AB7',
+    color: '#512DA8', // Darker deep purple
     isInteractive: true,
     hasChoices: false,
     supportsMedia: true,
@@ -157,7 +157,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Multi-line text input',
     icon: '📝',
     category: 'survey',
-    color: '#009688',
+    color: '#00695C', // Darker teal
     isInteractive: true,
     hasChoices: false,
     supportsMedia: true,
@@ -168,7 +168,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Multiple selection question',
     icon: '☑️',
     category: 'assessment',
-    color: '#4CAF50',
+    color: '#2E7D32', // Darker green
     isInteractive: true,
     hasChoices: true,
     supportsMedia: true,
@@ -179,7 +179,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Checkbox selection',
     icon: '☑️',
     category: 'assessment',
-    color: '#2196F3',
+    color: '#1565C0', // Darker blue
     isInteractive: true,
     hasChoices: true,
     supportsMedia: true,
@@ -190,7 +190,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Word grouping game',
     icon: '🎮',
     category: 'game',
-    color: '#E91E63',
+    color: '#AD1457', // Darker pink
     isInteractive: true,
     hasChoices: false,
     supportsMedia: true,
@@ -201,7 +201,7 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     description: 'Word guessing game',
     icon: '🎯',
     category: 'game',
-    color: '#FF5722',
+    color: '#D84315', // Darker deep orange
     isInteractive: true,
     hasChoices: false,
     supportsMedia: true,

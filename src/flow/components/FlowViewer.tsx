@@ -584,17 +584,43 @@ function FlowViewerContent({
         {showBackground && <Background color="action.hover" gap={20} />}
         
         {showControls && (
-          <Controls 
-            showZoom={true}
-            showFitView={true}
-            showInteractive={true}
-            position="bottom-right"
-            style={{ 
-              zIndex: 1000,
+          <Box
+            sx={{
+              position: 'fixed',
               right: editingNodeId ? '490px' : '10px',
-              transition: 'right 0.3s ease'
+              bottom: '10px',
+              zIndex: 9999,
+              transition: 'right 0.3s ease',
+              backgroundColor: 'background.paper',
+              borderRadius: 1,
+              padding: 1,
+              boxShadow: 4,
+              border: 1,
+              borderColor: 'divider',
+              '& .react-flow__controls': {
+                backgroundColor: 'transparent',
+                boxShadow: 'none',
+                border: 'none',
+              },
+              '& .react-flow__controls button': {
+                backgroundColor: 'background.default',
+                color: 'text.primary',
+                border: 1,
+                borderColor: 'divider',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                  color: 'text.primary',
+                },
+              },
             }}
-          />
+          >
+            <Controls 
+              showZoom={true}
+              showFitView={true}
+              showInteractive={true}
+              position="bottom-right"
+            />
+          </Box>
         )}
         
         {showMiniMap && (

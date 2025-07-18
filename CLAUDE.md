@@ -92,11 +92,13 @@ React Context + useReducer pattern for:
 npm run dev          # Development server
 npm run build        # Production build
 npm run preview      # Preview production build
-npm run test         # Run test suite (249 tests passing)
+npm run test -- --run # Run test suite (249 tests passing) - ALWAYS use --run flag
 npm run test:ui      # Run tests with UI
 npm run test:coverage # Run tests with coverage
 npm run lint         # Run ESLint (39 non-critical issues remaining)
 ```
+
+**IMPORTANT**: Always use `npm run test -- --run` instead of `npm run test` to avoid watch mode.
 
 ### Pre-deployment Verification
 

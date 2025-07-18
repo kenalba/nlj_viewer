@@ -46,9 +46,27 @@ export const AssessmentPreview: React.FC<AssessmentPreviewProps> = ({
     const connectedChoiceEdges = allEdges.filter((edge: any) => 
       edge.source === node.id
     );
-    return connectedChoiceEdges.map((edge: any) => 
-      allNodes.find((n: any) => n.id === edge.target && n.data.nodeType === 'choice')
-    ).filter(Boolean).map((choiceNode: any) => choiceNode.data.nljNode);
+    
+    // Use a Set to prevent duplicates and filter by unique node IDs
+    const seenNodeIds = new Set<string>();
+    const choiceNodes = connectedChoiceEdges
+      .map((edge: any) => 
+        allNodes.find((n: any) => n.id === edge.target && n.data.nodeType === 'choice')
+      )
+      .filter((choiceNode: any) => {
+        if (!choiceNode || seenNodeIds.has(choiceNode.id)) {
+          return false;
+        }
+        seenNodeIds.add(choiceNode.id);
+        return true;
+      })
+      .map((choiceNode: any) => choiceNode.data.nljNode);
+    
+    // Debug logging to identify duplicates
+    console.log('AssessmentPreview - Raw edges:', connectedChoiceEdges);
+    console.log('AssessmentPreview - Filtered choice nodes:', choiceNodes);
+    
+    return choiceNodes;
   };
 
   // Common props for all components

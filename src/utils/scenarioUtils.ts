@@ -32,9 +32,17 @@ export const getChoicesForQuestion = (
     link => link.type === 'parent-child' && link.sourceNodeId === questionNodeId
   );
   
+  // Use a Set to prevent duplicates based on node ID
+  const seenNodeIds = new Set<string>();
   return parentChildLinks
     .map(link => scenario.nodes.find(node => node.id === link.targetNodeId))
-    .filter((node): node is ChoiceNode => node?.type === 'choice');
+    .filter((node): node is ChoiceNode => {
+      if (!node || node.type !== 'choice' || seenNodeIds.has(node.id)) {
+        return false;
+      }
+      seenNodeIds.add(node.id);
+      return true;
+    });
 };
 
 /**

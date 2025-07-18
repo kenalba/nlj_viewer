@@ -47,9 +47,20 @@ export const ChoiceEditor: React.FC<ChoiceEditorProps> = ({
     const connectedChoiceEdges = allEdges.filter((edge: any) => 
       edge.source === node.id
     );
-    return connectedChoiceEdges.map((edge: any) => 
-      allNodes.find((n: any) => n.id === edge.target && n.data.nodeType === 'choice')
-    ).filter(Boolean);
+    
+    // Use a Set to prevent duplicates and filter by unique node IDs
+    const seenNodeIds = new Set();
+    return connectedChoiceEdges
+      .map((edge: any) => 
+        allNodes.find((n: any) => n.id === edge.target && n.data.nodeType === 'choice')
+      )
+      .filter((choiceNode: any) => {
+        if (!choiceNode || seenNodeIds.has(choiceNode.id)) {
+          return false;
+        }
+        seenNodeIds.add(choiceNode.id);
+        return true;
+      });
   };
 
   // Get appropriate labels for different question types
