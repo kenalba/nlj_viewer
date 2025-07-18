@@ -12,6 +12,7 @@ import {
   Tab,
   TextField,
   Divider,
+  Stack,
 } from '@mui/material';
 import { 
   Upload as UploadIcon, 
@@ -23,7 +24,7 @@ import {
   Games as WordleIcon,
   Download as DownloadIcon,
   Code as LLMIcon,
-  ContentPaste as PasteIcon,
+  AccountTree as FlowIcon,
 } from '@mui/icons-material';
 import type { NLJScenario } from '../types/nlj';
 import { validateScenario } from '../utils/scenarioUtils';
@@ -93,11 +94,16 @@ const SAMPLE_WORDLE = [
   'hard_wordle.json',
 ];
 
-export const ScenarioLoader: React.FC = () => {
+interface ScenarioLoaderProps {
+  onFlowEdit?: (scenario: NLJScenario) => void;
+}
+
+export const ScenarioLoader: React.FC<ScenarioLoaderProps> = ({ onFlowEdit }) => {
   const { loadScenario } = useGameContext();
   const { playSound } = useAudio();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadedScenario, setLoadedScenario] = useState<NLJScenario | null>(null);
   const [errorDetails, setErrorDetails] = useState<ErrorDetails | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [selectedActivityType, setSelectedActivityType] = useState<ActivityType>('nlj');
@@ -110,7 +116,7 @@ export const ScenarioLoader: React.FC = () => {
     details?: string,
     suggestions?: string[],
     file?: File,
-    additionalData?: any
+    additionalData?: Record<string, unknown>
   ): ErrorDetails => ({
     category,
     message,
@@ -123,12 +129,12 @@ export const ScenarioLoader: React.FC = () => {
     ...additionalData,
   });
 
-  const handleError = (errorDetails: ErrorDetails) => {
+  const handleError = useCallback((errorDetails: ErrorDetails) => {
     setError(errorDetails.message);
     setErrorDetails(errorDetails);
     setShowErrorModal(true);
     playSound('error');
-  };
+  }, [playSound]);
 
   const loadScenarioFromFile = useCallback(async (file: File) => {
     setLoading(true);
@@ -140,7 +146,7 @@ export const ScenarioLoader: React.FC = () => {
       const fileExtension = file.name.split('.').pop()?.toLowerCase();
       
       let scenario: NLJScenario;
-      let rawData: any;
+      let rawData: unknown;
       
       if (fileExtension === 'xlsx' || fileExtension === 'xls') {
         // Handle Trivie Excel files
@@ -304,6 +310,7 @@ export const ScenarioLoader: React.FC = () => {
       // Store scenario data in localStorage
       localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
       playSound('navigate');
+      setLoadedScenario(scenario);
       loadScenario(scenario);
     } catch (err) {
       handleError(createErrorDetails(
@@ -385,6 +392,7 @@ export const ScenarioLoader: React.FC = () => {
       // Store scenario data in localStorage
       localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
       playSound('navigate');
+      setLoadedScenario(scenario);
       loadScenario(scenario);
       
       // Clear the pasted JSON after successful load
@@ -411,6 +419,130 @@ export const ScenarioLoader: React.FC = () => {
     }
   }, [pastedJson, loadScenario, playSound, handleError]);
 
+  const handlePastedJsonPreview = useCallback(async () => {
+    if (!pastedJson.trim()) {
+      playSound('error');
+      setError('Please paste JSON content in the text area');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Parse and validate JSON
+      let scenario: NLJScenario;
+      try {
+        scenario = JSON.parse(pastedJson);
+      } catch (jsonError) {
+        handleError(createErrorDetails(
+          'file_format',
+          'Invalid JSON format',
+          `The pasted content contains invalid JSON: ${jsonError instanceof Error ? jsonError.message : 'Unknown error'}`,
+          [
+            'Check if the JSON is properly formatted',
+            'Validate the JSON syntax using a JSON validator',
+            'Ensure all brackets, quotes, and commas are correct',
+          ],
+          undefined,
+          { pastedContent: pastedJson }
+        ));
+        return;
+      }
+
+      // Validate scenario
+      const validationErrors = validateScenario(scenario);
+      if (validationErrors.length > 0) {
+        handleError(createErrorDetails(
+          'schema_validation',
+          'Invalid NLJ scenario format',
+          `The pasted JSON contains ${validationErrors.length} validation error(s) that prevent proper loading.`,
+          [
+            'Check that all required fields are present',
+            'Ensure node IDs are unique and properly referenced',
+            'Verify links connect existing nodes',
+          ],
+          undefined,
+          { 
+            rawData: scenario,
+            validationErrors: validationErrors.map(error => ({ field: 'scenario', message: error }))
+          }
+        ));
+        return;
+      }
+
+      // Store scenario data in localStorage for potential play later
+      localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
+      playSound('navigate');
+      setLoadedScenario(scenario);
+      
+      // Open flow editor instead of playing
+      if (onFlowEdit) {
+        onFlowEdit(scenario);
+      }
+      
+      // Clear the pasted JSON after successful load
+      setPastedJson('');
+      
+    } catch (err) {
+      handleError(createErrorDetails(
+        'unknown',
+        'Failed to process pasted JSON',
+        `An error occurred while processing the pasted content: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        [
+          'Try pasting the JSON again',
+          'Verify the JSON is complete and not truncated',
+          'Check for any special characters that might cause issues',
+          'Try using the file upload option instead',
+        ],
+        undefined,
+        { 
+          stackTrace: err instanceof Error ? err.stack : undefined
+        }
+      ));
+    } finally {
+      setLoading(false);
+    }
+  }, [pastedJson, playSound, handleError, onFlowEdit]);
+
+  const loadSampleForPreview = useCallback(async (filename: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${import.meta.env.BASE_URL}static/sample_nljs/${filename}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const scenario: NLJScenario = await response.json();
+      
+      // Validate scenario
+      const validationErrors = validateScenario(scenario);
+      if (validationErrors.length > 0) {
+        playSound('error');
+        setError(`Validation errors: ${validationErrors.join(', ')}`);
+        return;
+      }
+      
+      // Store scenario data in localStorage
+      localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
+      playSound('navigate');
+      setLoadedScenario(scenario);
+      
+      // Open flow editor instead of playing
+      if (onFlowEdit) {
+        onFlowEdit(scenario);
+      }
+      
+    } catch (err) {
+      playSound('error');
+      setError(`Failed to load sample: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setLoading(false);
+    }
+  }, [playSound, onFlowEdit]);
+
   const loadSampleScenario = useCallback(async (filename: string) => {
     setLoading(true);
     setError(null);
@@ -434,6 +566,7 @@ export const ScenarioLoader: React.FC = () => {
       // Store scenario data in localStorage
       localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
       playSound('navigate');
+      setLoadedScenario(scenario);
       loadScenario(scenario);
     } catch (err) {
       playSound('error');
@@ -491,6 +624,7 @@ export const ScenarioLoader: React.FC = () => {
       // Store scenario data in localStorage
       localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
       playSound('navigate');
+      setLoadedScenario(scenario);
       loadScenario(scenario);
     } catch (err) {
       playSound('error');
@@ -523,6 +657,7 @@ export const ScenarioLoader: React.FC = () => {
       // Store scenario data in localStorage
       localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
       playSound('navigate');
+      setLoadedScenario(scenario);
       loadScenario(scenario);
     } catch (err) {
       playSound('error');
@@ -555,6 +690,7 @@ export const ScenarioLoader: React.FC = () => {
       // Store scenario data in localStorage
       localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
       playSound('navigate');
+      setLoadedScenario(scenario);
       loadScenario(scenario);
     } catch (err) {
       playSound('error');
@@ -573,37 +709,41 @@ export const ScenarioLoader: React.FC = () => {
 
   const downloadSampleJSON = useCallback(async (activityType: ActivityType) => {
     try {
-      let sampleData: any;
+      let sampleData: unknown;
       let filename: string;
       
       switch (activityType) {
-        case 'nlj':
+        case 'nlj': {
           // Download the first sample NLJ scenario
           const nlj = await fetch(`${import.meta.env.BASE_URL}static/sample_nljs/${SAMPLE_SCENARIOS[0]}`);
           sampleData = await nlj.json();
           filename = 'sample_nlj_scenario.json';
           break;
+        }
           
-        case 'survey':
+        case 'survey': {
           // Download the first sample survey
           const survey = await fetch(`${import.meta.env.BASE_URL}static/sample_surveys/${SAMPLE_SURVEYS[0]}`);
           sampleData = await survey.json();
           filename = 'sample_survey.json';
           break;
+        }
           
-        case 'connections':
+        case 'connections': {
           // Download the first sample connections game
           const connections = await fetch(`${import.meta.env.BASE_URL}static/sample_connections/${SAMPLE_CONNECTIONS[0]}`);
           sampleData = await connections.json();
           filename = 'sample_connections_game.json';
           break;
+        }
           
-        case 'wordle':
+        case 'wordle': {
           // Download the first sample wordle game
           const wordle = await fetch(`${import.meta.env.BASE_URL}static/sample_wordle/${SAMPLE_WORDLE[0]}`);
           sampleData = await wordle.json();
           filename = 'sample_wordle_game.json';
           break;
+        }
           
         case 'trivie':
           // For Trivie, we'll create a simple template since it's Excel-based
@@ -822,17 +962,30 @@ export const ScenarioLoader: React.FC = () => {
                   }}
                 />
                 
-                <Button
-                  variant="outlined"
-                  startIcon={<PasteIcon />}
-                  onClick={handlePastedJson}
-                  disabled={loading || !pastedJson.trim()}
-                  fullWidth
-                  size="large"
-                  color={currentActivityType.color}
-                >
-                  Load Pasted JSON
-                </Button>
+                <Stack direction="row" spacing={2}>
+                  <Button
+                    variant="contained"
+                    startIcon={<PlayIcon />}
+                    onClick={handlePastedJson}
+                    disabled={loading || !pastedJson.trim()}
+                    fullWidth
+                    size="large"
+                    color={currentActivityType.color}
+                  >
+                    Play Journey
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<FlowIcon />}
+                    onClick={handlePastedJsonPreview}
+                    disabled={loading || !pastedJson.trim()}
+                    fullWidth
+                    size="large"
+                    color="secondary"
+                  >
+                    Preview Nodes
+                  </Button>
+                </Stack>
               </>
             )}
             
@@ -848,6 +1001,22 @@ export const ScenarioLoader: React.FC = () => {
             >
               Download Sample JSON
             </Button>
+            
+            {/* Flow Editor button for loaded scenarios */}
+            {loadedScenario && onFlowEdit && (
+              <Button
+                variant="outlined"
+                startIcon={<FlowIcon />}
+                onClick={() => onFlowEdit(loadedScenario)}
+                disabled={loading}
+                fullWidth
+                size="large"
+                color="secondary"
+                sx={{ textTransform: 'none' }}
+              >
+                Edit Flow Diagram
+              </Button>
+            )}
           </Box>
         </CardContent>
       </Card>
@@ -956,29 +1125,16 @@ export const ScenarioLoader: React.FC = () => {
         <Box sx={{ 
           display: 'grid', 
           gap: 2,
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
         }}>
           {currentActivityType.samples.map((filename) => (
-            <Button
-              key={filename}
-              onClick={() => currentActivityType.loadSampleFunction(filename)}
-              disabled={loading}
-              variant="outlined"
-              color={currentActivityType.color}
-              startIcon={<PlayIcon />}
-              sx={{
-                justifyContent: 'flex-start',
-                textAlign: 'left',
-                textTransform: 'none',
-                py: 2,
-                px: 3,
-                borderRadius: 2,
-              }}
-            >
+            <Card key={filename} variant="outlined" sx={{ p: 2 }}>
               <Typography
+                variant="subtitle2"
                 sx={{
                   fontSize: '0.95rem',
                   fontWeight: 500,
+                  mb: 1,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -991,9 +1147,55 @@ export const ScenarioLoader: React.FC = () => {
                   filename.replace('.json', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
                 }
               </Typography>
-            </Button>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  onClick={() => currentActivityType.loadSampleFunction(filename)}
+                  disabled={loading}
+                  variant="contained"
+                  color={currentActivityType.color}
+                  startIcon={<PlayIcon />}
+                  size="small"
+                  fullWidth
+                  sx={{ textTransform: 'none' }}
+                >
+                  Play
+                </Button>
+                {selectedActivityType === 'nlj' && onFlowEdit && (
+                  <Button
+                    onClick={() => loadSampleForPreview(filename)}
+                    disabled={loading}
+                    variant="outlined"
+                    color="secondary"
+                    startIcon={<FlowIcon />}
+                    size="small"
+                    fullWidth
+                    sx={{ textTransform: 'none' }}
+                  >
+                    Preview
+                  </Button>
+                )}
+              </Stack>
+            </Card>
           ))}
         </Box>
+        
+        {/* Flow Editor button for loaded scenarios */}
+        {loadedScenario && onFlowEdit && (
+          <Box sx={{ mt: 3, borderTop: 1, borderColor: 'divider', pt: 3 }}>
+            <Button
+              variant="outlined"
+              startIcon={<FlowIcon />}
+              onClick={() => onFlowEdit(loadedScenario)}
+              disabled={loading}
+              fullWidth
+              size="large"
+              color="secondary"
+              sx={{ textTransform: 'none' }}
+            >
+              Edit Flow Diagram
+            </Button>
+          </Box>
+        )}
       </CardContent>
     </Card>
     );
@@ -1033,9 +1235,9 @@ export const ScenarioLoader: React.FC = () => {
           
           <Box sx={{ textAlign: 'center', mb: 2 }}>
             <Typography color="text.secondary" sx={{ fontSize: '0.9rem', maxWidth: 600, mx: 'auto' }}>
-              Test different activity types in a unified web/mobile responsive player. 
-              Appearance may differ from native mobile implementations.
-            </Typography>
+              This tool, which is VERY MUCH in beta, allows the user to play NLJs. This functionality works okay. It also has a crude NLJ editor/previewer, but that's EXTREMELY janky.
+              This is a proof of concept. Do not assume features here will be in production within the next 3 months.
+                       </Typography>
           </Box>
           
           {/* Activity Type Tabs */}

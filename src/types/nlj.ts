@@ -133,6 +133,7 @@ export interface InterstitialPanelNode extends BaseNode {
   text?: string;
   content?: string;
   media?: Media;
+  additionalMediaList?: MediaWrapper[];
 }
 
 export interface TrueFalseNode extends BaseNode {

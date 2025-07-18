@@ -29,6 +29,13 @@ A modern, responsive TypeScript React application for playing interactive Non-Li
 - **Keyboard Navigation**: Full accessibility support with keyboard controls
 - **xAPI Integration**: Comprehensive learning event tracking with post-activity analytics
 - **LLM Content Generation**: Comprehensive prompt generation system for creating NLJ scenarios with LLMs
+- **Flow Editor**: WYSIWYG visual editor for creating and editing NLJ scenarios
+  - Visual flow diagram creation with React Flow
+  - Drag-and-drop node palette with 18+ node types
+  - Real-time preview system with game widget support
+  - Persistent sidebar editors with auto-save
+  - Zoom controls and auto-layout algorithms
+  - Settings dialog and export functionality
 - **Production-Ready**: Optimized build process with comprehensive error checking
 
 ## 🎯 Quick Start
@@ -56,7 +63,8 @@ Visit `http://localhost:5173` to load scenarios and begin training.
 2. **Upload Trivie Excel**: Load Trivie quiz Excel files (automatically converted)
 3. **Upload Survey**: Load survey JSON files
 4. **Generate LLM Prompt**: Create customized prompts for LLM-powered content generation
-5. **Sample Content**: Try included demo content:
+5. **Flow Editor**: Create and edit NLJ scenarios visually with the WYSIWYG editor
+6. **Sample Content**: Try included demo content:
    - **NLJ Scenarios**: FSA sales training modules, Hyundai Ioniq9 product knowledge, Interactive decision trees
    - **Trivie Quizzes**: Excel format quiz samples
    - **Survey Templates**: Automotive Sales Department, Employee Engagement, Manager Effectiveness, Work-Life Balance
@@ -85,6 +93,9 @@ Visit `http://localhost:5173` to load scenarios and begin training.
 - **ScenarioLoader**: File upload, sample scenario selection, and LLM prompt generation with Trivie Excel support
 - **GameView**: Main gameplay interface with navigation and progress tracking
 - **MediaViewer**: Responsive media display with click-to-enlarge functionality
+- **FlowEditor**: WYSIWYG visual editor for creating and editing NLJ scenarios
+- **FlowViewer**: React Flow-based visual flow diagram component with comprehensive node editing
+- **WYSIWYGNodeEditor**: Persistent sidebar editor with real-time preview and auto-save
 - **Question Components**: Specialized components for each question type
   - `TrueFalseNode`: Interactive True/False buttons with submit/continue workflow and keyboard support (1 for True, 2 for False)
   - `OrderingNode`: Drag-and-drop item reordering with validation
@@ -186,7 +197,22 @@ src/
 │   ├── MediaViewer.tsx  # Responsive media display
 │   ├── ScenarioLoader.tsx # File loading and LLM integration
 │   ├── LLMPromptGenerator.tsx # LLM prompt generation system
+│   ├── FlowEditor.tsx  # WYSIWYG Flow Editor wrapper
 │   └── ...
+├── flow/               # Flow Editor components
+│   ├── components/     # Flow-specific components
+│   │   ├── FlowViewer.tsx # Main React Flow component
+│   │   ├── FlowNode.tsx # Custom flow node component
+│   │   ├── NodePalette.tsx # Drag-and-drop node palette
+│   │   └── wysiwyg/    # WYSIWYG editor components
+│   │       ├── WYSIWYGNodeEditor.tsx # Persistent sidebar editor
+│   │       ├── editors/ # Specialized node editors
+│   │       ├── previews/ # Real-time preview components
+│   │       └── components/ # Shared editor components
+│   ├── types/          # Flow-specific types
+│   │   └── flow.ts     # Flow node and edge types
+│   └── utils/          # Flow utilities
+│       └── flowUtils.ts # Layout algorithms and validation
 ├── contexts/           # React contexts
 │   └── GameContext.tsx # Game state management
 ├── hooks/              # Custom React hooks
@@ -281,6 +307,13 @@ All TypeScript build errors have been resolved as of the latest commits:
 - **Enhanced Testing**: Improved test utilities with theme-aware testing capabilities
 
 ### 📋 Planned Features
+- **Flow Editor Enhancements**: 
+  - Tiptap integration for markdown inline editing
+  - Advanced node editors for rating, matrix, slider, and text area types
+  - Add Choice functionality and choice node content updating
+  - Drag & drop media upload functionality
+  - Image export functionality (PNG/SVG) for flow diagrams
+  - Consolidate duplicative 'Text' and 'Content' fields
 - **Enhanced Post-Activity Experience**: Comprehensive analytics dashboard with detailed performance metrics
 - **Offline Support**: Service worker implementation for offline scenario access
 - **Node Grammar Extensions**: Fill-in-the-blank, classification, hotspot, and memory game question types

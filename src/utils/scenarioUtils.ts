@@ -140,9 +140,18 @@ const validateNodeStructure = (node: any): string[] => {
   if (node.type && CONTENT_REQUIRED_NODE_TYPES.includes(node.type)) {
     const hasText = node.text && node.text.trim().length > 0;
     const hasContent = node.content && node.content.trim().length > 0;
+    const hasMedia = node.media && node.media.fullPath && node.media.fullPath.trim().length > 0;
     
-    if (!hasText && !hasContent) {
-      errors.push(`Node "${node.id}" of type "${node.type}" missing required content - must have either 'text' or 'content' property with non-empty value`);
+    // Special case: interstitial panels can have just media without text/content
+    if (node.type === 'interstitial_panel') {
+      if (!hasText && !hasContent && !hasMedia) {
+        errors.push(`Node "${node.id}" of type "${node.type}" missing required content - must have either 'text', 'content', or 'media' property with non-empty value`);
+      }
+    } else {
+      // Other content-required nodes must have text or content
+      if (!hasText && !hasContent) {
+        errors.push(`Node "${node.id}" of type "${node.type}" missing required content - must have either 'text' or 'content' property with non-empty value`);
+      }
     }
   }
   
