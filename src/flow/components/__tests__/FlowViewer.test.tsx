@@ -9,7 +9,12 @@ import type { NLJScenario } from '../../../types/nlj';
 
 // Mock React Flow completely
 vi.mock('@xyflow/react', () => ({
-  ReactFlow: () => <div data-testid="react-flow">Mock ReactFlow</div>,
+  ReactFlow: ({ children }: any) => (
+    <div data-testid="react-flow">
+      Mock ReactFlow
+      {children}
+    </div>
+  ),
   Controls: () => <div data-testid="flow-controls">Controls</div>,
   MiniMap: () => <div data-testid="flow-minimap">MiniMap</div>,
   Background: () => <div data-testid="flow-background">Background</div>,
