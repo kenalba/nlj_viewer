@@ -34,7 +34,7 @@ import {
 } from '@mui/icons-material';
 
 import type { NodeTypeInfo, FlowNodeType } from '../types/flow';
-import { getNodeIcon } from '../utils/nodeTypeUtils';
+import { getNodeIcon } from '../utils/nodeTypeUtils.tsx';
 
 interface NodePaletteProps {
   nodeTypes: Array<NodeTypeInfo & { type: FlowNodeType }>;

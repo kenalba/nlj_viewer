@@ -15,7 +15,7 @@ import {
 
 import type { FlowNode } from '../../../types/flow';
 // NODE_TYPE_INFO is now imported via getNodeTypeInfo utility
-import { getNodeIcon, getNodeTypeInfo } from '../../../utils/nodeTypeUtils';
+import { getNodeIcon, getNodeTypeInfo } from '../../../utils/nodeTypeUtils.tsx';
 
 interface NodeHeaderProps {
   node: FlowNode;

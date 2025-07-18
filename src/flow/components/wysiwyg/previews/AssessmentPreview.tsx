@@ -43,7 +43,7 @@ export const AssessmentPreview: React.FC<AssessmentPreviewProps> = ({
 
   // Get connected choice nodes for choice-based assessments
   const getConnectedChoiceNodes = () => {
-    const connectedChoiceEdges = allEdges.filter((edge: any) => 
+    const connectedChoiceEdges = (allEdges || []).filter((edge: any) => 
       edge.source === node.id
     );
     
@@ -51,7 +51,7 @@ export const AssessmentPreview: React.FC<AssessmentPreviewProps> = ({
     const seenNodeIds = new Set<string>();
     const choiceNodes = connectedChoiceEdges
       .map((edge: any) => 
-        allNodes.find((n: any) => n.id === edge.target && n.data.nodeType === 'choice')
+        (allNodes || []).find((n: any) => n.id === edge.target && n.data.nodeType === 'choice')
       )
       .filter((choiceNode: any) => {
         if (!choiceNode || seenNodeIds.has(choiceNode.id)) {

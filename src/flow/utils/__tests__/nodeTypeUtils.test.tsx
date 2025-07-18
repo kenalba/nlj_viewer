@@ -43,7 +43,7 @@ import {
   isStructureType,
   isValidNodeType,
   getDefaultNodeTypeForCategory,
-} from '../nodeTypeUtils';
+} from '../nodeTypeUtils.tsx';
 
 describe('nodeTypeUtils', () => {
   describe('getNodeIcon', () => {

@@ -43,7 +43,7 @@ import {
 } from '@mui/icons-material';
 
 import type { NLJScenario, NLJNode, ConnectionsGroup } from '../../types/nlj';
-import type { FlowNode, FlowEdge, FlowNodeData, FlowValidationResult, LayoutConfig, FlowNodeType } from '../types/flow';
+import type { FlowNode, FlowEdge, FlowNodeData, FlowEdgeData, FlowValidationResult, LayoutConfig, FlowNodeType } from '../types/flow';
 import { 
   nljScenarioToFlow, 
   validateFlow, 
@@ -54,7 +54,7 @@ import {
 import { FlowNode as FlowNodeComponent } from './FlowNode';
 import { FlowEdge as FlowEdgeComponent } from './FlowEdge';
 import { NodePalette } from './NodePalette';
-import { WYSIWYGNodeEditor } from './wysiwyg/WYSIWYGNodeEditor';
+import { UnifiedSidebar } from './wysiwyg/UnifiedSidebar';
 
 interface FlowViewerProps {
   scenario: NLJScenario;
@@ -77,9 +77,6 @@ interface FlowViewerProps {
   onCloseSettings?: () => void;
 }
 
-const edgeTypes: EdgeTypes = {
-  custom: FlowEdgeComponent,
-};
 
 const defaultLayoutConfig: LayoutConfig = {
   algorithm: 'hierarchical',
@@ -115,6 +112,7 @@ function FlowViewerContent({
   const [isEditMode] = useState(!readOnly);
   const [_selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
   const [_pendingNodeId, setPendingNodeId] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showPalette, setShowPalette] = useState(true);
@@ -180,19 +178,13 @@ function FlowViewerContent({
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedNodeId(node.id);
     
-    // If the WYSIWYG editor is already open and there are unsaved changes, warn the user
-    if (editingNodeId && editingNodeId !== node.id) {
-      if (hasUnsavedChanges) {
-        const confirmed = window.confirm('You have unsaved changes. Are you sure you want to switch nodes without saving?');
-        if (!confirmed) {
-          return; // Don't switch nodes
-        }
-      }
-      setPendingNodeId(node.id);
-      setEditingNodeId(node.id);
-      setHasUnsavedChanges(false); // Reset unsaved changes when switching
-    }
-  }, [editingNodeId, hasUnsavedChanges]);
+    // Clear edge selection when a node is clicked
+    setEditingEdgeId(null);
+    
+    // Switch to the new node (auto-save will handle any unsaved changes)
+    setEditingNodeId(node.id);
+    setHasUnsavedChanges(false); // Reset unsaved changes when switching
+  }, []);
 
   // Handle node editing
   const onNodeEdit = useCallback((nodeId: string) => {
@@ -218,10 +210,6 @@ function FlowViewerContent({
     setEdges((eds) => [...eds, newEdge]);
   }, [setEdges]);
 
-  // Handle updating node from editor
-  const handleUpdateNodeFromEditor = useCallback((nodeId: string, updates: Partial<FlowNode>) => {
-    setNodes((nds) => nds.map(n => n.id === nodeId ? { ...n, ...updates } : n));
-  }, [setNodes]);
 
   // Handle node deletion
   const onNodeDelete = useCallback((nodeId: string) => {
@@ -481,6 +469,39 @@ function FlowViewerContent({
     }
   }, [reactFlowInstance, onNodeAdd]);
 
+  // Handle edge editing
+  const onEdgeEdit = useCallback((edgeId: string) => {
+    if (!isEditMode) return;
+    
+    setEditingEdgeId(edgeId);
+    // Don't close node editor if it's open - unified sidebar will handle both
+  }, [isEditMode]);
+
+  // Handle edge deletion
+  const onEdgeDelete = useCallback((edgeId: string) => {
+    if (!isEditMode) return;
+    
+    setEdges((eds) => eds.filter((edge) => edge.id !== edgeId));
+    setEditingEdgeId(null);
+  }, [isEditMode, setEdges]);
+
+  // Handle edge save
+  const onEdgeSave = useCallback((edgeId: string, updates: Partial<FlowEdge>) => {
+    setEdges((eds) => eds.map(edge => 
+      edge.id === edgeId ? { ...edge, ...updates } : edge
+    ));
+  }, [setEdges]);
+
+  // Handle edge click for selection
+  const onEdgeClick = useCallback((_event: React.MouseEvent, edge: FlowEdge) => {
+    if (!isEditMode) return;
+    
+    // Clear node selection when an edge is clicked
+    setEditingNodeId(null);
+    setSelectedNodeId(null);
+    
+    setEditingEdgeId(edge.id);
+  }, [isEditMode]);
 
   // Auto-layout (exposed to parent)
   const handleAutoLayout = useCallback(() => {
@@ -561,6 +582,20 @@ function FlowViewerContent({
     ),
   }), [onNodeEdit, onNodeDelete, isEditMode, theme]);
 
+  // Edge types with props passed from this component
+  const edgeTypes: EdgeTypes = useMemo(() => ({
+    custom: (props: any) => (
+      <FlowEdgeComponent 
+        {...props}
+        data={props.data as FlowEdgeData}
+        onEdit={onEdgeEdit}
+        onDelete={onEdgeDelete}
+        isEditMode={isEditMode}
+        theme={theme}
+      />
+    ),
+  }), [onEdgeEdit, onEdgeDelete, isEditMode, theme]);
+
   return (
     <Box className={className} sx={{ width: '100%', height: '100%', position: 'relative', overflowX: 'hidden' }}>
 
@@ -571,7 +606,7 @@ function FlowViewerContent({
           height: '100%', 
           transition: 'margin 0.3s ease',
           marginLeft: showPalette ? '320px' : '0px',
-          marginRight: Boolean(editingNodeId) ? '480px' : '0px',
+          marginRight: Boolean(editingNodeId || editingEdgeId) ? '480px' : '0px',
           overflow: 'hidden', // Prevent content from overflowing
         }}
       >
@@ -587,6 +622,7 @@ function FlowViewerContent({
             onNodeEdit(node.id);
           }
         }}
+        onEdgeClick={onEdgeClick}
         onDrop={onDrop}
         onDragOver={onDragOver}
         nodeTypes={nodeTypes}
@@ -723,28 +759,31 @@ function FlowViewerContent({
         />
       )}
 
-      {/* WYSIWYG Node Editor */}
-      <WYSIWYGNodeEditor
+      {/* Unified Sidebar for Node and Edge Editing */}
+      <UnifiedSidebar
         node={editingNodeId ? nodes.find(n => n.id === editingNodeId) || null : null}
-        isOpen={Boolean(editingNodeId)}
-        onSave={(updatedNode) => {
+        onNodeSave={(updatedNode) => {
           // Only update node data, don't close editor (for autosave)
           setNodes(nodes.map(n => n.id === editingNodeId ? updatedNode : n));
           setHasUnsavedChanges(false);
         }}
-        onClose={() => {
-          setEditingNodeId(null);
-          setHasUnsavedChanges(false);
-        }}
-        onDelete={onNodeDelete}
-        theme={theme}
-        headerHeight={headerHeight}
+        onNodeDelete={onNodeDelete}
+        edge={editingEdgeId ? edges.find(e => e.id === editingEdgeId) || null : null}
+        onEdgeSave={onEdgeSave}
+        onEdgeDelete={onEdgeDelete}
         allNodes={nodes}
         allEdges={edges}
+        isOpen={Boolean(editingNodeId || editingEdgeId)}
+        onClose={() => {
+          setEditingNodeId(null);
+          setEditingEdgeId(null);
+          setHasUnsavedChanges(false);
+        }}
+        theme={theme}
+        headerHeight={headerHeight}
         onUnsavedChanges={handleUnsavedChanges}
         onAddNode={handleAddNodeFromEditor}
         onAddEdge={handleAddEdgeFromEditor}
-        onUpdateNode={handleUpdateNodeFromEditor}
       />
 
       {/* Validation Results Dialog */}

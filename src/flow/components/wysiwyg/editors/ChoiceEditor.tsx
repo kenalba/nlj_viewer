@@ -51,7 +51,7 @@ export const ChoiceEditor: React.FC<ChoiceEditorProps> = ({
 
   // Get connected choice nodes
   const getConnectedChoiceNodes = () => {
-    const connectedChoiceEdges = allEdges.filter((edge: any) => 
+    const connectedChoiceEdges = (allEdges || []).filter((edge: any) => 
       edge.source === node.id
     );
     
@@ -59,7 +59,7 @@ export const ChoiceEditor: React.FC<ChoiceEditorProps> = ({
     const seenNodeIds = new Set();
     return connectedChoiceEdges
       .map((edge: any) => 
-        allNodes.find((n: any) => n.id === edge.target && n.data.nodeType === 'choice')
+        (allNodes || []).find((n: any) => n.id === edge.target && n.data.nodeType === 'choice')
       )
       .filter((choiceNode: any) => {
         if (!choiceNode || seenNodeIds.has(choiceNode.id)) {

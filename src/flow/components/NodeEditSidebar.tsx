@@ -37,7 +37,7 @@ import {
 import type { FlowNode, FlowEdge } from '../types/flow';
 import type { NLJNode } from '../../types/nlj';
 // NODE_TYPE_INFO is now imported via getNodeTypeInfo utility
-import { getNodeIcon, getNodeTypeInfo } from '../utils/nodeTypeUtils';
+import { getNodeIcon, getNodeTypeInfo } from '../utils/nodeTypeUtils.tsx';
 
 interface NodeEditSidebarProps {
   node: FlowNode | null;

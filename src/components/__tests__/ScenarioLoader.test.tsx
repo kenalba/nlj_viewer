@@ -310,8 +310,21 @@ describe('ScenarioLoader', () => {
           links: [],
           orientation: 'horizontal',
           activityType: 'training'
-        })
-      }), 100))
+        }),
+        headers: new Headers(),
+        redirected: false,
+        status: 200,
+        statusText: 'OK',
+        type: 'basic',
+        url: '',
+        body: null,
+        bodyUsed: false,
+        clone: vi.fn(),
+        arrayBuffer: vi.fn(),
+        blob: vi.fn(),
+        formData: vi.fn(),
+        text: vi.fn(),
+      } as unknown as Response), 100))
     );
 
     render(
@@ -340,8 +353,21 @@ describe('ScenarioLoader', () => {
   it('handles invalid JSON gracefully', async () => {
     vi.mocked(globalThis.fetch).mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.reject(new Error('Invalid JSON'))
-    });
+      json: () => Promise.reject(new Error('Invalid JSON')),
+      headers: new Headers(),
+      redirected: false,
+      status: 200,
+      statusText: 'OK',
+      type: 'basic',
+      url: '',
+      body: null,
+      bodyUsed: false,
+      clone: vi.fn(),
+      arrayBuffer: vi.fn(),
+      blob: vi.fn(),
+      formData: vi.fn(),
+      text: vi.fn(),
+    } as unknown as Response);
 
     render(
       <TestWrapper>
