@@ -615,9 +615,10 @@ function calculateHierarchicalLayout(
 function calculateForceLayout(
   nodes: FlowNode[],
   edges: FlowEdge[],
-  _config: LayoutConfig
+  config: LayoutConfig
 ): { nodes: FlowNode[], edges: FlowEdge[] } {
   // Better force-directed layout for complex scenarios
+  // Note: config parameter is available for future enhancements
   const updatedNodes = [...nodes];
   
   // Try to identify start and end nodes for better positioning (unused for now)
@@ -641,7 +642,7 @@ function calculateForceLayout(
     const row = Math.floor(index / cols);
     
     // Position start nodes at the top, end nodes at the bottom
-    let x = col * (nodeWidth + padding);
+    const x = col * (nodeWidth + padding);
     let y = row * (nodeHeight + padding);
     
     // Adjust positioning for special node types
@@ -661,9 +662,10 @@ function calculateForceLayout(
 function calculateCircularLayout(
   nodes: FlowNode[],
   edges: FlowEdge[],
-  _config: LayoutConfig
+  config: LayoutConfig
 ): { nodes: FlowNode[], edges: FlowEdge[] } {
   // Calculate radius accounting for node dimensions
+  // Note: config parameter is available for future enhancements
   const maxNodeDimension = Math.max(
     ...nodes.map(n => Math.max(n.data.nljNode.width || 250, n.data.nljNode.height || 120))
   );

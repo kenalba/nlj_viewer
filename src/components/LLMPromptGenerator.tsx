@@ -352,6 +352,31 @@ Example xAPI configuration:
 
 ` : ''}
 
+## Content Formatting Guidelines
+
+**IMPORTANT**: All content should use HTML formatting instead of markdown:
+
+- **Bold text**: Use \`<strong>Bold text</strong>\` instead of \`**Bold text**\`
+- **Italic text**: Use \`<em>Italic text</em>\` instead of \`*Italic text*\`
+- **Headers**: Use \`<h1>Header</h1>\`, \`<h2>Header</h2>\`, etc. instead of \`# Header\`
+- **Lists**: Use \`<ul><li>Item</li></ul>\` instead of \`- Item\`
+- **Links**: Use \`<a href="url">Link text</a>\` instead of \`[Link text](url)\`
+- **Line breaks**: Use \`<br>\` for line breaks or \`<p>\` tags for paragraphs
+- **Images**: Use \`<img src="url" alt="description">\` instead of \`![alt](url)\`
+
+**Example HTML-formatted content:**
+\`\`\`html
+<h2>Learning Objectives</h2>
+<p>After completing this training, you will be able to:</p>
+<ul>
+  <li><strong>Identify</strong> key components of the system</li>
+  <li><em>Explain</em> the process workflow</li>
+  <li>Apply knowledge in <strong>real-world scenarios</strong></li>
+</ul>
+\`\`\`
+
+This HTML formatting ensures consistent rendering across all components in the NLJ Viewer.
+
 ## Generation Instructions
 
 1. **Analyze the Source Material**: Understand the content domain, key concepts, and learning requirements
@@ -360,7 +385,8 @@ Example xAPI configuration:
 4. **Align with Learning Objectives**: Ensure all content directly supports the stated objectives
 5. **Use Appropriate Node Types**: Select node types that best serve the learning goals
 6. **Include Realistic Content**: Create questions and scenarios that reflect real-world applications
-7. **Validate Structure**: Ensure all required properties are included and links are properly connected
+7. **Use HTML Formatting**: Apply HTML formatting to all text content for consistent rendering
+8. **Validate Structure**: Ensure all required properties are included and links are properly connected
 
 ## Output Format
 

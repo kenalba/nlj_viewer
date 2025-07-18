@@ -37,7 +37,7 @@ export interface ErrorDetails {
   message: string;
   details?: string;
   suggestions?: string[];
-  rawData?: any;
+  rawData?: Record<string, unknown> | string | number | boolean | null;
   fileName?: string;
   fileSize?: number;
   fileType?: string;

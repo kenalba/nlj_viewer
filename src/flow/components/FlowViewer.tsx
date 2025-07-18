@@ -15,7 +15,7 @@ import {
   Panel,
   useReactFlow,
 } from '@xyflow/react';
-import type { Connection, Node, NodeTypes, EdgeTypes, NodeProps } from '@xyflow/react';
+import type { Connection, Node, NodeTypes, EdgeTypes, NodeProps, NodeChange, EdgeChange } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import {
   Box,
@@ -42,7 +42,7 @@ import {
   Settings as SettingsIcon,
 } from '@mui/icons-material';
 
-import type { NLJScenario } from '../../types/nlj';
+import type { NLJScenario, NLJNode } from '../../types/nlj';
 import type { FlowNode, FlowEdge, FlowNodeData, FlowValidationResult, LayoutConfig, FlowNodeType } from '../types/flow';
 import { 
   nljScenarioToFlow, 
@@ -60,7 +60,7 @@ interface FlowViewerProps {
   scenario: NLJScenario;
   onScenarioChange?: (scenario: NLJScenario) => void;
   onSave?: (scenario: NLJScenario) => void;
-  onExport?: (format: 'png' | 'svg' | 'json', data: any) => void;
+  onExport?: (format: 'png' | 'svg' | 'json', data: NLJScenario) => void;
   theme?: 'hyundai' | 'unfiltered' | 'custom';
   headerHeight?: number;
   readOnly?: boolean;
@@ -133,14 +133,14 @@ function FlowViewerContent({
 
   // Handle node/edge changes
   const handleNodesChange = useCallback(
-    (changes: any) => {
+    (changes: NodeChange<FlowNode>[]) => {
       onNodesChange(changes);
     },
     [onNodesChange]
   );
 
   const handleEdgesChange = useCallback(
-    (changes: any) => {
+    (changes: EdgeChange<FlowEdge>[]) => {
       onEdgesChange(changes);
     },
     [onEdgesChange]
@@ -250,7 +250,7 @@ function FlowViewerContent({
     });
     
     // Create type-specific NLJ node
-    let nljNode: any;
+    let nljNode: NLJNode;
     switch (nodeType) {
       case 'start':
         nljNode = { ...createBaseNode(), type: 'start' };
@@ -638,7 +638,7 @@ function FlowViewerContent({
           <MiniMap 
             position="bottom-left"
             nodeColor={(node) => {
-              const nodeType = (node.data as any)?.nodeType || 'default';
+              const nodeType = (node.data as FlowNodeData)?.nodeType || 'default';
               return NODE_TYPE_INFO[nodeType]?.color || 'text.secondary';
             }}
             maskColor="rgba(0,0,0,0.1)"

@@ -92,7 +92,7 @@ React Context + useReducer pattern for:
 npm run dev          # Development server
 npm run build        # Production build
 npm run preview      # Preview production build
-npm run test -- --run # Run test suite (249 tests passing) - ALWAYS use --run flag
+npm run test -- --run # Run test suite (280+ tests passing) - ALWAYS use --run flag
 npm run test:ui      # Run tests with UI
 npm run test:coverage # Run tests with coverage
 npm run lint         # Run ESLint (39 non-critical issues remaining)
@@ -184,6 +184,11 @@ Supports comprehensive activity schema including:
   - Complete schema documentation generator with all 18+ node types and Bloom's taxonomy integration
   - Multiple export formats (Markdown prompts, JSON schemas, reference guides)
   - Real-time preview and validation system with professional Material-UI interface
+✅ **Node Type Utilities**: Centralized node type classification and icon management system
+  - Extracted repeated node type logic from 4+ components into shared utilities
+  - Consolidated 100+ lines of duplicate code into reusable functions
+  - Comprehensive test coverage with 31 unit tests for all node type utilities
+  - Improved maintainability and consistency across Flow Editor components
 
 ## xAPI Integration - Phase 1 Complete
 

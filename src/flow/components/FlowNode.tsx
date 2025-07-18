@@ -20,17 +20,14 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   MoreVert as MoreIcon,
-  Quiz as QuizIcon,
-  Info as InfoIcon,
-  Games as GameIcon,
-  Poll as PollIcon,
+  Image as MediaIcon,
   PlayArrow as StartIcon,
   Flag as EndIcon,
-  Image as MediaIcon,
 } from '@mui/icons-material';
 
 import type { FlowNodeProps, FlowNodeData } from '../types/flow';
-import { NODE_TYPE_INFO } from '../utils/flowUtils';
+// NODE_TYPE_INFO is now imported via getNodeTypeInfo utility
+import { getNodeIcon, getNodeTypeInfo } from '../utils/nodeTypeUtils';
 
 // Custom handle component
 const CustomHandle = memo(({ 
@@ -75,7 +72,7 @@ export const FlowNode = memo(({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const isMenuOpen = Boolean(anchorEl);
   
-  const nodeTypeInfo = NODE_TYPE_INFO[nodeData?.nodeType as keyof typeof NODE_TYPE_INFO] || NODE_TYPE_INFO['question'];
+  const nodeTypeInfo = getNodeTypeInfo(nodeData?.nodeType as any);
   
   const handleMenuClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation();
@@ -100,36 +97,8 @@ export const FlowNode = memo(({
     handleMenuClose();
   }, [id, onDelete, handleMenuClose]);
 
-  // Get node icon based on type
-  const getNodeIcon = () => {
-    switch (nodeData?.nodeType) {
-      case 'start':
-        return <StartIcon />;
-      case 'end':
-        return <EndIcon />;
-      case 'question':
-      case 'true_false':
-      case 'ordering':
-      case 'matching':
-      case 'short_answer':
-      case 'multi_select':
-      case 'checkbox':
-        return <QuizIcon />;
-      case 'interstitial_panel':
-        return <InfoIcon />;
-      case 'likert_scale':
-      case 'rating':
-      case 'matrix':
-      case 'slider':
-      case 'text_area':
-        return <PollIcon />;
-      case 'connections':
-      case 'wordle':
-        return <GameIcon />;
-      default:
-        return <QuizIcon />;
-    }
-  };
+  // Get node icon using shared utility
+  const nodeIcon = getNodeIcon(nodeData?.nodeType as any);
 
   // Get node color based on type and theme
   const getNodeColor = () => {
@@ -233,7 +202,7 @@ export const FlowNode = memo(({
         >
           <Stack direction="row" spacing={1} alignItems="center">
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              {getNodeIcon()}
+              {nodeIcon}
             </Box>
             <Typography variant="caption" fontWeight="bold">
               {nodeTypeInfo?.label || nodeData?.nodeType || 'Unknown'}

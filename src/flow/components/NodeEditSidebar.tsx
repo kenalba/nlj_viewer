@@ -32,15 +32,12 @@ import {
   Image as ImageIcon,
   VideoLibrary as VideoIcon,
   AudioFile as AudioIcon,
-  Quiz as QuizIcon,
-  Games as GameIcon,
-  Poll as PollIcon,
-  Info as InfoIcon,
 } from '@mui/icons-material';
 
-import type { FlowNode } from '../types/flow';
+import type { FlowNode, FlowEdge } from '../types/flow';
 import type { NLJNode } from '../../types/nlj';
-import { NODE_TYPE_INFO } from '../utils/flowUtils';
+// NODE_TYPE_INFO is now imported via getNodeTypeInfo utility
+import { getNodeIcon, getNodeTypeInfo } from '../utils/nodeTypeUtils';
 
 interface NodeEditSidebarProps {
   node: FlowNode | null;
@@ -51,7 +48,7 @@ interface NodeEditSidebarProps {
   theme?: 'hyundai' | 'unfiltered' | 'custom';
   // Add scenario data for getting connected nodes
   allNodes?: FlowNode[];
-  allEdges?: any[];
+  allEdges?: FlowEdge[];
 }
 
 interface TabPanelProps {
@@ -134,36 +131,11 @@ export const NodeEditSidebar: React.FC<NodeEditSidebarProps> = ({
 
   if (!node || !editedNode) return null;
 
-  const nodeTypeInfo = NODE_TYPE_INFO[editedNode.data.nodeType];
+  const nodeTypeInfo = getNodeTypeInfo(editedNode.data.nodeType as any);
   const nljNode = editedNode.data.nljNode;
 
-  // Get node icon
-  const getNodeIcon = () => {
-    switch (editedNode.data.nodeType) {
-      case 'start':
-      case 'end':
-        return <InfoIcon />;
-      case 'question':
-      case 'true_false':
-      case 'ordering':
-      case 'matching':
-      case 'short_answer':
-      case 'multi_select':
-      case 'checkbox':
-        return <QuizIcon />;
-      case 'likert_scale':
-      case 'rating':
-      case 'matrix':
-      case 'slider':
-      case 'text_area':
-        return <PollIcon />;
-      case 'connections':
-      case 'wordle':
-        return <GameIcon />;
-      default:
-        return <InfoIcon />;
-    }
-  };
+  // Get node icon using shared utility
+  const nodeIcon = getNodeIcon(editedNode.data.nodeType as any);
 
   // Render basic properties tab
   const renderBasicProperties = () => (
@@ -234,11 +206,11 @@ export const NodeEditSidebar: React.FC<NodeEditSidebarProps> = ({
             {/* Show connected choice nodes */}
             {(() => {
               // Find choice nodes connected to this question via edges
-              const connectedChoiceEdges = allEdges.filter((edge: any) => 
+              const connectedChoiceEdges = allEdges.filter((edge: FlowEdge) => 
                 edge.source === editedNode.id
               );
-              const choiceNodes = connectedChoiceEdges.map((edge: any) => 
-                allNodes.find((node: any) => node.id === edge.target && node.data.nodeType === 'choice')
+              const choiceNodes = connectedChoiceEdges.map((edge: FlowEdge) => 
+                allNodes.find((flowNode: FlowNode) => flowNode.id === edge.target && flowNode.data.nodeType === 'choice')
               ).filter(Boolean);
               
               return (
@@ -247,7 +219,7 @@ export const NodeEditSidebar: React.FC<NodeEditSidebarProps> = ({
                     Connected Choice Nodes: {choiceNodes.length}
                   </Typography>
                   {choiceNodes.length > 0 ? (
-                    choiceNodes.map((choice: any, index: number) => (
+                    choiceNodes.map((choice: FlowNode, index: number) => (
                       <Paper key={choice.id} sx={{ p: 1, bgcolor: 'action.hover' }}>
                         <Typography variant="body2" fontWeight="medium">
                           Choice {index + 1}: {choice.data.nljNode.isCorrect ? '✓' : '✗'}
@@ -831,7 +803,7 @@ export const NodeEditSidebar: React.FC<NodeEditSidebarProps> = ({
         <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
           <Stack direction="row" alignItems="center" spacing={2}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              {getNodeIcon()}
+              {nodeIcon}
             </Box>
             <Box sx={{ flexGrow: 1 }}>
               <Typography variant="h6" noWrap>

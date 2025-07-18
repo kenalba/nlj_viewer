@@ -3,6 +3,14 @@
  */
 
 import { marked } from 'marked';
+import type { NLJNode, NLJScenario } from '../types/nlj';
+
+// Type for choice objects that can have text/content properties
+interface ChoiceWithContent {
+  text?: string;
+  content?: string;
+  [key: string]: any;
+}
 
 // Configure marked for our use case
 marked.setOptions({
@@ -57,7 +65,7 @@ export const isMarkdownContent = (content: string): boolean => {
 };
 
 // Function to convert markdown content in a node
-export const convertNodeMarkdownToHtml = (node: any): any => {
+export const convertNodeMarkdownToHtml = (node: NLJNode): NLJNode => {
   const convertedNode = { ...node };
   
   // Convert text field if it exists and is markdown
@@ -82,7 +90,7 @@ export const convertNodeMarkdownToHtml = (node: any): any => {
   
   // Convert choice content if it exists (for choice nodes)
   if (convertedNode.choices && Array.isArray(convertedNode.choices)) {
-    convertedNode.choices = convertedNode.choices.map((choice: any) => {
+    convertedNode.choices = convertedNode.choices.map((choice: ChoiceWithContent) => {
       const convertedChoice = { ...choice };
       if (convertedChoice.text && isMarkdownContent(convertedChoice.text)) {
         convertedChoice.text = convertMarkdownToHtml(convertedChoice.text);
@@ -98,7 +106,7 @@ export const convertNodeMarkdownToHtml = (node: any): any => {
 };
 
 // Function to convert markdown content in an entire scenario
-export const convertScenarioMarkdownToHtml = (scenario: any): any => {
+export const convertScenarioMarkdownToHtml = (scenario: NLJScenario): NLJScenario => {
   const convertedScenario = {
     ...scenario,
     nodes: scenario.nodes.map(convertNodeMarkdownToHtml)

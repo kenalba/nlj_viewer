@@ -11,17 +11,11 @@ import {
 } from '@mui/material';
 import {
   Close as CloseIcon,
-  Quiz as QuizIcon,
-  Info as InfoIcon,
-  Games as GameIcon,
-  Poll as PollIcon,
-  Assessment as AssessmentIcon,
-  PlayArrow as StartIcon,
-  Flag as EndIcon,
 } from '@mui/icons-material';
 
 import type { FlowNode } from '../../../types/flow';
-import { NODE_TYPE_INFO } from '../../../utils/flowUtils';
+// NODE_TYPE_INFO is now imported via getNodeTypeInfo utility
+import { getNodeIcon, getNodeTypeInfo } from '../../../utils/nodeTypeUtils';
 
 interface NodeHeaderProps {
   node: FlowNode;
@@ -34,38 +28,10 @@ export const NodeHeader: React.FC<NodeHeaderProps> = ({
   onClose,
 }) => {
   const nodeType = node.data.nodeType;
-  const nodeTypeInfo = NODE_TYPE_INFO[nodeType];
+  const nodeTypeInfo = getNodeTypeInfo(nodeType as any);
 
-  // Get node icon
-  const getNodeIcon = () => {
-    switch (nodeType) {
-      case 'start':
-        return <StartIcon />;
-      case 'end':
-        return <EndIcon />;
-      case 'question':
-      case 'true_false':
-      case 'ordering':
-      case 'matching':
-      case 'short_answer':
-      case 'multi_select':
-      case 'checkbox':
-        return <QuizIcon />;
-      case 'interstitial_panel':
-        return <InfoIcon />;
-      case 'likert_scale':
-      case 'rating':
-      case 'matrix':
-      case 'slider':
-      case 'text_area':
-        return <PollIcon />;
-      case 'connections':
-      case 'wordle':
-        return <GameIcon />;
-      default:
-        return <AssessmentIcon />;
-    }
-  };
+  // Get node icon using shared utility
+  const nodeIcon = getNodeIcon(nodeType as any);
 
   // Get node category color
   const getCategoryColor = () => {
@@ -92,7 +58,7 @@ export const NodeHeader: React.FC<NodeHeaderProps> = ({
         
         {/* Node Type Badge */}
         <Chip
-          icon={getNodeIcon()}
+          icon={nodeIcon}
           label={nodeTypeInfo?.label || nodeType}
           color={getCategoryColor()}
           size="small"

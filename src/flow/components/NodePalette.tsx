@@ -26,18 +26,15 @@ import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   DragIndicator as DragIcon,
-  Quiz as QuizIcon,
-  Info as InfoIcon,
-  Games as GameIcon,
-  Poll as PollIcon,
-  PlayArrow as StartIcon,
-  Flag as EndIcon,
   Assessment as AssessmentIcon,
-  Create as CreateIcon,
   Add as AddIcon,
+  Info as InfoIcon,
+  Poll as PollIcon,
+  Games as GameIcon,
 } from '@mui/icons-material';
 
 import type { NodeTypeInfo, FlowNodeType } from '../types/flow';
+import { getNodeIcon } from '../utils/nodeTypeUtils';
 
 interface NodePaletteProps {
   nodeTypes: Array<NodeTypeInfo & { type: FlowNodeType }>;
@@ -98,7 +95,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set(Object.keys(CATEGORY_CONFIG))
   );
-  const [_draggedNodeType, setDraggedNodeType] = useState<FlowNodeType | null>(null);
+  // Removed unused _draggedNodeType state
 
   // Filter node types based on search term
   const filteredNodeTypes = nodeTypes.filter(nodeType =>
@@ -132,7 +129,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({
 
   // Handle node drag start
   const handleDragStart = useCallback((event: React.DragEvent, nodeType: FlowNodeType) => {
-    setDraggedNodeType(nodeType);
+    // Drag functionality removed for simplicity
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
     
@@ -158,7 +155,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({
 
   // Handle node drag end
   const handleDragEnd = useCallback(() => {
-    setDraggedNodeType(null);
+    // Drag end functionality removed for simplicity
   }, []);
 
   // Handle node click (for touch devices or click-to-add)
@@ -168,36 +165,7 @@ export const NodePalette: React.FC<NodePaletteProps> = ({
     onNodeAdd(nodeType, { x: 100, y: 100 });
   }, [onNodeAdd]);
 
-  // Get node icon
-  const getNodeIcon = (nodeType: FlowNodeType) => {
-    switch (nodeType) {
-      case 'start':
-        return <StartIcon />;
-      case 'end':
-        return <EndIcon />;
-      case 'question':
-      case 'true_false':
-      case 'ordering':
-      case 'matching':
-      case 'short_answer':
-      case 'multi_select':
-      case 'checkbox':
-        return <QuizIcon />;
-      case 'interstitial_panel':
-        return <InfoIcon />;
-      case 'likert_scale':
-      case 'rating':
-      case 'matrix':
-      case 'slider':
-      case 'text_area':
-        return <PollIcon />;
-      case 'connections':
-      case 'wordle':
-        return <GameIcon />;
-      default:
-        return <CreateIcon />;
-    }
-  };
+  // Node icon is now provided by shared utility function imported above
 
   return (
     <Drawer
