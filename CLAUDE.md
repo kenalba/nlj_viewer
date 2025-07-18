@@ -15,7 +15,7 @@ A TypeScript React application for playing interactive Non-Linear Journey (NLJ) 
 - **Survey System**: Comprehensive survey question types with automotive and cross-industry templates
 - **Media Support**: Images, videos, and rich content integration
 - **Type-Safe**: Full TypeScript coverage for robust development
-- **Comprehensive Testing**: Full test suite with VSCode integration (249 tests passing)
+- **Comprehensive Testing**: Full test suite with VSCode integration (326 tests passing)
 - **Deployment-Ready**: All TypeScript build errors resolved and pre-deployment verification script included
 - **Keyboard Navigation**: Full keyboard support for accessibility (arrow keys, Enter, number keys)
   - **UnifiedQuestionNode**: Number keys (1-9) for choice selection, Enter to submit/continue
@@ -92,7 +92,7 @@ React Context + useReducer pattern for:
 npm run dev          # Development server
 npm run build        # Production build
 npm run preview      # Preview production build
-npm run test -- --run # Run test suite (280+ tests passing) - ALWAYS use --run flag
+npm run test -- --run # Run test suite (326 tests passing) - ALWAYS use --run flag
 npm run test:ui      # Run tests with UI
 npm run test:coverage # Run tests with coverage
 npm run lint         # Run ESLint (39 non-critical issues remaining)
@@ -151,7 +151,7 @@ Supports comprehensive activity schema including:
 ## Current Development Status
 
 ✅ **Core System**: Fully functional with all question types implemented
-✅ **Testing**: 249 tests passing, comprehensive test coverage including TrueFalseNode, OrderingNode, MatchingNode, ConnectionsNode, and WordleNode
+✅ **Testing**: 326 tests passing, comprehensive test coverage including TrueFalseNode, OrderingNode, MatchingNode, ConnectionsNode, WordleNode, FlowViewer, and ScenarioLoader
 ✅ **Deployment**: TypeScript build errors resolved, deployment-ready
 ✅ **UI/UX**: Responsive design, enhanced keyboard navigation, audio feedback
 ✅ **xAPI Integration**: Complete event tracking system with learning analytics

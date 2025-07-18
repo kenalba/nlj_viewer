@@ -23,7 +23,7 @@ A modern, responsive TypeScript React application for playing interactive Non-Li
 - **Real-time Feedback**: Immediate response validation with user-controlled progression
 - **Progress Tracking**: Visual progress indicators and completion tracking
 - **Type-Safe**: Full TypeScript coverage for robust development
-- **Comprehensive Testing**: Full test suite with VSCode integration (203 tests passing)
+- **Comprehensive Testing**: Full test suite with VSCode integration (326 tests passing)
 - **Debug Mode**: Comprehensive console logging for development (auto-enabled in dev mode)
 - **Deployment-Ready**: All TypeScript build errors resolved with pre-deployment verification
 - **Keyboard Navigation**: Full accessibility support with keyboard controls
@@ -149,7 +149,7 @@ The application uses a custom Material UI theme with:
 npm run dev          # Development server with hot reload
 npm run build        # Production build (TypeScript errors resolved)
 npm run preview      # Preview production build
-npm run test         # Run test suite (203 tests passing)
+npm run test         # Run test suite (326 tests passing)
 npm run test:ui      # Run tests with UI
 npm run test:coverage # Run tests with coverage
 npm run lint         # Run ESLint (39 non-critical issues remaining)
@@ -163,72 +163,16 @@ npm run type-check   # Run TypeScript compiler check
 
 The pre-deployment script verifies:
 - ✅ TypeScript compilation success
-- ✅ All tests passing (203/203)
+- ✅ All tests passing (326/326)
 - ✅ Critical lint issues resolved
 - ✅ Build process completion
 - ⚠️ Reports non-critical style warnings
 
 ### Debug Mode
-Development mode automatically enables comprehensive console logging:
-
-```javascript
-// Debug mode is auto-enabled in development
-// To disable: localStorage.setItem('nlj_debug', 'false')
-// To enable in production: localStorage.setItem('nlj_debug', 'true')
-
-// Available debug commands:
-nlj_debug.enable()    // Enable debugging
-nlj_debug.disable()   // Disable debugging
-nlj_debug.isEnabled() // Check status
-```
-
-Debug output includes:
-- State changes with before/after comparison
-- User interactions (choices, navigation)
-- Variable updates and calculations
-- Scenario loading and completion events
+Development mode automatically enables comprehensive console logging for debugging purposes. Debug output includes state changes, user interactions, variable updates, and scenario events.
 
 ### Project Structure
-```
-src/
-├── components/          # React components
-│   ├── GameView.tsx    # Main game interface
-│   ├── NodeRenderer.tsx # Dynamic node rendering
-│   ├── MediaViewer.tsx  # Responsive media display
-│   ├── ScenarioLoader.tsx # File loading and LLM integration
-│   ├── LLMPromptGenerator.tsx # LLM prompt generation system
-│   ├── FlowEditor.tsx  # WYSIWYG Flow Editor wrapper
-│   └── ...
-├── flow/               # Flow Editor components
-│   ├── components/     # Flow-specific components
-│   │   ├── FlowViewer.tsx # Main React Flow component
-│   │   ├── FlowNode.tsx # Custom flow node component
-│   │   ├── NodePalette.tsx # Drag-and-drop node palette
-│   │   └── wysiwyg/    # WYSIWYG editor components
-│   │       ├── WYSIWYGNodeEditor.tsx # Persistent sidebar editor
-│   │       ├── editors/ # Specialized node editors
-│   │       ├── previews/ # Real-time preview components
-│   │       └── components/ # Shared editor components
-│   ├── types/          # Flow-specific types
-│   │   └── flow.ts     # Flow node and edge types
-│   └── utils/          # Flow utilities
-│       └── flowUtils.ts # Layout algorithms and validation
-├── contexts/           # React contexts
-│   └── GameContext.tsx # Game state management
-├── hooks/              # Custom React hooks
-│   └── useGameEngine.ts # Core game logic
-├── types/              # TypeScript interfaces
-│   └── nlj.ts          # NLJ schema definitions
-├── utils/              # Utility functions
-│   ├── debug.ts        # Debug logging system
-│   ├── scenarioUtils.ts # Scenario processing
-│   ├── trivieInterpreter.ts # Trivie Excel parsing and conversion
-│   └── schemaDocGenerator.ts # LLM documentation system
-├── theme/              # Material UI theme
-│   └── hyundaiTheme.ts # Custom Hyundai theme
-└── static/             # Static assets
-    └── sample_nljs/    # Sample scenario files
-```
+Built with modern React architecture using TypeScript, Material-UI, and comprehensive testing. The codebase is organized into logical modules for components, contexts, hooks, types, and utilities.
 
 ## 🌐 Schema Support
 
@@ -258,7 +202,7 @@ Supports the full NLJ schema including:
 
 All TypeScript build errors have been resolved as of the latest commits:
 - **Build**: ✅ Successful TypeScript compilation
-- **Tests**: ✅ All 203 tests passing
+- **Tests**: ✅ All 326 tests passing
 - **Lint**: ✅ Critical errors resolved (39 non-critical style warnings remain)
 - **Pre-deployment**: ✅ Verification script available
 
