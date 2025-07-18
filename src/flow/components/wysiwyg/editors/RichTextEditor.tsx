@@ -5,13 +5,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Typography from '@tiptap/extension-typography';
+import TypographyExtension from '@tiptap/extension-typography';
 import Placeholder from '@tiptap/extension-placeholder';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import BulletList from '@tiptap/extension-bullet-list';
 import OrderedList from '@tiptap/extension-ordered-list';
 import ListItem from '@tiptap/extension-list-item';
+import { convertMarkdownToHtml } from '../../../../utils/markdownUtils';
 import {
   Box,
   Paper,
@@ -20,7 +21,6 @@ import {
   Stack,
   Divider,
   ClickAwayListener,
-  Zoom,
   alpha,
 } from '@mui/material';
 import {
@@ -32,23 +32,23 @@ import {
   FormatListNumbered as NumberedListIcon,
   FormatQuote as BlockquoteIcon,
   Code as CodeIcon,
+  Title as H1Icon,
+  Subject as H2Icon,
+  ShortText as H3Icon,
   Link as LinkIcon,
   Image as ImageIcon,
   Undo as UndoIcon,
   Redo as RedoIcon,
-  Edit as EditIcon,
   Check as CheckIcon,
   Close as CloseIcon,
-  Visibility as PreviewIcon,
-  EditNote as CodeViewIcon,
 } from '@mui/icons-material';
+
 
 interface RichTextEditorProps {
   value: string;
   onUpdate: (value: string) => void;
   placeholder?: string;
   variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'body1' | 'body2' | 'caption';
-  multiline?: boolean;
   minHeight?: number;
   maxHeight?: number;
   sx?: object;
@@ -61,7 +61,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   value,
   onUpdate,
   placeholder = 'Click to edit... (Markdown supported)',
-  multiline = true,
   minHeight = 120,
   maxHeight = 400,
   sx = {},
@@ -70,8 +69,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   autoFocus = false,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
 
   const editor = useEditor({
@@ -82,7 +79,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         orderedList: false, // We'll use our own
         listItem: false, // We'll use our own
       }),
-      Typography,
+      TypographyExtension,
       Placeholder.configure({
         placeholder,
         showOnlyWhenEditable: true,
@@ -114,8 +111,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         },
       }),
     ],
-    content: value,
-    editable: !disabled && !isPreviewMode,
+    content: convertMarkdownToHtml(value), // Convert markdown to HTML when loading
+    editable: !disabled,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       onUpdate(html);
@@ -131,16 +128,20 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   // Update editor content when value changes
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value);
+      const htmlContent = convertMarkdownToHtml(value);
+      editor.commands.setContent(htmlContent);
     }
   }, [value, editor]);
 
-  // Update editor editable state when preview mode changes
+  // Don't interfere with content updates when in preview mode
+  // Preview mode should be read-only and not affect the actual content
+
+  // Update editor editable state when disabled changes
   useEffect(() => {
     if (editor) {
-      editor.setEditable(!disabled && !isPreviewMode);
+      editor.setEditable(!disabled);
     }
-  }, [editor, disabled, isPreviewMode]);
+  }, [editor, disabled]);
 
   // Focus editor when editing starts
   useEffect(() => {
@@ -153,7 +154,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const handleStartEdit = () => {
     if (disabled) return;
     setIsEditing(true);
-    setShowTooltip(false);
   };
 
   // Handle saving edit
@@ -224,19 +224,30 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
     return (
       <Stack direction="row" spacing={0.25} sx={{ p: 0.5, borderBottom: 1, borderColor: 'divider' }}>
-        {/* Preview/Edit Mode Toggle */}
-        <ToolbarButton
-          icon={isPreviewMode ? <CodeViewIcon sx={{ fontSize: '0.875rem' }} /> : <PreviewIcon sx={{ fontSize: '0.875rem' }} />}
-          tooltip={isPreviewMode ? 'Switch to Edit Mode' : 'Switch to Preview Mode'}
-          onClick={() => setIsPreviewMode(!isPreviewMode)}
-          isActive={isPreviewMode}
-        />
-        
-        <Divider orientation="vertical" flexItem sx={{ mx: 0.25 }} />
+        {/* Headers */}
+        <>
+            <ToolbarButton
+              icon={<H1Icon sx={{ fontSize: '0.875rem' }} />}
+              tooltip="Heading 1"
+              onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+              isActive={editor.isActive('heading', { level: 1 })}
+            />
+            <ToolbarButton
+              icon={<H2Icon sx={{ fontSize: '0.875rem' }} />}
+              tooltip="Heading 2"
+              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              isActive={editor.isActive('heading', { level: 2 })}
+            />
+            <ToolbarButton
+              icon={<H3Icon sx={{ fontSize: '0.875rem' }} />}
+              tooltip="Heading 3"
+              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+              isActive={editor.isActive('heading', { level: 3 })}
+            />
 
-        {/* Text formatting - only show when not in preview mode */}
-        {!isPreviewMode && (
-          <>
+            <Divider orientation="vertical" flexItem sx={{ mx: 0.25 }} />
+
+            {/* Text formatting */}
             <ToolbarButton
               icon={<BoldIcon sx={{ fontSize: '0.875rem' }} />}
               tooltip="Bold"
@@ -335,7 +346,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
               disabled={!editor.can().redo()}
             />
           </>
-        )}
 
         {/* Save/Cancel (only when editing) */}
         {isEditing && (
@@ -357,201 +367,63 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     );
   };
 
-  if (isEditing) {
-    return (
+  // Always show the editor with toolbar when showToolbar is true
+  return (
+    <Box>
+      
       <ClickAwayListener onClickAway={handleClickAway}>
         <Paper
-          elevation={2}
+          elevation={isEditing ? 2 : 1}
           sx={{
             border: 1,
-            borderColor: 'primary.main',
+            borderColor: isEditing ? 'primary.main' : 'divider',
             borderRadius: 1,
             overflow: 'hidden',
+            cursor: disabled || isEditing ? 'default' : 'pointer',
+            '&:hover': disabled || isEditing ? {} : {
+              borderColor: 'primary.main',
+            },
             ...sx,
           }}
+          onClick={!isEditing && !disabled ? handleStartEdit : undefined}
         >
-          {renderToolbar()}
+        {renderToolbar()}
+        <Box
+          ref={editorRef}
+          sx={{
+            p: 1,
+          }}
+        >
+          {/* Always show Tiptap editor */}
           <Box
-            ref={editorRef}
             sx={{
-              p: 1,
               '& .tiptap-editor': {
                 outline: 'none',
                 fontSize: '0.875rem',
                 lineHeight: 1.5,
-                '& p': {
-                  margin: 0,
-                  lineHeight: 1.5,
-                },
-                '& ul, & ol': {
-                  paddingLeft: '16px',
-                  margin: '4px 0',
-                },
+                '& p': { margin: '0 0 8px 0' },
+                '& ul, & ol': { paddingLeft: '16px', margin: '4px 0' },
                 '& blockquote': {
                   borderLeft: '3px solid',
                   borderColor: 'divider',
                   paddingLeft: '12px',
                   marginLeft: 0,
                   fontStyle: 'italic',
-                  fontSize: '0.875rem',
-                },
-                '& pre': {
                   backgroundColor: 'action.hover',
-                  padding: '6px',
                   borderRadius: '4px',
-                  fontSize: '0.75rem',
-                  fontFamily: 'monospace',
+                  padding: '8px 12px',
+                  margin: '8px 0',
                 },
-                '& .tiptap-link': {
-                  color: 'primary.main',
-                  textDecoration: 'underline',
-                },
-                '& .tiptap-image': {
-                  maxWidth: '100%',
-                  height: 'auto',
-                },
+                '& strong': { fontWeight: 'bold' },
+                '& em': { fontStyle: 'italic' },
               },
             }}
           >
-            {isPreviewMode ? (
-              // Preview mode - show rendered HTML
-              <Box
-                sx={{
-                  minHeight: minHeight - 40, // Account for toolbar height
-                  maxHeight: maxHeight - 40,
-                  overflow: 'auto',
-                  color: 'text.primary',
-                  fontSize: '0.875rem',
-                  lineHeight: 1.5,
-                  '& p': {
-                    margin: 0,
-                    lineHeight: 1.5,
-                  },
-                  '& ul, & ol': {
-                    paddingLeft: '16px',
-                    margin: '4px 0',
-                  },
-                  '& blockquote': {
-                    borderLeft: '3px solid',
-                    borderColor: 'divider',
-                    paddingLeft: '12px',
-                    marginLeft: 0,
-                    fontStyle: 'italic',
-                    fontSize: '0.875rem',
-                  },
-                  '& pre': {
-                    backgroundColor: 'action.hover',
-                    padding: '6px',
-                    borderRadius: '4px',
-                    fontSize: '0.75rem',
-                    fontFamily: 'monospace',
-                  },
-                  '& a': {
-                    color: 'primary.main',
-                    textDecoration: 'underline',
-                  },
-                  '& img': {
-                    maxWidth: '100%',
-                    height: 'auto',
-                  },
-                }}
-                dangerouslySetInnerHTML={{
-                  __html: value || '<p style="color: text.secondary; font-style: italic;">No content to preview</p>',
-                }}
-              />
-            ) : (
-              // Edit mode - show Tiptap editor
-              <EditorContent editor={editor} />
-            )}
+            <EditorContent editor={editor} />
           </Box>
-        </Paper>
-      </ClickAwayListener>
-    );
-  }
-
-  return (
-    <Box
-      onClick={handleStartEdit}
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
-      sx={{
-        cursor: disabled ? 'default' : 'pointer',
-        position: 'relative',
-        minHeight: multiline ? minHeight : 'auto',
-        border: 1,
-        borderColor: 'divider',
-        borderRadius: 1,
-        p: 1,
-        backgroundColor: 'background.paper',
-        '&:hover': disabled ? {} : {
-          borderColor: 'primary.main',
-          '& .edit-icon': {
-            opacity: 1,
-          },
-        },
-        ...sx,
-      }}
-    >
-      {/* Content preview */}
-      <Box
-        sx={{
-          color: value && value !== '<p></p>' ? 'text.primary' : 'text.secondary',
-          fontSize: '0.875rem',
-          lineHeight: 1.5,
-          '& p': {
-            margin: 0,
-            lineHeight: 1.5,
-          },
-          '& ul, & ol': {
-            paddingLeft: '16px',
-            margin: '4px 0',
-          },
-          '& blockquote': {
-            borderLeft: '3px solid',
-            borderColor: 'divider',
-            paddingLeft: '12px',
-            marginLeft: 0,
-            fontStyle: 'italic',
-            fontSize: '0.875rem',
-          },
-          '& pre': {
-            backgroundColor: 'action.hover',
-            padding: '6px',
-            borderRadius: '4px',
-            fontSize: '0.75rem',
-            fontFamily: 'monospace',
-          },
-          '& a': {
-            color: 'primary.main',
-            textDecoration: 'underline',
-          },
-          '& img': {
-            maxWidth: '100%',
-            height: 'auto',
-          },
-        }}
-        dangerouslySetInnerHTML={{
-          __html: value && value !== '<p></p>' ? value : `<p style="color: ${disabled ? 'inherit' : 'text.secondary'}; font-size: 0.875rem;">${placeholder}</p>`,
-        }}
-      />
-
-      {/* Edit icon */}
-      {!disabled && (
-        <Zoom in={showTooltip}>
-          <EditIcon
-            className="edit-icon"
-            sx={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              fontSize: 16,
-              color: 'action.active',
-              opacity: 0,
-              transition: 'opacity 0.2s',
-            }}
-          />
-        </Zoom>
-      )}
-    </Box>
+        </Box>
+      </Paper>
+    </ClickAwayListener>
+  </Box>
   );
 };

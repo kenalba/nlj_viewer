@@ -1,6 +1,7 @@
 import { useReducer, useCallback } from 'react';
 import type { GameState, GameAction, NLJScenario } from '../types/nlj';
 import { debugState, debugLog } from '../utils/debug';
+import { convertScenarioMarkdownToHtml } from '../utils/markdownUtils';
 
 const initialState: GameState = {
   scenarioId: '',
@@ -19,7 +20,14 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
   
   switch (action.type) {
     case 'LOAD_SCENARIO': {
-      const scenario: NLJScenario = action.payload;
+      const rawScenario: NLJScenario = action.payload;
+      
+      // Convert any markdown content to HTML before storing the scenario
+      const scenario: NLJScenario = convertScenarioMarkdownToHtml(rawScenario);
+      
+      // Save the converted scenario to localStorage so it can be accessed by App/GameView
+      localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
+      
       const startNode = scenario.nodes.find(n => n.type === 'start');
       const initialVariables = scenario.variableDefinitions?.reduce(
         (acc, def) => ({ ...acc, [def.id]: 0 }),
@@ -38,6 +46,8 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
         startNodeId: startNode?.id,
         totalNodes: scenario.nodes.length,
         variables: initialVariables,
+        markdownConverted: true,
+        savedToLocalStorage: true,
       });
       break;
     }

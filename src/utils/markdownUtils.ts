@@ -1,0 +1,108 @@
+/**
+ * Utility functions for markdown detection and conversion
+ */
+
+import { marked } from 'marked';
+
+// Configure marked for our use case
+marked.setOptions({
+  breaks: true, // Convert line breaks to <br>
+  gfm: true,    // Enable GitHub Flavored Markdown
+});
+
+// Simple markdown-to-HTML converter using marked
+export const convertMarkdownToHtml = (markdown: string): string => {
+  if (!markdown) return '';
+  
+  // If it already looks like HTML (contains HTML tags), return as-is
+  if (markdown.includes('<') && markdown.includes('>')) {
+    return markdown;
+  }
+  
+  try {
+    // Use marked to convert markdown to HTML synchronously
+    const html = marked.parse(markdown, { async: false }) as string;
+    return html;
+  } catch (error) {
+    console.error('Error converting markdown to HTML:', error);
+    // Fallback to returning the original markdown if conversion fails
+    return markdown;
+  }
+};
+
+// Function to detect if content is markdown
+export const isMarkdownContent = (content: string): boolean => {
+  if (!content) return false;
+  
+  // If it already contains HTML tags, it's likely HTML
+  if (content.includes('<') && content.includes('>')) {
+    return false;
+  }
+  
+  // Check for common markdown patterns
+  const markdownPatterns = [
+    /^#{1,6}\s+/m,           // Headers (# ## ###)
+    /\*\*.*?\*\*/,           // Bold (**text**)
+    /\*.*?\*/,               // Italic (*text*)
+    /`.*?`/,                 // Inline code (`code`)
+    /\[.*?\]\(.*?\)/,        // Links [text](url)
+    /!\[.*?\]\(.*?\)/,       // Images ![alt](src)
+    /^-\s+/m,                // Unordered lists (- item)
+    /^\d+\.\s+/m,            // Ordered lists (1. item)
+    /^>\s+/m,                // Blockquotes (> text)
+    /^---$/m,                // Horizontal rules (---)
+  ];
+  
+  return markdownPatterns.some(pattern => pattern.test(content));
+};
+
+// Function to convert markdown content in a node
+export const convertNodeMarkdownToHtml = (node: any): any => {
+  const convertedNode = { ...node };
+  
+  // Convert text field if it exists and is markdown
+  if (convertedNode.text && isMarkdownContent(convertedNode.text)) {
+    convertedNode.text = convertMarkdownToHtml(convertedNode.text);
+  }
+  
+  // Convert content field if it exists and is markdown
+  if (convertedNode.content && isMarkdownContent(convertedNode.content)) {
+    convertedNode.content = convertMarkdownToHtml(convertedNode.content);
+  }
+  
+  // Convert description field if it exists and is markdown
+  if (convertedNode.description && isMarkdownContent(convertedNode.description)) {
+    convertedNode.description = convertMarkdownToHtml(convertedNode.description);
+  }
+  
+  // Convert title field if it exists and is markdown
+  if (convertedNode.title && isMarkdownContent(convertedNode.title)) {
+    convertedNode.title = convertMarkdownToHtml(convertedNode.title);
+  }
+  
+  // Convert choice content if it exists (for choice nodes)
+  if (convertedNode.choices && Array.isArray(convertedNode.choices)) {
+    convertedNode.choices = convertedNode.choices.map((choice: any) => {
+      const convertedChoice = { ...choice };
+      if (convertedChoice.text && isMarkdownContent(convertedChoice.text)) {
+        convertedChoice.text = convertMarkdownToHtml(convertedChoice.text);
+      }
+      if (convertedChoice.content && isMarkdownContent(convertedChoice.content)) {
+        convertedChoice.content = convertMarkdownToHtml(convertedChoice.content);
+      }
+      return convertedChoice;
+    });
+  }
+  
+  return convertedNode;
+};
+
+// Function to convert markdown content in an entire scenario
+export const convertScenarioMarkdownToHtml = (scenario: any): any => {
+  const convertedScenario = {
+    ...scenario,
+    nodes: scenario.nodes.map(convertNodeMarkdownToHtml)
+  };
+  
+  return convertedScenario;
+};

@@ -178,7 +178,7 @@ describe('ScenarioLoader', () => {
     );
 
     expect(screen.getByText('NLJs')).toBeInTheDocument();
-    expect(screen.getByText('Trivie Quizzes')).toBeInTheDocument();
+    expect(screen.getByText('Quizzes')).toBeInTheDocument();
     expect(screen.getByText('Surveys')).toBeInTheDocument();
     expect(screen.getByText('Connections')).toBeInTheDocument();
     expect(screen.getByText('Wordle')).toBeInTheDocument();
@@ -192,7 +192,7 @@ describe('ScenarioLoader', () => {
     );
 
     // Click on Trivie tab
-    fireEvent.click(screen.getByText('Trivie Quizzes'));
+    fireEvent.click(screen.getByText('Quizzes'));
     await waitFor(() => {
       expect(screen.getByText('Upload Trivie Quiz')).toBeInTheDocument();
     });
@@ -454,7 +454,7 @@ describe('ScenarioLoader', () => {
     );
 
     // Switch to Trivie tab
-    fireEvent.click(screen.getByText('Trivie Quizzes'));
+    fireEvent.click(screen.getByText('Quizzes'));
 
     await waitFor(() => {
       expect(screen.getByText('Quiz Export 2025-07-15')).toBeInTheDocument();

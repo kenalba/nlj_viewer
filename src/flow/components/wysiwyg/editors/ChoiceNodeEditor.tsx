@@ -79,7 +79,6 @@ export const ChoiceNodeEditor: React.FC<ChoiceNodeEditorProps> = ({
           value={nljNode.text || ''}
           onUpdate={(value) => onUpdate({ text: value })}
           placeholder="Enter choice text..."
-          multiline
           minHeight={80}
           showToolbar={true}
           autoFocus={false}
@@ -170,7 +169,6 @@ export const ChoiceNodeEditor: React.FC<ChoiceNodeEditorProps> = ({
             value={nljNode.matchingText || ''}
             onUpdate={(value) => onUpdate({ matchingText: value })}
             placeholder="Enter matching text..."
-            multiline
             minHeight={60}
             showToolbar={false}
             autoFocus={false}
@@ -209,7 +207,6 @@ export const ChoiceNodeEditor: React.FC<ChoiceNodeEditorProps> = ({
           value={nljNode.feedback || ''}
           onUpdate={(value) => onUpdate({ feedback: value })}
           placeholder="Enter feedback shown when this choice is selected..."
-          multiline
           minHeight={80}
           showToolbar={true}
           autoFocus={false}

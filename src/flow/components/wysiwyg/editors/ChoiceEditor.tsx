@@ -288,7 +288,6 @@ export const ChoiceEditor: React.FC<ChoiceEditorProps> = ({
                     value={choiceNode.data.nljNode.text || ''}
                     onUpdate={(value) => handleUpdateChoiceNode(choiceNode.id, { text: value })}
                     placeholder="Click to edit choice text..."
-                    multiline
                     minHeight={50}
                     showToolbar={false}
                     autoFocus={false}
@@ -306,7 +305,6 @@ export const ChoiceEditor: React.FC<ChoiceEditorProps> = ({
                       value={choiceNode.data.nljNode.matchingText || ''}
                       onUpdate={(value) => handleUpdateChoiceNode(choiceNode.id, { matchingText: value })}
                       placeholder="Click to edit matching text..."
-                      multiline
                       minHeight={50}
                       showToolbar={false}
                       autoFocus={false}
@@ -324,7 +322,6 @@ export const ChoiceEditor: React.FC<ChoiceEditorProps> = ({
                     value={choiceNode.data.nljNode.feedback || ''}
                     onUpdate={(value) => handleUpdateChoiceNode(choiceNode.id, { feedback: value })}
                     placeholder="Click to add feedback for this choice..."
-                    multiline
                     minHeight={50}
                     showToolbar={false}
                     autoFocus={false}

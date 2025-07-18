@@ -8,7 +8,6 @@ import {
   Stack,
   Chip,
   IconButton,
-  Alert,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -27,14 +26,12 @@ import { NODE_TYPE_INFO } from '../../../utils/flowUtils';
 interface NodeHeaderProps {
   node: FlowNode;
   onClose: () => void;
-  hasChanges: boolean;
   theme?: 'hyundai' | 'unfiltered' | 'custom';
 }
 
 export const NodeHeader: React.FC<NodeHeaderProps> = ({
   node,
   onClose,
-  hasChanges,
 }) => {
   const nodeType = node.data.nodeType;
   const nodeTypeInfo = NODE_TYPE_INFO[nodeType];
@@ -118,21 +115,6 @@ export const NodeHeader: React.FC<NodeHeaderProps> = ({
         </IconButton>
       </Stack>
 
-      {/* Unsaved Changes Alert */}
-      {hasChanges && (
-        <Alert 
-          severity="info" 
-          sx={{ 
-            mt: 1,
-            py: 0.5,
-            '& .MuiAlert-message': {
-              fontSize: '0.75rem',
-            },
-          }}
-        >
-          You have unsaved changes
-        </Alert>
-      )}
     </Box>
   );
 };

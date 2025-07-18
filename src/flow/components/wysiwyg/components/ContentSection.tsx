@@ -82,7 +82,6 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
           value={nljNode.title || ''}
           onUpdate={(value) => onUpdate({ title: value })}
           placeholder="Enter node title..."
-          multiline
           minHeight={40}
           showToolbar={false}
           autoFocus={false}
@@ -92,20 +91,14 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
       {/* Main Text Field */}
       {hasTextField && (
         <Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.75rem' }}>
-            {getTextLabel()}
-          </Typography>
-          
           <RichTextEditor
             value={nljNode.text || ''}
             onUpdate={(value) => onUpdate({ text: value })}
             placeholder={`Enter ${getTextLabel().toLowerCase()}... (Markdown supported)`}
-            multiline
             minHeight={100}
             showToolbar={true}
             autoFocus={false}
           />
-          
         </Box>
       )}
 
@@ -120,7 +113,6 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
             value={nljNode.content || ''}
             onUpdate={(value) => onUpdate({ content: value })}
             placeholder={`Enter ${getContentLabel().toLowerCase()}... (Markdown supported)`}
-            multiline
             minHeight={70}
             showToolbar={true}
             autoFocus={false}
@@ -140,7 +132,6 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
             value={nljNode.description || ''}
             onUpdate={(value) => onUpdate({ description: value })}
             placeholder="Enter description for this node..."
-            multiline
             minHeight={50}
             showToolbar={false}
             autoFocus={false}

@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import { Box, Typography, useTheme } from '@mui/material';
+import { HtmlRenderer } from './HtmlRenderer';
 
 interface MarkdownRendererProps {
   content: string;
@@ -10,47 +11,126 @@ interface MarkdownRendererProps {
   component?: React.ElementType;
 }
 
+// Function to detect if content is HTML
+const isHtmlContent = (content: string): boolean => {
+  if (!content) return false;
+  
+  // Check for HTML tags and structure
+  const htmlTags = /<(h[1-6]|p|div|span|strong|em|ul|ol|li|a|img|code|pre|blockquote|hr)\b[^>]*>/i;
+  const hasHtmlTags = htmlTags.test(content);
+  
+  // If it has HTML tags and doesn't start with markdown syntax, it's probably HTML
+  const startsWithMarkdown = /^(#{1,6}\s+|[*-]\s+|\d+\.\s+|>)/m.test(content);
+  
+  return hasHtmlTags && !startsWithMarkdown;
+};
+
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   content,
   sx = {},
   component = 'div',
 }) => {
   const theme = useTheme();
+  
+  // Handle undefined or null content
+  if (!content) {
+    return null;
+  }
+  
+  // Debug: Log the content being rendered
+  console.log('MarkdownRenderer content:', content.substring(0, 100) + (content.length > 100 ? '...' : ''));
+  
+  // If content is HTML, use the HtmlRenderer instead
+  if (isHtmlContent(content)) {
+    console.log('Detected HTML content, using HtmlRenderer');
+    return <HtmlRenderer content={content} sx={sx} component={component} />;
+  }
+  
+  console.log('Detected markdown content, using ReactMarkdown');
 
   const components = {
     // Typography components
     h1: ({ children, ...props }: any) => (
-      <Typography gutterBottom {...props}>
+      <Typography 
+        gutterBottom 
+        sx={{ 
+          '&:first-of-type': { marginTop: 0 },
+          ...props.sx 
+        }} 
+        {...props}
+      >
         {children}
       </Typography>
     ),
     h2: ({ children, ...props }: any) => (
-      <Typography gutterBottom {...props}>
+      <Typography 
+        gutterBottom 
+        sx={{ 
+          '&:first-of-type': { marginTop: 0 },
+          ...props.sx 
+        }} 
+        {...props}
+      >
         {children}
       </Typography>
     ),
     h3: ({ children, ...props }: any) => (
-      <Typography gutterBottom {...props}>
+      <Typography 
+        gutterBottom 
+        sx={{ 
+          '&:first-of-type': { marginTop: 0 },
+          ...props.sx 
+        }} 
+        {...props}
+      >
         {children}
       </Typography>
     ),
     h4: ({ children, ...props }: any) => (
-      <Typography gutterBottom {...props}>
+      <Typography 
+        gutterBottom 
+        sx={{ 
+          '&:first-of-type': { marginTop: 0 },
+          ...props.sx 
+        }} 
+        {...props}
+      >
         {children}
       </Typography>
     ),
     h5: ({ children, ...props }: any) => (
-      <Typography gutterBottom {...props}>
+      <Typography 
+        gutterBottom 
+        sx={{ 
+          '&:first-of-type': { marginTop: 0 },
+          ...props.sx 
+        }} 
+        {...props}
+      >
         {children}
       </Typography>
     ),
     h6: ({ children, ...props }: any) => (
-      <Typography gutterBottom {...props}>
+      <Typography 
+        gutterBottom 
+        sx={{ 
+          '&:first-of-type': { marginTop: 0 },
+          ...props.sx 
+        }} 
+        {...props}
+      >
         {children}
       </Typography>
     ),
     p: ({ children, ...props }: any) => (
-      <Typography paragraph {...props}>
+      <Typography 
+        paragraph 
+        sx={{ 
+          '&:first-of-type': { marginTop: 0 },
+          ...props.sx 
+        }} 
+        {...props}
+      >
         {children}
       </Typography>
     ),
@@ -230,7 +310,24 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   };
 
   return (
-    <Box component={component} sx={sx}>
+    <Box 
+      component={component} 
+      sx={{
+        ...sx,
+        // Remove top margin from first child element
+        '& > *:first-of-type': {
+          marginTop: '0 !important',
+        },
+        // Also handle ReactMarkdown's direct children
+        '& > div > *:first-of-type': {
+          marginTop: '0 !important',
+        },
+        // Be more specific about first paragraph/heading
+        '& > p:first-of-type, & > h1:first-of-type, & > h2:first-of-type, & > h3:first-of-type': {
+          marginTop: '0 !important',
+        },
+      }}
+    >
       <ReactMarkdown
         components={components}
         rehypePlugins={[rehypeRaw]}

@@ -282,7 +282,6 @@ export const WYSIWYGNodeEditor: React.FC<WYSIWYGNodeEditorProps> = ({
         <NodeHeader
           node={editedNode}
           onClose={handleClose}
-          hasChanges={hasChanges}
           theme={theme}
         />
 
