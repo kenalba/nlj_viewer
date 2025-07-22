@@ -5,6 +5,7 @@ import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useNodeSettings } from '../hooks/useNodeSettings';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface TextAreaNodeProps {
@@ -13,11 +14,16 @@ interface TextAreaNodeProps {
 }
 
 export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }) => {
+  const settings = useNodeSettings(question.id);
   const [textValue, setTextValue] = useState<string>('');
   const [showValidation, setShowValidation] = useState(false);
   const [validationError, setValidationError] = useState<string>('');
   const { playSound } = useAudio();
   const { themeMode } = useTheme();
+
+  if (import.meta.env.DEV) {
+    console.log(`TextAreaNode ${question.id}: shuffleAnswerOrder=${settings.shuffleAnswerOrder}, reinforcementEligible=${settings.reinforcementEligible}`);
+  }
   const textFieldRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-focus the text field when component mounts

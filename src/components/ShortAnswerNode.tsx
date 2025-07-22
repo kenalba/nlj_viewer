@@ -5,6 +5,7 @@ import type { ShortAnswerNode as ShortAnswerNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
+import { useNodeSettings } from '../hooks/useNodeSettings';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface ShortAnswerNodeProps {
@@ -13,10 +14,15 @@ interface ShortAnswerNodeProps {
 }
 
 export const ShortAnswerNode: React.FC<ShortAnswerNodeProps> = ({ question, onAnswer }) => {
+  const settings = useNodeSettings(question.id);
   const [userAnswer, setUserAnswer] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
   const { playSound } = useAudio();
   const textFieldRef = useRef<HTMLInputElement>(null);
+
+  if (import.meta.env.DEV) {
+    console.log(`ShortAnswerNode ${question.id}: shuffleAnswerOrder=${settings.shuffleAnswerOrder}, reinforcementEligible=${settings.reinforcementEligible}`);
+  }
 
   // Auto-focus the text field when component mounts
   useEffect(() => {

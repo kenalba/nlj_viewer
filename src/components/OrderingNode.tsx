@@ -5,6 +5,7 @@ import type { OrderingNode as OrderingNodeType, OrderingItem } from '../types/nl
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
+import { useNodeSettings } from '../hooks/useNodeSettings';
 import { useIsMobile } from '../utils/mobileDetection';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { MediaDisplay } from './MediaDisplay';
@@ -15,9 +16,17 @@ interface OrderingNodeProps {
 }
 
 export const OrderingNode: React.FC<OrderingNodeProps> = ({ question, onAnswer }) => {
-  const [orderedItems, setOrderedItems] = useState<OrderingItem[]>(
-    [...question.items].sort(() => Math.random() - 0.5) // Shuffle initially
-  );
+  const settings = useNodeSettings(question.id);
+  const [orderedItems, setOrderedItems] = useState<OrderingItem[]>(() => {
+    // Use settings to determine if items should be shuffled
+    const shouldShuffle = settings.shuffleAnswerOrder;
+    if (import.meta.env.DEV) {
+      console.log(`OrderingNode ${question.id}: shuffleAnswerOrder=${shouldShuffle}, reinforcementEligible=${settings.reinforcementEligible}`);
+    }
+    return shouldShuffle 
+      ? [...question.items].sort(() => Math.random() - 0.5) 
+      : [...question.items];
+  });
   const [showFeedback, setShowFeedback] = useState(false);
   const [draggedItem, setDraggedItem] = useState<OrderingItem | null>(null);
   const [draggedOverIndex, setDraggedOverIndex] = useState<number | null>(null);

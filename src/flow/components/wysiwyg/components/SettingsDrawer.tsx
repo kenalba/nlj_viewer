@@ -21,9 +21,11 @@ import {
 } from '@mui/icons-material';
 
 import { getFeedbackColors } from '../../../../utils/feedbackColors';
+import { QuestionSettingsPanel } from '../../../../components/QuestionSettingsPanel';
 
 import type { FlowNode } from '../../../types/flow';
 import type { NLJNode } from '../../../../types/nlj';
+import type { NodeSettings } from '../../../../types/settings';
 
 interface SettingsDrawerProps {
   node: FlowNode;
@@ -31,6 +33,8 @@ interface SettingsDrawerProps {
   isExpanded: boolean;
   onToggle: () => void;
   theme?: 'hyundai' | 'unfiltered' | 'custom';
+  activitySettings?: { shuffleAnswerOrder?: boolean; reinforcementEligible?: boolean };
+  alwaysExpanded?: boolean;
 }
 
 export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
@@ -39,6 +43,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   isExpanded,
   onToggle,
   theme = 'unfiltered',
+  activitySettings = {},
+  alwaysExpanded = false,
 }) => {
   const muiTheme = useTheme();
   const themeColors = getFeedbackColors(muiTheme, theme === 'custom' ? 'unfiltered' : theme);
@@ -124,6 +130,13 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
           placeholder="Type a tag and press Enter"
         />
       </Box>
+
+      {/* Question Settings */}
+      <QuestionSettingsPanel
+        node={nljNode}
+        activitySettings={activitySettings}
+        onUpdate={(settings) => onUpdate({ settings })}
+      />
 
       {/* Technical Properties */}
       <Box>
@@ -232,8 +245,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
     </Stack>
   );
 
-  // If always expanded (tab mode), render content directly
-  if (isExpanded && onToggle === (() => {})) {
+  // If always expanded (tab mode), render content directly  
+  if (alwaysExpanded || (isExpanded && onToggle.toString().includes('() => {}'))) {
     return renderContent();
   }
 

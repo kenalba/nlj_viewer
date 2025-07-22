@@ -23,6 +23,7 @@ import type { MatrixNode as MatrixNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
+import { useNodeSettings } from '../hooks/useNodeSettings';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface MatrixNodeProps {
@@ -31,12 +32,17 @@ interface MatrixNodeProps {
 }
 
 export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) => {
+  const settings = useNodeSettings(question.id);
   const [responses, setResponses] = useState<Record<string, string | string[]>>({});
   const [showValidation, setShowValidation] = useState(false);
   const [validationError, setValidationError] = useState<string>('');
   const [currentRowIndex, setCurrentRowIndex] = useState(0);
   const { playSound } = useAudio();
   const muiTheme = useMuiTheme();
+
+  if (import.meta.env.DEV) {
+    console.log(`MatrixNode ${question.id}: shuffleAnswerOrder=${settings.shuffleAnswerOrder}, reinforcementEligible=${settings.reinforcementEligible}`);
+  }
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
 
   const handleSingleResponse = (rowId: string, columnId: string) => {

@@ -28,6 +28,7 @@ import {
 
 import { FlowViewer } from '../flow';
 import type { NLJScenario } from '../types/nlj';
+import type { ActivitySettings } from '../types/settings';
 import { useTheme } from '../contexts/ThemeContext';
 import { useGameContext } from '../contexts/GameContext';
 
@@ -59,6 +60,15 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
     setEditedScenario(updatedScenario);
     setIsDirty(true);
   }, []);
+
+  const handleActivitySettingsChange = useCallback((settings: ActivitySettings) => {
+    const updatedScenario = {
+      ...editedScenario,
+      settings,
+    };
+    setEditedScenario(updatedScenario);
+    setIsDirty(true);
+  }, [editedScenario]);
 
   const handleSave = useCallback(() => {
     if (onSave) {
@@ -200,7 +210,21 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
           </Box>
           
           <Stack direction="row" spacing={1}>
-            {/* Simplified header - just scenario name and status */}
+            <Tooltip title="Activity & Flow Settings">
+              <IconButton
+                onClick={() => setShowSettings(true)}
+                color={showSettings ? 'primary' : 'default'}
+                size="large"
+                sx={{
+                  backgroundColor: showSettings ? 'primary.50' : 'transparent',
+                  '&:hover': {
+                    backgroundColor: showSettings ? 'primary.100' : 'action.hover',
+                  },
+                }}
+              >
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </Stack>
       </Paper>
@@ -210,6 +234,7 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
         <FlowViewer
           scenario={editedScenario}
           onScenarioChange={handleScenarioChange}
+          onActivitySettingsChange={handleActivitySettingsChange}
           onSave={handleSave}
           onExport={handleExport}
           theme={themeMode}
@@ -273,15 +298,6 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
             </IconButton>
           </Tooltip>
           
-          <Tooltip title="Flow Settings">
-            <IconButton
-              onClick={() => setShowSettings(true)}
-              size="small"
-              color={showSettings ? 'primary' : 'default'}
-            >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
           
           <Tooltip title="Export JSON">
             <IconButton
@@ -340,6 +356,7 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
           Scenario saved successfully!
         </Alert>
       </Snackbar>
+
     </Box>
   );
 };

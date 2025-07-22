@@ -3,6 +3,8 @@
  * Extended to support unified activity system (training, surveys, assessments)
  */
 
+import type { ActivitySettings, NodeSettings } from './settings';
+
 // JSON-compatible types for metadata and extensions
 export type JSONValue = string | number | boolean | null | JSONValue[] | { [key: string]: JSONValue };
 export type JSONObject = Record<string, JSONValue>;
@@ -115,6 +117,8 @@ export interface QuestionNode extends BaseNode {
   content?: string;
   media?: Media;
   additionalMediaList?: MediaWrapper[];
+  // Question-level settings
+  settings?: NodeSettings;
 }
 
 export interface ChoiceNode extends BaseNode {
@@ -145,6 +149,8 @@ export interface TrueFalseNode extends BaseNode {
   media?: Media;
   additionalMediaList?: MediaWrapper[];
   correctAnswer: boolean;
+  // Question-level settings
+  settings?: NodeSettings;
 }
 
 export interface OrderingNode extends BaseNode {
@@ -154,6 +160,8 @@ export interface OrderingNode extends BaseNode {
   media?: Media;
   additionalMediaList?: MediaWrapper[];
   items: OrderingItem[];
+  // Question-level settings
+  settings?: NodeSettings;
 }
 
 export interface OrderingItem {
@@ -171,6 +179,8 @@ export interface MatchingNode extends BaseNode {
   leftItems: MatchingItem[];
   rightItems: MatchingItem[];
   correctMatches: MatchingPair[];
+  // Question-level settings
+  settings?: NodeSettings;
 }
 
 export interface MatchingItem {
@@ -191,6 +201,8 @@ export interface ShortAnswerNode extends BaseNode {
   additionalMediaList?: MediaWrapper[];
   correctAnswers: string[];
   caseSensitive?: boolean;
+  // Question-level settings
+  settings?: NodeSettings;
 }
 
 // Validation configuration for all node types
@@ -242,6 +254,8 @@ export interface LikertScaleNode extends BaseNode {
   required?: boolean;
   showNumbers?: boolean;
   showLabels?: boolean;
+  // Question-level settings
+  settings?: NodeSettings;
 }
 
 export interface RatingNode extends BaseNode {
@@ -265,6 +279,8 @@ export interface RatingNode extends BaseNode {
     filled?: string;
     empty?: string;
   };
+  // Question-level settings
+  settings?: NodeSettings;
 }
 
 export interface MatrixNode extends BaseNode {
@@ -289,6 +305,8 @@ export interface MatrixNode extends BaseNode {
   allowMultiplePerRow?: boolean;
   randomizeRows?: boolean;
   randomizeColumns?: boolean;
+  // Question-level settings
+  settings?: NodeSettings;
 }
 
 export interface SliderNode extends BaseNode {
@@ -313,6 +331,8 @@ export interface SliderNode extends BaseNode {
   showValue?: boolean;
   showTicks?: boolean;
   continuous?: boolean;
+  // Question-level settings
+  settings?: NodeSettings;
 }
 
 export interface TextAreaNode extends BaseNode {
@@ -330,6 +350,8 @@ export interface TextAreaNode extends BaseNode {
   resizable?: boolean;
   spellCheck?: boolean;
   wordCount?: boolean;
+  // Question-level settings
+  settings?: NodeSettings;
 }
 
 // Extended question node types for assessments
@@ -349,6 +371,8 @@ export interface MultiSelectNode extends BaseNode {
   maxSelections?: number;
   randomizeOptions?: boolean;
   required?: boolean;
+  // Question-level settings
+  settings?: NodeSettings;
 }
 
 export interface CheckboxNode extends BaseNode {
@@ -369,6 +393,8 @@ export interface CheckboxNode extends BaseNode {
     correct?: string;
     incorrect?: string;
   };
+  // Question-level settings
+  settings?: NodeSettings;
 }
 
 
@@ -402,6 +428,8 @@ export interface ConnectionsNode extends BaseNode {
   };
   timeLimit?: number; // Time limit in seconds (optional)
   required?: boolean;
+  // Question-level settings
+  settings?: NodeSettings;
 }
 
 // Wordle Game Types
@@ -435,6 +463,8 @@ export interface WordleNode extends BaseNode {
     bonusPerRemainingAttempt?: number;
     hintPenalty?: number;
   };
+  // Question-level settings
+  settings?: NodeSettings;
 }
 
 // Updated union type to include all node types
@@ -602,6 +632,8 @@ export interface NLJScenario {
   assessmentMetadata?: AssessmentMetadata;
   theme?: ThemeConfiguration;
   accessibility?: AccessibilityOptions;
+  // Activity-level settings
+  settings?: ActivitySettings;
   // Section-based organization for mixed activities
   sections?: Array<{
     id: string;

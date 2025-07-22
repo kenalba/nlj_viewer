@@ -6,6 +6,7 @@ import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useXAPI } from '../contexts/XAPIContext';
+import { useNodeSettings } from '../hooks/useNodeSettings';
 import { useIsMobile } from '../utils/mobileDetection';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
@@ -15,9 +16,14 @@ interface LikertScaleNodeProps {
 }
 
 export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAnswer }) => {
+  const settings = useNodeSettings(question.id);
   const [selectedValue, setSelectedValue] = useState<number | null>(question.defaultValue || null);
   const [showValidation, setShowValidation] = useState(false);
   const { playSound } = useAudio();
+
+  if (import.meta.env.DEV) {
+    console.log(`LikertScaleNode ${question.id}: shuffleAnswerOrder=${settings.shuffleAnswerOrder}, reinforcementEligible=${settings.reinforcementEligible}`);
+  }
   const { themeMode } = useTheme();
   const { trackSurveyResponse } = useXAPI();
   const isMobile = useIsMobile();

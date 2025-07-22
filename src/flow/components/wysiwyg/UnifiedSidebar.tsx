@@ -47,6 +47,7 @@ interface UnifiedSidebarProps {
   onUnsavedChanges?: (hasChanges: boolean) => void;
   onAddNode?: (node: FlowNode) => void;
   onAddEdge?: (edge: FlowEdge) => void;
+  activitySettings?: { shuffleAnswerOrder?: boolean; reinforcementEligible?: boolean };
 }
 
 export function UnifiedSidebar({
@@ -65,6 +66,7 @@ export function UnifiedSidebar({
   onUnsavedChanges,
   onAddNode,
   onAddEdge,
+  activitySettings = {},
 }: UnifiedSidebarProps) {
   const [activeTab, setActiveTab] = useState(0);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -141,6 +143,7 @@ export function UnifiedSidebar({
           onUnsavedChanges={handleUnsavedChanges}
           onAddNode={onAddNode}
           onAddEdge={onAddEdge}
+          activitySettings={activitySettings}
         />
       );
     }

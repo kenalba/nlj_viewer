@@ -15,6 +15,7 @@ import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useTheme } from '../contexts/ThemeContext';
 import { useXAPI } from '../contexts/XAPIContext';
+import { useNodeSettings } from '../hooks/useNodeSettings';
 import { getAlertFeedbackColors } from '../utils/feedbackColors';
 import { useIsMobile } from '../utils/mobileDetection';
 import { MarkdownRenderer } from './MarkdownRenderer';
@@ -33,6 +34,17 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
   onChoiceSelect,
   disabled = false,
 }) => {
+  const settings = useNodeSettings(question.id);
+  const [shuffledChoices] = useState<ChoiceNode[]>(() => {
+    // Use settings to determine if choices should be shuffled
+    const shouldShuffle = settings.shuffleAnswerOrder;
+    if (import.meta.env.DEV) {
+      console.log(`UnifiedQuestionNode ${question.id}: shuffleAnswerOrder=${shouldShuffle}, reinforcementEligible=${settings.reinforcementEligible}`);
+    }
+    return shouldShuffle 
+      ? [...choices].sort(() => Math.random() - 0.5) 
+      : choices;
+  });
   const [selectedChoice, setSelectedChoice] = useState<string>('');
   const [showFeedback, setShowFeedback] = useState(false);
   const [selectedChoiceNode, setSelectedChoiceNode] = useState<ChoiceNode | null>(null);
@@ -107,9 +119,9 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
       // Handle number keys (1-9) to select choices (only when not showing feedback)
       if (!showFeedback && event.key >= '1' && event.key <= '9') {
         const choiceIndex = parseInt(event.key, 10) - 1;
-        if (choiceIndex < choices.length) {
+        if (choiceIndex < shuffledChoices.length) {
           event.preventDefault();
-          handleChoiceClick(choices[choiceIndex]);
+          handleChoiceClick(shuffledChoices[choiceIndex]);
         }
       }
       
@@ -128,7 +140,7 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
 
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
-  }, [disabled, showFeedback, choices, selectedChoice, handleChoiceClick, handleSubmit, handleContinue]);
+  }, [disabled, showFeedback, shuffledChoices, selectedChoice, handleChoiceClick, handleSubmit, handleContinue]);
 
   const getFeedbackSeverity = (choiceType: string) => {
     switch (choiceType) {
@@ -201,7 +213,7 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
           </Typography>
           
           <Stack spacing={1.5} sx={{ mb: 3 }}>
-            {choices.map((choice) => (
+            {shuffledChoices.map((choice) => (
               <Box
                 key={choice.id}
                 onClick={() => handleChoiceClick(choice)}
@@ -373,10 +385,10 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
       )}
       
       {/* Keyboard Controls Helper - Hide on mobile */}
-      {!isMobile && choices.length > 0 && !showFeedback && (
+      {!isMobile && shuffledChoices.length > 0 && !showFeedback && (
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Typography color="text.secondary" sx={{ fontSize: '0.75rem', opacity: 0.7 }}>
-            Use number keys (1-{Math.min(choices.length, 9)}) to select • Enter to submit
+            Use number keys (1-{Math.min(shuffledChoices.length, 9)}) to select • Enter to submit
           </Typography>
         </Box>
       )}

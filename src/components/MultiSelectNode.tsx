@@ -15,6 +15,7 @@ import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useXAPI } from '../contexts/XAPIContext';
+import { useNodeSettings } from '../hooks/useNodeSettings';
 import { useIsMobile } from '../utils/mobileDetection';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
@@ -24,12 +25,17 @@ interface MultiSelectNodeProps {
 }
 
 export const MultiSelectNode: React.FC<MultiSelectNodeProps> = ({ question, onAnswer }) => {
+  const settings = useNodeSettings(question.id);
   const [selectedValues, setSelectedValues] = useState<string[]>([]);
   const [showValidation, setShowValidation] = useState(false);
   const { playSound } = useAudio();
   const { themeMode } = useTheme();
   const { trackSurveyResponse } = useXAPI();
   const isMobile = useIsMobile();
+
+  if (import.meta.env.DEV) {
+    console.log(`MultiSelectNode ${question.id}: shuffleAnswerOrder=${settings.shuffleAnswerOrder}, reinforcementEligible=${settings.reinforcementEligible}`);
+  }
 
   const handleValueChange = useCallback((optionValue: string, checked: boolean) => {
     setSelectedValues(prev => {

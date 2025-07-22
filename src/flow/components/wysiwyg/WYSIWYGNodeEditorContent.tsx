@@ -43,6 +43,7 @@ interface WYSIWYGNodeEditorContentProps {
   // For adding new nodes and edges
   onAddNode?: (node: FlowNode) => void;
   onAddEdge?: (edge: any) => void;
+  activitySettings?: { shuffleAnswerOrder?: boolean; reinforcementEligible?: boolean };
 }
 
 export function WYSIWYGNodeEditorContent({
@@ -55,6 +56,7 @@ export function WYSIWYGNodeEditorContent({
   onUnsavedChanges,
   onAddNode,
   onAddEdge,
+  activitySettings = {},
 }: WYSIWYGNodeEditorContentProps) {
   const [editedNode, setEditedNode] = useState<FlowNode | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
@@ -305,6 +307,8 @@ export function WYSIWYGNodeEditorContent({
               isExpanded={true}
               onToggle={() => {}}
               theme={theme}
+              activitySettings={activitySettings}
+              alwaysExpanded={true}
             />
           </Box>
         )}

@@ -4,6 +4,7 @@ import type { SliderNode as SliderNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
+import { useNodeSettings } from '../hooks/useNodeSettings';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface SliderNodeProps {
@@ -12,12 +13,17 @@ interface SliderNodeProps {
 }
 
 export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) => {
+  const settings = useNodeSettings(question.id);
   const [selectedValue, setSelectedValue] = useState<number | null>(
     question.defaultValue !== undefined ? question.defaultValue : 
     question.required ? null : null
   );
   const [showValidation, setShowValidation] = useState(false);
   const { playSound } = useAudio();
+
+  if (import.meta.env.DEV) {
+    console.log(`SliderNode ${question.id}: shuffleAnswerOrder=${settings.shuffleAnswerOrder}, reinforcementEligible=${settings.reinforcementEligible}`);
+  }
 
   const handleValueChange = (_event: Event, newValue: number | number[]) => {
     const value = Array.isArray(newValue) ? newValue[0] : newValue;

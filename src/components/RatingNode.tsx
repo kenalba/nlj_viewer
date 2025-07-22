@@ -6,6 +6,7 @@ import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useNodeSettings } from '../hooks/useNodeSettings';
 import { getStarColors } from '../utils/feedbackColors';
 import { useIsMobile } from '../utils/mobileDetection';
 import { MarkdownRenderer } from './MarkdownRenderer';
@@ -16,8 +17,13 @@ interface RatingNodeProps {
 }
 
 export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) => {
+  const settings = useNodeSettings(question.id);
   const [selectedValue, setSelectedValue] = useState<number | null>(question.defaultValue || null);
   const [showValidation, setShowValidation] = useState(false);
+
+  if (import.meta.env.DEV) {
+    console.log(`RatingNode ${question.id}: shuffleAnswerOrder=${settings.shuffleAnswerOrder}, reinforcementEligible=${settings.reinforcementEligible}`);
+  }
   const { playSound } = useAudio();
   const { themeMode } = useTheme();
   const muiTheme = useMuiTheme();

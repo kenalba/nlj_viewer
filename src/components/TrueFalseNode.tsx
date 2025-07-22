@@ -6,6 +6,7 @@ import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useXAPI } from '../contexts/XAPIContext';
+import { useNodeSettings } from '../hooks/useNodeSettings';
 import { useIsMobile } from '../utils/mobileDetection';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { MediaDisplay } from './MediaDisplay';
@@ -16,12 +17,17 @@ interface TrueFalseNodeProps {
 }
 
 export const TrueFalseNode: React.FC<TrueFalseNodeProps> = ({ question, onAnswer }) => {
+  const settings = useNodeSettings(question.id);
   const [selectedAnswer, setSelectedAnswer] = useState<boolean | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [questionStartTime] = useState(new Date());
   const { playSound } = useAudio();
   const { trackQuestionAnswered } = useXAPI();
   const isMobile = useIsMobile();
+
+  if (import.meta.env.DEV) {
+    console.log(`TrueFalseNode ${question.id}: shuffleAnswerOrder=${settings.shuffleAnswerOrder}, reinforcementEligible=${settings.reinforcementEligible}`);
+  }
 
   // Keyboard support
   useEffect(() => {

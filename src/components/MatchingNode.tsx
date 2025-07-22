@@ -6,6 +6,7 @@ import { NodeCard } from './NodeCard';
 import { MediaViewer } from './MediaViewer';
 import { useAudio } from '../contexts/AudioContext';
 import { useXAPI } from '../contexts/XAPIContext';
+import { useNodeSettings } from '../hooks/useNodeSettings';
 import { useIsMobile } from '../utils/mobileDetection';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
@@ -20,11 +21,16 @@ interface UserMatch {
 }
 
 export const MatchingNode: React.FC<MatchingNodeProps> = ({ question, onAnswer }) => {
+  const settings = useNodeSettings(question.id);
   const [userMatches, setUserMatches] = useState<UserMatch[]>([]);
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
   const [selectedRight, setSelectedRight] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [questionStartTime] = useState(new Date());
+
+  if (import.meta.env.DEV) {
+    console.log(`MatchingNode ${question.id}: shuffleAnswerOrder=${settings.shuffleAnswerOrder}, reinforcementEligible=${settings.reinforcementEligible}`);
+  }
   
   // Keyboard navigation state
   const [focusedColumn, setFocusedColumn] = useState<'left' | 'right' | null>('left');

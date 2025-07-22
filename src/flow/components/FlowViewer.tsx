@@ -43,6 +43,7 @@ import {
 } from '@mui/icons-material';
 
 import type { NLJScenario, NLJNode, ConnectionsGroup } from '../../types/nlj';
+import type { ActivitySettings } from '../../types/settings';
 import type { FlowNode, FlowEdge, FlowNodeData, FlowEdgeData, FlowValidationResult, LayoutConfig, FlowNodeType } from '../types/flow';
 import { 
   nljScenarioToFlow, 
@@ -55,10 +56,12 @@ import { FlowNode as FlowNodeComponent } from './FlowNode';
 import { FlowEdge as FlowEdgeComponent } from './FlowEdge';
 import { NodePalette } from './NodePalette';
 import { UnifiedSidebar } from './wysiwyg/UnifiedSidebar';
+import { ActivitySettingsPanel } from '../../components/ActivitySettingsPanel';
 
 interface FlowViewerProps {
   scenario: NLJScenario;
   onScenarioChange?: (scenario: NLJScenario) => void;
+  onActivitySettingsChange?: (settings: ActivitySettings) => void;
   onSave?: (scenario: NLJScenario) => void;
   onExport?: (format: 'png' | 'svg' | 'json', data: NLJScenario) => void;
   theme?: 'hyundai' | 'unfiltered' | 'custom';
@@ -91,6 +94,10 @@ const defaultLayoutConfig: LayoutConfig = {
 
 function FlowViewerContent({
   scenario,
+  onScenarioChange,
+  onActivitySettingsChange,
+  onSave,
+  onExport,
   theme = 'unfiltered',
   headerHeight = 120,
   readOnly = false,
@@ -706,7 +713,16 @@ function FlowViewerContent({
 
         {/* Additional Controls Panel */}
         <Panel position="top-right">
-          <Stack spacing={1}>
+          <Stack 
+            spacing={1}
+            sx={{
+              backgroundColor: 'background.paper',
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 1,
+              p: 1,
+            }}
+          >
             <Tooltip title="Fit View">
               <IconButton onClick={handleFitView} size="small">
                 <CenterIcon />
@@ -784,6 +800,7 @@ function FlowViewerContent({
         onUnsavedChanges={handleUnsavedChanges}
         onAddNode={handleAddNodeFromEditor}
         onAddEdge={handleAddEdgeFromEditor}
+        activitySettings={scenario.settings || {}}
       />
 
       {/* Validation Results Dialog */}
@@ -833,12 +850,24 @@ function FlowViewerContent({
       <Dialog
         open={showSettings}
         onClose={onCloseSettings}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Flow Settings</DialogTitle>
+        <DialogTitle>Scenario & Flow Settings</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 2 }}>
+            {/* Activity Settings Panel */}
+            <ActivitySettingsPanel
+              scenario={scenario}
+              onUpdate={onActivitySettingsChange || (() => {})}
+              isExpanded={true}
+            />
+            
+            {/* Flow Layout Settings */}
+            <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+              Flow Layout Settings
+            </Typography>
+            
             <FormControl fullWidth>
               <InputLabel>Layout Algorithm</InputLabel>
               <Select
