@@ -1,0 +1,1534 @@
+{
+  "id": "649dfdfb4055d613315af4ed",
+  "name": "FSA_102_4_30",
+  "orientation": "vertical",
+  "nodes": [
+    {
+      "type": "interstitial_panel",
+      "id": "1c21a455-c722-43e1-8624-42aa3130df5c",
+      "x": 218,
+      "y": 1570,
+      "width": 215,
+      "height": 130,
+      "media": {
+        "id": "3039",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ4_30_PANEL-11.jpg",
+        "title": "FSA_102_NLJ4_30_PANEL-11",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ4_30_PANEL-11.jpg",
+        "createTimestamp": "2023-06-29T22:04:04.302108Z",
+        "updateTimestamp": "2024-01-31T13:30:48.716263Z"
+      }
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "8a1b73e2-b1c3-4b36-832f-e9585adf2bdc",
+      "x": 1275,
+      "y": 1356,
+      "width": 215,
+      "height": 130,
+      "text": "You give Cooper your card, but you never hear from him again. He ends up buying a car from somewhere else."
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "12cf4f26-2350-4497-ac73-ecd65bb31262",
+      "x": 1275,
+      "y": 1112,
+      "width": 215,
+      "height": 130,
+      "media": {
+        "id": "3050",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ4_30_PANEL-6.jpg",
+        "title": "FSA_102_NLJ4_30_PANEL-6",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ4_30_PANEL-6.jpg",
+        "createTimestamp": "2023-06-29T22:06:48.922974Z",
+        "updateTimestamp": "2024-01-31T13:30:48.738402Z"
+      }
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "bfe60837-36ad-4a6e-89cb-71b56293676c",
+      "x": 1040,
+      "y": 2058,
+      "width": 215,
+      "height": 130,
+      "media": {
+        "id": "3038",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ4_30_PANEL-8.jpg",
+        "title": "FSA_102_NLJ4_30_PANEL-8",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ4_30_PANEL-8.jpg",
+        "createTimestamp": "2023-06-29T22:03:14.057291Z",
+        "updateTimestamp": "2024-01-31T13:30:48.704210Z"
+      }
+    },
+    {
+      "type": "choice",
+      "id": "1755987b-e890-4096-b3e9-e12101466552",
+      "parentId": "0b38db5a-45e5-4ede-9254-976f8c75c0bf",
+      "text": "No problem. I'll have my team put an offer sheet together and we can finish the rest of this process virtually. We can even deliver the SUV at your convience.",
+      "value": 0,
+      "feedback": "This is a good way to show Cooper that you can work together and move forward",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "bad66b3f-e410-4757-a943-700161250225",
+          "value": 1
+        },
+        {
+          "variableId": "7874e1e3-32db-4d04-bac8-b1c85d008992",
+          "value": 1
+        }
+      ],
+      "x": 688,
+      "y": 1807,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "b72b718d-f9f3-4309-8b18-7a213f0d0b0f",
+      "parentId": "0b38db5a-45e5-4ede-9254-976f8c75c0bf",
+      "text": "Is your daughter playing soccer with the town league?  I think I might have seen you at the park during a game.  My daughters both play, one with the Barracudas and the other with the Piranhas.  I understand having to zip out, is your email address still number1coach@aol.com?",
+      "value": 0,
+      "feedback": "A Driver will not appreciate the personal connection, especially at this time, and you didn't address the excuse.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "bad66b3f-e410-4757-a943-700161250225",
+          "value": 2
+        },
+        {
+          "variableId": "7874e1e3-32db-4d04-bac8-b1c85d008992",
+          "value": 0
+        }
+      ],
+      "x": 923,
+      "y": 1807,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "94ba5ff6-fb62-421f-a289-bbe9b516899b",
+      "parentId": "0b38db5a-45e5-4ede-9254-976f8c75c0bf",
+      "text": "That's fine. What's your email address? Let's keep talking. Maybe you can swing by the shop later this week and we can finialze the paperwork.",
+      "value": 0,
+      "feedback": "An advocate for the customer would try to help the customer surmount issues that prevent them from moving forward",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "bad66b3f-e410-4757-a943-700161250225",
+          "value": 2
+        },
+        {
+          "variableId": "7874e1e3-32db-4d04-bac8-b1c85d008992",
+          "value": 0
+        }
+      ],
+      "x": 1158,
+      "y": 1807,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "22b62f65-5ecc-463a-b31a-b1cf7d1fae4a",
+      "parentId": "62530b1e-10f3-45b8-b802-e7714395f03d",
+      "text": "We've got the perfect SUV for your needs. It's only 3 years old, it has folding-third-row seating, leather seats so that it's easy to clean up after the kids, and plenty of trunk space.",
+      "value": 0,
+      "feedback": "Cooper revealed a motivation, and you successfully tied it to your presentation",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "8b49e802-5fb2-408a-859d-94b920503cde",
+          "value": 1
+        }
+      ],
+      "x": 917,
+      "y": 1349,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "end",
+      "id": "2",
+      "x": 741,
+      "y": 2572,
+      "width": 70,
+      "height": 50
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "491f1340-6c71-4fa5-9862-6b93825c6e40",
+      "x": 68,
+      "y": 1112,
+      "width": 215,
+      "height": 130,
+      "content": "Flexing to the customer's social style and setting a direction are critical - please choose again."
+    },
+    {
+      "type": "choice",
+      "id": "afe3832f-1d58-4f81-9e25-30435e73c50b",
+      "parentId": "17861b4d-130d-48a0-b847-460d59f89c24",
+      "text": "Let's do a much as we can in the time you have. You mentioned that you wanted space. Are you thinking about a mini-van or SUV? Share with me, have you looked at any vehicles already?",
+      "value": 0,
+      "feedback": "This closed-ended question is disguised as an RFQ, and will not encourage Cooper to reveal his needs and motivations",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "bad66b3f-e410-4757-a943-700161250225",
+          "value": 4
+        },
+        {
+          "variableId": "c87731c4-b965-4849-b1ab-e96f15dac8f6",
+          "value": 0
+        }
+      ],
+      "x": 1158,
+      "y": 851,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "54d64b5c-5ffd-4518-ba77-748943eaf72a",
+      "parentId": "f2539441-1069-4e84-8069-33e0425a495f",
+      "text": "I’d be glad to help, let’s start by learning what you would like to accomplish. From there we will work as far as we can and I will have some recommendations. We can then wrap things up remotely or find another time to connect.  Does that sound like a good plan?",
+      "value": 0,
+      "feedback": "This is a good way to flex to a Driver - direct and to-the-point.  You also set a clear direction.",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "e389a0b9-d16a-4f57-a104-91e6e4e6184c",
+          "value": 1
+        },
+        {
+          "variableId": "67d8acea-1886-48fd-af67-90ccb9cb09d3",
+          "value": 1
+        }
+      ],
+      "x": 1121,
+      "y": 400,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "0b38db5a-45e5-4ede-9254-976f8c75c0bf",
+      "text": "Which response best addresses this objection?",
+      "media": {
+        "id": "2994",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ4_30_PANEL-4.jpg",
+        "title": "FSA_102_NLJ4_30_PANEL-4",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ4_30_PANEL-4.jpg",
+        "createTimestamp": "2023-06-29T20:51:44.552632Z",
+        "updateTimestamp": "2024-01-31T13:30:48.390395Z"
+      },
+      "additionalMediaList": [],
+      "x": 917,
+      "y": 1570,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "fbd053f1-377d-42d4-ac14-91f79eb5b358",
+      "parentId": "f2539441-1069-4e84-8069-33e0425a495f",
+      "text": "Congratulations on the third child! We just had our second, and I couldn't imagine having a third. Let's take a walk and look at a few options while I ask a few questions to better understand what you're looking for.",
+      "value": 0,
+      "feedback": "A Driver needs to save time and isn't looking for a personal connection.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "e389a0b9-d16a-4f57-a104-91e6e4e6184c",
+          "value": 0
+        },
+        {
+          "variableId": "67d8acea-1886-48fd-af67-90ccb9cb09d3",
+          "value": 1
+        },
+        {
+          "variableId": "bad66b3f-e410-4757-a943-700161250225",
+          "value": 5
+        }
+      ],
+      "x": 258,
+      "y": 400,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "start",
+      "id": "1",
+      "x": 173,
+      "y": 12,
+      "width": 70,
+      "height": 50
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "84d1d83b-15de-4e24-bffe-a36e20c1084b",
+      "x": 688,
+      "y": 2058,
+      "width": 215,
+      "height": 130,
+      "media": {
+        "id": "3018",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ4_30_PANEL-5.jpg",
+        "title": "FSA_102_NLJ4_30_PANEL-5",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ4_30_PANEL-5.jpg",
+        "createTimestamp": "2023-06-29T22:02:52.738645Z",
+        "updateTimestamp": "2024-01-31T13:30:48.686268Z"
+      }
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "015e5ac9-8679-48d2-a2a2-59d33aadce8f",
+      "x": 23,
+      "y": 614,
+      "width": 215,
+      "height": 130,
+      "media": {
+        "id": "3051",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ4_30_PANEL-10.jpg",
+        "title": "FSA_102_NLJ4_30_PANEL-10",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ4_30_PANEL-10.jpg",
+        "createTimestamp": "2023-06-29T22:08:54.866909Z",
+        "updateTimestamp": "2024-01-31T13:30:48.754048Z"
+      }
+    },
+    {
+      "type": "question",
+      "id": "f2539441-1069-4e84-8069-33e0425a495f",
+      "text": "Which response best Sets a Direction and flexes to Cooper's Driver Social Style?",
+      "media": {
+        "id": "2992",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ4_30_PANEL-1.jpg",
+        "title": "FSA_102_NLJ4_30_PANEL-1",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ4_30_PANEL-1.jpg",
+        "createTimestamp": "2023-06-29T20:50:43.149798Z",
+        "updateTimestamp": "2024-01-31T13:30:48.354592Z"
+      },
+      "additionalMediaList": [],
+      "x": 100,
+      "y": 146,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "06e41df2-f933-41d4-88bd-30260ba87211",
+      "parentId": "f2539441-1069-4e84-8069-33e0425a495f",
+      "text": "Congratulations on the third child! We just had our second, and I couldn't imagine having a third.  How much were you looking to spend?  Will you be trading in your current vehicle?",
+      "value": 0,
+      "feedback": "This response neither effectively Sets a Direction nor flexes to Cooper's social style",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "67d8acea-1886-48fd-af67-90ccb9cb09d3",
+          "value": 0
+        },
+        {
+          "variableId": "e389a0b9-d16a-4f57-a104-91e6e4e6184c",
+          "value": 0
+        },
+        {
+          "variableId": "bad66b3f-e410-4757-a943-700161250225",
+          "value": 6
+        }
+      ],
+      "x": 23,
+      "y": 400,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "f13e41dd-41f2-45ff-9b43-72e5d3456b2f",
+      "parentId": "62530b1e-10f3-45b8-b802-e7714395f03d",
+      "text": "I've got a great compact SUV that will save you money at the gas pump. It doesn't have third-row seating, but it does have a relatively big trunk.",
+      "value": 0,
+      "feedback": "You missed an opportunity to use what Cooper revealed as a motivation",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "bad66b3f-e410-4757-a943-700161250225",
+          "value": 3
+        },
+        {
+          "variableId": "8b49e802-5fb2-408a-859d-94b920503cde",
+          "value": 0
+        }
+      ],
+      "x": 453,
+      "y": 1349,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "04fbb119-ee1c-4be7-852e-2e9c20f7e962",
+      "x": 258,
+      "y": 614,
+      "width": 215,
+      "height": 130,
+      "media": {
+        "id": "3040",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ4_30_PANEL-9.jpg",
+        "title": "FSA_102_NLJ4_30_PANEL-9",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ4_30_PANEL-9.jpg",
+        "createTimestamp": "2023-06-29T22:08:14.253656Z",
+        "updateTimestamp": "2024-01-31T13:30:48.746225Z"
+      }
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "0b17089a-0678-411f-a48d-45f12eb879a9",
+      "x": 218,
+      "y": 1814,
+      "width": 215,
+      "height": 130,
+      "text": "You give Cooper your card, but you never hear from him again. He ends up buying a car from somewhere else."
+    },
+    {
+      "type": "choice",
+      "id": "7c158bdc-491b-48a7-9c6e-044bec701169",
+      "parentId": "17861b4d-130d-48a0-b847-460d59f89c24",
+      "text": "Let's do a much as we can in the time you have. You mentioned that you wanted space. Are you thinking about a mini-van or SUV? Share with me, what are you looking for in a new vehicle?",
+      "value": 0,
+      "feedback": "This RFQ will likely set you on the path to discovering Cooper's needs and motivations",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "c87731c4-b965-4849-b1ab-e96f15dac8f6",
+          "value": 1
+        }
+      ],
+      "x": 493,
+      "y": 851,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "8b094cbb-707a-45a8-8475-d44a19842644",
+      "x": 453,
+      "y": 1814,
+      "width": 215,
+      "height": 130,
+      "text": "Cooper follows you around and looks at a few options before getting angry and storming off in a huff to go pick up his daughter. You give him your card, but you never hear from Cooper again. "
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "668096cf-533b-4cf6-b9e6-9708a2046270",
+      "x": 258,
+      "y": 858,
+      "width": 215,
+      "height": 130,
+      "text": "Cooper follows you around the lot looking at option after option. Just as he's about to take an SUV for a test drive, he realizes that he has to pick up his daughter from softball practice.  Cooper takes your card, but your process took so long that he decided to try another dealership."
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "39bd4582-0ba3-4cfe-9b43-c58ed5fa5c15",
+      "x": 688,
+      "y": 2272,
+      "width": 215,
+      "height": 130,
+      "text": "Congratulations! You navigated this scenario with grace. Cooper was so impressed with the ease of the buying process that he recommended you to his friends that are also looking to buy a new car. "
+    },
+    {
+      "type": "choice",
+      "id": "657ec8e6-9569-44b0-9fe8-4596bda5336a",
+      "parentId": "62530b1e-10f3-45b8-b802-e7714395f03d",
+      "text": "Lots of people who swore they would never own a mini-van are so happy when they finally get one.  Mini-vans are practical, are cheaper to maintain and have cheaper insurance rates, they are easy to get in and out of, and have a lot of storage space.",
+      "value": 0,
+      "feedback": "He specifically said he is not getting a mini-van.  With a Driver, it is better to support their conclusions and actions.",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "bad66b3f-e410-4757-a943-700161250225",
+          "value": 3
+        },
+        {
+          "variableId": "8b49e802-5fb2-408a-859d-94b920503cde",
+          "value": 0
+        }
+      ],
+      "x": 218,
+      "y": 1349,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "choice",
+      "id": "a65d5e62-1114-4218-b6dd-f40345e52fb6",
+      "parentId": "17861b4d-130d-48a0-b847-460d59f89c24",
+      "text": "I'll make sure to keep an eye on the clock.  What time do you have to leave?  What vehicle are you currently driving?  Have you looked at any vehicles already?",
+      "value": 0,
+      "feedback": "These closed-ended questions will not encourage Cooper to reveal his needs and motivations",
+      "isCorrect": false,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "bad66b3f-e410-4757-a943-700161250225",
+          "value": 4
+        },
+        {
+          "variableId": "c87731c4-b965-4849-b1ab-e96f15dac8f6",
+          "value": 0
+        }
+      ],
+      "x": 1393,
+      "y": 851,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "6b5db31a-4b04-4641-9735-188bb607c62e",
+      "x": 1040,
+      "y": 2272,
+      "width": 215,
+      "height": 130,
+      "text": "Cooper gives you his email address, but your email gets lost in the SPAM folder. Cooper grows frustrated waiting for your reply and buys the same car that you showed him from another dealership."
+    },
+    {
+      "type": "question",
+      "id": "17861b4d-130d-48a0-b847-460d59f89c24",
+      "text": "This is a good time to ask a Results Focused Question to discover Cooper's needs and motivations.  Which response achieves this?",
+      "media": {
+        "id": "2993",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ4_30_PANEL-2.jpg",
+        "title": "FSA_102_NLJ4_30_PANEL-2",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ4_30_PANEL-2.jpg",
+        "createTimestamp": "2023-06-29T20:51:05.314385Z",
+        "updateTimestamp": "2024-01-31T13:30:48.365001Z"
+      },
+      "additionalMediaList": [],
+      "x": 1121,
+      "y": 614,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "question",
+      "id": "62530b1e-10f3-45b8-b802-e7714395f03d",
+      "text": "Now is the time to be an advocate and tie Cooper's motivations to your presentation.  Which response does this best?",
+      "media": {
+        "id": "3003",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ4_30_PANEL-3.jpg",
+        "title": "FSA_102_NLJ4_30_PANEL-3",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ4_30_PANEL-3.jpg",
+        "createTimestamp": "2023-06-29T20:51:21.091364Z",
+        "updateTimestamp": "2024-01-31T13:30:48.377650Z"
+      },
+      "additionalMediaList": [],
+      "x": 493,
+      "y": 1112,
+      "width": 215,
+      "height": 130
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "7fe877cd-d5c0-4752-af1c-b88a4b45ba94",
+      "x": 453,
+      "y": 1570,
+      "width": 215,
+      "height": 130,
+      "media": {
+        "id": "3019",
+        "type": "IMAGE",
+        "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ4_30_PANEL-7.jpg",
+        "title": "FSA_102_NLJ4_30_PANEL-7",
+        "description": "",
+        "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ4_30_PANEL-7.jpg",
+        "createTimestamp": "2023-06-29T22:04:49.006425Z",
+        "updateTimestamp": "2024-01-31T13:30:48.728294Z"
+      }
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "6d098a84-904e-4895-8a16-914ff92ca692",
+      "x": 23,
+      "y": 858,
+      "width": 215,
+      "height": 130,
+      "text": "lack of direction and poor use of time rubs Cooper the wrong way.  He decides that this whole experience has been a big waste of his time. Cooper continues to shop online and ultimately ends up buying from another dealership."
+    }
+  ],
+  "links": [
+    {
+      "id": "a5b1d43e-3ed2-4dd7-bb3f-f4728e61fa6d",
+      "type": "parent-child",
+      "sourceNodeId": "f2539441-1069-4e84-8069-33e0425a495f",
+      "targetNodeId": "fbd053f1-377d-42d4-ac14-91f79eb5b358",
+      "startPoint": {
+        "x": 229,
+        "y": 276
+      },
+      "endPoint": {
+        "x": 365,
+        "y": 400
+      },
+      "bendPoints": [
+        {
+          "x": 229,
+          "y": 350
+        },
+        {
+          "x": 365,
+          "y": 350
+        }
+      ]
+    },
+    {
+      "id": "cda9cec8-4191-4fd1-b693-4bd279476c07",
+      "type": "link",
+      "sourceNodeId": "1",
+      "targetNodeId": "f2539441-1069-4e84-8069-33e0425a495f",
+      "probability": 100,
+      "startPoint": {
+        "x": 208,
+        "y": 62
+      },
+      "endPoint": {
+        "x": 208,
+        "y": 146
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "2047e306-d729-4f82-9771-241429269e27",
+      "type": "link",
+      "sourceNodeId": "668096cf-533b-4cf6-b9e6-9708a2046270",
+      "targetNodeId": "491f1340-6c71-4fa5-9862-6b93825c6e40",
+      "probability": 100,
+      "startPoint": {
+        "x": 365,
+        "y": 988
+      },
+      "endPoint": {
+        "x": 229,
+        "y": 1112
+      },
+      "bendPoints": [
+        {
+          "x": 365,
+          "y": 1038
+        },
+        {
+          "x": 229,
+          "y": 1038
+        }
+      ]
+    },
+    {
+      "id": "4a4f0576-ccaa-4c6c-9f5e-8f9f2f90a45f",
+      "type": "parent-child",
+      "sourceNodeId": "17861b4d-130d-48a0-b847-460d59f89c24",
+      "targetNodeId": "a65d5e62-1114-4218-b6dd-f40345e52fb6",
+      "startPoint": {
+        "x": 1283,
+        "y": 744
+      },
+      "endPoint": {
+        "x": 1500,
+        "y": 851
+      },
+      "bendPoints": [
+        {
+          "x": 1283,
+          "y": 794
+        },
+        {
+          "x": 1500,
+          "y": 794
+        }
+      ]
+    },
+    {
+      "id": "72683058-59d8-446a-ac19-f203869c0d0f",
+      "type": "link",
+      "sourceNodeId": "54d64b5c-5ffd-4518-ba77-748943eaf72a",
+      "targetNodeId": "17861b4d-130d-48a0-b847-460d59f89c24",
+      "probability": 100,
+      "startPoint": {
+        "x": 1229,
+        "y": 530
+      },
+      "endPoint": {
+        "x": 1229,
+        "y": 614
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "bc638e6b-b2b0-4535-94bd-167a1ef99b12",
+      "type": "parent-child",
+      "sourceNodeId": "f2539441-1069-4e84-8069-33e0425a495f",
+      "targetNodeId": "54d64b5c-5ffd-4518-ba77-748943eaf72a",
+      "startPoint": {
+        "x": 272,
+        "y": 276
+      },
+      "endPoint": {
+        "x": 1229,
+        "y": 400
+      },
+      "bendPoints": [
+        {
+          "x": 272,
+          "y": 340
+        },
+        {
+          "x": 1229,
+          "y": 340
+        }
+      ]
+    },
+    {
+      "id": "37c5a8af-3daf-4c19-8cb3-4b057e2798ea",
+      "type": "parent-child",
+      "sourceNodeId": "0b38db5a-45e5-4ede-9254-976f8c75c0bf",
+      "targetNodeId": "94ba5ff6-fb62-421f-a289-bbe9b516899b",
+      "startPoint": {
+        "x": 1078,
+        "y": 1700
+      },
+      "endPoint": {
+        "x": 1265,
+        "y": 1807
+      },
+      "bendPoints": [
+        {
+          "x": 1078,
+          "y": 1750
+        },
+        {
+          "x": 1265,
+          "y": 1750
+        }
+      ]
+    },
+    {
+      "id": "91ea9432-77b4-4c23-8d93-8f145d0f73be",
+      "type": "link",
+      "sourceNodeId": "491f1340-6c71-4fa5-9862-6b93825c6e40",
+      "targetNodeId": "f2539441-1069-4e84-8069-33e0425a495f",
+      "probability": 100,
+      "startPoint": {
+        "x": 122,
+        "y": 1112
+      },
+      "endPoint": {
+        "x": 143,
+        "y": 276
+      },
+      "bendPoints": [
+        {
+          "x": 122,
+          "y": 1048
+        },
+        {
+          "x": 12,
+          "y": 1048
+        },
+        {
+          "x": 12,
+          "y": 916
+        },
+        {
+          "x": 12,
+          "y": 672
+        },
+        {
+          "x": 12,
+          "y": 465
+        },
+        {
+          "x": 12,
+          "y": 340
+        },
+        {
+          "x": 143,
+          "y": 340
+        }
+      ]
+    },
+    {
+      "id": "dcf3d310-4227-4876-8cc4-b8edc16eafbe",
+      "type": "link",
+      "sourceNodeId": "0b17089a-0678-411f-a48d-45f12eb879a9",
+      "targetNodeId": "2",
+      "probability": 100,
+      "startPoint": {
+        "x": 325,
+        "y": 1944
+      },
+      "endPoint": {
+        "x": 752,
+        "y": 2572
+      },
+      "bendPoints": [
+        {
+          "x": 325,
+          "y": 2116
+        },
+        {
+          "x": 325,
+          "y": 2330
+        },
+        {
+          "x": 325,
+          "y": 2462
+        },
+        {
+          "x": 752,
+          "y": 2462
+        }
+      ]
+    },
+    {
+      "id": "aebc911a-0e25-492c-bc16-f6abf507b2b6",
+      "type": "link",
+      "sourceNodeId": "04fbb119-ee1c-4be7-852e-2e9c20f7e962",
+      "targetNodeId": "668096cf-533b-4cf6-b9e6-9708a2046270",
+      "probability": 100,
+      "startPoint": {
+        "x": 365,
+        "y": 744
+      },
+      "endPoint": {
+        "x": 365,
+        "y": 858
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "2454b8dd-98d1-46f4-82e1-17bfa870ca44",
+      "type": "parent-child",
+      "sourceNodeId": "17861b4d-130d-48a0-b847-460d59f89c24",
+      "targetNodeId": "7c158bdc-491b-48a7-9c6e-044bec701169",
+      "startPoint": {
+        "x": 1175,
+        "y": 744
+      },
+      "endPoint": {
+        "x": 600,
+        "y": 851
+      },
+      "bendPoints": [
+        {
+          "x": 1175,
+          "y": 794
+        },
+        {
+          "x": 600,
+          "y": 794
+        }
+      ]
+    },
+    {
+      "id": "0119aeed-b0e7-4e29-b13f-57f3cd0367e9",
+      "type": "link",
+      "sourceNodeId": "fbd053f1-377d-42d4-ac14-91f79eb5b358",
+      "targetNodeId": "04fbb119-ee1c-4be7-852e-2e9c20f7e962",
+      "probability": 100,
+      "startPoint": {
+        "x": 365,
+        "y": 530
+      },
+      "endPoint": {
+        "x": 365,
+        "y": 614
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "397f04e4-dda9-4337-bc82-0ef732b3cc86",
+      "type": "parent-child",
+      "sourceNodeId": "17861b4d-130d-48a0-b847-460d59f89c24",
+      "targetNodeId": "afe3832f-1d58-4f81-9e25-30435e73c50b",
+      "startPoint": {
+        "x": 1229,
+        "y": 744
+      },
+      "endPoint": {
+        "x": 1265,
+        "y": 851
+      },
+      "bendPoints": [
+        {
+          "x": 1229,
+          "y": 794
+        },
+        {
+          "x": 1265,
+          "y": 794
+        }
+      ]
+    },
+    {
+      "id": "b8b11ef3-50ce-457f-8fc5-83b1d22863c2",
+      "type": "link",
+      "sourceNodeId": "8b094cbb-707a-45a8-8475-d44a19842644",
+      "targetNodeId": "2",
+      "probability": 100,
+      "startPoint": {
+        "x": 560,
+        "y": 1944
+      },
+      "endPoint": {
+        "x": 764,
+        "y": 2572
+      },
+      "bendPoints": [
+        {
+          "x": 560,
+          "y": 2116
+        },
+        {
+          "x": 560,
+          "y": 2330
+        },
+        {
+          "x": 560,
+          "y": 2452
+        },
+        {
+          "x": 764,
+          "y": 2452
+        }
+      ]
+    },
+    {
+      "id": "ffa1ac55-4eb1-407d-ac85-f4276ee70228",
+      "type": "link",
+      "sourceNodeId": "12cf4f26-2350-4497-ac73-ecd65bb31262",
+      "targetNodeId": "8a1b73e2-b1c3-4b36-832f-e9585adf2bdc",
+      "probability": 100,
+      "startPoint": {
+        "x": 1383,
+        "y": 1242
+      },
+      "endPoint": {
+        "x": 1383,
+        "y": 1356
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "0d540729-2c9b-41d8-9dd1-763b57b5911c",
+      "type": "link",
+      "sourceNodeId": "7fe877cd-d5c0-4752-af1c-b88a4b45ba94",
+      "targetNodeId": "8b094cbb-707a-45a8-8475-d44a19842644",
+      "probability": 100,
+      "startPoint": {
+        "x": 560,
+        "y": 1700
+      },
+      "endPoint": {
+        "x": 560,
+        "y": 1814
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "fb19c18d-b791-4584-ac6f-690cd6ab1c0b",
+      "type": "link",
+      "sourceNodeId": "39bd4582-0ba3-4cfe-9b43-c58ed5fa5c15",
+      "targetNodeId": "2",
+      "probability": 100,
+      "startPoint": {
+        "x": 795,
+        "y": 2402
+      },
+      "endPoint": {
+        "x": 776,
+        "y": 2572
+      },
+      "bendPoints": [
+        {
+          "x": 795,
+          "y": 2452
+        },
+        {
+          "x": 776,
+          "y": 2452
+        }
+      ]
+    },
+    {
+      "id": "8803b28a-7e23-4e42-91c7-8ff151eecca1",
+      "type": "parent-child",
+      "sourceNodeId": "62530b1e-10f3-45b8-b802-e7714395f03d",
+      "targetNodeId": "22b62f65-5ecc-463a-b31a-b1cf7d1fae4a",
+      "startPoint": {
+        "x": 654,
+        "y": 1242
+      },
+      "endPoint": {
+        "x": 1025,
+        "y": 1349
+      },
+      "bendPoints": [
+        {
+          "x": 654,
+          "y": 1292
+        },
+        {
+          "x": 1025,
+          "y": 1292
+        }
+      ]
+    },
+    {
+      "id": "f86913c4-a77a-48e4-8338-b491dbc55610",
+      "type": "link",
+      "sourceNodeId": "84d1d83b-15de-4e24-bffe-a36e20c1084b",
+      "targetNodeId": "39bd4582-0ba3-4cfe-9b43-c58ed5fa5c15",
+      "probability": 100,
+      "startPoint": {
+        "x": 795,
+        "y": 2188
+      },
+      "endPoint": {
+        "x": 795,
+        "y": 2272
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "26a7a53f-4a30-4010-bd52-7745013da8e9",
+      "type": "link",
+      "sourceNodeId": "015e5ac9-8679-48d2-a2a2-59d33aadce8f",
+      "targetNodeId": "6d098a84-904e-4895-8a16-914ff92ca692",
+      "probability": 100,
+      "startPoint": {
+        "x": 130,
+        "y": 744
+      },
+      "endPoint": {
+        "x": 130,
+        "y": 858
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "f7d26c86-79fc-4281-8d12-3ffe29a00b91",
+      "type": "parent-child",
+      "sourceNodeId": "0b38db5a-45e5-4ede-9254-976f8c75c0bf",
+      "targetNodeId": "1755987b-e890-4096-b3e9-e12101466552",
+      "startPoint": {
+        "x": 971,
+        "y": 1700
+      },
+      "endPoint": {
+        "x": 795,
+        "y": 1807
+      },
+      "bendPoints": [
+        {
+          "x": 971,
+          "y": 1750
+        },
+        {
+          "x": 795,
+          "y": 1750
+        }
+      ]
+    },
+    {
+      "id": "650b2e85-f0d8-484f-9cc4-8ed8638f1988",
+      "type": "link",
+      "sourceNodeId": "657ec8e6-9569-44b0-9fe8-4596bda5336a",
+      "targetNodeId": "1c21a455-c722-43e1-8624-42aa3130df5c",
+      "probability": 100,
+      "startPoint": {
+        "x": 325,
+        "y": 1479
+      },
+      "endPoint": {
+        "x": 325,
+        "y": 1570
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "77204da9-d6d0-4bf7-bae9-d87811e98478",
+      "type": "parent-child",
+      "sourceNodeId": "62530b1e-10f3-45b8-b802-e7714395f03d",
+      "targetNodeId": "657ec8e6-9569-44b0-9fe8-4596bda5336a",
+      "startPoint": {
+        "x": 546,
+        "y": 1242
+      },
+      "endPoint": {
+        "x": 325,
+        "y": 1349
+      },
+      "bendPoints": [
+        {
+          "x": 546,
+          "y": 1292
+        },
+        {
+          "x": 325,
+          "y": 1292
+        }
+      ]
+    },
+    {
+      "id": "1cefbff6-3ba9-4e8e-a749-85b854de2ef0",
+      "type": "link",
+      "sourceNodeId": "a65d5e62-1114-4218-b6dd-f40345e52fb6",
+      "targetNodeId": "12cf4f26-2350-4497-ac73-ecd65bb31262",
+      "probability": 100,
+      "startPoint": {
+        "x": 1500,
+        "y": 981
+      },
+      "endPoint": {
+        "x": 1418,
+        "y": 1112
+      },
+      "bendPoints": [
+        {
+          "x": 1500,
+          "y": 1038
+        },
+        {
+          "x": 1418,
+          "y": 1038
+        }
+      ]
+    },
+    {
+      "id": "801df97b-3275-49f1-a5cf-9316a4216c88",
+      "type": "parent-child",
+      "sourceNodeId": "f2539441-1069-4e84-8069-33e0425a495f",
+      "targetNodeId": "06e41df2-f933-41d4-88bd-30260ba87211",
+      "startPoint": {
+        "x": 186,
+        "y": 276
+      },
+      "endPoint": {
+        "x": 130,
+        "y": 400
+      },
+      "bendPoints": [
+        {
+          "x": 186,
+          "y": 350
+        },
+        {
+          "x": 130,
+          "y": 350
+        }
+      ]
+    },
+    {
+      "id": "65514b8f-4efb-43c7-b4a2-376f9ebb8535",
+      "type": "parent-child",
+      "sourceNodeId": "0b38db5a-45e5-4ede-9254-976f8c75c0bf",
+      "targetNodeId": "b72b718d-f9f3-4309-8b18-7a213f0d0b0f",
+      "startPoint": {
+        "x": 1025,
+        "y": 1700
+      },
+      "endPoint": {
+        "x": 1030,
+        "y": 1807
+      },
+      "bendPoints": [
+        {
+          "x": 1025,
+          "y": 1750
+        },
+        {
+          "x": 1030,
+          "y": 1750
+        }
+      ]
+    },
+    {
+      "id": "127aea4f-470b-41f0-885d-dba76ff645b7",
+      "type": "link",
+      "sourceNodeId": "6d098a84-904e-4895-8a16-914ff92ca692",
+      "targetNodeId": "491f1340-6c71-4fa5-9862-6b93825c6e40",
+      "probability": 100,
+      "startPoint": {
+        "x": 130,
+        "y": 988
+      },
+      "endPoint": {
+        "x": 175,
+        "y": 1112
+      },
+      "bendPoints": [
+        {
+          "x": 130,
+          "y": 1038
+        },
+        {
+          "x": 175,
+          "y": 1038
+        }
+      ]
+    },
+    {
+      "id": "dbd98d29-e1b8-465d-aeb6-511d22cb50c4",
+      "type": "link",
+      "sourceNodeId": "afe3832f-1d58-4f81-9e25-30435e73c50b",
+      "targetNodeId": "12cf4f26-2350-4497-ac73-ecd65bb31262",
+      "probability": 100,
+      "startPoint": {
+        "x": 1265,
+        "y": 981
+      },
+      "endPoint": {
+        "x": 1347,
+        "y": 1112
+      },
+      "bendPoints": [
+        {
+          "x": 1265,
+          "y": 1038
+        },
+        {
+          "x": 1347,
+          "y": 1038
+        }
+      ]
+    },
+    {
+      "id": "3df4dcba-22dd-4a55-9116-36394ebc8a04",
+      "type": "link",
+      "sourceNodeId": "1755987b-e890-4096-b3e9-e12101466552",
+      "targetNodeId": "84d1d83b-15de-4e24-bffe-a36e20c1084b",
+      "probability": 100,
+      "startPoint": {
+        "x": 795,
+        "y": 1937
+      },
+      "endPoint": {
+        "x": 795,
+        "y": 2058
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "7219207e-e8ce-4403-be20-a7f77eef9901",
+      "type": "link",
+      "sourceNodeId": "8a1b73e2-b1c3-4b36-832f-e9585adf2bdc",
+      "targetNodeId": "2",
+      "probability": 100,
+      "startPoint": {
+        "x": 1383,
+        "y": 1486
+      },
+      "endPoint": {
+        "x": 799,
+        "y": 2572
+      },
+      "bendPoints": [
+        {
+          "x": 1383,
+          "y": 1628
+        },
+        {
+          "x": 1383,
+          "y": 1872
+        },
+        {
+          "x": 1383,
+          "y": 2116
+        },
+        {
+          "x": 1383,
+          "y": 2330
+        },
+        {
+          "x": 1383,
+          "y": 2472
+        },
+        {
+          "x": 799,
+          "y": 2472
+        }
+      ]
+    },
+    {
+      "id": "3827ba29-c35f-4f7c-b880-8352374f4787",
+      "type": "link",
+      "sourceNodeId": "6b5db31a-4b04-4641-9735-188bb607c62e",
+      "targetNodeId": "2",
+      "probability": 100,
+      "startPoint": {
+        "x": 1148,
+        "y": 2402
+      },
+      "endPoint": {
+        "x": 787,
+        "y": 2572
+      },
+      "bendPoints": [
+        {
+          "x": 1148,
+          "y": 2462
+        },
+        {
+          "x": 787,
+          "y": 2462
+        }
+      ]
+    },
+    {
+      "id": "b50ec32a-8520-46e1-a1e8-79fe3111ab5a",
+      "type": "link",
+      "sourceNodeId": "94ba5ff6-fb62-421f-a289-bbe9b516899b",
+      "targetNodeId": "bfe60837-36ad-4a6e-89cb-71b56293676c",
+      "probability": 100,
+      "startPoint": {
+        "x": 1265,
+        "y": 1937
+      },
+      "endPoint": {
+        "x": 1183,
+        "y": 2058
+      },
+      "bendPoints": [
+        {
+          "x": 1265,
+          "y": 1994
+        },
+        {
+          "x": 1183,
+          "y": 1994
+        }
+      ]
+    },
+    {
+      "id": "6d890a04-8e4c-41bf-895e-e2bd176de93b",
+      "type": "link",
+      "sourceNodeId": "7c158bdc-491b-48a7-9c6e-044bec701169",
+      "targetNodeId": "62530b1e-10f3-45b8-b802-e7714395f03d",
+      "probability": 100,
+      "startPoint": {
+        "x": 600,
+        "y": 981
+      },
+      "endPoint": {
+        "x": 600,
+        "y": 1112
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "03849f21-b235-45c8-a1ef-1f2ba4140615",
+      "type": "link",
+      "sourceNodeId": "06e41df2-f933-41d4-88bd-30260ba87211",
+      "targetNodeId": "015e5ac9-8679-48d2-a2a2-59d33aadce8f",
+      "probability": 100,
+      "startPoint": {
+        "x": 130,
+        "y": 530
+      },
+      "endPoint": {
+        "x": 130,
+        "y": 614
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "ade54dfe-edd8-41e4-b685-3a78f787db3e",
+      "type": "link",
+      "sourceNodeId": "1c21a455-c722-43e1-8624-42aa3130df5c",
+      "targetNodeId": "0b17089a-0678-411f-a48d-45f12eb879a9",
+      "probability": 100,
+      "startPoint": {
+        "x": 325,
+        "y": 1700
+      },
+      "endPoint": {
+        "x": 325,
+        "y": 1814
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "7a86c143-63ed-490b-9f86-11ce6dfb034e",
+      "type": "link",
+      "sourceNodeId": "b72b718d-f9f3-4309-8b18-7a213f0d0b0f",
+      "targetNodeId": "bfe60837-36ad-4a6e-89cb-71b56293676c",
+      "probability": 100,
+      "startPoint": {
+        "x": 1030,
+        "y": 1937
+      },
+      "endPoint": {
+        "x": 1112,
+        "y": 2058
+      },
+      "bendPoints": [
+        {
+          "x": 1030,
+          "y": 1994
+        },
+        {
+          "x": 1112,
+          "y": 1994
+        }
+      ]
+    },
+    {
+      "id": "79424ca5-9d22-447d-bc33-a3bb11849f1e",
+      "type": "link",
+      "sourceNodeId": "f13e41dd-41f2-45ff-9b43-72e5d3456b2f",
+      "targetNodeId": "7fe877cd-d5c0-4752-af1c-b88a4b45ba94",
+      "probability": 100,
+      "startPoint": {
+        "x": 560,
+        "y": 1479
+      },
+      "endPoint": {
+        "x": 560,
+        "y": 1570
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "cb497bb1-3063-4a30-ac65-eb04ba359feb",
+      "type": "parent-child",
+      "sourceNodeId": "62530b1e-10f3-45b8-b802-e7714395f03d",
+      "targetNodeId": "f13e41dd-41f2-45ff-9b43-72e5d3456b2f",
+      "startPoint": {
+        "x": 600,
+        "y": 1242
+      },
+      "endPoint": {
+        "x": 560,
+        "y": 1349
+      },
+      "bendPoints": [
+        {
+          "x": 600,
+          "y": 1292
+        },
+        {
+          "x": 560,
+          "y": 1292
+        }
+      ]
+    },
+    {
+      "id": "c22d68d6-d793-4ded-8b8e-0638e3e81d94",
+      "type": "link",
+      "sourceNodeId": "bfe60837-36ad-4a6e-89cb-71b56293676c",
+      "targetNodeId": "6b5db31a-4b04-4641-9735-188bb607c62e",
+      "probability": 100,
+      "startPoint": {
+        "x": 1148,
+        "y": 2188
+      },
+      "endPoint": {
+        "x": 1148,
+        "y": 2272
+      },
+      "bendPoints": []
+    },
+    {
+      "id": "302e6ebd-ff6b-4c07-b868-6577d7e01598",
+      "type": "link",
+      "sourceNodeId": "22b62f65-5ecc-463a-b31a-b1cf7d1fae4a",
+      "targetNodeId": "0b38db5a-45e5-4ede-9254-976f8c75c0bf",
+      "probability": 100,
+      "startPoint": {
+        "x": 1025,
+        "y": 1479
+      },
+      "endPoint": {
+        "x": 1025,
+        "y": 1570
+      },
+      "bendPoints": []
+    }
+  ],
+  "variableDefinitions": [
+    {
+      "id": "67d8acea-1886-48fd-af67-90ccb9cb09d3",
+      "name": "VA",
+      "type": "integer"
+    },
+    {
+      "id": "e389a0b9-d16a-4f57-a104-91e6e4e6184c",
+      "name": "SS",
+      "type": "integer"
+    },
+    {
+      "id": "c87731c4-b965-4849-b1ab-e96f15dac8f6",
+      "name": "RFQ",
+      "type": "integer"
+    },
+    {
+      "id": "7874e1e3-32db-4d04-bac8-b1c85d008992",
+      "name": "EC",
+      "type": "integer"
+    },
+    {
+      "id": "8b49e802-5fb2-408a-859d-94b920503cde",
+      "name": "TM",
+      "type": "integer"
+    },
+    {
+      "id": "bad66b3f-e410-4757-a943-700161250225",
+      "name": "Outcome",
+      "type": "integer"
+    }
+  ],
+  "goals": [
+    {
+      "id": "af44740f-761c-43c7-884d-ca8327c8c814",
+      "name": "Can you be the customer's advocate by setting a direction with a Verbal Agenda, asking an RFQ, Tying Motivations to Presentation, and Handling Objections?",
+      "description": "",
+      "script": "if Outcome==1 then\r\nmessage=\"Good work!  You set a direction, flexed to the customer's social style, asked an RFQ, tied the customer's motivations to your presentation, and handled the objection\"\r\ncelebrate=true\r\nendif\r\n\r\nif Outcome==2 then\r\nmessage=\"There was a better way to handle the objection\"\r\ncelebrate=true\r\nendif\r\n\r\nif Outcome==3 then\r\nmessage=\"When the customer reveals their needs and motivations, be sure to use what you know in your presentation.\"\r\ncelebrate=false\r\nendif\r\n\r\nif Outcome==4 then\r\nmessage=\"A Results Focused Question would have gotten you the information you needed to be an advocate for the customer.\"\r\ncelebrate=false\r\n\r\nendif\r\n\r\nif Outcome==5 then\r\nmessage=\"Build influence by flexing to the customer's social style.\"\r\ncelebrate=false\r\nendif\r\n\r\nif Outcome==6 then\r\nmessage=\"Setting a direction and flexing to the customer's social style would have been a better way to start.\"\r\ncelebrate=false\r\nendif\r\n",
+      "tagValues": [
+        {
+          "id": "5fef491b-1b6d-484c-bd7a-e316ee84339e",
+          "tagDefinitionId": "1001",
+          "value": "FSA_102_4_30"
+        }
+      ]
+    }
+  ]
+}

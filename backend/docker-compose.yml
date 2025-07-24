@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database
+  db:
+    image: postgres:15-alpine
+    container_name: nlj_postgres
+    environment:
+      POSTGRES_DB: nlj_platform
+      POSTGRES_USER: nlj_user
+      POSTGRES_PASSWORD: nlj_pass
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nlj_user -d nlj_platform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nlj_network
+
+  # Redis for caching (optional - for future use)
+  redis:
+    image: redis:7-alpine
+    container_name: nlj_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nlj_network
+
+  # FastAPI backend (for containerized development)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nlj_backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://nlj_user:nlj_pass@db:5432/nlj_platform
+      REDIS_URL: redis://redis:6379
+      DEBUG: "true"
+    volumes:
+      - .:/app
+      - /app/.venv  # Exclude virtual environment from volume mount
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - nlj_network
+    profiles:
+      - full  # Only start with docker-compose --profile full up
+
+  # Database migration service
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nlj_migrate
+    environment:
+      DATABASE_URL: postgresql+asyncpg://nlj_user:nlj_pass@db:5432/nlj_platform
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    command: alembic upgrade head
+    networks:
+      - nlj_network
+    profiles:
+      - migrate
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  nlj_network:
+    driver: bridge

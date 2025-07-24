@@ -1,0 +1,133 @@
+{
+  "id": "sample_wordle_game",
+  "name": "Sample Wordle Game",
+  "description": "A basic 5-letter Wordle game with common English words",
+  "activityType": "game",
+  "orientation": "vertical",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "x": 100,
+      "y": 100,
+      "width": 200,
+      "height": 100,
+      "title": "Welcome to Wordle",
+      "text": "Get ready to play Wordle!"
+    },
+    {
+      "id": "wordle_game",
+      "type": "wordle",
+      "x": 400,
+      "y": 100,
+      "width": 600,
+      "height": 500,
+      "title": "Wordle Challenge",
+      "text": "Guess the 5-letter word in 6 attempts or less!",
+      "content": "Use the on-screen keyboard or your physical keyboard to make guesses. Letters will be highlighted:\n\n- **Green**: Correct letter in correct position\n- **Yellow**: Correct letter in wrong position\n- **Gray**: Letter not in the word",
+      "gameData": {
+        "targetWord": "REACT",
+        "wordLength": 5,
+        "maxAttempts": 6,
+        "validWords": [
+          "REACT", "ABOUT", "ABOVE", "ABUSE", "ACTOR", "ACUTE", "ADMIT", "ADOPT", "ADULT", "AFTER",
+          "AGAIN", "AGENT", "AGREE", "AHEAD", "ALARM", "ALBUM", "ALERT", "ALIEN", "ALIGN", "ALIKE",
+          "ALIVE", "ALLOW", "ALONE", "ALONG", "ALTER", "ANGEL", "ANGER", "ANGLE", "ANGRY", "APART",
+          "APPLE", "APPLY", "ARENA", "ARGUE", "ARISE", "ARRAY", "ASIDE", "ASSET", "AVOID", "AWAKE",
+          "AWARE", "BADLY", "BAKER", "BASES", "BASIC", "BEACH", "BEGAN", "BEGIN", "BEING", "BELOW",
+          "BENCH", "BILLY", "BIRTH", "BLACK", "BLAME", "BLANK", "BLIND", "BLOCK", "BLOOD", "BOARD",
+          "BOOST", "BOOTH", "BOUND", "BRAIN", "BRAND", "BRASS", "BRAVE", "BREAD", "BREAK", "BREED",
+          "BRIEF", "BRING", "BROAD", "BROKE", "BROWN", "BUILD", "BUILT", "BUYER", "CABLE", "CALIF",
+          "CARRY", "CATCH", "CAUSE", "CHAIN", "CHAIR", "CHAOS", "CHARM", "CHART", "CHASE", "CHEAP",
+          "CHECK", "CHEST", "CHIEF", "CHILD", "CHINA", "CHOSE", "CIVIL", "CLAIM", "CLASS", "CLEAN",
+          "CLEAR", "CLICK", "CLIMB", "CLOCK", "CLOSE", "CLOUD", "COACH", "COAST", "COULD", "COUNT",
+          "COURT", "COVER", "CRAFT", "CRASH", "CRAZY", "CREAM", "CRIME", "CROSS", "CROWD", "CROWN",
+          "CURVE", "CYCLE", "DAILY", "DAMAGE", "DANCE", "DEATH", "DEBUT", "DELAY", "DEPTH", "DOING",
+          "DOUBT", "DOZEN", "DRAFT", "DRAMA", "DRANK", "DREAM", "DRESS", "DRILL", "DRINK", "DRIVE",
+          "DROVE", "DYING", "EAGER", "EARLY", "EARTH", "EIGHT", "ELITE", "EMPTY", "ENEMY", "ENJOY",
+          "ENTER", "ENTRY", "EQUAL", "ERROR", "EVENT", "EVERY", "EXACT", "EXIST", "EXTRA", "FAITH",
+          "FALSE", "FAULT", "FIBER", "FIELD", "FIFTH", "FIFTY", "FIGHT", "FINAL", "FIRST", "FIXED",
+          "FLASH", "FLEET", "FLOOR", "FLUID", "FOCUS", "FORCE", "FORTH", "FORTY", "FORUM", "FOUND",
+          "FRAME", "FRANK", "FRAUD", "FRESH", "FRONT", "FRUIT", "FULLY", "FUNNY", "GIANT", "GIVEN",
+          "GLASS", "GLOBE", "GOING", "GRACE", "GRADE", "GRAIN", "GRAND", "GRANT", "GRASS", "GRAVE",
+          "GREAT", "GREEN", "GROSS", "GROUP", "GROWN", "GUARD", "GUESS", "GUEST", "GUIDE", "HAPPY",
+          "HARRY", "HEART", "HEAVY", "HORSE", "HOTEL", "HOUSE", "HUMAN", "IDEAL", "IMAGE", "INDEX",
+          "INNER", "INPUT", "ISSUE", "JAPAN", "JIMMY", "JOINT", "JONES", "JUDGE", "KNOWN", "LABEL",
+          "LARGE", "LASER", "LATER", "LAUGH", "LAYER", "LEARN", "LEASE", "LEAST", "LEAVE", "LEGAL",
+          "LEVEL", "LEWIS", "LIGHT", "LIMIT", "LINKS", "LIVES", "LOCAL", "LOOSE", "LOWER", "LUCKY",
+          "LUNCH", "LYING", "MAGIC", "MAJOR", "MAKER", "MARCH", "MARIA", "MATCH", "MAYBE", "MAYOR",
+          "MEANT", "MEDIA", "METAL", "MIGHT", "MINOR", "MINUS", "MIXED", "MODEL", "MONEY", "MONTH",
+          "MORAL", "MOTOR", "MOUNT", "MOUSE", "MOUTH", "MOVED", "MOVIE", "MUSIC", "NEEDS", "NEVER",
+          "NEWLY", "NIGHT", "NOISE", "NORTH", "NOTED", "NOVEL", "NURSE", "OCCUR", "OCEAN", "OFFER",
+          "OFTEN", "ORDER", "OTHER", "OUGHT", "PAINT", "PANEL", "PAPER", "PARTY", "PEACE", "PETER",
+          "PHASE", "PHONE", "PHOTO", "PIANO", "PIECE", "PILOT", "PITCH", "PLACE", "PLAIN", "PLANE",
+          "PLANT", "PLATE", "POINT", "POUND", "POWER", "PRESS", "PRICE", "PRIDE", "PRIME", "PRINT",
+          "PRIOR", "PRIZE", "PROOF", "PROUD", "PROVE", "QUEEN", "QUICK", "QUIET", "QUITE", "RADIO",
+          "RAISE", "RANGE", "RAPID", "RATIO", "REACH", "READY", "REALM", "REFER", "RELAX", "RIDER",
+          "RIDGE", "RIGHT", "RIGID", "RIVER", "ROBOT", "ROGER", "ROMAN", "ROUGH", "ROUND", "ROUTE",
+          "ROYAL", "RURAL", "SCALE", "SCENE", "SCOPE", "SCORE", "SENSE", "SERVE", "SEVEN", "SHALL",
+          "SHAPE", "SHARE", "SHARP", "SHEET", "SHELF", "SHELL", "SHIFT", "SHINE", "SHIRT", "SHOCK",
+          "SHOOT", "SHORT", "SHOWN", "SIGHT", "SIMON", "SIXTH", "SIXTY", "SIZED", "SKILL", "SLEEP",
+          "SLIDE", "SMALL", "SMART", "SMILE", "SMITH", "SMOKE", "SNAKE", "SNOW", "SOLID", "SOLVE",
+          "SORRY", "SOUND", "SOUTH", "SPACE", "SPARE", "SPEAK", "SPEED", "SPEND", "SPENT", "SPLIT",
+          "SPOKE", "SPORT", "STAFF", "STAGE", "STAKE", "STAND", "START", "STATE", "STEAM", "STEEL",
+          "STEEP", "STEER", "STEVE", "STICK", "STILL", "STOCK", "STONE", "STOOD", "STORE", "STORM",
+          "STORY", "STRIP", "STUCK", "STUDY", "STUFF", "STYLE", "SUGAR", "SUITE", "SUPER", "SWEET",
+          "TABLE", "TAKEN", "TASTE", "TAXES", "TEACH", "TEAM", "TEETH", "TERRY", "TEXAS", "THANK",
+          "THEFT", "THEIR", "THEME", "THERE", "THESE", "THICK", "THING", "THINK", "THIRD", "THOSE",
+          "THREE", "THREW", "THROW", "THUMB", "TIGHT", "TIMER", "TITLE", "TODAY", "TOPIC", "TOTAL",
+          "TOUCH", "TOUGH", "TOWER", "TRACK", "TRADE", "TRAIN", "TREAT", "TREND", "TRIAL", "TRIBE",
+          "TRICK", "TRIED", "TRIES", "TRUCK", "TRULY", "TRUNK", "TRUST", "TRUTH", "TWICE", "TWIST",
+          "TYLER", "UNCLE", "UNDER", "UNDUE", "UNION", "UNITY", "UNTIL", "UPPER", "URBAN", "USAGE",
+          "USUAL", "VALID", "VALUE", "VIDEO", "VIRUS", "VISIT", "VITAL", "VOCAL", "VOICE", "WASTE",
+          "WATCH", "WATER", "WAVE", "WHEEL", "WHERE", "WHICH", "WHILE", "WHITE", "WHOLE", "WHOSE",
+          "WOMAN", "WOMEN", "WORLD", "WORRY", "WORSE", "WORST", "WORTH", "WOULD", "WRITE", "WRONG",
+          "WROTE", "YOUNG", "YOUTH"
+        ],
+        "hints": [
+          "This word is commonly used in web development",
+          "It's a JavaScript library for building user interfaces",
+          "It starts with 'R' and ends with 'T'"
+        ]
+      },
+      "hardMode": false,
+      "showKeyboard": true,
+      "colorblindMode": false,
+      "allowHints": true,
+      "scoring": {
+        "basePoints": 100,
+        "bonusPerRemainingAttempt": 20,
+        "hintPenalty": 10
+      },
+      "required": true
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "x": 800,
+      "y": 100,
+      "width": 200,
+      "height": 100,
+      "title": "Game Complete!",
+      "text": "Thanks for playing Wordle!"
+    }
+  ],
+  "links": [
+    {
+      "id": "start-to-wordle",
+      "type": "link",
+      "sourceNodeId": "start",
+      "targetNodeId": "wordle_game",
+      "startPoint": { "x": 300, "y": 150 },
+      "endPoint": { "x": 400, "y": 150 }
+    },
+    {
+      "id": "wordle-to-end",
+      "type": "link",
+      "sourceNodeId": "wordle_game",
+      "targetNodeId": "end",
+      "startPoint": { "x": 1000, "y": 150 },
+      "endPoint": { "x": 800, "y": 150 }
+    }
+  ]
+}

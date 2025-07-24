@@ -1,0 +1,243 @@
+{
+  "id": "markdown-carousel-test",
+  "name": "Markdown and Carousel Test Scenario",
+  "orientation": "vertical",
+  "nodes": [
+    {
+      "type": "start",
+      "id": "start-node",
+      "text": "Start",
+      "x": 50,
+      "y": 50,
+      "width": 100,
+      "height": 50
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "intro-panel",
+      "text": "# Welcome to the Markdown & Carousel Test!\n\nThis scenario demonstrates our new **markdown rendering** and **carousel functionality**.\n\n## Features to Test:\n\n1. **Rich Text Formatting** - *italics*, **bold**, and `code`\n2. **Embedded Images** - ![Test Image](https://static.prod.ander.ai/files/5172e9d2-c0e8-4c14-9910-c1cb7b9b64ed)\n3. **Lists and Links** - [Click here](https://example.com) to see a link\n4. **Media Carousels** - Multiple images with navigation\n\n> This is a blockquote to test formatting\n\n---\n\n### Ready to begin? Click Continue!",
+      "content": "",
+      "x": 100,
+      "y": 100,
+      "width": 200,
+      "height": 100
+    },
+    {
+      "type": "question",
+      "id": "markdown-question",
+      "text": "## Question with Markdown\n\nWhat is **2 + 2**? (Note the math is in *italics*: *2 + 2*)\n\n![Math Image](https://static.prod.ander.ai/files/26c4ded2-2101-41ea-9c3f-83adcbb7a9bb)",
+      "content": "This question demonstrates **markdown formatting** in question text with an embedded image and formatted choices below.",
+      "additionalMediaList": [
+        {
+          "media": {
+            "id": "carousel-1",
+            "type": "IMAGE",
+            "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ2_10_PANEL-1.jpg",
+            "title": "Sales Training Panel 1",
+            "description": "Customer interaction scenario - Panel 1",
+            "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ2_10_PANEL-1.jpg",
+            "width": 400,
+            "height": 300
+          }
+        },
+        {
+          "media": {
+            "id": "carousel-2", 
+            "type": "IMAGE",
+            "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ2_10_PANEL-2.jpg",
+            "title": "Sales Training Panel 2",
+            "description": "Customer interaction scenario - Panel 2",
+            "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ2_10_PANEL-2.jpg",
+            "width": 400,
+            "height": 300
+          }
+        },
+        {
+          "media": {
+            "id": "carousel-3",
+            "type": "IMAGE", 
+            "fullPath": "https://static.prod.ander.ai/img/FSA_102_NLJ2_10_PANEL-3.jpg",
+            "title": "Sales Training Panel 3",
+            "description": "Customer interaction scenario - Panel 3",
+            "fullThumbnail": "https://static.prod.ander.ai/thumbnails/FSA_102_NLJ2_10_PANEL-3.jpg",
+            "width": 400,
+            "height": 300
+          }
+        }
+      ],
+      "x": 100,
+      "y": 300,
+      "width": 200,
+      "height": 100
+    },
+    {
+      "type": "choice",
+      "id": "choice-1",
+      "parentId": "markdown-question",
+      "text": "**4** - This is the *correct* answer with `code formatting`",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "feedback": "## Correct! 🎉\n\nYou chose **4**, which is indeed correct!\n\n- Math: 2 + 2 = 4\n- Formatting: **Bold** and *italic* text works\n- Links: [Learn more about math](https://example.com)",
+      "x": 100,
+      "y": 500,
+      "width": 150,
+      "height": 80
+    },
+    {
+      "type": "choice",
+      "id": "choice-2", 
+      "parentId": "markdown-question",
+      "text": "**3** - This is *incorrect* with ~~strikethrough~~",
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "feedback": "## Incorrect ❌\n\nYou chose **3**, but the correct answer is **4**.\n\n> Remember: 2 + 2 = 4, not 3!\n\n### Try again next time!",
+      "x": 300,
+      "y": 500,
+      "width": 150,
+      "height": 80
+    },
+    {
+      "type": "choice",
+      "id": "choice-3",
+      "parentId": "markdown-question", 
+      "text": "**5** - Also *incorrect* with a `code snippet`",
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "feedback": "## Not quite! ⚠️\n\nYou chose **5**, but:\n\n1. The correct answer is **4**\n2. Basic math: 2 + 2 ≠ 5\n3. Keep practicing!\n\n![Wrong Answer](https://static.prod.ander.ai/files/496dcc93-85fb-4d89-9d2a-4d2603fc549b)",
+      "x": 500,
+      "y": 500,
+      "width": 150,
+      "height": 80
+    },
+    {
+      "type": "true_false",
+      "id": "true-false-markdown",
+      "text": "### True or False Question\n\nIs this statement true?\n\n> \"**Markdown** supports *rich text formatting* including `code blocks`\"",
+      "content": "This demonstrates markdown in both question text and content areas.\n\n- **Bold text** works\n- *Italic text* works  \n- `Code formatting` works\n- [Links](https://example.com) work\n\n```javascript\n// Even code blocks work!\nconst answer = true;\n```",
+      "correctAnswer": true,
+      "x": 100,
+      "y": 700,
+      "width": 200,
+      "height": 100
+    },
+    {
+      "type": "ordering",
+      "id": "ordering-markdown",
+      "text": "## Ordering Question with Markdown\n\nArrange these **formatting elements** in order of *importance*:",
+      "content": "Drag and drop to reorder these items. Each item contains **markdown formatting** to test rendering.",
+      "items": [
+        {
+          "id": "item-1",
+          "text": "**Bold text** - Most important for emphasis",
+          "correctOrder": 1
+        },
+        {
+          "id": "item-2", 
+          "text": "*Italic text* - Secondary emphasis",
+          "correctOrder": 2
+        },
+        {
+          "id": "item-3",
+          "text": "`Code formatting` - For technical terms",
+          "correctOrder": 3
+        },
+        {
+          "id": "item-4",
+          "text": "~~Strikethrough~~ - Least important",
+          "correctOrder": 4
+        }
+      ],
+      "x": 100,
+      "y": 900,
+      "width": 200,
+      "height": 100
+    },
+    {
+      "type": "interstitial_panel",
+      "id": "final-panel",
+      "text": "# 🎉 Test Complete!\n\nYou've successfully tested:\n\n## ✅ Markdown Features\n- **Bold** and *italic* text\n- `Code formatting`\n- [Links](https://example.com)\n- Lists and blockquotes\n- Embedded images\n\n## ✅ Carousel Features  \n- Multiple image navigation\n- Desktop controls (arrows, dots)\n- Mobile-friendly stepper\n- Image counter display\n\n---\n\n### Great job! 🚀\n\n![Success](https://static.prod.ander.ai/files/82303dfd-104d-490b-aa93-9d64e13dadea)",
+      "content": "",
+      "x": 100,
+      "y": 1100,
+      "width": 200,
+      "height": 100
+    },
+    {
+      "type": "end",
+      "id": "end-node",
+      "text": "End",
+      "x": 100,
+      "y": 1300,
+      "width": 100,
+      "height": 50
+    }
+  ],
+  "links": [
+    {
+      "id": "link-0",
+      "sourceNodeId": "start-node",
+      "targetNodeId": "intro-panel",
+      "type": "link"
+    },
+    {
+      "id": "link-1",
+      "sourceNodeId": "intro-panel",
+      "targetNodeId": "markdown-question",
+      "type": "link"
+    },
+    {
+      "id": "link-parent-1",
+      "sourceNodeId": "markdown-question",
+      "targetNodeId": "choice-1",
+      "type": "parent-child"
+    },
+    {
+      "id": "link-parent-2",
+      "sourceNodeId": "markdown-question",
+      "targetNodeId": "choice-2",
+      "type": "parent-child"
+    },
+    {
+      "id": "link-parent-3",
+      "sourceNodeId": "markdown-question",
+      "targetNodeId": "choice-3",
+      "type": "parent-child"
+    },
+    {
+      "id": "link-2", 
+      "sourceNodeId": "choice-1",
+      "targetNodeId": "true-false-markdown",
+      "type": "link"
+    },
+    {
+      "id": "link-3",
+      "sourceNodeId": "choice-2",
+      "targetNodeId": "true-false-markdown",
+      "type": "link"
+    },
+    {
+      "id": "link-4",
+      "sourceNodeId": "choice-3", 
+      "targetNodeId": "true-false-markdown",
+      "type": "link"
+    },
+    {
+      "id": "link-5",
+      "sourceNodeId": "true-false-markdown",
+      "targetNodeId": "ordering-markdown",
+      "type": "link"
+    },
+    {
+      "id": "link-6",
+      "sourceNodeId": "ordering-markdown",
+      "targetNodeId": "final-panel",
+      "type": "link"
+    },
+    {
+      "id": "link-7",
+      "sourceNodeId": "final-panel",
+      "targetNodeId": "end-node",
+      "type": "link"
+    }
+  ]
+}

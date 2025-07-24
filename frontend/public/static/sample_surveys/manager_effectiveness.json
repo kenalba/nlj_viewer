@@ -1,0 +1,468 @@
+{
+  "id": "manager-effectiveness-survey",
+  "name": "Manager Effectiveness Survey (360-Degree Feedback)",
+  "orientation": "vertical",
+  "activityType": "survey",
+  "surveyMetadata": {
+    "anonymous": true,
+    "allowSkip": false,
+    "showProgress": true,
+    "allowReview": true,
+    "collectDemographics": false,
+    "targetAudience": "Direct Reports",
+    "industry": "Cross-Industry"
+  },
+  "activityMetadata": {
+    "category": "360-feedback",
+    "estimatedDuration": 8,
+    "language": "en-US",
+    "author": "HR Department",
+    "tags": ["manager-effectiveness", "360-feedback", "leadership"]
+  },
+  "sections": [
+    {
+      "id": "communication-support",
+      "title": "Communication & Support",
+      "description": "Questions about your manager's communication and support",
+      "type": "survey",
+      "nodeIds": ["q3", "q9", "q35", "q37", "q1270"]
+    },
+    {
+      "id": "decision-making",
+      "title": "Decision Making & Leadership",
+      "description": "Questions about decision making and leadership style",
+      "type": "survey",
+      "nodeIds": ["q531", "q532", "q786", "q784", "q785"]
+    },
+    {
+      "id": "trust-fairness",
+      "title": "Trust & Fairness",
+      "description": "Questions about trust and fairness in management",
+      "type": "survey",
+      "nodeIds": ["q787", "q1312", "q1313", "open_feedback"]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "x": 100,
+      "y": 100,
+      "width": 200,
+      "height": 100
+    },
+    {
+      "id": "q3",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 250,
+      "width": 600,
+      "height": 300,
+      "text": "Manager has an 'open door' and is willing and available to listen to employees' opinions and complaints",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "Strongly Disagree",
+          "max": "Strongly Agree"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "tags": ["communication-support", "accessibility"]
+    },
+    {
+      "id": "q9",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 400,
+      "width": 600,
+      "height": 300,
+      "text": "Manager tries to resolve employee problems and complaints in a fair and timely manner",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "Strongly Disagree",
+          "max": "Strongly Agree"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "tags": ["communication-support", "problem-solving"]
+    },
+    {
+      "id": "q35",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 550,
+      "width": 600,
+      "height": 300,
+      "text": "Manager has the job knowledge and experience to coach employees who need help",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "Strongly Disagree",
+          "max": "Strongly Agree"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "tags": ["communication-support", "coaching"]
+    },
+    {
+      "id": "q37",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 700,
+      "width": 600,
+      "height": 300,
+      "text": "Manager helps employees to put good ideas and suggestions into practice",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "Strongly Disagree",
+          "max": "Strongly Agree"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "tags": ["communication-support", "idea-implementation"]
+    },
+    {
+      "id": "q1270",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 850,
+      "width": 600,
+      "height": 300,
+      "text": "I trust my manager",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "Strongly Disagree",
+          "max": "Strongly Agree"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "tags": ["communication-support", "trust"]
+    },
+    {
+      "id": "q531",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 1000,
+      "width": 600,
+      "height": 300,
+      "text": "Manager seeks employee input and suggestions when making decisions that affect our jobs",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "Strongly Disagree",
+          "max": "Strongly Agree"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "tags": ["decision-making", "employee-input"]
+    },
+    {
+      "id": "q532",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 1150,
+      "width": 600,
+      "height": 300,
+      "text": "Manager values teamwork and encourages employees to work together",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "Strongly Disagree",
+          "max": "Strongly Agree"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "tags": ["decision-making", "teamwork"]
+    },
+    {
+      "id": "q786",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 1300,
+      "width": 600,
+      "height": 300,
+      "text": "Manager takes a genuine interest in employee needs and well being",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "Strongly Disagree",
+          "max": "Strongly Agree"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "tags": ["decision-making", "employee-care"]
+    },
+    {
+      "id": "q784",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 1450,
+      "width": 600,
+      "height": 300,
+      "text": "Manager always tells me the truth",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "Strongly Disagree",
+          "max": "Strongly Agree"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "tags": ["decision-making", "honesty"]
+    },
+    {
+      "id": "q785",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 1600,
+      "width": 600,
+      "height": 300,
+      "text": "Manager performs tasks with skill",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "Strongly Disagree",
+          "max": "Strongly Agree"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "tags": ["decision-making", "competence"]
+    },
+    {
+      "id": "q787",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 1750,
+      "width": 600,
+      "height": 300,
+      "text": "If I make a mistake, I am sure my manager will not use it against me",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "Strongly Disagree",
+          "max": "Strongly Agree"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "tags": ["trust-fairness", "psychological-safety"]
+    },
+    {
+      "id": "q1312",
+      "type": "rating",
+      "x": 100,
+      "y": 1900,
+      "width": 600,
+      "height": 300,
+      "text": "Do you feel you get the support needed from your immediate supervisor?",
+      "content": "Rate on a scale of 1-10",
+      "ratingType": "numeric",
+      "range": {
+        "min": 1,
+        "max": 10
+      },
+      "required": true,
+      "showValue": true,
+      "tags": ["trust-fairness", "support"]
+    },
+    {
+      "id": "q1313",
+      "type": "rating",
+      "x": 100,
+      "y": 2050,
+      "width": 600,
+      "height": 300,
+      "text": "Is your direct supervisor fair and reasonable?",
+      "content": "Rate on a scale of 1-10",
+      "ratingType": "numeric",
+      "range": {
+        "min": 1,
+        "max": 10
+      },
+      "required": true,
+      "showValue": true,
+      "tags": ["trust-fairness", "fairness"]
+    },
+    {
+      "id": "open_feedback",
+      "type": "text_area",
+      "x": 100,
+      "y": 2200,
+      "width": 600,
+      "height": 300,
+      "text": "What are your manager's key strengths as a leader?",
+      "content": "Please provide specific examples and feedback",
+      "placeholder": "Share your thoughts on your manager's leadership strengths...",
+      "required": false,
+      "rows": 5,
+      "maxLength": 1000,
+      "wordCount": true,
+      "tags": ["trust-fairness", "open-feedback"]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "x": 100,
+      "y": 2350,
+      "width": 200,
+      "height": 100
+    }
+  ],
+  "links": [
+    {
+      "id": "start-q3",
+      "type": "link",
+      "sourceNodeId": "start",
+      "targetNodeId": "q3",
+      "startPoint": { "x": 200, "y": 200 },
+      "endPoint": { "x": 400, "y": 250 }
+    },
+    {
+      "id": "q3-q9",
+      "type": "link",
+      "sourceNodeId": "q3",
+      "targetNodeId": "q9",
+      "startPoint": { "x": 400, "y": 400 },
+      "endPoint": { "x": 400, "y": 400 }
+    },
+    {
+      "id": "q9-q35",
+      "type": "link",
+      "sourceNodeId": "q9",
+      "targetNodeId": "q35",
+      "startPoint": { "x": 400, "y": 550 },
+      "endPoint": { "x": 400, "y": 550 }
+    },
+    {
+      "id": "q35-q37",
+      "type": "link",
+      "sourceNodeId": "q35",
+      "targetNodeId": "q37",
+      "startPoint": { "x": 400, "y": 700 },
+      "endPoint": { "x": 400, "y": 700 }
+    },
+    {
+      "id": "q37-q1270",
+      "type": "link",
+      "sourceNodeId": "q37",
+      "targetNodeId": "q1270",
+      "startPoint": { "x": 400, "y": 850 },
+      "endPoint": { "x": 400, "y": 850 }
+    },
+    {
+      "id": "q1270-q531",
+      "type": "link",
+      "sourceNodeId": "q1270",
+      "targetNodeId": "q531",
+      "startPoint": { "x": 400, "y": 1000 },
+      "endPoint": { "x": 400, "y": 1000 }
+    },
+    {
+      "id": "q531-q532",
+      "type": "link",
+      "sourceNodeId": "q531",
+      "targetNodeId": "q532",
+      "startPoint": { "x": 400, "y": 1150 },
+      "endPoint": { "x": 400, "y": 1150 }
+    },
+    {
+      "id": "q532-q786",
+      "type": "link",
+      "sourceNodeId": "q532",
+      "targetNodeId": "q786",
+      "startPoint": { "x": 400, "y": 1300 },
+      "endPoint": { "x": 400, "y": 1300 }
+    },
+    {
+      "id": "q786-q784",
+      "type": "link",
+      "sourceNodeId": "q786",
+      "targetNodeId": "q784",
+      "startPoint": { "x": 400, "y": 1450 },
+      "endPoint": { "x": 400, "y": 1450 }
+    },
+    {
+      "id": "q784-q785",
+      "type": "link",
+      "sourceNodeId": "q784",
+      "targetNodeId": "q785",
+      "startPoint": { "x": 400, "y": 1600 },
+      "endPoint": { "x": 400, "y": 1600 }
+    },
+    {
+      "id": "q785-q787",
+      "type": "link",
+      "sourceNodeId": "q785",
+      "targetNodeId": "q787",
+      "startPoint": { "x": 400, "y": 1750 },
+      "endPoint": { "x": 400, "y": 1750 }
+    },
+    {
+      "id": "q787-q1312",
+      "type": "link",
+      "sourceNodeId": "q787",
+      "targetNodeId": "q1312",
+      "startPoint": { "x": 400, "y": 1900 },
+      "endPoint": { "x": 400, "y": 1900 }
+    },
+    {
+      "id": "q1312-q1313",
+      "type": "link",
+      "sourceNodeId": "q1312",
+      "targetNodeId": "q1313",
+      "startPoint": { "x": 400, "y": 2050 },
+      "endPoint": { "x": 400, "y": 2050 }
+    },
+    {
+      "id": "q1313-open_feedback",
+      "type": "link",
+      "sourceNodeId": "q1313",
+      "targetNodeId": "open_feedback",
+      "startPoint": { "x": 400, "y": 2200 },
+      "endPoint": { "x": 400, "y": 2200 }
+    },
+    {
+      "id": "open_feedback-end",
+      "type": "link",
+      "sourceNodeId": "open_feedback",
+      "targetNodeId": "end",
+      "startPoint": { "x": 400, "y": 2350 },
+      "endPoint": { "x": 200, "y": 2350 }
+    }
+  ]
+}
