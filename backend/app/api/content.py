@@ -188,6 +188,9 @@ async def get_content(
             )
     # Approvers and Admins can see all content (no additional check needed)
     
+    # Refresh the object to ensure all attributes are loaded
+    await db.refresh(content, ["creator"])
+    
     # Increment view count for analytics
     await service.increment_view_count(content_id)
     

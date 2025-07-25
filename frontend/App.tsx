@@ -3,9 +3,9 @@
  * Unified app with role-based access and simplified routing
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Box } from '@mui/material';
+import { Box, CircularProgress, Typography, Alert } from '@mui/material';
 import { GameProvider, useGameContext } from './contexts/GameContext';
 import { AppLayout } from './shared/AppLayout';
 import { GameView } from './player/GameView';
@@ -15,6 +15,7 @@ import { ContentLibrary } from './player/ContentLibrary';
 import { ContentDashboard } from './editor/ContentDashboard';
 import { FlowEditor } from './editor/FlowEditor';
 import { useAuth } from './contexts/AuthContext';
+import { contentApi } from './api/content';
 import type { NLJScenario } from './types/nlj';
 
 const AppContent: React.FC = () => {
@@ -23,6 +24,8 @@ const AppContent: React.FC = () => {
   const location = useLocation();
   const [currentScenario, setCurrentScenario] = useState<NLJScenario | null>(null);
   const [editingScenario, setEditingScenario] = useState<NLJScenario | null>(null);
+  const [loadingScenario, setLoadingScenario] = useState<boolean>(false);
+  const [scenarioError, setScenarioError] = useState<string | null>(null);
   
   
   // Load scenario from localStorage when game state changes
@@ -44,6 +47,91 @@ const AppContent: React.FC = () => {
 
   const canEdit = user?.role && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role);
 
+  // Load scenario from Content API when editing
+  useEffect(() => {
+    const loadScenarioForEditing = async () => {
+      const searchParams = new URLSearchParams(location.search);
+      const editId = searchParams.get('edit');
+      
+      if (editId && !editingScenario && !loadingScenario) {
+        setLoadingScenario(true);
+        setScenarioError(null);
+        
+        try {
+          const contentItem = await contentApi.get(editId);
+          
+          // Convert ContentItem to NLJScenario format
+          const scenario: NLJScenario = {
+            id: contentItem.id,
+            name: contentItem.title,
+            description: contentItem.description,
+            ...contentItem.nlj_data
+          };
+          
+          setEditingScenario(scenario);
+        } catch (error) {
+          console.error('Failed to load scenario for editing:', error);
+          setScenarioError('Failed to load scenario. Please try again.');
+        } finally {
+          setLoadingScenario(false);
+        }
+      }
+    };
+
+    if (location.pathname.includes('/flow')) {
+      loadScenarioForEditing();
+    } else {
+      // Clear editing scenario when not on flow page
+      if (editingScenario) {
+        setEditingScenario(null);
+      }
+      if (scenarioError) {
+        setScenarioError(null);
+      }
+    }
+  }, [location.search, location.pathname, editingScenario, loadingScenario, scenarioError]);
+
+  // Create blank scenario for new content
+  const createBlankScenario = (): NLJScenario => {
+    return {
+      id: `new-${Date.now()}`,
+      name: 'New Activity',
+      description: 'A new activity created with the Flow Editor',
+      nodes: [
+        {
+          id: 'start',
+          type: 'start',
+          x: 100,
+          y: 100,
+          width: 200,
+          height: 100,
+          data: {
+            title: 'Start',
+            content: 'This is the starting node of your activity. Click Edit to customize this content.'
+          }
+        },
+        {
+          id: 'end',
+          type: 'end',
+          x: 400,
+          y: 100,
+          width: 200,
+          height: 100,
+          data: {
+            title: 'End',
+            content: 'This is the ending node of your activity. You can customize this content or connect more nodes.'
+          }
+        }
+      ],
+      links: [{
+        id: 'start-to-end',
+        sourceNodeId: 'start',
+        targetNodeId: 'end'
+      }],
+      variableDefinitions: []
+    };
+  };
+
   // Super simple path matching
   const path = location.pathname;
   
@@ -55,22 +143,139 @@ const AppContent: React.FC = () => {
     return <ContentDashboard onEditScenario={setEditingScenario} />;
   }
   
-  if (path.includes('/flow') && canEdit) {
-    if (!editingScenario) {
-      return <div>No scenario selected</div>;
+  if (path.includes('/app/flow') && canEdit) {
+    const searchParams = new URLSearchParams(location.search);
+    const editId = searchParams.get('edit');
+    
+    // Show loading state while fetching scenario
+    if (loadingScenario) {
+      return (
+        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="400px" gap={2}>
+          <CircularProgress />
+          <Typography>Loading scenario for editing...</Typography>
+        </Box>
+      );
     }
+    
+    // Show error state if loading failed
+    if (scenarioError) {
+      return (
+        <Box p={3}>
+          <Alert severity="error" action={
+            <button onClick={() => window.location.reload()}>Retry</button>
+          }>
+            {scenarioError}
+          </Alert>
+        </Box>
+      );
+    }
+    
+    // Determine scenario to edit
+    let scenarioToEdit = editingScenario;
+    
+    // If no edit ID and no editing scenario, create blank scenario
+    if (!editId && !editingScenario) {
+      scenarioToEdit = createBlankScenario();
+      setEditingScenario(scenarioToEdit);
+    }
+    
+    // If we have an edit ID but still no scenario, wait for loading
+    if (editId && !scenarioToEdit) {
+      return (
+        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="400px" gap={2}>
+          <CircularProgress />
+          <Typography>Loading scenario for editing...</Typography>
+        </Box>
+      );
+    }
+    
     return (
       <FlowEditor
-        scenario={editingScenario}
-        onBack={() => setEditingScenario(null)}
-        onPlay={(scenario) => {
-          // TODO: Implement scenario play functionality
+        scenario={scenarioToEdit!}
+        onBack={() => {
+          setEditingScenario(null);
+          window.history.back();
         }}
-        onSave={(scenario) => {
+        onPlay={(scenario) => {
+          // Store scenario for playing
+          localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
+          // Navigate to game view
+          window.location.href = '/app';
+        }}
+        onSave={async (scenario) => {
           setEditingScenario(scenario);
+          
+          try {
+            // Determine if we're creating new content or updating existing
+            const isNewScenario = scenario.id.startsWith('new-');
+            
+            if (isNewScenario) {
+              // Create new content item
+              const contentData = {
+                title: scenario.name,
+                description: scenario.description || 'Activity created with Flow Editor',
+                nlj_data: {
+                  nodes: scenario.nodes,
+                  links: scenario.links,
+                  variableDefinitions: scenario.variableDefinitions
+                },
+                content_type: 'training' as const, // Default to training
+                learning_style: 'visual' as const, // Default to visual
+                is_template: false,
+                template_category: 'Custom'
+              };
+              
+              const createdContent = await contentApi.create(contentData);
+              
+              // Update scenario with real ID from database
+              const updatedScenario = {
+                ...scenario,
+                id: createdContent.id
+              };
+              
+              setEditingScenario(updatedScenario);
+              
+              // Update URL to reflect the new ID
+              const newUrl = new URL(window.location.href);
+              newUrl.searchParams.set('edit', createdContent.id);
+              window.history.replaceState({}, '', newUrl.toString());
+              
+              console.log('Created new content item:', createdContent.id);
+            } else {
+              // Update existing content item
+              const updateData = {
+                title: scenario.name,
+                description: scenario.description || 'Activity updated with Flow Editor',
+                nlj_data: {
+                  nodes: scenario.nodes,
+                  links: scenario.links,
+                  variableDefinitions: scenario.variableDefinitions
+                }
+              };
+              
+              await contentApi.update(scenario.id, updateData);
+              console.log('Updated existing content item:', scenario.id);
+            }
+            
+            // TODO: Show success notification
+            console.log('Scenario saved successfully!');
+            
+          } catch (error) {
+            console.error('Failed to save scenario:', error);
+            // TODO: Show error notification
+            alert('Failed to save scenario. Please try again.');
+          }
         }}
         onExport={(scenario) => {
-          // TODO: Implement scenario export functionality
+          // Download as JSON
+          const dataStr = JSON.stringify(scenario, null, 2);
+          const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+          const exportFileDefaultName = `${scenario.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
+          
+          const linkElement = document.createElement('a');
+          linkElement.setAttribute('href', dataUri);
+          linkElement.setAttribute('download', exportFileDefaultName);
+          linkElement.click();
         }}
       />
     );
@@ -92,6 +297,7 @@ const AppContent: React.FC = () => {
 
 export const App: React.FC = () => {
   const { user } = useAuth();
+  const location = useLocation();
   
   const contentLibrary = {
     scenarios: 9,
@@ -101,10 +307,17 @@ export const App: React.FC = () => {
   };
 
   const appMode = user?.role && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role) ? 'editor' : 'player';
+  
+  // Debug the actual pathname for troubleshooting
+  console.log('App Current pathname:', location.pathname);
+  console.log('App Current search:', location.search);
 
   return (
     <GameProvider>
-      <AppLayout mode={appMode} contentLibrary={contentLibrary}>
+      <AppLayout 
+        mode={appMode} 
+        contentLibrary={contentLibrary}
+      >
         <AppContent />
       </AppLayout>
     </GameProvider>

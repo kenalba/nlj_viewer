@@ -55,7 +55,8 @@ async def create_tables() -> None:
         # Import all models here to ensure they're registered
         from app.models.user import User  # noqa: F401
         from app.models.content import ContentItem  # noqa: F401
-        from app.models.workflow import ApprovalWorkflow, ApprovalStep  # noqa: F401
+        # TODO: Uncomment when approval workflow is implemented
+        # from app.models.workflow import ApprovalWorkflow, ApprovalStep  # noqa: F401
         
         # Create all tables
         await conn.run_sync(Base.metadata.create_all)

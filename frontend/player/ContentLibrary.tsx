@@ -45,7 +45,8 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   ViewModule as CardViewIcon,
-  TableRows as TableViewIcon
+  TableRows as TableViewIcon,
+  FileUpload as ImportIcon
 } from '@mui/icons-material';
 import { useGameContext } from '../contexts/GameContext';
 import { useNavigate } from 'react-router-dom';
@@ -265,21 +266,45 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 120,
+      width: 160,
       align: 'center',
       headerAlign: 'center',
       sortable: false,
       renderCell: (params: GridRenderCellParams) => (
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<PlayIcon />}
-          onClick={() => handlePlayContent(params.row)}
-          sx={{ fontSize: '0.75rem' }}
-        >
-          {params.row.content_type === 'game' ? 'Play' : 
-           params.row.content_type === 'survey' ? 'Take' : 'Start'}
-        </Button>
+        user && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role) ? (
+          <Box display="flex" gap={0.5}>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<PlayIcon />}
+              onClick={() => handlePlayContent(params.row)}
+              sx={{ fontSize: '0.75rem', minWidth: '60px' }}
+            >
+              {params.row.content_type === 'game' ? 'Play' : 
+               params.row.content_type === 'survey' ? 'Take' : 'Start'}
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<EditIcon />}
+              onClick={() => handleEditContent(params.row)}
+              sx={{ fontSize: '0.75rem', minWidth: '50px' }}
+            >
+              Edit
+            </Button>
+          </Box>
+        ) : (
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<PlayIcon />}
+            onClick={() => handlePlayContent(params.row)}
+            sx={{ fontSize: '0.75rem' }}
+          >
+            {params.row.content_type === 'game' ? 'Play' : 
+             params.row.content_type === 'survey' ? 'Take' : 'Start'}
+          </Button>
+        )
       )
     }
   ];
@@ -297,9 +322,14 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
     navigate('/player');
   };
 
+  const handleEditContent = (item: ContentItem) => {
+    // Navigate to Flow Editor with the selected content for editing
+    navigate(`/app/flow?edit=${item.id}`);
+  };
+
   const handleCreateActivity = () => {
     // Navigate to Flow Editor for creating new content
-    navigate('/editor/flow');
+    navigate('/app/flow');
   };
 
   const getPageTitle = () => {
@@ -371,59 +401,83 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
             </Typography>
           </Box>
           
-          {/* View Toggle - Make it more prominent */}
-          <Box display="flex" flexDirection="column" alignItems="flex-end" gap={1}>
-            <Typography variant="caption" color="text.secondary">
-              View Mode
-            </Typography>
-            <ToggleButtonGroup
-              value={viewMode}
-              exclusive
-              onChange={(_, newView) => newView && setViewMode(newView)}
-              aria-label="view mode"
-              size="small"
-              sx={{ 
-                backgroundColor: 'background.paper',
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 1
-              }}
-            >
-              <ToggleButton 
-                value="card" 
-                aria-label="card view"
+          <Box display="flex" gap={2} alignItems="flex-end">
+            {/* Action Buttons for creators/admins */}
+            {user && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role) && (
+              <Box display="flex" gap={1}>
+                <Button
+                  variant="outlined"
+                  startIcon={<ImportIcon />}
+                  onClick={() => {/* TODO: Open import modal */}}
+                  size="small"
+                >
+                  Import Activity
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={handleCreateActivity}
+                  size="small"
+                >
+                  New Activity
+                </Button>
+              </Box>
+            )}
+            
+            {/* View Toggle */}
+            <Box display="flex" flexDirection="column" alignItems="flex-end" gap={1}>
+              <Typography variant="caption" color="text.secondary">
+                View Mode
+              </Typography>
+              <ToggleButtonGroup
+                value={viewMode}
+                exclusive
+                onChange={(_, newView) => newView && setViewMode(newView)}
+                aria-label="view mode"
+                size="small"
                 sx={{ 
-                  px: 2,
-                  '&.Mui-selected': {
-                    backgroundColor: 'primary.main',
-                    color: 'primary.contrastText',
-                    '&:hover': {
-                      backgroundColor: 'primary.dark',
-                    }
-                  }
+                  backgroundColor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1
                 }}
               >
-                <CardViewIcon sx={{ mr: 0.5 }} />
-                Cards
-              </ToggleButton>
-              <ToggleButton 
-                value="table" 
-                aria-label="table view"
-                sx={{ 
-                  px: 2,
-                  '&.Mui-selected': {
-                    backgroundColor: 'primary.main',
-                    color: 'primary.contrastText',
-                    '&:hover': {
-                      backgroundColor: 'primary.dark',
+                <ToggleButton 
+                  value="card" 
+                  aria-label="card view"
+                  sx={{ 
+                    px: 2,
+                    '&.Mui-selected': {
+                      backgroundColor: 'primary.main',
+                      color: 'primary.contrastText',
+                      '&:hover': {
+                        backgroundColor: 'primary.dark',
+                      }
                     }
-                  }
-                }}
-              >
-                <TableViewIcon sx={{ mr: 0.5 }} />
-                Table
-              </ToggleButton>
-            </ToggleButtonGroup>
+                  }}
+                >
+                  <CardViewIcon sx={{ mr: 0.5 }} />
+                  Cards
+                </ToggleButton>
+                <ToggleButton 
+                  value="table" 
+                  aria-label="table view"
+                  sx={{ 
+                    px: 2,
+                    '&.Mui-selected': {
+                      backgroundColor: 'primary.main',
+                      color: 'primary.contrastText',
+                      '&:hover': {
+                        backgroundColor: 'primary.dark',
+                      }
+                    }
+                  }}
+                >
+                  <TableViewIcon sx={{ mr: 0.5 }} />
+                  Table
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
           </Box>
         </Box>
       </Box>
@@ -669,16 +723,39 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
                   minHeight: '64px',
                   flexShrink: 0
                 }}>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    startIcon={<PlayIcon />}
-                    onClick={() => handlePlayContent(item)}
-                    sx={{ height: '40px' }}
-                  >
-                    {item.content_type === 'game' ? 'Play' : 
-                     item.content_type === 'survey' ? 'Take Survey' : 'Start Training'}
-                  </Button>
+                  {/* Role-based button display */}
+                  {user && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role) ? (
+                    <Box display="flex" gap={1} width="100%">
+                      <Button
+                        variant="contained"
+                        startIcon={<PlayIcon />}
+                        onClick={() => handlePlayContent(item)}
+                        sx={{ height: '40px', flex: 1 }}
+                      >
+                        {item.content_type === 'game' ? 'Play' : 
+                         item.content_type === 'survey' ? 'Take' : 'Start'}
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        startIcon={<EditIcon />}
+                        onClick={() => handleEditContent(item)}
+                        sx={{ height: '40px', minWidth: '80px' }}
+                      >
+                        Edit
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      startIcon={<PlayIcon />}
+                      onClick={() => handlePlayContent(item)}
+                      sx={{ height: '40px' }}
+                    >
+                      {item.content_type === 'game' ? 'Play' : 
+                       item.content_type === 'survey' ? 'Take Survey' : 'Start Training'}
+                    </Button>
+                  )}
                 </CardActions>
               </Card>
           ))}

@@ -3,7 +3,7 @@
  * Provides unified layout structure with sidebar navigation and top bar
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   AppBar,
@@ -20,7 +20,7 @@ import {
   Brightness7 as LightModeIcon
 } from '@mui/icons-material';
 import { SidebarNavigation } from './SidebarNavigation';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface AppLayoutProps {
@@ -34,6 +34,7 @@ interface AppLayoutProps {
     templates: number;
   };
   topBarActions?: React.ReactNode;
+  hideSidebar?: boolean; // Deprecated - now calculated internally
 }
 
 const SIDEBAR_WIDTH = 280;
@@ -44,12 +45,21 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   children,
   title,
   contentLibrary,
-  topBarActions
+  topBarActions,
+  hideSidebar = false // Deprecated - now calculated internally
 }) => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Calculate whether to hide sidebar based on current location
+  const shouldHideSidebar = useMemo(() => {
+    const isFlowEditor = location.pathname.includes('/flow');
+    console.log('AppLayout shouldHideSidebar calculation:', { pathname: location.pathname, isFlowEditor });
+    return isFlowEditor;
+  }, [location.pathname]);
 
   const handleSidebarToggle = () => {
     setSidebarOpen(!sidebarOpen);
@@ -71,13 +81,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Sidebar Navigation */}
-      <SidebarNavigation
-        mode={mode}
-        open={sidebarOpen}
-        onToggle={handleSidebarToggle}
-        contentLibrary={contentLibrary}
-      />
+      {/* Sidebar Navigation - conditionally rendered */}
+      {!shouldHideSidebar && (
+        <SidebarNavigation
+          mode={mode}
+          open={sidebarOpen}
+          onToggle={handleSidebarToggle}
+          contentLibrary={contentLibrary}
+        />
+      )}
 
       {/* Main Content Area */}
       <Box

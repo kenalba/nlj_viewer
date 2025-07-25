@@ -10,6 +10,18 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, ConfigDict
 
 from app.models.content import ContentState, ContentType, LearningStyle
+from app.models.user import UserRole
+
+
+class UserSummary(BaseModel):
+    """Basic user information for content responses."""
+    
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: uuid.UUID
+    username: str
+    full_name: Optional[str] = None
+    role: UserRole
 
 
 class ContentBase(BaseModel):
@@ -111,7 +123,7 @@ class ContentResponse(ContentBase):
     completion_count: int
     
     # Creator information (from relationship)
-    creator: Optional[Dict[str, Any]] = None
+    creator: Optional[UserSummary] = None
 
 
 class ContentSummary(BaseModel):

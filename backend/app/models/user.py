@@ -17,7 +17,8 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models.content import ContentItem
-    from app.models.workflow import ApprovalStep
+    # TODO: Uncomment when ApprovalStep model is implemented
+    # from app.models.workflow import ApprovalStep
 
 
 class UserRole(str, Enum):
@@ -93,10 +94,11 @@ class User(Base):
         back_populates="creator",
         lazy="selectin"
     )
-    approval_steps: Mapped[list["ApprovalStep"]] = relationship(
-        back_populates="approver",
-        lazy="selectin"
-    )
+    # TODO: Uncomment when ApprovalStep model is implemented
+    # approval_steps: Mapped[list["ApprovalStep"]] = relationship(
+    #     back_populates="approver",
+    #     lazy="selectin"
+    # )
     
     def __repr__(self) -> str:
         return f"<User(username={self.username}, role={self.role})>"

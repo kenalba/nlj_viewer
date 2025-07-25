@@ -17,7 +17,8 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models.user import User
-    from app.models.workflow import ApprovalWorkflow
+    # TODO: Uncomment when ApprovalWorkflow model is implemented
+    # from app.models.workflow import ApprovalWorkflow
 
 
 class ContentState(str, Enum):
@@ -151,11 +152,11 @@ class ContentItem(Base):
         lazy="selectin"
     )
     
-    # Approval workflow
-    approval_workflow: Mapped["ApprovalWorkflow | None"] = relationship(
-        back_populates="content",
-        lazy="selectin"
-    )
+    # Approval workflow - TODO: Implement when ApprovalWorkflow model is created
+    # approval_workflow: Mapped["ApprovalWorkflow | None"] = relationship(
+    #     back_populates="content",
+    #     lazy="selectin"
+    # )
     
     def __repr__(self) -> str:
         return f"<ContentItem(title={self.title}, state={self.state})>"
@@ -174,8 +175,9 @@ class ContentItem(Base):
     
     def get_workflow_stage(self) -> str | None:
         """Get current workflow stage if in approval process."""
-        if self.approval_workflow:
-            return self.approval_workflow.current_stage
+        # TODO: Implement when ApprovalWorkflow model is created
+        # if self.approval_workflow:
+        #     return self.approval_workflow.current_stage
         return None
     
     def increment_view_count(self) -> None:
