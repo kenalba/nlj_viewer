@@ -7,8 +7,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { LoginPage } from './pages/LoginPage';  
-import { PlayerApp } from './player/PlayerApp';
-import { EditorApp } from './editor/EditorApp';
+import { SimpleUnifiedApp } from './SimpleUnifiedApp';
 import { LoadingSpinner } from './shared/LoadingSpinner';
 
 // Protected Route component
@@ -35,7 +34,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (requiredRole && user?.role !== requiredRole) {
     // Allow admin access to everything
     if (user?.role !== 'admin') {
-      return <Navigate to="/player" replace />;
+      return <Navigate to="/app" replace />;
     }
   }
 
@@ -50,42 +49,36 @@ export const AppRouter: React.FC = () => {
   }
 
   return (
-    <Router>
+    <Router basename="/nlj_viewer">
       <Routes>
         {/* Auth Routes */}
         <Route 
           path="/login" 
           element={
-            isAuthenticated ? <Navigate to="/player" replace /> : <LoginPage />
+            isAuthenticated ? <Navigate to="/app" replace /> : <LoginPage />
           } 
         />
 
-        {/* Player Routes - Available to all authenticated users */}
+        {/* Simple route - all authenticated users go here */}
         <Route
-          path="/player/*"
+          path="/app/*"
           element={
             <ProtectedRoute>
-              <PlayerApp />
+              <SimpleUnifiedApp />
             </ProtectedRoute>
           }
         />
 
-        {/* Editor Routes - Available to creators, reviewers, approvers, and admins */}
-        <Route
-          path="/editor/*"
-          element={
-            <ProtectedRoute>
-              <EditorApp />
-            </ProtectedRoute>
-          }
-        />
+        {/* Legacy redirects for existing bookmarks */}
+        <Route path="/player/*" element={<Navigate to="/app" replace />} />
+        <Route path="/editor/*" element={<Navigate to="/app" replace />} />
 
         {/* Default redirects */}
         <Route
           path="/"
           element={
             isAuthenticated ? (
-              <Navigate to="/player" replace />
+              <Navigate to="/app" replace />
             ) : (
               <Navigate to="/login" replace />
             )

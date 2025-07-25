@@ -1,90 +1,32 @@
 /**
  * Editor Application
- * Main application for content creation and management
+ * Main application for content creation and management with unified sidebar navigation
  */
 
 import React, { useState } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
-import { Box, AppBar, Toolbar, Typography, Button, Avatar, Menu, MenuItem } from '@mui/material';
-import { useAuth } from '../contexts/AuthContext';
+import { Routes, Route } from 'react-router-dom';
+import { AppLayout } from '../shared/AppLayout';
 import { ContentDashboard } from './ContentDashboard';
 import { FlowEditor } from './FlowEditor';
+import { ContentLibrary } from '../player/ContentLibrary';
 import type { NLJScenario } from '../types/nlj';
-
-const EditorNavBar: React.FC = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-  const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-    handleClose();
-  };
-
-  const handlePlayer = () => {
-    navigate('/player');
-    handleClose();
-  };
-
-  return (
-    <AppBar position="static" elevation={1}>
-      <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          NLJ Content Editor
-        </Typography>
-        
-        {user && (
-          <Box display="flex" alignItems="center" gap={2}>
-            <Typography variant="body2">
-              {user.full_name || user.username}
-            </Typography>
-            <Typography variant="caption" sx={{ 
-              bgcolor: 'secondary.main', 
-              px: 1, 
-              py: 0.5, 
-              borderRadius: 1,
-              textTransform: 'capitalize'
-            }}>
-              {user.role}
-            </Typography>
-            <Button
-              onClick={handleMenu}
-              sx={{ p: 0, minWidth: 'auto' }}
-            >
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
-                {user.username.charAt(0).toUpperCase()}
-              </Avatar>
-            </Button>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-            >
-              <MenuItem onClick={handlePlayer}>Player</MenuItem>
-              <MenuItem onClick={handleLogout}>Logout</MenuItem>
-            </Menu>
-          </Box>
-        )}
-      </Toolbar>
-    </AppBar>
-  );
-};
 
 export const EditorApp: React.FC = () => {
   const [editingScenario, setEditingScenario] = useState<NLJScenario | null>(null);
 
+  // Mock content library counts - will be replaced with API data  
+  const contentLibrary = {
+    scenarios: 9,
+    surveys: 4,
+    games: 6,
+    templates: 20
+  };
+
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <EditorNavBar />
+    <AppLayout 
+      mode="editor"
+      contentLibrary={contentLibrary}
+    >
       <Routes>
         <Route
           path="/"
@@ -94,8 +36,9 @@ export const EditorApp: React.FC = () => {
             />
           }
         />
+        <Route path="/activities" element={<ContentLibrary contentType="all" />} />
         <Route
-          path="/flow-editor/:scenarioId?"
+          path="/flow"
           element={
             editingScenario ? (
               <FlowEditor
@@ -121,6 +64,6 @@ export const EditorApp: React.FC = () => {
           }
         />
       </Routes>
-    </Box>
+    </AppLayout>
   );
 };

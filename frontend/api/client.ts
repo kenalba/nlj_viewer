@@ -40,7 +40,7 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('access_token');
       localStorage.removeItem('user');
       // Redirect to login page
-      window.location.href = '/login';
+      window.location.href = '/nlj_viewer/login';
     }
     return Promise.reject(error);
   }

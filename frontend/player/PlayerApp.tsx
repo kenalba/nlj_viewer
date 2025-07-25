@@ -1,16 +1,16 @@
 /**
  * Player Application
- * Main application for playing NLJ scenarios
+ * Main application for playing NLJ scenarios with unified sidebar navigation
  */
 
 import React, { useEffect, useState } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
-import { Box, AppBar, Toolbar, Typography, Button, Avatar, Menu, MenuItem } from '@mui/material';
+import { Routes, Route } from 'react-router-dom';
 import { GameProvider, useGameContext } from '../contexts/GameContext';
-import { useAuth } from '../contexts/AuthContext';
+import { AppLayout } from '../shared/AppLayout';
 import { GameView } from './GameView';
 import { ScenarioLoader } from './ScenarioLoader';
 import { XAPIResultsScreen } from './XAPIResultsScreen';
+import { ContentLibrary } from './ContentLibrary';
 import type { NLJScenario } from '../types/nlj';
 
 const PlayerContent: React.FC = () => {
@@ -54,83 +54,29 @@ const PlayerContent: React.FC = () => {
           )
         }
       />
-      <Route
-        path="/results/:sessionId"
-        element={<XAPIResultsScreen />}
-      />
+      <Route path="/activities" element={<ContentLibrary contentType="all" />} />
+      <Route path="/results/:sessionId" element={<XAPIResultsScreen />} />
     </Routes>
   );
 };
 
-const PlayerNavBar: React.FC = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-  const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-    handleClose();
-  };
-
-  const handleEditor = () => {
-    navigate('/editor');
-    handleClose();
-  };
-
-  return (
-    <AppBar position="static" elevation={1}>
-      <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          NLJ Player
-        </Typography>
-        
-        {user && (
-          <Box display="flex" alignItems="center" gap={2}>
-            <Typography variant="body2">
-              {user.full_name || user.username}
-            </Typography>
-            <Button
-              onClick={handleMenu}
-              sx={{ p: 0, minWidth: 'auto' }}
-            >
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
-                {user.username.charAt(0).toUpperCase()}
-              </Avatar>
-            </Button>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-            >
-              {(user.role === 'creator' || user.role === 'reviewer' || 
-                user.role === 'approver' || user.role === 'admin') && (
-                <MenuItem onClick={handleEditor}>Editor</MenuItem>
-              )}
-              <MenuItem onClick={handleLogout}>Logout</MenuItem>
-            </Menu>
-          </Box>
-        )}
-      </Toolbar>
-    </AppBar>
-  );
-};
-
 export const PlayerApp: React.FC = () => {
+  // Mock content library counts - will be replaced with API data
+  const contentLibrary = {
+    scenarios: 9,
+    surveys: 4,
+    games: 6,
+    templates: 20
+  };
+
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <PlayerNavBar />
-      <GameProvider>
+    <GameProvider>
+      <AppLayout 
+        mode="player"
+        contentLibrary={contentLibrary}
+      >
         <PlayerContent />
-      </GameProvider>
-    </Box>
+      </AppLayout>
+    </GameProvider>
   );
 };
