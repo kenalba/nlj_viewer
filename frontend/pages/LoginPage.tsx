@@ -32,7 +32,7 @@ export const LoginPage: React.FC = () => {
 
     try {
       await login({ username: username.trim(), password });
-      navigate('/player', { replace: true });
+      navigate('/app', { replace: true });
     } catch (error) {
       // Error is already handled in AuthContext
       console.error('Login failed:', error);

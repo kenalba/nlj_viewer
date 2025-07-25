@@ -7,7 +7,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { LoginPage } from './pages/LoginPage';  
-import { SimpleUnifiedApp } from './SimpleUnifiedApp';
+import { App } from './App';
 import { LoadingSpinner } from './shared/LoadingSpinner';
 
 // Protected Route component
@@ -64,7 +64,7 @@ export const AppRouter: React.FC = () => {
           path="/app/*"
           element={
             <ProtectedRoute>
-              <SimpleUnifiedApp />
+              <App />
             </ProtectedRoute>
           }
         />

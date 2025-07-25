@@ -86,11 +86,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           flexGrow: 1,
           display: 'flex',
           flexDirection: 'column',
-          width: `calc(100% - ${sidebarOpen ? SIDEBAR_WIDTH : SIDEBAR_COLLAPSED_WIDTH}px)`,
-          transition: theme.transitions.create(['width', 'margin'], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen,
-          }),
+          minWidth: 0, // Allow flex shrinking
+          overflow: 'hidden'
         }}
       >
 
@@ -98,6 +95,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         <Box
           sx={{
             flexGrow: 1,
+            width: '100%',
+            maxWidth: '100%',
             p: 0, // No default padding - let children control their own spacing
             backgroundColor: theme.palette.background.default,
             overflow: 'auto'

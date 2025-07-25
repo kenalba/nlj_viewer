@@ -40,6 +40,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { ThemeToggle } from './ThemeToggle';
 
 export interface SidebarItem {
   id: string;
@@ -265,6 +266,13 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
       <List sx={{ flexGrow: 1, py: 1 }}>
         {navigationItems.map(item => renderNavItem(item))}
       </List>
+
+      <Divider />
+
+      {/* Theme Controls Section */}
+      <Box sx={{ p: open ? 2 : 1, display: 'flex', justifyContent: 'center' }}>
+        <ThemeToggle />
+      </Box>
 
       <Divider />
 

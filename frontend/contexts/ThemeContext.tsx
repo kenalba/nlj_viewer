@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { Theme } from '@mui/material/styles';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { hyundaiTheme } from '../theme/hyundaiTheme';
 import { unfilteredTheme } from '../theme/unfilteredTheme';
 
@@ -51,7 +52,9 @@ export const ThemeProvider: React.FC<{ children: ReactNode; initialTheme?: Theme
         setThemeMode: handleSetThemeMode,
       }}
     >
-      {children}
+      <MuiThemeProvider theme={currentTheme}>
+        {children}
+      </MuiThemeProvider>
     </ThemeContext.Provider>
   );
 };

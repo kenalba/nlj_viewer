@@ -16,7 +16,7 @@ from app.core.config import settings
 # Create async engine with modern SQLAlchemy 2.0 syntax
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=settings.DEBUG,  # Log SQL queries in debug mode
+    echo=False,  # Disable verbose SQL logging
     pool_pre_ping=True,
     pool_recycle=300,
 )

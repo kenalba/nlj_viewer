@@ -31,7 +31,6 @@ import { validateScenario } from '../utils/scenarioUtils';
 import { parseTrivieExcel, convertTrivieToNLJ, validateTrivieQuiz } from '../utils/trivieInterpreter';
 import { useGameContext } from '../contexts/GameContext';
 import { useAudio } from '../contexts/AudioContext';
-import { ThemeToggle } from '../shared/ThemeToggle';
 import { SoundToggle } from '../shared/SoundToggle';
 import { ErrorModal, type ErrorDetails } from '../shared/ErrorModal';
 import { LLMPromptGenerator } from '../shared/LLMPromptGenerator';
@@ -1230,7 +1229,6 @@ export const ScenarioLoader: React.FC<ScenarioLoaderProps> = ({ onFlowEdit }) =>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <SoundToggle />
-              <ThemeToggle />
             </Box>
           </Box>
           

@@ -28,6 +28,9 @@ dependencies = [
     # HTTP client for external integrations
     "httpx",
     
+    # Excel file processing (for Trivie imports)
+    "openpyxl",
+    
     # Environment management
     "python-dotenv",
 ]
