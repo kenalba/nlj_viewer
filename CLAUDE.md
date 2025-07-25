@@ -1,28 +1,55 @@
-# NLJ Viewer - Unified Activity Viewer
+# NLJ Viewer - Unified Learning Platform
 
-A TypeScript React application for playing interactive Non-Linear Journey (NLJ) training scenarios, surveys, and assessments using Material UI components.
+A full-stack TypeScript application for creating, managing, and delivering interactive Non-Linear Journey (NLJ) training scenarios, surveys, assessments, and games with comprehensive analytics and role-based access control.
 
-## Features
+## Platform Features
 
-- **Unified Activity System**: Support for training scenarios, surveys, assessments, Connections word puzzles, and Wordle games in a single platform
-- **Complete Question Type Support**: True/False, Multiple Choice, Ordering, Matching, Short Answer, Likert Scales, Rating Questions, Matrix Questions, Sliders, Text Areas, Connections Games, and Wordle Games
-- **LLM Content Generation**: Comprehensive prompt generation system for creating NLJ scenarios with Large Language Models
-- **Mobile-Responsive Design**: Built with Material UI for optimal mobile/desktop experience
-- **Real-time Feedback**: Immediate response validation and scoring with audio feedback
+### **Backend Infrastructure (Phase 1 Complete ✅)**
+- **FastAPI Backend**: High-performance Python backend with async support
+- **PostgreSQL Database**: Robust data persistence with SQLAlchemy ORM
+- **JWT Authentication**: Secure user authentication and session management
+- **Role-Based Access Control**: Multi-tier permissions (Player/Creator/Reviewer/Approver/Admin)
+- **Docker Deployment**: Containerized deployment with Docker Compose
+- **OpenAPI Documentation**: Auto-generated API documentation
+- **Content API**: Full CRUD operations with filtering, search, and pagination
+
+### **Frontend Architecture (Phase 2 Complete ✅)**
+- **Unified Dashboard**: Modern home page with quick actions, metrics, and review queue
+- **Activities Browser**: Card/table view toggle with advanced filtering and search
+- **Content-Aware URLs**: Deep linking support for activities (`/app/play/[id]`)
+- **Responsive Design**: Mobile-first design with Material-UI components
+- **Theme Support**: Dark/light themes with toggle functionality
+- **Sidebar Navigation**: Role-based navigation with unified layout
+
+### **Flow Editor Integration (Phase 3 Complete ✅)**
+- **Visual Flow Editor**: React Flow-based WYSIWYG editor with drag-and-drop
+- **Database Integration**: Save/load scenarios directly from PostgreSQL
+- **Node Palette**: 18+ node types with comprehensive editors
+- **Real-time Preview**: Live preview system with game widget support
+- **Auto-layout**: Hierarchical and force-directed layout algorithms
+- **Export Functionality**: JSON export with proper scenario structure
+
+### **Learning Activities & Games**
+- **Complete Question Type Support**: True/False, Multiple Choice, Ordering, Matching, Short Answer, Likert Scales, Rating Questions, Matrix Questions, Sliders, Text Areas
+- **Interactive Games**: Connections word puzzles (NYT-style) and Wordle games with comprehensive dictionary validation
 - **Visual Interactions**: Drag-and-drop ordering, visual connection lines for matching
-- **Progress Tracking**: Visual progress indicators and completion tracking
-- **Trivie Excel Support**: Load and convert Trivie quiz Excel files to NLJ format
-- **Survey System**: Comprehensive survey question types with automotive and cross-industry templates
-- **Media Support**: Images, videos, and rich content integration
-- **Type-Safe**: Full TypeScript coverage for robust development
-- **Comprehensive Testing**: Full test suite with VSCode integration (326 tests passing)
-- **Deployment-Ready**: All TypeScript build errors resolved and pre-deployment verification script included
 - **Keyboard Navigation**: Full keyboard support for accessibility (arrow keys, Enter, number keys)
-  - **UnifiedQuestionNode**: Number keys (1-9) for choice selection, Enter to submit/continue
-  - **TrueFalseNode**: 1 for True, 2 for False, Enter to submit/continue
 - **Audio Feedback**: Oscillator-based audio system with user-controlled sound toggle
-- **Multi-Theme Support**: Hyundai and Unfiltered themes with dynamic switching
-- **xAPI Integration**: Comprehensive event tracking with learning analytics and post-activity results
+- **Progress Tracking**: Visual progress indicators and completion tracking
+- **Media Support**: Images, videos, and rich content integration
+
+### **Content Management**
+- **Trivie Excel Support**: Import and convert Trivie quiz Excel files to NLJ format
+- **Survey Templates**: Pre-built automotive and cross-industry employee feedback surveys
+- **LLM Content Generation**: Comprehensive prompt generation system for AI-powered content creation
+- **Version Control**: Content versioning with publication workflow
+- **Approval System**: Multi-stage content approval process (planned)
+
+### **Analytics & Tracking**
+- **xAPI Integration**: Comprehensive event tracking with learning analytics
+- **Usage Metrics**: Platform-wide analytics dashboard with completion rates, user engagement
+- **Post-Activity Results**: Detailed performance analysis and event logs
+- **Real-time Monitoring**: Live activity tracking and user progress
 
 ## Quick Start
 
@@ -221,13 +248,24 @@ Supports comprehensive activity schema including:
 - PDF report generation
 - LRS integration endpoints
 
-## Current Priority: Flow Editor Integration (Phase 4)
+## Current Priority: Phase 4 Complete ✅
 
-🔄 **IN PROGRESS**: Connect Flow Editor to Content API
-- Enable saving/loading scenarios from database
-- Implement content management UI in Flow Editor
-- Add authentication integration with editor
-- Create content import/export from editor
+✅ **Phase 4 Complete**: Enhanced User Experience and Navigation
+- **Modern Home Dashboard**: Redesigned with flexbox layout, quick actions, platform metrics, and review queue
+- **Content-Aware URLs**: Deep linking support for activities with `/app/play/[id]` structure  
+- **Immersive Activity Experience**: Sidebar automatically hidden during gameplay for distraction-free learning
+- **Improved Back Navigation**: Fixed "Back to Home" functionality to return to Activities browser
+- **Responsive Layout**: Clean 2-column dashboard design that adapts to all screen sizes
+- **Role-Based Dashboard**: Different layouts and features for creators/admins vs players
+- **Enhanced Flow Editor Integration**: Complete database integration with save/load from PostgreSQL
+
+## Next Priority: Content Creation Enhancements
+
+🔄 **UPCOMING**: Advanced Content Creation Tools
+- Extract LLM Prompt Construction as standalone sidebar feature
+- Add content creation templates to New Activity workflow  
+- Implement Import Activity functionality with file upload and JSON paste
+- Enhanced content management and approval workflows
 
 ## Future Enhancements
 

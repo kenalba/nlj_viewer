@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Box, CircularProgress, Typography, Alert } from '@mui/material';
 import { GameProvider, useGameContext } from './contexts/GameContext';
 import { AppLayout } from './shared/AppLayout';
@@ -16,12 +16,14 @@ import { ContentDashboard } from './editor/ContentDashboard';
 import { FlowEditor } from './editor/FlowEditor';
 import { useAuth } from './contexts/AuthContext';
 import { contentApi } from './api/content';
+import { HomePage } from './components/HomePage';
 import type { NLJScenario } from './types/nlj';
 
 const AppContent: React.FC = () => {
   const { state, reset } = useGameContext();
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [currentScenario, setCurrentScenario] = useState<NLJScenario | null>(null);
   const [editingScenario, setEditingScenario] = useState<NLJScenario | null>(null);
   const [loadingScenario, setLoadingScenario] = useState<boolean>(false);
@@ -43,6 +45,8 @@ const AppContent: React.FC = () => {
   const handleHome = () => {
     reset();
     setCurrentScenario(null);
+    // Navigate back to Activities page instead of showing scenario loader
+    navigate('/app/activities');
   };
 
   const canEdit = user?.role && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role);
@@ -50,8 +54,11 @@ const AppContent: React.FC = () => {
   // Load scenario from Content API when editing
   useEffect(() => {
     const loadScenarioForEditing = async () => {
-      const searchParams = new URLSearchParams(location.search);
-      const editId = searchParams.get('edit');
+      // Parse editId from path segments instead of query params
+      const pathSegments = location.pathname.split('/');
+      const flowIndex = pathSegments.indexOf('flow');
+      const action = flowIndex !== -1 ? pathSegments[flowIndex + 1] : null;
+      const editId = action === 'edit' ? pathSegments[flowIndex + 2] : null;
       
       if (editId && !editingScenario && !loadingScenario) {
         setLoadingScenario(true);
@@ -89,7 +96,7 @@ const AppContent: React.FC = () => {
         setScenarioError(null);
       }
     }
-  }, [location.search, location.pathname, editingScenario, loadingScenario, scenarioError]);
+  }, [location.pathname, editingScenario, loadingScenario, scenarioError]);
 
   // Create blank scenario for new content
   const createBlankScenario = (): NLJScenario => {
@@ -143,9 +150,33 @@ const AppContent: React.FC = () => {
     return <ContentDashboard onEditScenario={setEditingScenario} />;
   }
   
+  // Handle playing specific activities with content-aware URLs
+  if (path.includes('/app/play/')) {
+    const pathSegments = path.split('/');
+    const playIndex = pathSegments.indexOf('play');
+    const contentId = playIndex !== -1 ? pathSegments[playIndex + 1] : null;
+    
+    if (contentId && state.scenarioId && state.currentNodeId && currentScenario) {
+      return <GameView scenario={currentScenario} onHome={handleHome} />;
+    }
+    
+    // If we have a content ID but no loaded scenario, redirect to home for loading
+    if (contentId) {
+      return (
+        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="400px" gap={2}>
+          <CircularProgress />
+          <Typography>Loading activity...</Typography>
+        </Box>
+      );
+    }
+  }
+  
   if (path.includes('/app/flow') && canEdit) {
-    const searchParams = new URLSearchParams(location.search);
-    const editId = searchParams.get('edit');
+    // Parse URL structure: /app/flow/new or /app/flow/edit/[id]
+    const pathSegments = path.split('/');
+    const flowIndex = pathSegments.indexOf('flow');
+    const action = pathSegments[flowIndex + 1]; // 'new' or 'edit'
+    const editId = action === 'edit' ? pathSegments[flowIndex + 2] : null;
     
     // Show loading state while fetching scenario
     if (loadingScenario) {
@@ -173,8 +204,8 @@ const AppContent: React.FC = () => {
     // Determine scenario to edit
     let scenarioToEdit = editingScenario;
     
-    // If no edit ID and no editing scenario, create blank scenario
-    if (!editId && !editingScenario) {
+    // If creating new activity and no editing scenario, create blank scenario
+    if (action === 'new' && !editingScenario) {
       scenarioToEdit = createBlankScenario();
       setEditingScenario(scenarioToEdit);
     }
@@ -289,9 +320,7 @@ const AppContent: React.FC = () => {
   return state.scenarioId && state.currentNodeId && currentScenario ? (
     <GameView scenario={currentScenario} onHome={handleHome} />
   ) : (
-    <Box sx={{ p: 3, width: '100%', maxWidth: '100%' }}>
-      <ScenarioLoader onFlowEdit={() => {}} />
-    </Box>
+    <HomePage />
   );
 };
 

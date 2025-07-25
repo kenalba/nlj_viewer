@@ -57,8 +57,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   // Calculate whether to hide sidebar based on current location
   const shouldHideSidebar = useMemo(() => {
     const isFlowEditor = location.pathname.includes('/flow');
-    console.log('AppLayout shouldHideSidebar calculation:', { pathname: location.pathname, isFlowEditor });
-    return isFlowEditor;
+    const isPlayingActivity = location.pathname.includes('/app/play/');
+    console.log('AppLayout shouldHideSidebar calculation:', { 
+      pathname: location.pathname, 
+      isFlowEditor, 
+      isPlayingActivity,
+      shouldHide: isFlowEditor || isPlayingActivity
+    });
+    return isFlowEditor || isPlayingActivity;
   }, [location.pathname]);
 
   const handleSidebarToggle = () => {

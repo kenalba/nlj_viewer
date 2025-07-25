@@ -53,7 +53,38 @@ async def create_content(
     
     try:
         content = await service.create_content(content_data, current_user.id)
-        return ContentResponse.model_validate(content)
+        
+        # Refresh to ensure all attributes are loaded
+        await db.refresh(content, ["creator"])
+        
+        # Create response data within the session context
+        response_data = {
+            "id": content.id,
+            "title": content.title,
+            "description": content.description,
+            "content_type": content.content_type,
+            "nlj_data": content.nlj_data,
+            "learning_style": content.learning_style,
+            "is_template": content.is_template,
+            "template_category": content.template_category,
+            "state": content.state,
+            "version": content.version,
+            "view_count": content.view_count,
+            "completion_count": content.completion_count,
+            "created_by": content.created_by,
+            "parent_content_id": getattr(content, 'parent_content_id', None),
+            "created_at": content.created_at,
+            "updated_at": content.updated_at,
+            "published_at": getattr(content, 'published_at', None),
+            "creator": {
+                "id": content.creator.id,
+                "username": content.creator.username,
+                "full_name": content.creator.full_name,
+                "role": content.creator.role
+            } if content.creator else None
+        }
+        
+        return ContentResponse.model_validate(response_data)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -191,10 +222,35 @@ async def get_content(
     # Refresh the object to ensure all attributes are loaded
     await db.refresh(content, ["creator"])
     
+    # Create response data within the session context
+    response_data = {
+        "id": content.id,
+        "title": content.title,
+        "description": content.description,
+        "content_type": content.content_type,
+        "nlj_data": content.nlj_data,
+        "learning_style": content.learning_style,
+        "is_template": content.is_template,
+        "template_category": content.template_category,
+        "state": content.state,
+        "version": content.version,
+        "view_count": content.view_count,
+        "completion_count": content.completion_count,
+        "created_by": content.created_by,
+        "created_at": content.created_at,
+        "updated_at": content.updated_at,
+        "creator": {
+            "id": content.creator.id,
+            "username": content.creator.username,
+            "full_name": content.creator.full_name,
+            "role": content.creator.role
+        } if content.creator else None
+    }
+    
     # Increment view count for analytics
     await service.increment_view_count(content_id)
     
-    return ContentResponse.model_validate(content)
+    return ContentResponse.model_validate(response_data)
 
 
 @router.put(
@@ -224,7 +280,37 @@ async def update_content(
                 detail="Content not found"
             )
         
-        return ContentResponse.model_validate(content)
+        # Refresh to ensure all attributes are loaded
+        await db.refresh(content, ["creator"])
+        
+        # Create response data within the session context
+        response_data = {
+            "id": content.id,
+            "title": content.title,
+            "description": content.description,
+            "content_type": content.content_type,
+            "nlj_data": content.nlj_data,
+            "learning_style": content.learning_style,
+            "is_template": content.is_template,
+            "template_category": content.template_category,
+            "state": content.state,
+            "version": content.version,
+            "view_count": content.view_count,
+            "completion_count": content.completion_count,
+            "created_by": content.created_by,
+            "parent_content_id": getattr(content, 'parent_content_id', None),
+            "created_at": content.created_at,
+            "updated_at": content.updated_at,
+            "published_at": getattr(content, 'published_at', None),
+            "creator": {
+                "id": content.creator.id,
+                "username": content.creator.username,
+                "full_name": content.creator.full_name,
+                "role": content.creator.role
+            } if content.creator else None
+        }
+        
+        return ContentResponse.model_validate(response_data)
         
     except PermissionError as e:
         raise HTTPException(
@@ -313,7 +399,37 @@ async def update_content_state(
                 detail="Content not found"
             )
         
-        return ContentResponse.model_validate(content)
+        # Refresh to ensure all attributes are loaded
+        await db.refresh(content, ["creator"])
+        
+        # Create response data within the session context
+        response_data = {
+            "id": content.id,
+            "title": content.title,
+            "description": content.description,
+            "content_type": content.content_type,
+            "nlj_data": content.nlj_data,
+            "learning_style": content.learning_style,
+            "is_template": content.is_template,
+            "template_category": content.template_category,
+            "state": content.state,
+            "version": content.version,
+            "view_count": content.view_count,
+            "completion_count": content.completion_count,
+            "created_by": content.created_by,
+            "parent_content_id": getattr(content, 'parent_content_id', None),
+            "created_at": content.created_at,
+            "updated_at": content.updated_at,
+            "published_at": getattr(content, 'published_at', None),
+            "creator": {
+                "id": content.creator.id,
+                "username": content.creator.username,
+                "full_name": content.creator.full_name,
+                "role": content.creator.role
+            } if content.creator else None
+        }
+        
+        return ContentResponse.model_validate(response_data)
         
     except PermissionError as e:
         raise HTTPException(

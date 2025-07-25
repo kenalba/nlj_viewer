@@ -164,11 +164,19 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
   const columns: GridColDef[] = [
     {
       field: 'title',
-      headerName: 'Title',
-      width: 300,
+      headerName: 'Title & Description',
+      flex: 1,
+      minWidth: 300,
       renderCell: (params: GridRenderCellParams) => (
-        <Box>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+        <Box sx={{ py: 1 }}>
+          <Typography 
+            variant="subtitle2" 
+            sx={{ 
+              fontWeight: 600, 
+              lineHeight: 1.2,
+              mb: 0.5
+            }}
+          >
             {params.row.title}
           </Typography>
           <Typography 
@@ -180,11 +188,10 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
               fontSize: '0.8rem',
-              lineHeight: 1.2,
-              mt: 0.5
+              lineHeight: 1.2
             }}
           >
-            {params.row.description}
+            {params.row.description || 'No description available'}
           </Typography>
         </Box>
       )
@@ -192,10 +199,12 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
     {
       field: 'content_type',
       headerName: 'Type',
-      width: 150,
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params: GridRenderCellParams) => (
-        <Box display="flex" alignItems="center" gap={1}>
-          <Box sx={{ color: getIconColor(params.value) }}>
+        <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+          <Box sx={{ color: getIconColor(params.value), fontSize: '1.1rem' }}>
             {getContentIcon(params.value)}
           </Box>
           <Chip 
@@ -205,6 +214,7 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
               backgroundColor: getContentTypeColor(params.value),
               color: 'white',
               fontWeight: 600,
+              fontSize: '0.75rem',
               '& .MuiChip-label': {
                 textTransform: 'capitalize'
               }
@@ -216,7 +226,9 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
     {
       field: 'learning_style',
       headerName: 'Learning Style',
-      width: 140,
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params: GridRenderCellParams) => (
         <Chip 
           label={params.value?.replace('_', '/') || 'N/A'} 
@@ -228,7 +240,9 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
     {
       field: 'template_category',
       headerName: 'Category',
-      width: 140,
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params: GridRenderCellParams) => (
         <Chip 
           label={params.value || 'General'} 
@@ -248,7 +262,7 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
     {
       field: 'completion_count',
       headerName: 'Completed',
-      width: 100,
+      width: 90,
       align: 'center',
       headerAlign: 'center',
       type: 'number'
@@ -256,7 +270,9 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
     {
       field: 'created_at',
       headerName: 'Created',
-      width: 110,
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params: GridRenderCellParams) => (
         <Typography variant="body2">
           {new Date(params.value).toLocaleDateString()}
@@ -264,72 +280,136 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
       )
     },
     {
+      field: 'status',
+      headerName: 'Status',
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: (params: GridRenderCellParams) => (
+        <Chip 
+          label="Active" 
+          size="small" 
+          color="success"
+          variant="outlined"
+        />
+      )
+    },
+    {
       field: 'actions',
       headerName: 'Actions',
-      width: 160,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
       sortable: false,
       renderCell: (params: GridRenderCellParams) => (
         user && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role) ? (
-          <Box display="flex" gap={0.5}>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<PlayIcon />}
-              onClick={() => handlePlayContent(params.row)}
-              sx={{ fontSize: '0.75rem', minWidth: '60px' }}
-            >
-              {params.row.content_type === 'game' ? 'Play' : 
-               params.row.content_type === 'survey' ? 'Take' : 'Start'}
-            </Button>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<EditIcon />}
-              onClick={() => handleEditContent(params.row)}
-              sx={{ fontSize: '0.75rem', minWidth: '50px' }}
-            >
-              Edit
-            </Button>
+          <Box display="flex" gap={0.5} justifyContent="center">
+            <Tooltip title={
+              params.row.content_type === 'game' ? 'Play Game' : 
+              params.row.content_type === 'survey' ? 'Take Survey' : 'Start Training'
+            }>
+              <IconButton
+                size="small"
+                onClick={() => handlePlayContent(params.row)}
+                sx={{ 
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'primary.dark'
+                  }
+                }}
+              >
+                <PlayIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Edit Activity">
+              <IconButton
+                size="small"
+                onClick={() => handleEditContent(params.row)}
+                sx={{ 
+                  backgroundColor: 'grey.100',
+                  color: 'primary.main',
+                  '&:hover': {
+                    backgroundColor: 'primary.50',
+                    color: 'primary.dark'
+                  }
+                }}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </Box>
         ) : (
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<PlayIcon />}
-            onClick={() => handlePlayContent(params.row)}
-            sx={{ fontSize: '0.75rem' }}
-          >
-            {params.row.content_type === 'game' ? 'Play' : 
-             params.row.content_type === 'survey' ? 'Take' : 'Start'}
-          </Button>
+          <Tooltip title={
+            params.row.content_type === 'game' ? 'Play Game' : 
+            params.row.content_type === 'survey' ? 'Take Survey' : 'Start Training'
+          }>
+            <IconButton
+              size="small"
+              onClick={() => handlePlayContent(params.row)}
+              sx={{ 
+                backgroundColor: 'primary.main',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'primary.dark'
+                }
+              }}
+            >
+              <PlayIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         )
       )
     }
   ];
 
-  const handlePlayContent = (item: ContentItem) => {
-    // Store content in localStorage (temporary - will use proper API integration)
-    localStorage.setItem(`scenario_${item.id}`, JSON.stringify({
-      id: item.id,
-      name: item.title,
-      ...item.nlj_data
-    }));
+  const handlePlayContent = async (item: ContentItem) => {
+    console.log('🎯 PLAY BUTTON CLICKED! Item ID:', item.id);
     
-    // Load the scenario in game context
-    loadScenario(item.id, 'start');
-    navigate('/player');
+    try {
+      // Fetch the full content item with nlj_data (list endpoint only returns ContentSummary)
+      console.log('🔍 Fetching full content item from API...');
+      const fullContentItem = await contentApi.get(item.id);
+      console.log('🔍 Full content item:', fullContentItem);
+      console.log('🔍 nlj_data:', fullContentItem.nlj_data);
+      
+      // Reconstruct the full scenario structure from the database format
+      const fullScenario = {
+        id: fullContentItem.id,
+        name: fullContentItem.title,
+        description: fullContentItem.description || '',
+        nodes: fullContentItem.nlj_data?.nodes || [],
+        links: fullContentItem.nlj_data?.links || [],
+        variableDefinitions: fullContentItem.nlj_data?.variableDefinitions || []
+      };
+      
+      console.log('🔍 Reconstructed scenario:', fullScenario);
+      console.log('🔍 Scenario nodes:', fullScenario.nodes);
+      console.log('🔍 Start node:', fullScenario.nodes.find(n => n.type === 'start'));
+      
+      // Store content in localStorage for game state persistence
+      localStorage.setItem(`scenario_${fullScenario.id}`, JSON.stringify(fullScenario));
+      
+      // Load the scenario in game context with the complete scenario object
+      loadScenario(fullScenario);
+      
+      // Navigate to content-aware play URL
+      navigate(`/app/play/${item.id}`);
+      
+    } catch (error) {
+      console.error('🚨 Failed to fetch full content item:', error);
+      // TODO: Show user-friendly error message
+    }
   };
 
   const handleEditContent = (item: ContentItem) => {
-    // Navigate to Flow Editor with the selected content for editing
-    navigate(`/app/flow?edit=${item.id}`);
+    // Navigate to Flow Editor with the selected content for editing using proper routing
+    navigate(`/app/flow/edit/${item.id}`);
   };
 
   const handleCreateActivity = () => {
-    // Navigate to Flow Editor for creating new content
-    navigate('/app/flow');
+    // Navigate to Flow Editor for creating new content using proper routing
+    navigate('/app/flow/new');
   };
 
   const getPageTitle = () => {
@@ -389,103 +469,45 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
 
   return (
     <Box p={3} sx={{ position: 'relative' }}>
-      {/* Header */}
-      <Box mb={3}>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-          <Box>
-            <Typography variant="h4" gutterBottom>
-              {getPageTitle()}
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Browse all activities from the platform library
-            </Typography>
-          </Box>
-          
-          <Box display="flex" gap={2} alignItems="flex-end">
-            {/* Action Buttons for creators/admins */}
-            {user && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role) && (
-              <Box display="flex" gap={1}>
-                <Button
-                  variant="outlined"
-                  startIcon={<ImportIcon />}
-                  onClick={() => {/* TODO: Open import modal */}}
-                  size="small"
-                >
-                  Import Activity
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={handleCreateActivity}
-                  size="small"
-                >
-                  New Activity
-                </Button>
-              </Box>
-            )}
-            
-            {/* View Toggle */}
-            <Box display="flex" flexDirection="column" alignItems="flex-end" gap={1}>
-              <Typography variant="caption" color="text.secondary">
-                View Mode
-              </Typography>
-              <ToggleButtonGroup
-                value={viewMode}
-                exclusive
-                onChange={(_, newView) => newView && setViewMode(newView)}
-                aria-label="view mode"
-                size="small"
-                sx={{ 
-                  backgroundColor: 'background.paper',
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 1
-                }}
-              >
-                <ToggleButton 
-                  value="card" 
-                  aria-label="card view"
-                  sx={{ 
-                    px: 2,
-                    '&.Mui-selected': {
-                      backgroundColor: 'primary.main',
-                      color: 'primary.contrastText',
-                      '&:hover': {
-                        backgroundColor: 'primary.dark',
-                      }
-                    }
-                  }}
-                >
-                  <CardViewIcon sx={{ mr: 0.5 }} />
-                  Cards
-                </ToggleButton>
-                <ToggleButton 
-                  value="table" 
-                  aria-label="table view"
-                  sx={{ 
-                    px: 2,
-                    '&.Mui-selected': {
-                      backgroundColor: 'primary.main',
-                      color: 'primary.contrastText',
-                      '&:hover': {
-                        backgroundColor: 'primary.dark',
-                      }
-                    }
-                  }}
-                >
-                  <TableViewIcon sx={{ mr: 0.5 }} />
-                  Table
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </Box>
-          </Box>
+      {/* Header Row 1: Title and Action Buttons */}
+      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+        <Box>
+          <Typography variant="h4" gutterBottom>
+            {getPageTitle()}
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Browse all activities from the platform library
+          </Typography>
         </Box>
+        
+        {/* Action Buttons for creators/admins */}
+        {user && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role) && (
+          <Box display="flex" gap={1}>
+            <Button
+              variant="outlined"
+              startIcon={<ImportIcon />}
+              onClick={() => {/* TODO: Open import modal */}}
+              size="medium"
+            >
+              Import Activity
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreateActivity}
+              size="medium"
+            >
+              New Activity
+            </Button>
+          </Box>
+        )}
       </Box>
 
-      {/* Filters and Search */}
+      {/* Header Row 2: Search, Filters, and View Toggle */}
       <Box mb={3}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={3}>
+          {/* Search Field */}
+          <Grid xs={12} md={3}>
             <TextField
               fullWidth
               size="small"
@@ -502,7 +524,8 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
             />
           </Grid>
 
-          <Grid item xs={12} md={2}>
+          {/* Type Filter */}
+          <Grid xs={12} md={2}>
             <FormControl fullWidth size="small">
               <InputLabel>Type</InputLabel>
               <Select
@@ -519,7 +542,8 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
             </FormControl>
           </Grid>
           
-          <Grid item xs={12} md={2}>
+          {/* Sort Filter */}
+          <Grid xs={12} md={2}>
             <FormControl fullWidth size="small">
               <InputLabel>Sort by</InputLabel>
               <Select
@@ -535,7 +559,8 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} md={3}>
+          {/* Learning Style Filter */}
+          <Grid xs={12} md={2}>
             <FormControl fullWidth size="small">
               <InputLabel>Learning Style</InputLabel>
               <Select
@@ -552,10 +577,66 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} md={2}>
+          {/* Results Count */}
+          <Grid xs={12} md={1}>
             <Typography variant="body2" color="text.secondary" textAlign="center">
               {content.length} of {total} activities
             </Typography>
+          </Grid>
+
+          {/* Spacer for right alignment */}
+          <Grid xs />
+          
+          {/* View Toggle - Right aligned to table edge */}
+          <Grid>
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={(_, newView) => newView && setViewMode(newView)}
+              aria-label="view mode"
+              size="small"
+              sx={{ 
+                backgroundColor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1
+              }}
+            >
+              <ToggleButton 
+                value="card" 
+                aria-label="card view"
+                sx={{ 
+                  px: 1.5,
+                  '&.Mui-selected': {
+                    backgroundColor: 'primary.main',
+                    color: 'primary.contrastText',
+                    '&:hover': {
+                      backgroundColor: 'primary.dark',
+                    }
+                  }
+                }}
+              >
+                <CardViewIcon sx={{ mr: 0.5 }} />
+                Cards
+              </ToggleButton>
+              <ToggleButton 
+                value="table" 
+                aria-label="table view"
+                sx={{ 
+                  px: 1.5,
+                  '&.Mui-selected': {
+                    backgroundColor: 'primary.main',
+                    color: 'primary.contrastText',
+                    '&:hover': {
+                      backgroundColor: 'primary.dark',
+                    }
+                  }
+                }}
+              >
+                <TableViewIcon sx={{ mr: 0.5 }} />
+                Table
+              </ToggleButton>
+            </ToggleButtonGroup>
           </Grid>
         </Grid>
       </Box>
@@ -761,40 +842,48 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
           ))}
         </Box>
       ) : (
-        /* Table View with MUI DataGrid */
-        <Box sx={{ height: 600, width: '100%' }}>
-          <DataGrid
-            rows={content}
-            columns={columns}
-            initialState={{
-              pagination: {
-                paginationModel: { page: 0, pageSize: 10 },
-              },
-            }}
-            pageSizeOptions={[10, 25, 50]}
-            checkboxSelection={false}
-            disableRowSelectionOnClick
-            sx={{
-              '& .MuiDataGrid-cell': {
-                padding: '8px 16px',
-              },
-              '& .MuiDataGrid-row': {
-                minHeight: '72px !important',
-                '&:hover': {
-                  backgroundColor: 'action.hover',
-                }
-              },
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: 'grey.50',
-                borderBottom: '2px solid',
-                borderBottomColor: 'divider',
-              },
-              '& .MuiDataGrid-columnHeader': {
-                fontWeight: 600,
+        /* Table View with Simplified MUI DataGrid */
+        <DataGrid
+          rows={content}
+          columns={columns}
+          initialState={{
+            pagination: {
+              paginationModel: { page: 0, pageSize: 15 },
+            },
+          }}
+          pageSizeOptions={[10, 15, 25, 50]}
+          checkboxSelection={true}
+          disableRowSelectionOnClick={false}
+          autoHeight
+          sx={{
+            '& .MuiDataGrid-cell': {
+              display: 'flex',
+              alignItems: 'center',
+              padding: '8px 16px',
+            },
+            '& .MuiDataGrid-row': {
+              minHeight: '72px !important',
+              '&:hover': {
+                backgroundColor: 'action.hover',
               }
-            }}
-          />
-        </Box>
+            },
+            '& .MuiDataGrid-columnHeaders': {
+              backgroundColor: 'grey.50',
+              borderBottom: '2px solid',
+              borderBottomColor: 'divider',
+            },
+            '& .MuiDataGrid-columnHeader': {
+              fontWeight: 600,
+            },
+            // Ensure action buttons align with table edge
+            '& .MuiDataGrid-cell:last-child': {
+              paddingRight: '16px',
+            },
+            '& .MuiDataGrid-columnHeader:last-child': {
+              paddingRight: '16px',
+            }
+          }}
+        />
       )}
 
       {content.length === 0 && !loading && (
