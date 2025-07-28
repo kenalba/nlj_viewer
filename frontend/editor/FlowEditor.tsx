@@ -56,6 +56,12 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
   const { themeMode } = useTheme();
   const { loadScenario } = useGameContext();
 
+  // Update scenario when prop changes (e.g., from template selection)
+  useEffect(() => {
+    setEditedScenario(scenario);
+    setIsDirty(false);
+  }, [scenario]);
+
   const handleScenarioChange = useCallback((updatedScenario: NLJScenario) => {
     setEditedScenario(updatedScenario);
     setIsDirty(true);

@@ -17,8 +17,7 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models.user import User
-    # TODO: Uncomment when ApprovalWorkflow model is implemented
-    # from app.models.workflow import ApprovalWorkflow
+    from app.models.workflow import ContentVersion, ApprovalWorkflow
 
 
 class ContentState(str, Enum):
@@ -152,11 +151,13 @@ class ContentItem(Base):
         lazy="selectin"
     )
     
-    # Approval workflow - TODO: Implement when ApprovalWorkflow model is created
-    # approval_workflow: Mapped["ApprovalWorkflow | None"] = relationship(
-    #     back_populates="content",
-    #     lazy="selectin"
-    # )
+    # Version-aware relationships
+    versions: Mapped[list["ContentVersion"]] = relationship(
+        back_populates="content",
+        cascade="all, delete-orphan",
+        order_by="ContentVersion.version_number.desc()",
+        lazy="selectin"
+    )
     
     def __repr__(self) -> str:
         return f"<ContentItem(title={self.title}, state={self.state})>"
@@ -173,11 +174,53 @@ class ContentItem(Base):
         """Check if content is published and available to players."""
         return self.state == ContentState.PUBLISHED
     
+    def get_current_version(self) -> "ContentVersion | None":
+        """Get the current working/published version."""
+        if not self.versions:
+            return None
+        # Return the latest version (versions are ordered by version_number desc)
+        return self.versions[0]
+    
+    def get_published_version(self) -> "ContentVersion | None":
+        """Get the currently published version."""
+        from app.models.workflow import VersionStatus
+        for version in self.versions:
+            if version.version_status == VersionStatus.PUBLISHED:
+                return version
+        return None
+    
+    def get_draft_version(self) -> "ContentVersion | None":
+        """Get the current draft version."""
+        from app.models.workflow import VersionStatus
+        for version in self.versions:
+            if version.version_status == VersionStatus.DRAFT:
+                return version
+        return None
+    
+    def create_new_version(self, creator_id: uuid.UUID, change_summary: str = None) -> "ContentVersion":
+        """Create a new version of this content."""
+        from app.models.workflow import ContentVersion, VersionStatus
+        
+        next_version_number = (max(v.version_number for v in self.versions) + 1) if self.versions else 1
+        
+        new_version = ContentVersion(
+            content_id=self.id,
+            version_number=next_version_number,
+            version_status=VersionStatus.DRAFT,
+            nlj_data=self.nlj_data.copy(),  # Copy current NLJ data
+            title=self.title,
+            description=self.description,
+            change_summary=change_summary,
+            created_by=creator_id
+        )
+        
+        return new_version
+    
     def get_workflow_stage(self) -> str | None:
         """Get current workflow stage if in approval process."""
-        # TODO: Implement when ApprovalWorkflow model is created
-        # if self.approval_workflow:
-        #     return self.approval_workflow.current_stage
+        current_version = self.get_current_version()
+        if current_version and current_version.approval_workflow:
+            return current_version.approval_workflow.current_state
         return None
     
     def increment_view_count(self) -> None:

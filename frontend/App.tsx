@@ -14,6 +14,7 @@ import { XAPIResultsScreen } from './player/XAPIResultsScreen';
 import { ContentLibrary } from './player/ContentLibrary';
 import { ContentDashboard } from './editor/ContentDashboard';
 import { FlowEditor } from './editor/FlowEditor';
+import { ApprovalDashboard } from './player/ApprovalDashboard';
 import { useAuth } from './contexts/AuthContext';
 import { contentApi } from './api/content';
 import { HomePage } from './components/HomePage';
@@ -50,6 +51,7 @@ const AppContent: React.FC = () => {
   };
 
   const canEdit = user?.role && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role);
+  const canReview = user?.role && ['reviewer', 'approver', 'admin'].includes(user.role);
 
   // Load scenario from Content API when editing
   useEffect(() => {
@@ -146,6 +148,10 @@ const AppContent: React.FC = () => {
     return <ContentLibrary contentType="all" />;
   }
   
+  if (path.includes('/approvals') && canReview) {
+    return <ApprovalDashboard />;
+  }
+  
   if (path.includes('/dashboard') && canEdit) {
     return <ContentDashboard onEditScenario={setEditingScenario} />;
   }
@@ -204,9 +210,23 @@ const AppContent: React.FC = () => {
     // Determine scenario to edit
     let scenarioToEdit = editingScenario;
     
-    // If creating new activity and no editing scenario, create blank scenario
+    // If creating new activity and no editing scenario, check for template in navigation state
     if (action === 'new' && !editingScenario) {
-      scenarioToEdit = createBlankScenario();
+      const navigationState = location.state as any;
+      if (navigationState?.template) {
+        // Use template from navigation state
+        scenarioToEdit = {
+          ...navigationState.template,
+          id: `new-${Date.now()}`,
+          name: navigationState.name || navigationState.template.name,
+          description: navigationState.description || navigationState.template.description
+        };
+        // Clear the navigation state to prevent issues with back navigation
+        window.history.replaceState({}, '', location.pathname);
+      } else {
+        // Create blank scenario
+        scenarioToEdit = createBlankScenario();
+      }
       setEditingScenario(scenarioToEdit);
     }
     

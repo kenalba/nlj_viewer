@@ -3,7 +3,7 @@
  * Quick actions, activity feed, and usage metrics
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -41,10 +41,13 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { CreateActivityModal } from '../shared/CreateActivityModal';
+import type { ActivityTemplate } from '../utils/activityTemplates';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const canEdit = user?.role && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role);
   const canReview = user?.role && ['reviewer', 'approver', 'admin'].includes(user.role);
@@ -90,6 +93,18 @@ export const HomePage: React.FC = () => {
     }
   };
 
+  const handleActivityCreated = (template: ActivityTemplate, name: string, description?: string) => {
+    // For now, navigate to the flow editor - in a real implementation, 
+    // this would create the activity in the database first
+    navigate('/app/flow/new', { 
+      state: { 
+        template: template.template, 
+        name, 
+        description 
+      } 
+    });
+  };
+
   return (
     <Box p={3}>
       {/* Welcome Header */}
@@ -127,7 +142,7 @@ export const HomePage: React.FC = () => {
                     <Button
                       variant="outlined"
                       startIcon={<AddIcon />}
-                      onClick={() => navigate('/app/flow/new')}
+                      onClick={() => setCreateModalOpen(true)}
                       sx={{ flex: 1, minWidth: 120 }}
                     >
                       Create Activity
@@ -265,6 +280,13 @@ export const HomePage: React.FC = () => {
           </Card>
         </Box>
       </Box>
+
+      {/* Create Activity Modal */}
+      <CreateActivityModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onActivityCreated={handleActivityCreated}
+      />
     </Box>
   );
 };

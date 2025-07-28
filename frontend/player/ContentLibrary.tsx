@@ -11,7 +11,7 @@ import {
   CardContent,
   CardActions,
   Button,
-  Grid,
+  Grid2 as Grid,
   Chip,
   TextField,
   InputAdornment,
@@ -21,7 +21,6 @@ import {
   Select,
   CircularProgress,
   Alert,
-  Fab,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -46,12 +45,18 @@ import {
   Edit as EditIcon,
   ViewModule as CardViewIcon,
   TableRows as TableViewIcon,
-  FileUpload as ImportIcon
+  FileUpload as ImportIcon,
+  RateReview as RequestReviewIcon
 } from '@mui/icons-material';
 import { useGameContext } from '../contexts/GameContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { contentApi, ContentItem, ContentFilters } from '../api/content';
+import { CreateActivityModal } from '../shared/CreateActivityModal';
+import { ImportActivityModal } from '../shared/ImportActivityModal';
+import { RequestReviewModal } from '../shared/RequestReviewModal';
+import type { ActivityTemplate } from '../utils/activityTemplates';
+import type { NLJScenario } from '../types/nlj';
 
 interface ContentLibraryProps {
   contentType: 'all' | 'training' | 'survey' | 'game' | 'recent';
@@ -66,12 +71,24 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'title' | 'created_at' | 'view_count' | 'completion_count'>('title');
   const [learningStyleFilter, setLearningStyleFilter] = useState<string>('all');
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [requestReviewModalOpen, setRequestReviewModalOpen] = useState(false);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'card' | 'table'>(() => {
+    // Load view mode from localStorage, default to 'card'
+    const saved = localStorage.getItem('nlj-activities-view-mode');
+    return (saved === 'card' || saved === 'table') ? saved : 'card';
+  });
 
   const { loadScenario } = useGameContext();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Clear selection when content changes
+  useEffect(() => {
+    setSelectedRowIds([]);
+  }, [content]);
 
   // Fetch content from API
   useEffect(() => {
@@ -125,6 +142,11 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
 
     fetchContent();
   }, [contentType, searchTerm, typeFilter, sortBy, learningStyleFilter]);
+
+  // Clear row selection when content changes to prevent stale references
+  useEffect(() => {
+    setSelectedRowIds([]);
+  }, [content]);
 
   const getContentIcon = (type: string) => {
     switch (type) {
@@ -185,10 +207,12 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
             sx={{
               overflow: 'hidden',
               display: '-webkit-box',
-              WebkitLineClamp: 2,
+              WebkitLineClamp: 3,
               WebkitBoxOrient: 'vertical',
-              fontSize: '0.8rem',
-              lineHeight: 1.2
+              fontSize: '0.85rem',
+              lineHeight: 1.3,
+              wordBreak: 'break-word',
+              maxHeight: '4rem'
             }}
           >
             {params.row.description || 'No description available'}
@@ -280,18 +304,44 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
       )
     },
     {
-      field: 'status',
-      headerName: 'Status',
-      width: 100,
+      field: 'workflow_status',
+      headerName: 'Review Status',
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: (params: GridRenderCellParams) => {
+        const status = params.row.state || 'published';
+        const getStatusColor = (status: string) => {
+          switch (status) {
+            case 'draft': return 'default';
+            case 'submitted': return 'warning';
+            case 'in_review': return 'info';
+            case 'approved': return 'success';
+            case 'published': return 'success';
+            case 'rejected': return 'error';
+            default: return 'default';
+          }
+        };
+        return (
+          <Chip 
+            label={status.replace('_', ' ').toUpperCase()} 
+            size="small" 
+            color={getStatusColor(status) as any}
+            variant="outlined"
+          />
+        );
+      }
+    },
+    {
+      field: 'version',
+      headerName: 'Version',
+      width: 80,
       align: 'center',
       headerAlign: 'center',
       renderCell: (params: GridRenderCellParams) => (
-        <Chip 
-          label="Active" 
-          size="small" 
-          color="success"
-          variant="outlined"
-        />
+        <Typography variant="body2">
+          v1.0
+        </Typography>
       )
     },
     {
@@ -407,9 +457,113 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
     navigate(`/app/flow/edit/${item.id}`);
   };
 
+  const handleRequestReview = () => {
+    if (selectedRowIds.length > 0) {
+      setRequestReviewModalOpen(true);
+    }
+  };
+
+  const handleReviewRequested = () => {
+    // Clear selection and refresh the content list
+    setSelectedRowIds([]);
+    setSearchTerm(searchTerm); // Trigger refresh
+  };
+
+  const getSelectedItems = (): ContentItem[] => {
+    if (!Array.isArray(selectedRowIds)) {
+      return [];
+    }
+    return content.filter(item => selectedRowIds.includes(item.id));
+  };
+
   const handleCreateActivity = () => {
-    // Navigate to Flow Editor for creating new content using proper routing
-    navigate('/app/flow/new');
+    setCreateModalOpen(true);
+  };
+
+  const handleImportActivity = () => {
+    setImportModalOpen(true);
+  };
+
+  const handleActivityCreated = (template: ActivityTemplate, name: string, description?: string) => {
+    if (template.category === 'blank') {
+      // For blank templates, navigate directly to flow editor
+      navigate('/app/flow/new');
+    } else {
+      // For other templates, we could either navigate to flow editor with template data
+      // or create the content directly via API. For now, navigate to flow editor
+      navigate('/app/flow/new', { 
+        state: { 
+          template: template.template, 
+          name, 
+          description 
+        } 
+      });
+    }
+  };
+
+  const handleActivityImported = async (scenario: NLJScenario, fileName: string) => {
+    try {
+      // Create the content item in the database
+      const contentData = {
+        title: scenario.name,
+        description: scenario.description || `Imported from ${fileName}`,
+        nlj_data: {
+          nodes: scenario.nodes,
+          links: scenario.links,
+          variableDefinitions: scenario.variableDefinitions
+        },
+        content_type: 'training' as const, // Default to training for imported content
+        learning_style: 'visual' as const, // Default to visual
+        is_template: false,
+        template_category: 'Imported'
+      };
+
+      const createdContent = await contentApi.create(contentData);
+      
+      console.log('Successfully imported activity:', createdContent.id);
+      
+      // Refresh the content list to show the new imported activity
+      const filters: ContentFilters = {
+        state: 'published',
+        size: 100,
+        sort_by: sortBy,
+        sort_order: 'asc'
+      };
+      
+      // Apply current filters
+      if (contentType !== 'all' && contentType !== 'recent') {
+        filters.content_type = contentType;
+      }
+      if (searchTerm.trim()) {
+        filters.search = searchTerm.trim();
+      }
+      if (typeFilter !== 'all') {
+        filters.content_type = typeFilter;
+      }
+      if (learningStyleFilter !== 'all') {
+        filters.learning_style = learningStyleFilter;
+      }
+
+      const response = await contentApi.list(filters);
+      let filteredContent = response.items;
+      
+      if (contentType === 'recent') {
+        filteredContent = filteredContent
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, 10);
+      }
+
+      setContent(filteredContent);
+      setTotal(response.total);
+      
+      // TODO: Show success notification
+      console.log('Activity imported and content list refreshed');
+      
+    } catch (error) {
+      console.error('Failed to import activity:', error);
+      // TODO: Show error notification
+      alert('Failed to import activity. Please try again.');
+    }
   };
 
   const getPageTitle = () => {
@@ -486,7 +640,7 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
             <Button
               variant="outlined"
               startIcon={<ImportIcon />}
-              onClick={() => {/* TODO: Open import modal */}}
+              onClick={handleImportActivity}
               size="medium"
             >
               Import Activity
@@ -505,15 +659,16 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
 
       {/* Header Row 2: Search, Filters, and View Toggle */}
       <Box mb={3}>
-        <Grid container spacing={2} alignItems="center">
-          {/* Search Field */}
-          <Grid xs={12} md={3}>
+        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+          {/* Left side: Search and Filters */}
+          <Box display="flex" alignItems="center" gap={2} flex={1} flexWrap="wrap">
+            {/* Search Field */}
             <TextField
-              fullWidth
               size="small"
               placeholder="Search activities..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{ minWidth: 250 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -522,11 +677,9 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
                 )
               }}
             />
-          </Grid>
 
-          {/* Type Filter */}
-          <Grid xs={12} md={2}>
-            <FormControl fullWidth size="small">
+            {/* Type Filter */}
+            <FormControl size="small" sx={{ minWidth: 120 }}>
               <InputLabel>Type</InputLabel>
               <Select
                 value={typeFilter}
@@ -540,11 +693,9 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
                 <MenuItem value="game">Game</MenuItem>
               </Select>
             </FormControl>
-          </Grid>
-          
-          {/* Sort Filter */}
-          <Grid xs={12} md={2}>
-            <FormControl fullWidth size="small">
+            
+            {/* Sort Filter */}
+            <FormControl size="small" sx={{ minWidth: 140 }}>
               <InputLabel>Sort by</InputLabel>
               <Select
                 value={sortBy}
@@ -557,11 +708,9 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
                 <MenuItem value="completion_count">Most Completed</MenuItem>
               </Select>
             </FormControl>
-          </Grid>
 
-          {/* Learning Style Filter */}
-          <Grid xs={12} md={2}>
-            <FormControl fullWidth size="small">
+            {/* Learning Style Filter */}
+            <FormControl size="small" sx={{ minWidth: 140 }}>
               <InputLabel>Learning Style</InputLabel>
               <Select
                 value={learningStyleFilter}
@@ -575,24 +724,51 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
                 <MenuItem value="reading_writing">Reading/Writing</MenuItem>
               </Select>
             </FormControl>
-          </Grid>
 
-          {/* Results Count */}
-          <Grid xs={12} md={1}>
-            <Typography variant="body2" color="text.secondary" textAlign="center">
+            {/* Results Count */}
+            <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
               {content.length} of {total} activities
             </Typography>
-          </Grid>
+          </Box>
 
-          {/* Spacer for right alignment */}
-          <Grid xs />
-          
-          {/* View Toggle - Right aligned to table edge */}
-          <Grid>
+          {/* Middle: Selection Actions */}
+          {selectedRowIds.length > 0 && (
+            <Box display="flex" alignItems="center" gap={1}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                {selectedRowIds.length} selected
+              </Typography>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<RequestReviewIcon />}
+                onClick={handleRequestReview}
+                sx={{ minWidth: 'auto' }}
+              >
+                Request Review
+              </Button>
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => setSelectedRowIds([])}
+                sx={{ minWidth: 'auto' }}
+              >
+                Clear
+              </Button>
+            </Box>
+          )}
+
+          {/* Right side: View Toggle */}
             <ToggleButtonGroup
               value={viewMode}
               exclusive
-              onChange={(_, newView) => newView && setViewMode(newView)}
+              onChange={(_, newView) => {
+                if (newView) {
+                  setViewMode(newView);
+                  localStorage.setItem('nlj-activities-view-mode', newView);
+                  // Clear selection when switching views
+                  setSelectedRowIds([]);
+                }
+              }}
               aria-label="view mode"
               size="small"
               sx={{ 
@@ -637,8 +813,7 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
                 Table
               </ToggleButton>
             </ToggleButtonGroup>
-          </Grid>
-        </Grid>
+        </Box>
       </Box>
 
       {/* Content Display */}
@@ -842,48 +1017,83 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
           ))}
         </Box>
       ) : (
-        /* Table View with Simplified MUI DataGrid */
-        <DataGrid
-          rows={content}
-          columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: { page: 0, pageSize: 15 },
-            },
-          }}
-          pageSizeOptions={[10, 15, 25, 50]}
-          checkboxSelection={true}
-          disableRowSelectionOnClick={false}
-          autoHeight
-          sx={{
-            '& .MuiDataGrid-cell': {
-              display: 'flex',
-              alignItems: 'center',
-              padding: '8px 16px',
-            },
-            '& .MuiDataGrid-row': {
-              minHeight: '72px !important',
-              '&:hover': {
-                backgroundColor: 'action.hover',
-              }
-            },
-            '& .MuiDataGrid-columnHeaders': {
-              backgroundColor: 'grey.50',
-              borderBottom: '2px solid',
-              borderBottomColor: 'divider',
-            },
-            '& .MuiDataGrid-columnHeader': {
-              fontWeight: 600,
-            },
-            // Ensure action buttons align with table edge
-            '& .MuiDataGrid-cell:last-child': {
-              paddingRight: '16px',
-            },
-            '& .MuiDataGrid-columnHeader:last-child': {
-              paddingRight: '16px',
-            }
-          }}
-        />
+        <Box>
+          {/* Table View with Simplified MUI DataGrid */}
+          {content.length > 0 && content.every(item => item.id) ? (
+            <DataGrid
+              rows={content}
+              columns={columns}
+              initialState={{
+                pagination: {
+                  paginationModel: { page: 0, pageSize: 15 },
+                },
+              }}
+              pageSizeOptions={[10, 15, 25, 50]}
+              checkboxSelection={true}
+              disableRowSelectionOnClick={false}
+              onRowSelectionModelChange={(newSelection) => {
+                if (Array.isArray(newSelection)) {
+                  setSelectedRowIds(newSelection as string[]);
+                } else if (newSelection && typeof newSelection === 'object' && 'ids' in newSelection) {
+                  // Handle the {type: 'include', ids: Set(...)} format
+                  const ids = Array.from(newSelection.ids as Set<string>);
+                  setSelectedRowIds(ids);
+                } else {
+                  setSelectedRowIds([]);
+                }
+              }}
+              autoHeight
+              sx={{
+                '& .MuiDataGrid-cell': {
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '8px 16px',
+                },
+                '& .MuiDataGrid-row': {
+                  minHeight: '80px !important',
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                  }
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor: 'grey.50',
+                  borderBottom: '2px solid',
+                  borderBottomColor: 'divider',
+                },
+                '& .MuiDataGrid-columnHeader': {
+                  fontWeight: 600,
+                },
+                // Ensure action buttons align with table edge
+                '& .MuiDataGrid-cell:last-child': {
+                  paddingRight: '16px',
+                },
+                '& .MuiDataGrid-columnHeader:last-child': {
+                  paddingRight: '16px',
+                }
+              }}
+            />
+          ) : content.length > 0 ? (
+            <Box textAlign="center" py={8}>
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  Some activity data is malformed. Please contact support.
+                </Typography>
+              </Alert>
+            </Box>
+          ) : (
+            <Box textAlign="center" py={8}>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                No activities found
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {searchTerm || typeFilter !== 'all' || learningStyleFilter !== 'all' 
+                  ? 'Try adjusting your search or filter criteria'
+                  : 'No activities available yet'
+                }
+              </Typography>
+            </Box>
+          )}
+        </Box>
       )}
 
       {content.length === 0 && !loading && (
@@ -909,21 +1119,30 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
         </Box>
       )}
 
-      {/* Floating Action Button for Creating New Activities */}
-      {user && (user.role === 'creator' || user.role === 'admin') && (
-        <Fab
-          color="primary"
-          sx={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            zIndex: 1000
-          }}
-          onClick={handleCreateActivity}
-        >
-          <AddIcon />
-        </Fab>
-      )}
+
+      {/* Create Activity Modal */}
+      <CreateActivityModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onActivityCreated={handleActivityCreated}
+      />
+
+      {/* Import Activity Modal */}
+      <ImportActivityModal
+        open={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onActivityImported={handleActivityImported}
+      />
+
+      {/* Request Review Modal */}
+      <RequestReviewModal
+        open={requestReviewModalOpen}
+        contentItems={getSelectedItems()}
+        onClose={() => {
+          setRequestReviewModalOpen(false);
+        }}
+        onReviewRequested={handleReviewRequested}
+      />
     </Box>
   );
 };

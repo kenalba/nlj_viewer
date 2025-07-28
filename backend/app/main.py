@@ -63,14 +63,12 @@ async def health_check() -> dict[str, str]:
 from app.api.auth import router as auth_router
 from app.api.users import router as users_router
 from app.api.content import router as content_router
+from app.api.workflow import router as workflow_router
 
 app.include_router(auth_router, prefix="/api/auth", tags=["authentication"])
 app.include_router(users_router, prefix="/api/users", tags=["users"])
 app.include_router(content_router, prefix="/api", tags=["content"])
-
-# TODO: Add workflow router when we build it
-# from app.api.workflow import router as workflow_router
-# app.include_router(workflow_router, prefix="/api/workflow", tags=["workflow"])
+app.include_router(workflow_router, tags=["workflow"])
 
 
 if __name__ == "__main__":

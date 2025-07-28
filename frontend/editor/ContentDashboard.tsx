@@ -17,10 +17,6 @@ import {
   TextField,
   InputAdornment,
   Fab,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -30,6 +26,8 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { CreateActivityModal } from '../shared/CreateActivityModal';
+import type { ActivityTemplate } from '../utils/activityTemplates';
 import type { NLJScenario } from '../types/nlj';
 
 interface ContentItem {
@@ -114,34 +112,25 @@ export const ContentDashboard: React.FC<ContentDashboardProps> = ({ onEditScenar
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [contentItems] = useState<ContentItem[]>(mockContentItems);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [newContentName, setNewContentName] = useState('');
-  const [newContentDescription, setNewContentDescription] = useState('');
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const filteredItems = contentItems.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleCreateContent = () => {
-    if (!newContentName.trim()) return;
-
+  const handleActivityCreated = (template: ActivityTemplate, name: string, description?: string) => {
+    // Create new scenario from template
     const newScenario: NLJScenario = {
+      ...template.template,
       id: Date.now().toString(),
-      name: newContentName,
-      nodes: [],
-      links: [],
-      orientation: 'vertical',
-      activityType: 'training',
+      name: name,
+      description: description
     };
 
-    // Navigate to flow editor with new scenario
+    // Navigate to flow editor with prepopulated template
     onEditScenario(newScenario);
     navigate('/editor/flow-editor');
-    
-    setCreateDialogOpen(false);
-    setNewContentName('');
-    setNewContentDescription('');
   };
 
   const handleEditContent = (item: ContentItem) => {
@@ -280,49 +269,19 @@ export const ContentDashboard: React.FC<ContentDashboardProps> = ({ onEditScenar
       {/* Create FAB */}
       <Fab
         color="primary"
-        aria-label="create content"
+        aria-label="create activity"
         sx={{ position: 'fixed', bottom: 16, right: 16 }}
-        onClick={() => setCreateDialogOpen(true)}
+        onClick={() => setCreateModalOpen(true)}
       >
         <AddIcon />
       </Fab>
 
-      {/* Create Content Dialog */}
-      <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Create New Content</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Content Name"
-            fullWidth
-            variant="outlined"
-            value={newContentName}
-            onChange={(e) => setNewContentName(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            margin="dense"
-            label="Description (Optional)"
-            fullWidth
-            multiline
-            rows={3}
-            variant="outlined"
-            value={newContentDescription}
-            onChange={(e) => setNewContentDescription(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={handleCreateContent}
-            variant="contained"
-            disabled={!newContentName.trim()}
-          >
-            Create & Edit
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Create Activity Modal */}
+      <CreateActivityModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onActivityCreated={handleActivityCreated}
+      />
     </Container>
   );
 };

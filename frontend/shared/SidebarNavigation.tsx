@@ -30,6 +30,7 @@ import {
   Games as GamesIcon,
   Assessment as AssessmentIcon,
   ContentCopy as TemplateIcon,
+  RateReview as ReviewIcon,
   ExpandLess,
   ExpandMore,
   ChevronLeft as ChevronLeftIcon,
@@ -102,6 +103,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
   // Role-based navigation items
   const getNavigationItems = (): SidebarItem[] => {
     const canEdit = user?.role && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role);
+    const canReview = user?.role && ['reviewer', 'approver', 'admin'].includes(user.role);
     
     const items: SidebarItem[] = [
       {
@@ -118,6 +120,16 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
         badge: Object.values(contentLibrary).reduce((sum, count) => sum + count, 0) || undefined
       }
     ];
+
+    // Add approval dashboard for reviewers and approvers
+    if (canReview) {
+      items.push({
+        id: 'approvals',
+        label: 'Approvals',
+        icon: <ReviewIcon />,
+        path: '/app/approvals'
+      });
+    }
 
     // Add creation/editing features for users with appropriate roles
     if (canEdit) {

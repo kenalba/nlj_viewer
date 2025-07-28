@@ -17,7 +17,7 @@ from app.core.config import settings
 # Import all models to ensure they're registered with Base.metadata
 from app.models.user import User  # noqa: F401
 from app.models.content import ContentItem  # noqa: F401
-from app.models.workflow import ApprovalWorkflow, ApprovalStep  # noqa: F401
+from app.models.workflow import ContentVersion, ApprovalWorkflow, WorkflowReview  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
