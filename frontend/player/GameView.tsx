@@ -6,8 +6,9 @@ import {
   Typography, 
   IconButton,
   Container,
+  Alert,
 } from '@mui/material';
-import { Home as HomeIcon } from '@mui/icons-material';
+import { Home as HomeIcon, Visibility as ReviewIcon } from '@mui/icons-material';
 import type { NLJScenario } from '../types/nlj';
 import { NodeRenderer } from './NodeRenderer';
 import { CardTransition } from './CardTransition';
@@ -21,9 +22,10 @@ import { SoundToggle } from '../shared/SoundToggle';
 interface GameViewProps {
   scenario: NLJScenario;
   onHome: () => void;
+  reviewMode?: boolean;
 }
 
-export const GameView: React.FC<GameViewProps> = ({ scenario, onHome }) => {
+export const GameView: React.FC<GameViewProps> = ({ scenario, onHome, reviewMode = false }) => {
   const { state } = useGameContext();
   const { trackActivityLaunched } = useXAPI();
   
@@ -73,6 +75,24 @@ export const GameView: React.FC<GameViewProps> = ({ scenario, onHome }) => {
             <ThemeToggle />
           </Toolbar>
         </AppBar>
+
+        {/* Review Mode Banner */}
+        {reviewMode && (
+          <Alert 
+            severity="info" 
+            icon={<ReviewIcon />}
+            sx={{ 
+              borderRadius: 0, 
+              justifyContent: 'center',
+              backgroundColor: 'info.light',
+              '& .MuiAlert-message': {
+                fontWeight: 600
+              }
+            }}
+          >
+            Review Mode Active - This content is being reviewed
+          </Alert>
+        )}
 
         <Box sx={{ 
           flex: 1, 

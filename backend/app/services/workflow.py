@@ -117,7 +117,9 @@ class WorkflowService:
         
         result = await self.db.execute(
             select(ApprovalWorkflow)
-            .options(selectinload(ApprovalWorkflow.content_version))
+            .options(
+                selectinload(ApprovalWorkflow.content_version).selectinload(ContentVersion.content)
+            )
             .where(ApprovalWorkflow.content_version_id == version_id)
         )
         workflow = result.scalar_one_or_none()
@@ -138,6 +140,10 @@ class WorkflowService:
         if reviewer_id:
             workflow.assigned_reviewer_id = reviewer_id
             workflow.current_state = WorkflowState.IN_REVIEW
+        
+        # CRITICAL: Update parent content state to SUBMITTED (not PUBLISHED)
+        if workflow.content_version and workflow.content_version.content:
+            workflow.content_version.content.state = ContentState.SUBMITTED
         
         await self.db.commit()
         await self.db.refresh(workflow)
@@ -164,6 +170,9 @@ class WorkflowService:
         
         result = await self.db.execute(
             select(ApprovalWorkflow)
+            .options(
+                selectinload(ApprovalWorkflow.content_version).selectinload(ContentVersion.content)
+            )
             .where(ApprovalWorkflow.id == workflow_id)
         )
         workflow = result.scalar_one_or_none()
@@ -179,6 +188,10 @@ class WorkflowService:
         previous_state = workflow.current_state
         workflow.assigned_reviewer_id = reviewer_id
         workflow.current_state = WorkflowState.IN_REVIEW
+        
+        # Update parent content state to IN_REVIEW when reviewer is assigned
+        if workflow.content_version and workflow.content_version.content:
+            workflow.content_version.content.state = ContentState.IN_REVIEW
         
         await self.db.commit()
         await self.db.refresh(workflow)
@@ -207,7 +220,9 @@ class WorkflowService:
         
         result = await self.db.execute(
             select(ApprovalWorkflow)
-            .options(selectinload(ApprovalWorkflow.content_version))
+            .options(
+                selectinload(ApprovalWorkflow.content_version).selectinload(ContentVersion.content)
+            )
             .where(ApprovalWorkflow.id == workflow_id)
         )
         workflow = result.scalar_one_or_none()
@@ -224,6 +239,10 @@ class WorkflowService:
         previous_state = workflow.current_state
         workflow.current_state = WorkflowState.APPROVED_PENDING_PUBLISH
         workflow.approved_at = datetime.utcnow()
+        
+        # Update parent content state to APPROVED
+        if workflow.content_version and workflow.content_version.content:
+            workflow.content_version.content.state = ContentState.APPROVED
         
         await self.db.commit()
         await self.db.refresh(workflow)
@@ -256,6 +275,9 @@ class WorkflowService:
         
         result = await self.db.execute(
             select(ApprovalWorkflow)
+            .options(
+                selectinload(ApprovalWorkflow.content_version).selectinload(ContentVersion.content)
+            )
             .where(ApprovalWorkflow.id == workflow_id)
         )
         workflow = result.scalar_one_or_none()
@@ -271,6 +293,10 @@ class WorkflowService:
         # Update workflow state
         previous_state = workflow.current_state
         workflow.current_state = WorkflowState.REVISION_REQUESTED
+        
+        # Update parent content state back to DRAFT for revision
+        if workflow.content_version and workflow.content_version.content:
+            workflow.content_version.content.state = ContentState.DRAFT
         
         await self.db.commit()
         await self.db.refresh(workflow)
@@ -299,6 +325,9 @@ class WorkflowService:
         
         result = await self.db.execute(
             select(ApprovalWorkflow)
+            .options(
+                selectinload(ApprovalWorkflow.content_version).selectinload(ContentVersion.content)
+            )
             .where(ApprovalWorkflow.id == workflow_id)
         )
         workflow = result.scalar_one_or_none()
@@ -314,6 +343,10 @@ class WorkflowService:
         # Update workflow state
         previous_state = workflow.current_state
         workflow.current_state = WorkflowState.REJECTED
+        
+        # Update parent content state to REJECTED
+        if workflow.content_version and workflow.content_version.content:
+            workflow.content_version.content.state = ContentState.REJECTED
         
         await self.db.commit()
         await self.db.refresh(workflow)
@@ -395,6 +428,9 @@ class WorkflowService:
         
         result = await self.db.execute(
             select(ApprovalWorkflow)
+            .options(
+                selectinload(ApprovalWorkflow.content_version).selectinload(ContentVersion.content)
+            )
             .where(ApprovalWorkflow.id == workflow_id)
         )
         workflow = result.scalar_one_or_none()
@@ -412,6 +448,10 @@ class WorkflowService:
         
         previous_state = workflow.current_state
         workflow.current_state = WorkflowState.WITHDRAWN
+        
+        # Update parent content state back to DRAFT when withdrawn
+        if workflow.content_version and workflow.content_version.content:
+            workflow.content_version.content.state = ContentState.DRAFT
         
         await self.db.commit()
         await self.db.refresh(workflow)
@@ -464,6 +504,51 @@ class WorkflowService:
         )
         
         return result.scalars().all()
+    
+    async def bulk_change_content_status(
+        self,
+        content_ids: List[uuid.UUID],
+        new_status: ContentState,
+        user_id: uuid.UUID
+    ) -> List[uuid.UUID]:
+        """Bulk change content status for multiple items."""
+        
+        # Get all content items to update
+        result = await self.db.execute(
+            select(ContentItem)
+            .where(ContentItem.id.in_(content_ids))
+        )
+        content_items = result.scalars().all()
+        
+        updated_ids = []
+        
+        for content_item in content_items:
+            # Validate state transition
+            if not self._can_change_status(content_item.state, new_status):
+                continue
+            
+            # Update content state
+            content_item.state = new_status
+            updated_ids.append(content_item.id)
+        
+        await self.db.commit()
+        
+        return updated_ids
+    
+    def _can_change_status(self, current_state: ContentState, new_state: ContentState) -> bool:
+        """Check if a status change is allowed."""
+        
+        # Allow most transitions for now, but prevent some invalid ones
+        invalid_transitions = {
+            # Can't go directly from REJECTED to PUBLISHED without review
+            (ContentState.REJECTED, ContentState.PUBLISHED),
+            # Can't go from ARCHIVED back to active states without proper workflow
+            (ContentState.ARCHIVED, ContentState.PUBLISHED),
+            (ContentState.ARCHIVED, ContentState.APPROVED),
+        }
+        
+        transition = (current_state, new_state)
+        return transition not in invalid_transitions
     
     async def _log_state_change(
         self,

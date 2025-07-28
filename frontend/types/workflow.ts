@@ -71,6 +71,7 @@ export interface WorkflowReview {
 
 export interface PendingReview {
   workflow: ApprovalWorkflow;
+  content_id: string;
   content_title: string;
   content_description?: string;
   version_number: number;

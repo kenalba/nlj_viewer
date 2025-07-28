@@ -46,7 +46,8 @@ import {
   ViewModule as CardViewIcon,
   TableRows as TableViewIcon,
   FileUpload as ImportIcon,
-  RateReview as RequestReviewIcon
+  RateReview as RequestReviewIcon,
+  ChangeCircle as ChangeStatusIcon
 } from '@mui/icons-material';
 import { useGameContext } from '../contexts/GameContext';
 import { useNavigate } from 'react-router-dom';
@@ -74,6 +75,7 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [requestReviewModalOpen, setRequestReviewModalOpen] = useState(false);
+  const [bulkStatusChangeLoading, setBulkStatusChangeLoading] = useState(false);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'card' | 'table'>(() => {
     // Load view mode from localStorage, default to 'card'
@@ -476,6 +478,33 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
     return content.filter(item => selectedRowIds.includes(item.id));
   };
 
+  const handleBulkStatusChange = async (newStatus: string) => {
+    if (selectedRowIds.length === 0) return;
+
+    try {
+      setBulkStatusChangeLoading(true);
+      
+      const result = await workflowApi.bulkChangeStatus(selectedRowIds, newStatus);
+      
+      // Show success message and refresh content
+      console.log(`Successfully updated ${result.updated_count} items to ${newStatus}`);
+      
+      if (result.skipped_count > 0) {
+        console.warn(`${result.skipped_count} items were skipped due to invalid status transitions`);
+      }
+      
+      // Clear selection and refresh content
+      setSelectedRowIds([]);
+      setSearchTerm(searchTerm); // Trigger refresh
+      
+    } catch (error) {
+      console.error('Failed to change status:', error);
+      setError('Failed to change content status. Please try again.');
+    } finally {
+      setBulkStatusChangeLoading(false);
+    }
+  };
+
   const handleCreateActivity = () => {
     setCreateModalOpen(true);
   };
@@ -745,6 +774,26 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
                 sx={{ minWidth: 'auto' }}
               >
                 Request Review
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<ChangeStatusIcon />}
+                onClick={() => handleBulkStatusChange('draft')}
+                disabled={bulkStatusChangeLoading}
+                sx={{ minWidth: 'auto' }}
+              >
+                Set to Draft
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<ChangeStatusIcon />}
+                onClick={() => handleBulkStatusChange('published')}
+                disabled={bulkStatusChangeLoading}
+                sx={{ minWidth: 'auto' }}
+              >
+                Set to Published
               </Button>
               <Button
                 variant="text"

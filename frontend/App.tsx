@@ -15,6 +15,8 @@ import { ContentLibrary } from './player/ContentLibrary';
 import { ContentDashboard } from './editor/ContentDashboard';
 import { FlowEditor } from './editor/FlowEditor';
 import { ApprovalDashboard } from './player/ApprovalDashboard';
+import { PlayActivityLoader } from './player/PlayActivityLoader';
+import { DetailedReviewPage } from './pages/DetailedReviewPage';
 import { useAuth } from './contexts/AuthContext';
 import { contentApi } from './api/content';
 import { HomePage } from './components/HomePage';
@@ -151,6 +153,17 @@ const AppContent: React.FC = () => {
   if (path.includes('/approvals') && canReview) {
     return <ApprovalDashboard />;
   }
+
+  // Handle detailed review page
+  if (path.includes('/app/review/') && canReview) {
+    const pathSegments = path.split('/');
+    const reviewIndex = pathSegments.indexOf('review');
+    const workflowId = reviewIndex !== -1 ? pathSegments[reviewIndex + 1] : null;
+    
+    if (workflowId) {
+      return <DetailedReviewPage />;
+    }
+  }
   
   if (path.includes('/dashboard') && canEdit) {
     return <ContentDashboard onEditScenario={setEditingScenario} />;
@@ -162,18 +175,24 @@ const AppContent: React.FC = () => {
     const playIndex = pathSegments.indexOf('play');
     const contentId = playIndex !== -1 ? pathSegments[playIndex + 1] : null;
     
+    // Check for review mode
+    const urlParams = new URLSearchParams(location.search);
+    const isReviewMode = urlParams.get('review_mode') === 'true';
+    
     if (contentId && state.scenarioId && state.currentNodeId && currentScenario) {
-      return <GameView scenario={currentScenario} onHome={handleHome} />;
+      return (
+        <GameView 
+          scenario={currentScenario} 
+          onHome={handleHome} 
+          reviewMode={isReviewMode}
+        />
+      );
     }
     
-    // If we have a content ID but no loaded scenario, redirect to home for loading
+    // If we have a content ID but no loaded scenario, load it
     if (contentId) {
-      return (
-        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="400px" gap={2}>
-          <CircularProgress />
-          <Typography>Loading activity...</Typography>
-        </Box>
-      );
+      // Use a custom hook or effect to load the scenario based on review mode permissions
+      return <PlayActivityLoader contentId={contentId} isReviewMode={isReviewMode} canReview={canReview} />;
     }
   }
   

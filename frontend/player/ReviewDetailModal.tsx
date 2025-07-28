@@ -30,6 +30,7 @@ import {
   Card,
   CardContent
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import {
   CheckCircle as ApproveIcon,
   Cancel as RejectIcon,
@@ -37,10 +38,15 @@ import {
   ExpandMore as ExpandIcon,
   Close as CloseIcon,
   PlayArrow as PreviewIcon,
+  PlayArrow as PlayIcon,
+  QrCode as QrCodeIcon,
   History as HistoryIcon,
   Person as PersonIcon,
-  Schedule as ClockIcon
+  Schedule as ClockIcon,
+  Smartphone as MobileIcon,
+  OpenInFull as DetailedReviewIcon
 } from '@mui/icons-material';
+import QRCode from 'qrcode';
 import { useAuth } from '../contexts/AuthContext';
 import { workflowApi } from '../api/workflow';
 import type { 
@@ -94,10 +100,12 @@ export const ReviewDetailModal: React.FC<ReviewDetailModalProps> = ({
   const [autoPublish, setAutoPublish] = useState(false);
   const [workflowHistory, setWorkflowHistory] = useState<WorkflowReview[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   
   const { user } = useAuth();
+  const navigate = useNavigate();
 
-  const { workflow, content_title, content_description, version_number, creator_name, submitted_at } = review;
+  const { workflow, content_id, content_title, content_description, version_number, creator_name, submitted_at } = review;
   const stateColor = getWorkflowStateColor(workflow.current_state);
   const stateLabel = getWorkflowStateLabel(workflow.current_state);
 
@@ -105,8 +113,29 @@ export const ReviewDetailModal: React.FC<ReviewDetailModalProps> = ({
   useEffect(() => {
     if (open) {
       loadWorkflowHistory();
+      generateQRCode();
     }
   }, [open, workflow.id]);
+
+  // Generate QR code for mobile review access
+  const generateQRCode = async () => {
+    try {
+      // Use current location to preserve base path
+      const currentUrl = new URL(window.location.href);
+      const reviewUrl = `${currentUrl.origin}${currentUrl.pathname.includes('/nlj_viewer/') ? '/nlj_viewer' : ''}/app/play/${content_id}?review_mode=true`;
+      const qrDataUrl = await QRCode.toDataURL(reviewUrl, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      setQrCodeDataUrl(qrDataUrl);
+    } catch (error) {
+      console.error('Failed to generate QR code:', error);
+    }
+  };
 
   const loadWorkflowHistory = async () => {
     try {
@@ -175,36 +204,100 @@ export const ReviewDetailModal: React.FC<ReviewDetailModalProps> = ({
     onClose();
   };
 
+  const handlePlayContent = () => {
+    // Use current location to preserve base path
+    const currentUrl = new URL(window.location.href);
+    const basePath = currentUrl.pathname.includes('/nlj_viewer/') ? '/nlj_viewer' : '';
+    const reviewUrl = `${basePath}/app/play/${content_id}?review_mode=true`;
+    window.open(reviewUrl, '_blank');
+  };
+
+  const handleDetailedReview = () => {
+    // Navigate to the detailed review page
+    navigate(`/app/review/${workflow.id}`);
+  };
+
   const renderContentPreview = () => {
-    // TODO: Implement content preview based on NLJ data
-    // For now, show basic information
     return (
       <Box>
-        <Alert severity="info" sx={{ mb: 2 }}>
-          Content preview functionality will be implemented here. 
-          This would show the actual NLJ scenario content for review.
-        </Alert>
-        
-        <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
-          <Typography variant="body2" color="text.secondary">
-            NLJ Data Preview (JSON structure):
+        {/* Review Actions */}
+        <Paper sx={{ p: 3, mb: 3, bgcolor: 'background.default' }}>
+          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <PlayIcon color="primary" />
+            Interactive Preview
           </Typography>
-          <Box 
-            component="pre" 
-            sx={{ 
-              fontSize: '0.75rem', 
-              overflow: 'auto', 
-              maxHeight: 200,
-              mt: 1,
-              whiteSpace: 'pre-wrap'
-            }}
-          >
-            {JSON.stringify({
-              title: content_title,
-              description: content_description,
-              version: version_number,
-              status: 'Ready for Review'
-            }, null, 2)}
+          
+          <Grid container spacing={3}>
+            {/* Play Button */}
+            <Grid item xs={12} md={6}>
+              <Box>
+                <Typography variant="subtitle2" gutterBottom>
+                  Desktop Review
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="large"
+                  startIcon={<PlayIcon />}
+                  onClick={handlePlayContent}
+                  fullWidth
+                  sx={{ mb: 1 }}
+                >
+                  Play Activity
+                </Button>
+                <Typography variant="caption" color="text.secondary">
+                  Opens the activity in a new tab for interactive review
+                </Typography>
+              </Box>
+            </Grid>
+
+            {/* QR Code */}
+            <Grid item xs={12} md={6}>
+              <Box>
+                <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <MobileIcon fontSize="small" />
+                  Mobile Review
+                </Typography>
+                {qrCodeDataUrl ? (
+                  <Box display="flex" flexDirection="column" alignItems="center">
+                    <img 
+                      src={qrCodeDataUrl} 
+                      alt="QR Code for mobile review" 
+                      style={{ width: 120, height: 120, border: '1px solid #ddd', borderRadius: 4 }}
+                    />
+                    <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ mt: 1 }}>
+                      Scan with your mobile device to review on-the-go
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Box display="flex" justifyContent="center" alignItems="center" sx={{ height: 120 }}>
+                    <CircularProgress size={24} />
+                  </Box>
+                )}
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+
+        {/* Content Information */}
+        <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
+          <Typography variant="subtitle2" gutterBottom>
+            Content Overview
+          </Typography>
+          <Box sx={{ ml: 2 }}>
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              <strong>Title:</strong> {content_title}
+            </Typography>
+            {content_description && (
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                <strong>Description:</strong> {content_description}
+              </Typography>
+            )}
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              <strong>Version:</strong> {version_number}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Status:</strong> {stateLabel}
+            </Typography>
           </Box>
         </Paper>
       </Box>
@@ -412,6 +505,16 @@ export const ReviewDetailModal: React.FC<ReviewDetailModalProps> = ({
       </DialogContent>
 
       <DialogActions sx={{ p: 3, pt: 0 }}>
+        <Button 
+          variant="outlined"
+          startIcon={<DetailedReviewIcon />}
+          onClick={handleDetailedReview}
+          disabled={loading}
+          sx={{ mr: 'auto' }}
+        >
+          Detailed Review
+        </Button>
+        
         <Button onClick={handleClose} disabled={loading}>
           Cancel
         </Button>

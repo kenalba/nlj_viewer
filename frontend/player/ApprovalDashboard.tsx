@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -57,7 +58,6 @@ import {
   canRequestRevision,
   canReject
 } from '../types/workflow';
-import { ReviewDetailModal } from './ReviewDetailModal';
 import { WorkflowHistoryModal } from './WorkflowHistoryModal';
 
 interface TabPanelProps {
@@ -85,6 +85,7 @@ export const ApprovalDashboard: React.FC = () => {
   const [stateFilter, setStateFilter] = useState<WorkflowState | 'all'>('all');
   
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Load pending reviews
   useEffect(() => {
@@ -123,7 +124,8 @@ export const ApprovalDashboard: React.FC = () => {
   };
 
   const handleReviewClick = (review: PendingReview) => {
-    setSelectedReview(review);
+    // Navigate directly to detailed review page
+    navigate(`/app/review/${review.workflow.id}`);
   };
 
   const handleReviewComplete = () => {
@@ -229,46 +231,14 @@ export const ApprovalDashboard: React.FC = () => {
           {/* Action buttons */}
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Box display="flex" gap={1}>
-              {canApprove(workflow.current_state) && (
-                <Button
-                  size="small"
-                  variant="contained"
-                  color="success"
-                  startIcon={<ApproveIcon />}
-                  onClick={() => handleReviewClick(review)}
-                >
-                  Review
-                </Button>
-              )}
-              {canRequestRevision(workflow.current_state) && !canApprove(workflow.current_state) && (
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="warning"
-                  startIcon={<RevisionIcon />}
-                  onClick={() => handleReviewClick(review)}
-                >
-                  Request Changes
-                </Button>
-              )}
-              {canReject(workflow.current_state) && !canApprove(workflow.current_state) && (
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="error"
-                  startIcon={<RejectIcon />}
-                  onClick={() => handleReviewClick(review)}
-                >
-                  Reject
-                </Button>
-              )}
               <Button
                 size="small"
-                variant="outlined"
-                startIcon={<ViewIcon />}
+                variant="contained"
+                color="primary"
+                startIcon={<ReviewIcon />}
                 onClick={() => handleReviewClick(review)}
               >
-                View Details
+                Review Content
               </Button>
             </Box>
             
@@ -428,15 +398,7 @@ export const ApprovalDashboard: React.FC = () => {
         </TabPanel>
       )}
 
-      {/* Review Detail Modal */}
-      {selectedReview && (
-        <ReviewDetailModal
-          open={!!selectedReview}
-          review={selectedReview}
-          onClose={() => setSelectedReview(null)}
-          onReviewComplete={handleReviewComplete}
-        />
-      )}
+      {/* Keep modal for workflow history only - review modal no longer needed */}
 
       {/* Workflow History Modal */}
       {historyWorkflowId && (

@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 
 from app.core.deps import get_current_user, get_db
 from app.models import User, WorkflowState, ReviewDecision, VersionStatus
+from app.models.content import ContentState
 from app.services.workflow import WorkflowService, WorkflowError
 
 router = APIRouter(prefix="/api/workflow", tags=["workflow"])
@@ -78,6 +79,12 @@ class PublishVersionRequest(BaseModel):
     version_id: uuid.UUID
 
 
+class BulkStatusChangeRequest(BaseModel):
+    """Request model for bulk status changes."""
+    content_ids: List[uuid.UUID]
+    new_status: str = Field(..., description="New status for content items")
+
+
 # Response models
 class ContentVersionResponse(BaseModel):
     """Response model for content versions."""
@@ -134,6 +141,7 @@ class ReviewResponse(BaseModel):
 class PendingReviewResponse(BaseModel):
     """Response model for pending reviews."""
     workflow: WorkflowResponse
+    content_id: uuid.UUID
     content_title: str
     content_description: Optional[str]
     version_number: int
@@ -375,6 +383,7 @@ async def get_pending_reviews(
         for workflow in workflows:
             responses.append(PendingReviewResponse(
                 workflow=WorkflowResponse.from_orm(workflow),
+                content_id=workflow.content_version.content_id,
                 content_title=workflow.content_version.title,
                 content_description=workflow.content_version.description,
                 version_number=workflow.content_version.version_number,
@@ -401,6 +410,43 @@ async def get_workflow_history(
         workflow_service = WorkflowService(db)
         reviews = await workflow_service.get_workflow_history(workflow_id)
         return [ReviewResponse.from_orm(review) for review in reviews]
+    except WorkflowError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.post("/bulk-status-change", response_model=Dict[str, Any])
+async def bulk_change_status(
+    request: BulkStatusChangeRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Bulk change status for multiple content items."""
+    try:
+        # Validate status value
+        try:
+            new_status = ContentState(request.new_status)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid status: {request.new_status}"
+            )
+        
+        workflow_service = WorkflowService(db)
+        updated_ids = await workflow_service.bulk_change_content_status(
+            content_ids=request.content_ids,
+            new_status=new_status,
+            user_id=current_user.id
+        )
+        
+        return {
+            "updated_count": len(updated_ids),
+            "updated_ids": updated_ids,
+            "skipped_count": len(request.content_ids) - len(updated_ids),
+            "new_status": request.new_status
+        }
     except WorkflowError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

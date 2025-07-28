@@ -174,6 +174,24 @@ export class WorkflowApi {
     );
   }
 
+  async bulkChangeStatus(
+    contentIds: string[],
+    newStatus: string
+  ): Promise<{
+    updated_count: number;
+    updated_ids: string[];
+    skipped_count: number;
+    new_status: string;
+  }> {
+    return this.request('/api/workflow/bulk-status-change', {
+      method: 'POST',
+      data: {
+        content_ids: contentIds,
+        new_status: newStatus,
+      },
+    });
+  }
+
   // Combined operations for common workflows
   async createVersionWithWorkflow(
     versionRequest: CreateVersionRequest,
