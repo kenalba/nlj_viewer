@@ -49,7 +49,7 @@ export const AppRouter: React.FC = () => {
   }
 
   return (
-    <Router basename="/nlj_viewer">
+    <Router basename="/">
       <Routes>
         {/* Auth Routes */}
         <Route 

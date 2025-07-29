@@ -4,20 +4,29 @@ A full-stack TypeScript application for creating, managing, and delivering inter
 
 ## 🚀 Quick Start
 
+### Development Environment
 ```bash
-# Frontend
+# Install dependencies and start both frontend & backend
 npm install
 npm run dev
-
-# Backend
-cd backend
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
 ```
 
 Visit `http://localhost:5173` for the frontend and `http://localhost:8000/docs` for the API documentation.
+
+### Production Deployment
+```bash
+# Full production build and deployment
+./deploy-callcoach.sh
+
+# Manual deployment steps:
+npm run build:frontend
+sudo cp -r frontend/dist/* /var/www/callcoach.training/
+sudo systemctl restart callcoach-api
+sudo nginx -s reload
+```
+
+**🌐 Live Production Site**: https://callcoach.training  
+**📖 API Documentation**: https://callcoach.training/api/docs
 
 ## 📋 Platform Overview
 
@@ -86,12 +95,17 @@ docker-compose up               # Run with Docker
 
 ## 🌟 Current Status
 
-✅ **Phase 4 Complete**: Enhanced User Experience and Navigation
-- Modern Home Dashboard with flexbox layout
-- Content-aware URLs with deep linking support
-- Immersive activity experience with hidden sidebar during gameplay
-- Enhanced Flow Editor integration with database persistence
-- Responsive design that adapts to all screen sizes
+✅ **Production Deployment Complete**: Live at https://callcoach.training
+- Full-stack deployment with nginx, PostgreSQL, and FastAPI
+- Automated deployment pipeline with `deploy-callcoach.sh`
+- SSL certificates and production-ready configuration
+- API documentation available at `/api/docs`
+
+✅ **Phase 5 Complete**: Enhanced Content Creation Workflow
+- Template-based activity creation with 5 pre-built templates
+- Visual template selection with Material-UI interface
+- Two-step creation flow with proper validation
+- Seamless Flow Editor integration with database persistence
 
 ## 🚀 Next Steps
 

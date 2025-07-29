@@ -53,12 +53,28 @@ A full-stack TypeScript application for creating, managing, and delivering inter
 
 ## Quick Start
 
+### Development
 ```bash
 npm install
 npm run dev
 ```
 
 Visit `http://localhost:5173` to load scenarios.
+
+### Production Deployment
+```bash
+# Build and deploy to production
+./deploy-callcoach.sh
+
+# Or manual deployment:
+npm run build:frontend
+sudo cp -r frontend/dist/* /var/www/callcoach.training/
+sudo systemctl restart callcoach-api
+sudo nginx -s reload
+```
+
+**Production Site**: https://callcoach.training  
+**API Documentation**: https://callcoach.training/api/docs
 
 ## Architecture
 
@@ -179,7 +195,7 @@ Supports comprehensive activity schema including:
 
 ✅ **Core System**: Fully functional with all question types implemented
 ✅ **Testing**: 326 tests passing, comprehensive test coverage including TrueFalseNode, OrderingNode, MatchingNode, ConnectionsNode, WordleNode, FlowViewer, and ScenarioLoader
-✅ **Deployment**: TypeScript build errors resolved, deployment-ready
+✅ **Production Deployment**: Live at https://callcoach.training with nginx, PostgreSQL, and FastAPI backend
 ✅ **UI/UX**: Responsive design, enhanced keyboard navigation, audio feedback
 ✅ **xAPI Integration**: Complete event tracking system with learning analytics
 ✅ **Flow Editor**: WYSIWYG visual editor with React Flow integration
