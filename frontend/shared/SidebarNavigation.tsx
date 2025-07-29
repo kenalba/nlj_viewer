@@ -31,6 +31,7 @@ import {
   Assessment as AssessmentIcon,
   ContentCopy as TemplateIcon,
   RateReview as ReviewIcon,
+  AutoAwesome as GenerateIcon,
   ExpandLess,
   ExpandMore,
   ChevronLeft as ChevronLeftIcon,
@@ -138,6 +139,13 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
         label: 'Content Dashboard',
         icon: <EditIcon />,
         path: '/app/dashboard'
+      });
+      
+      items.push({
+        id: 'generate',
+        label: 'Content Generation',
+        icon: <GenerateIcon />,
+        path: '/app/generate'
       });
     }
 

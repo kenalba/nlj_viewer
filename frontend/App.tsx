@@ -17,6 +17,7 @@ import { FlowEditor } from './editor/FlowEditor';
 import { ApprovalDashboard } from './player/ApprovalDashboard';
 import { PlayActivityLoader } from './player/PlayActivityLoader';
 import { DetailedReviewPage } from './pages/DetailedReviewPage';
+import { ContentGenerationPage } from './pages/ContentGenerationPage';
 import { useAuth } from './contexts/AuthContext';
 import { contentApi } from './api/content';
 import { HomePage } from './components/HomePage';
@@ -167,6 +168,10 @@ const AppContent: React.FC = () => {
   
   if (path.includes('/dashboard') && canEdit) {
     return <ContentDashboard onEditScenario={setEditingScenario} />;
+  }
+  
+  if (path.includes('/generate') && canEdit) {
+    return <ContentGenerationPage />;
   }
   
   // Handle playing specific activities with content-aware URLs
