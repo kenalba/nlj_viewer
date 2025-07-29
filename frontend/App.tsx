@@ -18,6 +18,7 @@ import { ApprovalDashboard } from './player/ApprovalDashboard';
 import { PlayActivityLoader } from './player/PlayActivityLoader';
 import { DetailedReviewPage } from './pages/DetailedReviewPage';
 import { ContentGenerationPage } from './pages/ContentGenerationPage';
+import { SubmitForReviewPage } from './pages/SubmitForReviewPage';
 import { useAuth } from './contexts/AuthContext';
 import { contentApi } from './api/content';
 import { HomePage } from './components/HomePage';
@@ -172,6 +173,10 @@ const AppContent: React.FC = () => {
   
   if (path.includes('/generate') && canEdit) {
     return <ContentGenerationPage />;
+  }
+  
+  if (path.includes('/app/submit-review') && canEdit) {
+    return <SubmitForReviewPage />;
   }
   
   // Handle playing specific activities with content-aware URLs

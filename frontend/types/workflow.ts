@@ -70,7 +70,7 @@ export interface WorkflowReview {
 }
 
 export interface PendingReview {
-  workflow: ApprovalWorkflow;
+  workflow: ApprovalWorkflow | MultiStageWorkflow;
   content_id: string;
   content_title: string;
   content_description?: string;
@@ -127,6 +127,119 @@ export interface WithdrawSubmissionRequest {
 
 export interface PublishVersionRequest {
   version_id: string;
+}
+
+// Multi-stage workflow types
+export enum WorkflowTemplateType {
+  TRAINING = "training",
+  ASSESSMENT = "assessment", 
+  SURVEY = "survey",
+  GAME = "game",
+  DEFAULT = "default"
+}
+
+export enum StageType {
+  PEER_REVIEW = "peer_review",
+  EXPERT_REVIEW = "expert_review",
+  MANAGER_APPROVAL = "manager_approval",
+  FINAL_APPROVAL = "final_approval",
+  COMPLIANCE_CHECK = "compliance_check",
+  CUSTOM = "custom"
+}
+
+export interface WorkflowTemplate {
+  id: string;
+  name: string;
+  content_type: WorkflowTemplateType;
+  description?: string;
+  is_default: boolean;
+  is_active: boolean;
+  auto_publish_on_completion: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  stages: WorkflowTemplateStage[];
+}
+
+export interface WorkflowTemplateStage {
+  id: string;
+  template_id: string;
+  stage_order: number;
+  stage_type: StageType;
+  name: string;
+  description?: string;
+  required_approvals: number;
+  allow_parallel_review: boolean;
+  auto_assign_to_role?: string;
+  reviewer_selection_criteria?: Record<string, any>;
+  estimated_duration_hours?: number;
+}
+
+export interface StageReviewerAssignment {
+  id: string;
+  stage_instance_id: string;
+  reviewer_id?: string;
+  assigned_role?: string;
+  assignment_type: string;
+  is_active: boolean;
+  has_reviewed: boolean;
+  delegated_from_id?: string;
+  delegation_reason?: string;
+  assigned_by: string;
+  assigned_at: string;
+}
+
+export interface WorkflowStageInstance {
+  id: string;
+  workflow_id: string;
+  template_stage_id: string;
+  current_state: WorkflowState;
+  approvals_received: number;
+  approvals_required: number;
+  started_at?: string;
+  completed_at?: string;
+  due_date?: string;
+  created_at: string;
+  updated_at: string;
+  template_stage: WorkflowTemplateStage;
+  reviewer_assignments: StageReviewerAssignment[];
+}
+
+export interface MultiStageWorkflow extends ApprovalWorkflow {
+  template_id?: string;
+  current_stage_order?: number;
+  stage_instances: WorkflowStageInstance[];
+}
+
+// Multi-stage API request types
+export interface CreateWorkflowTemplateRequest {
+  name: string;
+  content_type: WorkflowTemplateType;
+  description?: string;
+  is_default?: boolean;
+  auto_publish_on_completion?: boolean;
+  stages?: Array<Record<string, any>>;
+}
+
+export interface CreateMultiStageWorkflowRequest {
+  version_id: string;
+  template_id: string;
+}
+
+export interface AssignStageReviewersRequest {
+  reviewer_ids: string[];
+}
+
+export interface DelegateReviewerRequest {
+  assignment_id: string;
+  new_reviewer_id: string;
+  delegation_reason?: string;
+}
+
+export interface SubmitStageReviewRequest {
+  decision: ReviewDecision;
+  comments?: string;
+  feedback_areas?: Record<string, any>;
 }
 
 // Workflow state utilities
@@ -259,4 +372,79 @@ export const isVersionEditable = (status: VersionStatus): boolean => {
 
 export const isVersionPublished = (status: VersionStatus): boolean => {
   return status === VersionStatus.PUBLISHED;
+};
+
+// Multi-stage workflow utilities
+export const getWorkflowTemplateTypeLabel = (type: WorkflowTemplateType): string => {
+  switch (type) {
+    case WorkflowTemplateType.TRAINING:
+      return "Training";
+    case WorkflowTemplateType.ASSESSMENT:
+      return "Assessment";
+    case WorkflowTemplateType.SURVEY:
+      return "Survey";
+    case WorkflowTemplateType.GAME:
+      return "Game";
+    case WorkflowTemplateType.DEFAULT:
+      return "Default";
+    default:
+      return type;
+  }
+};
+
+export const getStageTypeLabel = (type: StageType): string => {
+  switch (type) {
+    case StageType.PEER_REVIEW:
+      return "Peer Review";
+    case StageType.EXPERT_REVIEW:
+      return "Expert Review";
+    case StageType.MANAGER_APPROVAL:
+      return "Manager Approval";
+    case StageType.FINAL_APPROVAL:
+      return "Final Approval";
+    case StageType.COMPLIANCE_CHECK:
+      return "Compliance Check";
+    case StageType.CUSTOM:
+      return "Custom";
+    default:
+      return type;
+  }
+};
+
+export const getStageTypeColor = (type: StageType): string => {
+  switch (type) {
+    case StageType.PEER_REVIEW:
+      return "#2196F3"; // Blue
+    case StageType.EXPERT_REVIEW:
+      return "#9C27B0"; // Purple
+    case StageType.MANAGER_APPROVAL:
+      return "#FF9800"; // Orange
+    case StageType.FINAL_APPROVAL:
+      return "#4CAF50"; // Green
+    case StageType.COMPLIANCE_CHECK:
+      return "#F44336"; // Red
+    case StageType.CUSTOM:
+      return "#607D8B"; // Blue Grey
+    default:
+      return "#9E9E9E";
+  }
+};
+
+export const isMultiStageWorkflow = (workflow: ApprovalWorkflow | MultiStageWorkflow): workflow is MultiStageWorkflow => {
+  return 'template_id' in workflow && workflow.template_id !== undefined;
+};
+
+export const getStageProgress = (stage: WorkflowStageInstance): number => {
+  if (stage.approvals_required === 0) return 0;
+  return (stage.approvals_received / stage.approvals_required) * 100;
+};
+
+export const isStageComplete = (stage: WorkflowStageInstance): boolean => {
+  return stage.current_state === WorkflowState.APPROVED_PENDING_PUBLISH;
+};
+
+export const getActiveReviewers = (stage: WorkflowStageInstance): StageReviewerAssignment[] => {
+  return stage.reviewer_assignments.filter(assignment => 
+    assignment.is_active && !assignment.has_reviewed
+  );
 };

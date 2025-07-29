@@ -16,7 +16,18 @@ import type {
   RequestRevisionRequest,
   RejectContentRequest,
   WithdrawSubmissionRequest,
-  PublishVersionRequest
+  PublishVersionRequest,
+  // Multi-stage workflow types
+  WorkflowTemplate,
+  WorkflowTemplateType,
+  WorkflowStageInstance,
+  StageReviewerAssignment,
+  MultiStageWorkflow,
+  CreateWorkflowTemplateRequest,
+  CreateMultiStageWorkflowRequest,
+  AssignStageReviewersRequest,
+  DelegateReviewerRequest,
+  SubmitStageReviewRequest
 } from '../types/workflow';
 
 class WorkflowApiError extends Error {
@@ -222,6 +233,123 @@ export class WorkflowApi {
     });
 
     return { workflow };
+  }
+
+  // ===== MULTI-STAGE WORKFLOW METHODS =====
+
+  // Workflow Template operations
+  async createWorkflowTemplate(request: CreateWorkflowTemplateRequest): Promise<WorkflowTemplate> {
+    return this.request<WorkflowTemplate>('/api/workflow/templates', {
+      method: 'POST',
+      data: request,
+    });
+  }
+
+  async getWorkflowTemplates(
+    filters?: { content_type?: WorkflowTemplateType; is_active?: boolean }
+  ): Promise<WorkflowTemplate[]> {
+    const params = new URLSearchParams();
+    if (filters?.content_type) {
+      params.append('content_type', filters.content_type);
+    }
+    if (filters?.is_active !== undefined) {
+      params.append('is_active', filters.is_active.toString());
+    } else {
+      params.append('is_active', 'true'); // Default to active templates
+    }
+    
+    const query = params.toString();
+    const endpoint = `/api/workflow/templates${query ? `?${query}` : ''}`;
+    
+    return this.request<WorkflowTemplate[]>(endpoint);
+  }
+
+  async getDefaultTemplate(contentType: WorkflowTemplateType): Promise<WorkflowTemplate | null> {
+    return this.request<WorkflowTemplate | null>(
+      `/api/workflow/templates/default/${contentType}`
+    );
+  }
+
+  // Multi-stage workflow operations
+  async createMultiStageWorkflow(request: CreateMultiStageWorkflowRequest): Promise<MultiStageWorkflow> {
+    return this.request<MultiStageWorkflow>('/api/workflow/multi-stage', {
+      method: 'POST',
+      data: request,
+    });
+  }
+
+  async assignStageReviewers(
+    stageInstanceId: string,
+    request: AssignStageReviewersRequest
+  ): Promise<StageReviewerAssignment[]> {
+    return this.request<StageReviewerAssignment[]>(
+      `/api/workflow/stages/${stageInstanceId}/reviewers`,
+      {
+        method: 'POST',
+        data: request,
+      }
+    );
+  }
+
+  async delegateReviewerAssignment(request: DelegateReviewerRequest): Promise<StageReviewerAssignment> {
+    return this.request<StageReviewerAssignment>('/api/workflow/assignments/delegate', {
+      method: 'POST',
+      data: request,
+    });
+  }
+
+  async submitStageReview(
+    stageInstanceId: string,
+    request: SubmitStageReviewRequest
+  ): Promise<WorkflowReview> {
+    return this.request<WorkflowReview>(
+      `/api/workflow/stages/${stageInstanceId}/review`,
+      {
+        method: 'POST',
+        data: request,
+      }
+    );
+  }
+
+  async getMyStageReviews(states?: string[]): Promise<WorkflowStageInstance[]> {
+    const params = new URLSearchParams();
+    if (states && states.length > 0) {
+      states.forEach(state => params.append('states', state));
+    }
+    
+    const query = params.toString();
+    const endpoint = `/api/workflow/stages/my-reviews${query ? `?${query}` : ''}`;
+    
+    return this.request<WorkflowStageInstance[]>(endpoint);
+  }
+
+  // Combined operations for multi-stage workflows
+  async createVersionWithMultiStageWorkflow(
+    versionRequest: CreateVersionRequest,
+    templateId: string
+  ): Promise<{ version: ContentVersion; workflow: MultiStageWorkflow }> {
+    // Create the version first
+    const version = await this.createVersion(versionRequest);
+
+    // Create multi-stage workflow
+    const workflow = await this.createMultiStageWorkflow({
+      version_id: version.id,
+      template_id: templateId,
+    });
+
+    return { version, workflow };
+  }
+
+  async submitForMultiStageReview(request: {
+    version_id: string;
+    template_id: string;
+    initial_comments?: string;
+  }): Promise<MultiStageWorkflow> {
+    // Create multi-stage workflow
+    return this.request<MultiStageWorkflow>('/api/workflow/multi-stage/submit', {
+      method: 'POST',
+      data: request,
+    });
   }
 }
 

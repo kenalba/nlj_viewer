@@ -46,6 +46,25 @@ class ReviewDecision(str, Enum):
     REJECT = "reject"
 
 
+class WorkflowTemplateType(str, Enum):
+    """Types of content that can have different workflow templates."""
+    TRAINING = "training"
+    ASSESSMENT = "assessment"
+    SURVEY = "survey"
+    GAME = "game"
+    DEFAULT = "default"
+
+
+class StageType(str, Enum):
+    """Types of review stages."""
+    PEER_REVIEW = "peer_review"      # Peer/colleague review
+    SUBJECT_MATTER_EXPERT = "sme"    # SME review
+    MANAGER_APPROVAL = "manager"     # Manager approval
+    LEGAL_REVIEW = "legal"           # Legal/compliance review
+    FINAL_APPROVAL = "final"         # Final approval before publish
+    CUSTOM = "custom"                # Custom stage type
+
+
 class ContentVersion(Base):
     """
     Version-aware content storage. Each version represents a snapshot
@@ -212,12 +231,24 @@ class ApprovalWorkflow(Base):
         comment="When version was published"
     )
     
-    # Current reviewer assignment
+    # Current reviewer assignment (for single-stage workflows)
     assigned_reviewer_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
         index=True,
-        comment="Currently assigned reviewer"
+        comment="Currently assigned reviewer (single-stage workflow)"
+    )
+    
+    # Multi-stage workflow support
+    template_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("workflow_templates.id"),
+        index=True,
+        comment="Workflow template (if using multi-stage workflow)"
+    )
+    current_stage_order: Mapped[int | None] = mapped_column(
+        Integer,
+        comment="Current stage in multi-stage workflow (1, 2, 3, ...)"
     )
     
     # Workflow configuration
@@ -256,6 +287,18 @@ class ApprovalWorkflow(Base):
         foreign_keys=[assigned_reviewer_id],
         lazy="selectin"
     )
+    template: Mapped["WorkflowTemplate | None"] = relationship(
+        back_populates="workflows",
+        lazy="selectin"
+    )
+    
+    # Multi-stage workflow instances
+    stage_instances: Mapped[list["WorkflowStageInstance"]] = relationship(
+        back_populates="workflow",
+        cascade="all, delete-orphan",
+        order_by="WorkflowStageInstance.template_stage_id",
+        lazy="selectin"
+    )
     
     # Review history
     reviews: Mapped[list["WorkflowReview"]] = relationship(
@@ -287,6 +330,32 @@ class ApprovalWorkflow(Base):
     def get_latest_review(self) -> "WorkflowReview | None":
         """Get the most recent review."""
         return self.reviews[0] if self.reviews else None
+    
+    def is_multi_stage(self) -> bool:
+        """Check if this workflow uses multi-stage approval."""
+        return self.template_id is not None
+    
+    def get_current_stage(self) -> "WorkflowStageInstance | None":
+        """Get the current active stage in multi-stage workflow."""
+        if not self.is_multi_stage() or not self.current_stage_order:
+            return None
+        
+        # Find stage instance matching current stage order
+        for stage in self.stage_instances:
+            if stage.template_stage.stage_order == self.current_stage_order:
+                return stage
+        return None
+    
+    def has_pending_stages(self) -> bool:
+        """Check if there are pending stages after the current one."""
+        if not self.is_multi_stage():
+            return False
+            
+        current_order = self.current_stage_order or 0
+        return any(
+            stage.template_stage.stage_order > current_order 
+            for stage in self.stage_instances
+        )
 
 
 class WorkflowReview(Base):
@@ -311,6 +380,14 @@ class WorkflowReview(Base):
         ForeignKey("approval_workflows.id", ondelete="CASCADE"),
         nullable=False,
         index=True
+    )
+    
+    # Link to specific stage (for multi-stage workflows)
+    stage_instance_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("workflow_stage_instances.id", ondelete="CASCADE"),
+        index=True,
+        comment="Specific stage this review belongs to (multi-stage workflows)"
     )
     
     # Review details
@@ -365,6 +442,10 @@ class WorkflowReview(Base):
         foreign_keys=[reviewer_id],
         lazy="selectin"
     )
+    stage_instance: Mapped["WorkflowStageInstance | None"] = relationship(
+        back_populates="reviews",
+        lazy="selectin"
+    )
     
     def __repr__(self) -> str:
         return f"<WorkflowReview(workflow_id={self.workflow_id}, decision={self.decision})>"
@@ -380,3 +461,398 @@ class WorkflowReview(Base):
     def is_rejection(self) -> bool:
         """Check if this review rejected the content."""
         return self.decision == ReviewDecision.REJECT
+
+
+class WorkflowTemplate(Base):
+    """
+    Template defining multi-stage workflows for different content types.
+    Templates specify the sequence of review stages and their requirements.
+    """
+    
+    __tablename__ = "workflow_templates"
+    
+    # Primary key
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        index=True
+    )
+    
+    # Template identification
+    name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        comment="Human-readable template name"
+    )
+    content_type: Mapped[WorkflowTemplateType] = mapped_column(
+        String(20),
+        nullable=False,
+        index=True,
+        comment="Type of content this template applies to"
+    )
+    
+    # Template configuration
+    description: Mapped[str | None] = mapped_column(
+        Text,
+        comment="Description of this workflow template"
+    )
+    is_default: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        comment="Whether this is the default template for the content type"
+    )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        comment="Whether this template is currently active"
+    )
+    
+    # Auto-publish after all stages complete
+    auto_publish_on_completion: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        comment="Automatically publish content after all stages approve"
+    )
+    
+    # Creation tracking
+    created_by: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True
+    )
+    
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False
+    )
+    
+    # Relationships
+    creator: Mapped["User"] = relationship(
+        foreign_keys=[created_by],
+        lazy="selectin"
+    )
+    stages: Mapped[list["WorkflowTemplateStage"]] = relationship(
+        back_populates="template",
+        cascade="all, delete-orphan",
+        order_by="WorkflowTemplateStage.stage_order",
+        lazy="selectin"
+    )
+    workflows: Mapped[list["ApprovalWorkflow"]] = relationship(
+        back_populates="template",
+        lazy="selectin"
+    )
+    
+    def __repr__(self) -> str:
+        return f"<WorkflowTemplate(name={self.name}, type={self.content_type})>"
+
+
+class WorkflowTemplateStage(Base):
+    """
+    Individual stage definition within a workflow template.
+    Defines the type, requirements, and reviewer assignments for each stage.
+    """
+    
+    __tablename__ = "workflow_template_stages"
+    
+    # Primary key
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        index=True
+    )
+    
+    # Link to template
+    template_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("workflow_templates.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    
+    # Stage configuration
+    stage_order: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        comment="Order of this stage in the workflow (1, 2, 3, ...)"
+    )
+    stage_type: Mapped[StageType] = mapped_column(
+        String(30),
+        nullable=False,
+        comment="Type of review stage"
+    )
+    
+    # Stage metadata
+    name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        comment="Human-readable stage name"
+    )
+    description: Mapped[str | None] = mapped_column(
+        Text,
+        comment="Description of this review stage"
+    )
+    
+    # Stage requirements
+    required_approvals: Mapped[int] = mapped_column(
+        Integer,
+        default=1,
+        comment="Number of approvals needed to complete this stage"
+    )
+    allow_parallel_review: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        comment="Whether multiple reviewers can review simultaneously"
+    )
+    
+    # Auto-assignment rules
+    auto_assign_to_role: Mapped[str | None] = mapped_column(
+        String(50),
+        comment="Automatically assign to users with this role"
+    )
+    reviewer_selection_criteria: Mapped[dict[str, Any] | None] = mapped_column(
+        JSON,
+        comment="JSON criteria for automatic reviewer selection"
+    )
+    
+    # Stage timing
+    estimated_duration_hours: Mapped[int | None] = mapped_column(
+        Integer,
+        comment="Estimated time to complete this stage (hours)"
+    )
+    
+    # Relationships
+    template: Mapped["WorkflowTemplate"] = relationship(
+        back_populates="stages",
+        lazy="selectin"
+    )
+    stage_instances: Mapped[list["WorkflowStageInstance"]] = relationship(
+        back_populates="template_stage",
+        lazy="selectin"
+    )
+    
+    def __repr__(self) -> str:
+        return f"<WorkflowTemplateStage(template_id={self.template_id}, order={self.stage_order}, type={self.stage_type})>"
+
+
+class WorkflowStageInstance(Base):
+    """
+    Active instance of a workflow stage for a specific content version.
+    Tracks the actual progress and reviewer assignments for each stage.
+    """
+    
+    __tablename__ = "workflow_stage_instances"
+    
+    # Primary key
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        index=True
+    )
+    
+    # Links
+    workflow_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("approval_workflows.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    template_stage_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("workflow_template_stages.id"),
+        nullable=False,
+        index=True
+    )
+    
+    # Stage status
+    current_state: Mapped[WorkflowState] = mapped_column(
+        String(30),
+        default=WorkflowState.DRAFT,
+        nullable=False,
+        index=True,
+        comment="Current state of this stage instance"
+    )
+    
+    # Progress tracking
+    approvals_received: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        comment="Number of approvals received for this stage"
+    )
+    approvals_required: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        comment="Number of approvals needed (copied from template)"
+    )
+    
+    # Timing
+    started_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        comment="When this stage started"
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        comment="When this stage was completed"
+    )
+    due_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        comment="Expected completion date"
+    )
+    
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False
+    )
+    
+    # Relationships
+    workflow: Mapped["ApprovalWorkflow"] = relationship(
+        back_populates="stage_instances",
+        lazy="selectin"
+    )
+    template_stage: Mapped["WorkflowTemplateStage"] = relationship(
+        back_populates="stage_instances",
+        lazy="selectin"
+    )
+    reviewer_assignments: Mapped[list["StageReviewerAssignment"]] = relationship(
+        back_populates="stage_instance",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    reviews: Mapped[list["WorkflowReview"]] = relationship(
+        foreign_keys="WorkflowReview.stage_instance_id",
+        back_populates="stage_instance",
+        lazy="selectin"
+    )
+    
+    def __repr__(self) -> str:
+        return f"<WorkflowStageInstance(workflow_id={self.workflow_id}, state={self.current_state})>"
+    
+    def is_complete(self) -> bool:
+        """Check if this stage has received all required approvals."""
+        return self.approvals_received >= self.approvals_required
+    
+    def can_complete(self) -> bool:
+        """Check if this stage can be marked as complete."""
+        return (
+            self.current_state == WorkflowState.IN_REVIEW and
+            self.is_complete()
+        )
+
+
+class StageReviewerAssignment(Base):
+    """
+    Assignment of specific reviewers to workflow stage instances.
+    Supports both individual assignments and role-based assignments.
+    """
+    
+    __tablename__ = "stage_reviewer_assignments"
+    
+    # Primary key
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        index=True
+    )
+    
+    # Links
+    stage_instance_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("workflow_stage_instances.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    reviewer_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        index=True,
+        comment="Specific user assigned to review"
+    )
+    
+    # Assignment metadata
+    assigned_role: Mapped[str | None] = mapped_column(
+        String(50),
+        comment="Role-based assignment (if reviewer_id is null)"
+    )
+    assignment_type: Mapped[str] = mapped_column(
+        String(20),
+        default="direct",
+        comment="Type of assignment: direct, role_based, delegated"
+    )
+    
+    # Assignment status
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        comment="Whether this assignment is currently active"
+    )
+    has_reviewed: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        comment="Whether this reviewer has completed their review"
+    )
+    
+    # Delegation support
+    delegated_from_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        comment="Original reviewer who delegated this assignment"
+    )
+    delegation_reason: Mapped[str | None] = mapped_column(
+        Text,
+        comment="Reason for delegation"
+    )
+    
+    # Assignment tracking
+    assigned_by: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True,
+        comment="User who made this assignment"
+    )
+    assigned_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )
+    
+    # Relationships
+    stage_instance: Mapped["WorkflowStageInstance"] = relationship(
+        back_populates="reviewer_assignments",
+        lazy="selectin"
+    )
+    reviewer: Mapped["User | None"] = relationship(
+        foreign_keys=[reviewer_id],
+        lazy="selectin"
+    )
+    delegated_from: Mapped["User | None"] = relationship(
+        foreign_keys=[delegated_from_id],
+        lazy="selectin"
+    )
+    assigner: Mapped["User"] = relationship(
+        foreign_keys=[assigned_by],
+        lazy="selectin"
+    )
+    
+    def __repr__(self) -> str:
+        return f"<StageReviewerAssignment(stage_id={self.stage_instance_id}, reviewer_id={self.reviewer_id})>"

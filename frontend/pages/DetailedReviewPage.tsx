@@ -29,6 +29,8 @@ import {
 } from '@mui/icons-material';
 import { workflowApi } from '../api/workflow';
 import type { PendingReview } from '../types/workflow';
+import { isMultiStageWorkflow } from '../types/workflow';
+import { useAuth } from '../contexts/AuthContext';
 
 // Import modular components
 import { ReviewOverviewTab } from '../components/review/ReviewOverviewTab';
@@ -36,6 +38,8 @@ import { ReviewPlayTab } from '../components/review/ReviewPlayTab';
 import { ReviewContentAuditTab } from '../components/review/ReviewContentAuditTab';
 import { ReviewHistoryTab } from '../components/review/ReviewHistoryTab';
 import { ReviewActionsPanel } from '../components/review/ReviewActionsPanel';
+import { MultiStageWorkflowPanel } from '../components/review/MultiStageWorkflowPanel';
+import { MultiStageReviewActionsPanel } from '../components/review/MultiStageReviewActionsPanel';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -58,6 +62,7 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 export const DetailedReviewPage: React.FC = () => {
   const params = useParams();
   const location = useLocation();
+  const { user } = useAuth();
   
   // Extract workflowId from URL path since useParams might not be working with our routing setup
   const pathSegments = location.pathname.split('/');
@@ -156,11 +161,18 @@ export const DetailedReviewPage: React.FC = () => {
     );
   }
 
+  const isMultiStage = isMultiStageWorkflow(review.workflow);
+  
   const tabConfigs = [
     { label: 'Overview', icon: <OverviewIcon fontSize="small" />, component: <ReviewOverviewTab review={review} /> },
     { label: 'Interactive Preview', icon: <PlayIcon fontSize="small" />, component: <ReviewPlayTab review={review} /> },
     { label: 'Content Audit', icon: <AuditIcon fontSize="small" />, component: <ReviewContentAuditTab review={review} /> },
-    { label: 'Review History', icon: <HistoryIcon fontSize="small" />, component: <ReviewHistoryTab review={review} /> }
+    { label: 'Review History', icon: <HistoryIcon fontSize="small" />, component: <ReviewHistoryTab review={review} /> },
+    ...(isMultiStage ? [{ 
+      label: 'Workflow Progress', 
+      icon: <ReviewIcon fontSize="small" />, 
+      component: <MultiStageWorkflowPanel workflow={review.workflow} compact={false} /> 
+    }] : [])
   ];
 
   return (
@@ -244,11 +256,20 @@ export const DetailedReviewPage: React.FC = () => {
           </Box>
           
           <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-            <ReviewActionsPanel 
-              review={review}
-              onReviewComplete={handleReviewComplete}
-              compact={false}
-            />
+            {isMultiStage ? (
+              <MultiStageReviewActionsPanel
+                workflow={review.workflow}
+                currentUserId={user?.id || ''}
+                onReviewComplete={handleReviewComplete}
+                compact={false}
+              />
+            ) : (
+              <ReviewActionsPanel 
+                review={review}
+                onReviewComplete={handleReviewComplete}
+                compact={false}
+              />
+            )}
           </Box>
         </Box>
       </Box>

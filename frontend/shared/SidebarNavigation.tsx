@@ -117,8 +117,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
         id: 'activities',
         label: 'Activities',
         icon: <FolderIcon />,
-        path: '/app/activities',
-        badge: Object.values(contentLibrary).reduce((sum, count) => sum + count, 0) || undefined
+        path: '/app/activities'
       }
     ];
 
@@ -134,13 +133,6 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
 
     // Add creation/editing features for users with appropriate roles
     if (canEdit) {
-      items.push({
-        id: 'dashboard',
-        label: 'Content Dashboard',
-        icon: <EditIcon />,
-        path: '/app/dashboard'
-      });
-      
       items.push({
         id: 'generate',
         label: 'Content Generation',

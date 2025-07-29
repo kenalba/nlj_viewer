@@ -12,6 +12,7 @@ import {
   Checkbox,
   Button,
   Alert,
+  Snackbar,
   CircularProgress,
   Divider
 } from '@mui/material';
@@ -50,6 +51,16 @@ export const ReviewActionsPanel: React.FC<ReviewActionsPanelProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [comments, setComments] = useState('');
   const [autoPublish, setAutoPublish] = useState(false);
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string>('');
+  const [toastSeverity, setToastSeverity] = useState<'success' | 'error' | 'info'>('success');
+
+  // Helper function to show toast notifications
+  const showToast = (message: string, severity: 'success' | 'error' | 'info' = 'success') => {
+    setToastMessage(message);
+    setToastSeverity(severity);
+    setToastOpen(true);
+  };
 
   const { workflow } = review;
 
@@ -84,6 +95,19 @@ export const ReviewActionsPanel: React.FC<ReviewActionsPanelProps> = ({
             comments: comments.trim()
           };
           await workflowApi.rejectContent(workflow.id, rejectRequest);
+          break;
+      }
+
+      // Show success toast based on action
+      switch (action) {
+        case 'approve':
+          showToast(autoPublish ? 'Content approved and published successfully!' : 'Content approved successfully!');
+          break;
+        case 'revision':
+          showToast('Revision requested successfully', 'info');
+          break;
+        case 'reject':
+          showToast('Content rejected', 'info');
           break;
       }
 
@@ -208,6 +232,22 @@ export const ReviewActionsPanel: React.FC<ReviewActionsPanelProps> = ({
           </Button>
         </Box>
       )}
+      {/* Toast Notifications */}
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={4000}
+        onClose={() => setToastOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={() => setToastOpen(false)} 
+          severity={toastSeverity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </Paper>
   );
 };

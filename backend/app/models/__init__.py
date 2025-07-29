@@ -6,14 +6,21 @@ from .workflow import (
     ContentVersion, 
     ApprovalWorkflow, 
     WorkflowReview,
+    WorkflowTemplate,
+    WorkflowTemplateStage,
+    WorkflowStageInstance,
+    StageReviewerAssignment,
     VersionStatus,
     WorkflowState,
-    ReviewDecision
+    ReviewDecision,
+    WorkflowTemplateType,
+    StageType
 )
 
 __all__ = [
     "User",
-    "ContentItem", "ContentState", "ContentType", "LearningStyle",
+    "ContentItem", "ContentState", "ContentType", "LearningStyle",  
     "ContentVersion", "ApprovalWorkflow", "WorkflowReview",
-    "VersionStatus", "WorkflowState", "ReviewDecision"
+    "WorkflowTemplate", "WorkflowTemplateStage", "WorkflowStageInstance", "StageReviewerAssignment",
+    "VersionStatus", "WorkflowState", "ReviewDecision", "WorkflowTemplateType", "StageType"
 ]

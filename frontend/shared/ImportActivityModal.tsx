@@ -23,7 +23,9 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  ListItemSecondary
+  ListItemSecondary,
+  TextField,
+  Grid
 } from '@mui/material';
 import {
   CloudUpload as UploadIcon,
@@ -32,7 +34,8 @@ import {
   CheckCircle as CheckIcon,
   Error as ErrorIcon,
   Description as FileIcon,
-  ArrowForward as NextIcon
+  ArrowForward as NextIcon,
+  ContentPaste as PasteIcon
 } from '@mui/icons-material';
 import type { NLJScenario } from '../types/nlj';
 import { validateScenario } from '../utils/scenarioUtils';
@@ -62,14 +65,14 @@ export const ImportActivityModal: React.FC<ImportActivityModalProps> = ({
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [dragOverCard, setDragOverCard] = useState<'ander' | 'trivie' | null>(null);
+  const [jsonText, setJsonText] = useState('');
 
   // Reset state when modal opens/closes
   const handleClose = useCallback(() => {
     setImporting(false);
     setImportResult(null);
     setDragOver(false);
-    setDragOverCard(null);
+    setJsonText('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -79,6 +82,36 @@ export const ImportActivityModal: React.FC<ImportActivityModalProps> = ({
   const handleFileSelect = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
+
+  const handleProcessJsonText = useCallback(async () => {
+    if (!jsonText.trim()) {
+      setImportResult({
+        success: false,
+        fileName: 'pasted-json',
+        fileType: 'ander-json',
+        error: 'Please paste JSON content into the text area.'
+      });
+      return;
+    }
+
+    setImporting(true);
+    setImportResult(null);
+
+    try {
+      const result = await importJsonText(jsonText);
+      setImportResult(result);
+    } catch (error) {
+      console.error('JSON paste import error:', error);
+      setImportResult({
+        success: false,
+        fileName: 'pasted-json',
+        fileType: 'ander-json',
+        error: `Failed to process JSON: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
+    } finally {
+      setImporting(false);
+    }
+  }, [jsonText]);
 
   // Drag and drop handlers
   const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -93,7 +126,6 @@ export const ImportActivityModal: React.FC<ImportActivityModalProps> = ({
     // Only set dragOver to false if we're leaving the modal area
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setDragOver(false);
-      setDragOverCard(null);
     }
   }, []);
 
@@ -107,7 +139,6 @@ export const ImportActivityModal: React.FC<ImportActivityModalProps> = ({
     e.stopPropagation();
     
     setDragOver(false);
-    setDragOverCard(null);
     
     const files = Array.from(e.dataTransfer.files);
     const file = files[0];
@@ -117,20 +148,6 @@ export const ImportActivityModal: React.FC<ImportActivityModalProps> = ({
     }
   }, []);
 
-  const handleCardDragEnter = useCallback((cardType: 'ander' | 'trivie') => (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOverCard(cardType);
-  }, []);
-
-  const handleCardDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Only clear if we're actually leaving the card
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setDragOverCard(null);
-    }
-  }, []);
 
   const processFile = async (file: File) => {
     setImporting(true);
@@ -176,7 +193,10 @@ export const ImportActivityModal: React.FC<ImportActivityModalProps> = ({
 
   const importAnderJSON = async (file: File): Promise<ImportResult> => {
     const text = await file.text();
-    
+    return await importJsonText(text, file.name);
+  };
+
+  const importJsonText = async (text: string, fileName: string = 'pasted-json'): Promise<ImportResult> => {
     try {
       const parsed = JSON.parse(text);
       
@@ -198,17 +218,17 @@ export const ImportActivityModal: React.FC<ImportActivityModalProps> = ({
       };
 
       // Validate the scenario structure
-      const validation = validateScenario(scenario);
+      const validationErrors = validateScenario(scenario);
       const warnings: string[] = [];
 
-      if (!validation.isValid) {
-        warnings.push(`Scenario validation warnings: ${validation.errors.join(', ')}`);
+      if (validationErrors.length > 0) {
+        warnings.push(`Scenario validation warnings: ${validationErrors.join(', ')}`);
       }
 
       return {
         success: true,
         scenario,
-        fileName: file.name,
+        fileName,
         fileType: 'ander-json',
         warnings: warnings.length > 0 ? warnings : undefined
       };
@@ -254,14 +274,79 @@ export const ImportActivityModal: React.FC<ImportActivityModalProps> = ({
     }
   }, [importResult, onActivityImported, handleClose]);
 
+  const renderJsonPaste = () => (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
+        Paste JSON Content
+      </Typography>
+
+      <Card sx={{ 
+        flexGrow: 1,
+        border: 1,
+        borderColor: 'grey.300',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <PasteIcon sx={{ fontSize: 20, color: 'primary.main' }} />
+            <Typography variant="body2" color="text.secondary">
+              Paste your Ander JSON scenario content directly below
+            </Typography>
+          </Box>
+          
+          <TextField
+            multiline
+            fullWidth
+            variant="outlined"
+            placeholder={`Paste your JSON content here...
+
+Example:
+{
+  "id": "my-scenario",
+  "name": "My Scenario",
+  "nodes": [...],
+  "links": [...]
+}`}
+            value={jsonText}
+            onChange={(e) => setJsonText(e.target.value)}
+            sx={{
+              flexGrow: 1,
+              '& .MuiOutlinedInput-root': {
+                fontFamily: 'monospace',
+                fontSize: '0.875rem',
+                height: '100%',
+                alignItems: 'flex-start',
+                '& .MuiInputBase-input': {
+                  height: '100% !important',
+                  overflow: 'auto !important'
+                }
+              }
+            }}
+            disabled={importing}
+            InputProps={{
+              sx: { height: '100%', alignItems: 'flex-start' }
+            }}
+          />
+        </CardContent>
+      </Card>
+      
+      <Box sx={{ textAlign: 'center', mt: 2 }}>
+        <Button
+          variant="contained"
+          startIcon={<PasteIcon />}
+          onClick={handleProcessJsonText}
+          disabled={importing || !jsonText.trim()}
+          sx={{ minWidth: 120 }}
+        >
+          Process JSON
+        </Button>
+      </Box>
+    </Box>
+  );
+
   const renderFileUpload = () => (
-    <Box 
-      sx={{ textAlign: 'center', py: 4 }}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-    >
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <input
         type="file"
         ref={fileInputRef}
@@ -270,106 +355,92 @@ export const ImportActivityModal: React.FC<ImportActivityModalProps> = ({
         style={{ display: 'none' }}
       />
       
-      <Box sx={{ mb: 3 }}>
-        <UploadIcon sx={{ 
-          fontSize: 64, 
-          color: dragOver ? 'primary.dark' : 'primary.main', 
-          mb: 2,
-          transition: 'color 0.2s ease'
-        }} />
-        <Typography variant="h6" gutterBottom>
-          Import Activity from File
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 400, mx: 'auto' }}>
-          {dragOver 
-            ? 'Drop your file here to import' 
-            : 'Drag & drop files here or click the cards below. We support Ander JSON scenarios and Trivie Excel quiz files.'
-          }
-        </Typography>
-      </Box>
+      <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
+        Upload Files
+      </Typography>
 
-      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 3 }}>
-        <Card 
-          sx={{ 
-            width: 200, 
-            cursor: 'pointer',
-            border: 2,
-            borderColor: dragOverCard === 'ander' ? 'primary.main' : 'transparent',
-            bgcolor: dragOverCard === 'ander' ? 'primary.50' : 'background.paper',
-            transition: 'all 0.2s ease',
-            '&:hover': { 
-              bgcolor: 'action.hover',
-              borderColor: 'primary.light'
-            }
-          }}
-          onClick={handleFileSelect}
-          onDragEnter={handleCardDragEnter('ander')}
-          onDragLeave={handleCardDragLeave}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-        >
-          <CardContent sx={{ textAlign: 'center', py: 2 }}>
-            <NLJIcon sx={{ fontSize: 32, color: 'primary.main', mb: 1 }} />
-            <Typography variant="subtitle2" gutterBottom>
-              Ander JSON
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {dragOverCard === 'ander' ? 'Drop .json file here' : '.json files from the Ander system'}
-            </Typography>
-          </CardContent>
-        </Card>
-
-        <Card 
-          sx={{ 
-            width: 200, 
-            cursor: 'pointer',
-            border: 2,
-            borderColor: dragOverCard === 'trivie' ? 'secondary.main' : 'transparent',
-            bgcolor: dragOverCard === 'trivie' ? 'secondary.50' : 'background.paper',
-            transition: 'all 0.2s ease',
-            '&:hover': { 
-              bgcolor: 'action.hover',
-              borderColor: 'secondary.light'
-            }
-          }}
-          onClick={handleFileSelect}
-          onDragEnter={handleCardDragEnter('trivie')}
-          onDragLeave={handleCardDragLeave}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-        >
-          <CardContent sx={{ textAlign: 'center', py: 2 }}>
-            <TrivieIcon sx={{ fontSize: 32, color: 'secondary.main', mb: 1 }} />
-            <Typography variant="subtitle2" gutterBottom>
-              Trivie Excel
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {dragOverCard === 'trivie' ? 'Drop .xlsx file here' : '.xlsx quiz export files'}
-            </Typography>
-          </CardContent>
-        </Card>
-      </Box>
-
-      <Button
-        variant="contained"
-        size="large"
-        startIcon={<UploadIcon />}
-        onClick={handleFileSelect}
-        disabled={importing}
-        sx={{
-          bgcolor: dragOver ? 'primary.dark' : 'primary.main',
-          '&:hover': {
-            bgcolor: 'primary.dark'
+      <Card 
+        sx={{ 
+          flexGrow: 1,
+          cursor: 'pointer',
+          border: 2,
+          borderColor: dragOver ? 'primary.main' : 'grey.300',
+          borderStyle: dragOver ? 'solid' : 'dashed',
+          bgcolor: dragOver ? 'primary.50' : 'grey.50',
+          transition: 'all 0.2s ease',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 300,
+          '&:hover': { 
+            bgcolor: dragOver ? 'primary.100' : 'grey.100',
+            borderColor: 'primary.light',
+            borderStyle: 'solid'
           }
         }}
+        onClick={handleFileSelect}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
       >
-        {dragOver ? 'Drop File Here' : 'Choose File to Import'}
-      </Button>
+        <CardContent sx={{ textAlign: 'center', py: 4 }}>
+          <UploadIcon sx={{ 
+            fontSize: 48, 
+            color: dragOver ? 'primary.main' : 'grey.600', 
+            mb: 2,
+            transition: 'color 0.2s ease'
+          }} />
+          <Typography variant="body1" gutterBottom sx={{ fontWeight: 500 }}>
+            {dragOver ? 'Drop your file here' : 'Drag & drop files here or click to browse'}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            We support multiple file formats:
+          </Typography>
+          
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <NLJIcon sx={{ fontSize: 20, color: 'primary.main' }} />
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  Ander JSON
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  .json scenario files
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TrivieIcon sx={{ fontSize: 20, color: 'secondary.main' }} />
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  Trivie Excel
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  .xlsx quiz exports
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      
+      <Box sx={{ textAlign: 'center', mt: 2 }}>
+        <Button
+          variant="outlined"
+          startIcon={<UploadIcon />}
+          onClick={handleFileSelect}
+          disabled={importing}
+          sx={{ minWidth: 120 }}
+        >
+          Browse Files
+        </Button>
+      </Box>
     </Box>
   );
 
   const renderImporting = () => (
-    <Box sx={{ textAlign: 'center', py: 4 }}>
+    <Box sx={{ textAlign: 'center' }}>
       <CircularProgress sx={{ mb: 2 }} />
       <Typography variant="h6" gutterBottom>
         Importing Activity...
@@ -491,12 +562,15 @@ export const ImportActivityModal: React.FC<ImportActivityModalProps> = ({
     <Dialog 
       open={open} 
       onClose={handleClose} 
-      maxWidth="md" 
+      maxWidth="lg" 
       fullWidth
       PaperProps={{
         sx: {
-          minHeight: '500px',
-          maxHeight: '90vh'
+          height: '80vh',
+          maxHeight: '800px',
+          minHeight: '600px',
+          display: 'flex',
+          flexDirection: 'column'
         }
       }}
     >
@@ -505,14 +579,47 @@ export const ImportActivityModal: React.FC<ImportActivityModalProps> = ({
           Import Activity
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Import activities from Ander JSON or Trivie Excel files
+          Upload files (Ander JSON, Trivie Excel) or paste JSON content directly
         </Typography>
       </DialogTitle>
 
-      <DialogContent>
-        {importing ? renderImporting() : 
-         importResult ? renderImportResult() : 
-         renderFileUpload()}
+      <DialogContent sx={{ 
+        flex: 1, 
+        p: 0, 
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        {importing ? (
+          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {renderImporting()}
+          </Box>
+        ) : importResult ? (
+          <Box sx={{ flex: 1, p: 3, overflow: 'auto' }}>
+            {renderImportResult()}
+          </Box>
+        ) : (
+          <Box sx={{ flex: 1, display: 'flex', height: '100%' }}>
+            <Box sx={{ 
+              flex: 1, 
+              borderRight: 1, 
+              borderColor: 'divider',
+              p: 3,
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              {renderFileUpload()}
+            </Box>
+            <Box sx={{ 
+              flex: 1,
+              p: 3,
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              {renderJsonPaste()}
+            </Box>
+          </Box>
+        )}
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 3, justifyContent: 'space-between' }}>

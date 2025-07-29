@@ -3,7 +3,7 @@
  * Displays all activities from the database with unified filtering and search
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -21,6 +21,7 @@ import {
   Select,
   CircularProgress,
   Alert,
+  Snackbar,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -32,7 +33,14 @@ import {
   ToggleButton,
   ToggleButtonGroup
 } from '@mui/material';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { 
+  DataGrid
+} from '@mui/x-data-grid';
+import type { 
+  GridColDef, 
+  GridRenderCellParams,
+  GridRowSelectionModel
+} from '@mui/x-data-grid';
 import {
   Search as SearchIcon,
   PlayArrow as PlayIcon,
@@ -47,15 +55,17 @@ import {
   TableRows as TableViewIcon,
   FileUpload as ImportIcon,
   RateReview as RequestReviewIcon,
-  ChangeCircle as ChangeStatusIcon
+  ChangeCircle as ChangeStatusIcon,
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 import { useGameContext } from '../contexts/GameContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { contentApi, ContentItem, ContentFilters } from '../api/content';
+import { workflowApi } from '../api/workflow';
+import type { WorkflowTemplateType } from '../types/workflow';
 import { CreateActivityModal } from '../shared/CreateActivityModal';
 import { ImportActivityModal } from '../shared/ImportActivityModal';
-import { RequestReviewModal } from '../shared/RequestReviewModal';
 import type { ActivityTemplate } from '../utils/activityTemplates';
 import type { NLJScenario } from '../types/nlj';
 
@@ -68,57 +78,316 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'title' | 'created_at' | 'view_count' | 'completion_count'>('title');
-  const [learningStyleFilter, setLearningStyleFilter] = useState<string>('all');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string>('');
+  const [toastSeverity, setToastSeverity] = useState<'success' | 'error' | 'info'>('success');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
-  const [requestReviewModalOpen, setRequestReviewModalOpen] = useState(false);
   const [bulkStatusChangeLoading, setBulkStatusChangeLoading] = useState(false);
-  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+  const [rowSelectionModel, setRowSelectionModel] = useState<GridRowSelectionModel>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
+  // Helper function to show toast notifications
+  const showToast = (message: string, severity: 'success' | 'error' | 'info' = 'success') => {
+    setToastMessage(message);
+    setToastSeverity(severity);
+    setToastOpen(true);
+  };
   const [viewMode, setViewMode] = useState<'card' | 'table'>(() => {
     // Load view mode from localStorage, default to 'card'
     const saved = localStorage.getItem('nlj-activities-view-mode');
     return (saved === 'card' || saved === 'table') ? saved : 'card';
   });
 
+  // Handle row selection changes
+  const handleRowSelectionModelChange = (newRowSelectionModel: GridRowSelectionModel) => {
+    console.log('Selected rows:', newRowSelectionModel);
+    setRowSelectionModel(newRowSelectionModel);
+  };
+
+  const getSelectedItems = (): ContentItem[] => {
+    // Handle both array format (v7) and object format (v8)
+    let selectedIds: any[] = [];
+    
+    if (Array.isArray(rowSelectionModel)) {
+      selectedIds = rowSelectionModel;
+    } else if (rowSelectionModel && typeof rowSelectionModel === 'object' && 'ids' in rowSelectionModel) {
+      // MUI DataGrid v8 format: {type: 'include', ids: Set(...)}
+      selectedIds = Array.from(rowSelectionModel.ids as Set<any>);
+    }
+    
+    return filteredContent.filter(item => selectedIds.includes(item.id));
+  };
+
+  const getSelectedCount = (): number => {
+    if (Array.isArray(rowSelectionModel)) {
+      return rowSelectionModel.length;
+    } else if (rowSelectionModel && typeof rowSelectionModel === 'object' && 'ids' in rowSelectionModel) {
+      return (rowSelectionModel.ids as Set<any>).size;
+    }
+    return 0;
+  };
+
+  // Handle submit for review - navigates to dedicated page
+  const handleSubmitForReview = () => {
+    const selectedItems = getSelectedItems();
+    if (selectedItems.length === 0) return;
+    navigate('/app/submit-review', { state: { contentItems: selectedItems } });
+  };
+
+  const handlePublishContent = async () => {
+    const selectedItems = getSelectedItems();
+    if (selectedItems.length === 0) return;
+
+    try {
+      setBulkStatusChangeLoading(true);
+      
+      for (const item of selectedItems) {
+        // For approved content, we can publish directly
+        if (item.state === 'approved') {
+          // Find the latest version and publish it
+          await workflowApi.publishVersion({
+            version_id: item.id // Assuming content has version info
+          });
+        } else if (item.state === 'draft') {
+          // For draft content, create version -> workflow -> approve -> publish
+          const version = await workflowApi.createVersion({
+            content_id: item.id,
+            nlj_data: item.nlj_data || {},
+            title: item.title,
+            description: item.description
+          });
+          
+          const workflow = await workflowApi.createWorkflow({
+            version_id: version.id,
+            requires_approval: false, // Skip approval for direct publish
+            auto_publish: true
+          });
+          
+          await workflowApi.submitForReview({
+            version_id: version.id
+          });
+        }
+      }
+      
+      console.log(`Successfully published ${selectedItems.length} items`);
+      setRowSelectionModel([]);
+      
+      // Show success toast
+      const itemCount = selectedItems.length;
+      const itemText = itemCount === 1 ? 'item' : 'items';
+      showToast(`Successfully approved and published ${itemCount} ${itemText}`);
+      
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Failed to publish content:', error);
+      setError('Failed to publish content. Please try again.');
+    } finally {
+      setBulkStatusChangeLoading(false);
+    }
+  };
+
+  const handleRejectContent = async () => {
+    const selectedItems = getSelectedItems();
+    if (selectedItems.length === 0) return;
+
+    try {
+      setBulkStatusChangeLoading(true);
+      
+      for (const item of selectedItems) {
+        // Only reject content that's in review
+        if (item.state === 'in_review' || item.state === 'submitted') {
+          // Find the workflow and reject it
+          // This would require getting the workflow ID - for now use bulk status change
+          await workflowApi.bulkChangeStatus([String(item.id)], 'rejected');
+        }
+      }
+      
+      console.log(`Successfully rejected ${selectedItems.length} items`);
+      setRowSelectionModel([]);
+      
+      // Show success toast
+      const itemCount = selectedItems.length;
+      const itemText = itemCount === 1 ? 'item' : 'items';
+      showToast(`Successfully rejected ${itemCount} ${itemText}`, 'info');
+      
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Failed to reject content:', error);
+      setError('Failed to reject content. Please try again.');
+    } finally {
+      setBulkStatusChangeLoading(false);
+    }
+  };
+
+  const handleDeleteItems = () => {
+    const selectedItems = getSelectedItems();
+    if (selectedItems.length === 0) return;
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmArchive = async () => {
+    const selectedItems = getSelectedItems();
+    if (selectedItems.length === 0) return;
+
+    try {
+      setBulkStatusChangeLoading(true);
+      setError(null); // Clear any existing errors
+      setSuccessMessage(null); // Clear any existing success messages
+      
+      for (const item of selectedItems) {
+        try {
+          console.log(`Processing deletion for "${item.title}" (state: ${item.state})`);
+          
+          // Step 1: Handle all non-draft states using workflow system
+          if (item.state !== 'draft' && item.state !== 'archived') {
+            console.log(`Item is in ${item.state} state, attempting to change to draft or archive...`);
+            try {
+              // For published content, try to archive directly first
+              if (item.state === 'published') {
+                console.log(`Attempting to archive published content ${item.title} directly...`);
+                await workflowApi.bulkChangeStatus([String(item.id)], 'archived');
+                console.log(`Successfully archived published content ${item.title}`);
+                continue; // Skip to next item since this one is now archived
+              } else {
+                // For other states, try to move to draft first
+                await workflowApi.bulkChangeStatus([String(item.id)], 'draft');
+                console.log(`Successfully moved ${item.title} to draft state`);
+                // Small delay to ensure backend state is updated
+                await new Promise(resolve => setTimeout(resolve, 100));
+              }
+            } catch (workflowError: any) {
+              console.error(`Failed to change state for ${item.title}:`, workflowError);
+              // Continue anyway - maybe we can still delete it or archive it through other means
+            }
+          }
+          
+          // Step 2: Try to delete the content
+          try {
+            await contentApi.delete(item.id);
+            console.log(`Successfully deleted ${item.title}`);
+          } catch (deleteError: any) {
+            console.error(`Direct deletion failed for ${item.title}:`, deleteError);
+            
+            // Step 3: If deletion still fails, try to archive through content API
+            if (deleteError.response?.status === 400 || deleteError.response?.status === 403) {
+              try {
+                console.log(`Attempting to archive ${item.title} via content API...`);
+                await contentApi.update(item.id, { state: 'archived' } as any);
+                console.log(`Successfully archived ${item.title}`);
+              } catch (archiveError: any) {
+                console.error(`Failed to archive ${item.title} via content API:`, archiveError);
+                
+                // Step 4: Try workflow API for archiving
+                try {
+                  console.log(`Attempting to archive ${item.title} via workflow API...`);
+                  await workflowApi.bulkChangeStatus([String(item.id)], 'archived');
+                  console.log(`Successfully archived ${item.title} via workflow API`);
+                } catch (workflowArchiveError: any) {
+                  console.error(`Failed to archive ${item.title} via workflow API:`, workflowArchiveError);
+                  throw new Error(`Cannot process "${item.title}": All deletion and archiving methods failed. Content in state '${item.state}' cannot be processed. ${workflowArchiveError.response?.data?.detail || workflowArchiveError.message}`);
+                }
+              }
+            } else if (deleteError.response?.status === 404) {
+              console.warn(`Item ${item.title} not found, may have been already deleted`);
+              // Continue since it's already gone from backend
+            } else {
+              throw new Error(`Failed to delete "${item.title}": ${deleteError.response?.data?.detail || deleteError.message}`);
+            }
+          }
+          
+        } catch (itemError: any) {
+          console.error(`Failed to process ${item.title}:`, itemError);
+          throw itemError; // Re-throw to stop the batch operation
+        }
+      }
+      
+      // Remove items from local state (whether deleted or archived, they shouldn't show in main view)
+      const processedIds = selectedItems.map(item => item.id);
+      setContent(prevContent => prevContent.filter(item => !processedIds.includes(item.id)));
+      setTotal(prevTotal => prevTotal - selectedItems.length);
+      
+      console.log(`Successfully processed ${selectedItems.length} items`);
+      setRowSelectionModel([]);
+      setDeleteConfirmOpen(false);
+      
+      // Show success toast
+      const itemCount = selectedItems.length;
+      const itemText = itemCount === 1 ? 'item' : 'items';
+      showToast(`Successfully deleted ${itemCount} ${itemText}`);
+      
+    } catch (error: any) {
+      console.error('Failed to delete/archive content:', error);
+      setError(error.message || 'Failed to delete/archive content. Please try again.');
+      setSuccessMessage(null); // Clear any existing success messages
+      setDeleteConfirmOpen(false);
+    } finally {
+      setBulkStatusChangeLoading(false);
+    }
+  };
+
+
+
+
   const { loadScenario } = useGameContext();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Clear selection when content changes
   useEffect(() => {
-    setSelectedRowIds([]);
-  }, [content]);
+    // Only clear selection when content array length changes (new data loaded)
+    // Don't clear when content items are just updated
+    console.log('Content changed, checking if selection should be cleared');
+    if (content.length === 0 && rowSelectionModel.length > 0) {
+      console.log('Content is empty, clearing row selection');
+      setRowSelectionModel([]);
+    }
+  }, [content.length]);
+
+  // Debug: Log rowSelectionModel changes
+  useEffect(() => {
+    console.log('rowSelectionModel state updated:', rowSelectionModel);
+  }, [rowSelectionModel]);
 
   // Fetch content from API
   useEffect(() => {
     const fetchContent = async () => {
       setLoading(true);
       try {
+        // Determine which content states to show based on user role
+        let allowedStates = ['published']; // Default for players
+        
+        if (user?.role === 'admin') {
+          // Admins can see all content states
+          allowedStates = ['published', 'approved', 'rejected', 'in_review', 'submitted', 'draft'];
+        } else if (user?.role === 'approver') {
+          // Approvers can see content that needs approval plus published and rejected
+          allowedStates = ['published', 'approved', 'rejected', 'in_review', 'submitted'];
+        } else if (user?.role === 'reviewer') {
+          // Reviewers can see content they review plus published and rejected
+          allowedStates = ['published', 'rejected', 'in_review', 'submitted'];
+        } else if (user?.role === 'creator') {
+          // Creators can see their own content in all states plus published content
+          allowedStates = ['published', 'approved', 'rejected', 'in_review', 'submitted', 'draft'];
+        }
+
         const filters: ContentFilters = {
-          state: 'published', // Only show published content
-          size: 100, // Get more items to show all content
-          sort_by: sortBy,
+          // Role-based state filtering
+          ...(user?.role === 'creator' || user?.role === 'reviewer' || user?.role === 'approver' || user?.role === 'admin' 
+              ? {} 
+              : { state: 'published' }
+          ),
+          size: 100, // Get all content for client-side filtering
+          sort_by: 'title',
           sort_order: 'asc'
         };
 
-        // Apply filters
+        // Apply content type filter if not 'all'
         if (contentType !== 'all' && contentType !== 'recent') {
           filters.content_type = contentType;
-        }
-        
-        if (searchTerm.trim()) {
-          filters.search = searchTerm.trim();
-        }
-
-        if (typeFilter !== 'all') {
-          filters.content_type = typeFilter;
-        }
-
-        if (learningStyleFilter !== 'all') {
-          filters.learning_style = learningStyleFilter;
         }
 
         const response = await contentApi.list(filters);
@@ -143,12 +412,7 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
     };
 
     fetchContent();
-  }, [contentType, searchTerm, typeFilter, sortBy, learningStyleFilter]);
-
-  // Clear row selection when content changes to prevent stale references
-  useEffect(() => {
-    setSelectedRowIds([]);
-  }, [content]);
+  }, [contentType, user?.role]); // Simplified dependencies - only contentType and user role
 
   const getContentIcon = (type: string) => {
     switch (type) {
@@ -191,8 +455,10 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
       headerName: 'Title & Description',
       flex: 1,
       minWidth: 300,
+      align: 'left',
+      headerAlign: 'left',
       renderCell: (params: GridRenderCellParams) => (
-        <Box sx={{ py: 1 }}>
+        <Box sx={{ py: 1, textAlign: 'left', width: '100%' }}>
           <Typography 
             variant="subtitle2" 
             sx={{ 
@@ -335,14 +601,14 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
       }
     },
     {
-      field: 'version',
-      headerName: 'Version',
-      width: 80,
+      field: 'updated_at',
+      headerName: 'Last Updated',
+      width: 120,
       align: 'center',
       headerAlign: 'center',
       renderCell: (params: GridRenderCellParams) => (
         <Typography variant="body2">
-          v1.0
+          {new Date(params.row.updated_at).toLocaleDateString()}
         </Typography>
       )
     },
@@ -459,51 +725,6 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
     navigate(`/app/flow/edit/${item.id}`);
   };
 
-  const handleRequestReview = () => {
-    if (selectedRowIds.length > 0) {
-      setRequestReviewModalOpen(true);
-    }
-  };
-
-  const handleReviewRequested = () => {
-    // Clear selection and refresh the content list
-    setSelectedRowIds([]);
-    setSearchTerm(searchTerm); // Trigger refresh
-  };
-
-  const getSelectedItems = (): ContentItem[] => {
-    if (!Array.isArray(selectedRowIds)) {
-      return [];
-    }
-    return content.filter(item => selectedRowIds.includes(item.id));
-  };
-
-  const handleBulkStatusChange = async (newStatus: string) => {
-    if (selectedRowIds.length === 0) return;
-
-    try {
-      setBulkStatusChangeLoading(true);
-      
-      const result = await workflowApi.bulkChangeStatus(selectedRowIds, newStatus);
-      
-      // Show success message and refresh content
-      console.log(`Successfully updated ${result.updated_count} items to ${newStatus}`);
-      
-      if (result.skipped_count > 0) {
-        console.warn(`${result.skipped_count} items were skipped due to invalid status transitions`);
-      }
-      
-      // Clear selection and refresh content
-      setSelectedRowIds([]);
-      setSearchTerm(searchTerm); // Trigger refresh
-      
-    } catch (error) {
-      console.error('Failed to change status:', error);
-      setError('Failed to change content status. Please try again.');
-    } finally {
-      setBulkStatusChangeLoading(false);
-    }
-  };
 
   const handleCreateActivity = () => {
     setCreateModalOpen(true);
@@ -553,9 +774,8 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
       
       // Refresh the content list to show the new imported activity
       const filters: ContentFilters = {
-        state: 'published',
         size: 100,
-        sort_by: sortBy,
+        sort_by: 'title',
         sort_order: 'asc'
       };
       
@@ -563,15 +783,7 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
       if (contentType !== 'all' && contentType !== 'recent') {
         filters.content_type = contentType;
       }
-      if (searchTerm.trim()) {
-        filters.search = searchTerm.trim();
-      }
-      if (typeFilter !== 'all') {
-        filters.content_type = typeFilter;
-      }
-      if (learningStyleFilter !== 'all') {
-        filters.learning_style = learningStyleFilter;
-      }
+      // Removed old filter logic - now handled by DataGrid
 
       const response = await contentApi.list(filters);
       let filteredContent = response.items;
@@ -595,9 +807,107 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
     }
   };
 
+  // Memoized filtering to improve performance
+  const filteredContent = React.useMemo(() => {
+    if (!searchTerm) return content;
+    const searchLower = searchTerm.toLowerCase();
+    return content.filter(item => (
+      item.title.toLowerCase().includes(searchLower) ||
+      (item.description && item.description.toLowerCase().includes(searchLower)) ||
+      item.content_type.toLowerCase().includes(searchLower) ||
+      (item.learning_style && item.learning_style.toLowerCase().includes(searchLower))
+    ));
+  }, [content, searchTerm]);
+
   const getPageTitle = () => {
     return 'Activities';
   };
+
+  // Enhanced toolbar with selection-based actions
+  const CustomToolbar = React.memo(() => {
+    const selectedCount = getSelectedCount();
+    console.log('CustomToolbar rendered, selectedCount:', selectedCount);
+    
+    return (
+      <Box
+        sx={{ 
+          p: 2, 
+          backgroundColor: 'grey.50', 
+          borderBottom: 1, 
+          borderColor: 'divider',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 1
+        }}
+      >
+        <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
+          <TextField
+            placeholder="Search activities..."
+            size="small"
+            variant="outlined"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{ minWidth: '200px' }}
+          />
+          <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+            {filteredContent.length} of {content.length} activities
+          </Typography>
+        </Box>
+        
+        {/* Bulk actions when items are selected */}
+        {selectedCount > 0 && user && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role) && (
+          <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
+            <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600 }}>
+              {selectedCount} selected
+            </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<RequestReviewIcon />}
+              onClick={handleSubmitForReview}
+              disabled={bulkStatusChangeLoading}
+              color="primary"
+            >
+              Submit for Review
+            </Button>
+            <Button
+              variant="contained" 
+              size="small"
+              startIcon={<ChangeStatusIcon />}
+              onClick={handlePublishContent}
+              disabled={bulkStatusChangeLoading}
+              color="success"
+            >
+              Publish
+            </Button>
+            {user && ['reviewer', 'approver', 'admin'].includes(user.role) && (
+              <Button
+                variant="outlined" 
+                size="small"
+                onClick={handleRejectContent}
+                disabled={bulkStatusChangeLoading}
+                color="error"
+              >
+                Reject
+              </Button>
+            )}
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<DeleteIcon />}
+              onClick={handleDeleteItems}
+              disabled={bulkStatusChangeLoading}
+              color="error"
+            >
+              Delete
+            </Button>
+          </Box>
+        )}
+      </Box>
+    );
+  });
 
   const renderLoadingSkeleton = () => (
     <Box p={3}>
@@ -686,183 +996,45 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
         )}
       </Box>
 
-      {/* Header Row 2: Search, Filters, and View Toggle */}
-      <Box mb={3}>
-        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
-          {/* Left side: Search and Filters */}
-          <Box display="flex" alignItems="center" gap={2} flex={1} flexWrap="wrap">
-            {/* Search Field */}
-            <TextField
-              size="small"
-              placeholder="Search activities..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ minWidth: 250 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                )
-              }}
-            />
+      {/* Success Alert */}
+      {successMessage && (
+        <Alert 
+          severity="success" 
+          sx={{ mb: 2 }}
+          onClose={() => setSuccessMessage(null)}
+        >
+          {successMessage}
+        </Alert>
+      )}
 
-            {/* Type Filter */}
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>Type</InputLabel>
-              <Select
-                value={typeFilter}
-                label="Type"
-                onChange={(e) => setTypeFilter(e.target.value)}
-              >
-                <MenuItem value="all">All Types</MenuItem>
-                <MenuItem value="training">Training</MenuItem>
-                <MenuItem value="survey">Survey</MenuItem>
-                <MenuItem value="assessment">Assessment</MenuItem>
-                <MenuItem value="game">Game</MenuItem>
-              </Select>
-            </FormControl>
-            
-            {/* Sort Filter */}
-            <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>Sort by</InputLabel>
-              <Select
-                value={sortBy}
-                label="Sort by"
-                onChange={(e) => setSortBy(e.target.value as any)}
-              >
-                <MenuItem value="title">Title</MenuItem>
-                <MenuItem value="created_at">Date Created</MenuItem>
-                <MenuItem value="view_count">Most Viewed</MenuItem>
-                <MenuItem value="completion_count">Most Completed</MenuItem>
-              </Select>
-            </FormControl>
-
-            {/* Learning Style Filter */}
-            <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>Learning Style</InputLabel>
-              <Select
-                value={learningStyleFilter}
-                label="Learning Style"
-                onChange={(e) => setLearningStyleFilter(e.target.value)}
-              >
-                <MenuItem value="all">All Styles</MenuItem>
-                <MenuItem value="visual">Visual</MenuItem>
-                <MenuItem value="auditory">Auditory</MenuItem>
-                <MenuItem value="kinesthetic">Kinesthetic</MenuItem>
-                <MenuItem value="reading_writing">Reading/Writing</MenuItem>
-              </Select>
-            </FormControl>
-
-            {/* Results Count */}
-            <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-              {content.length} of {total} activities
-            </Typography>
-          </Box>
-
-          {/* Middle: Selection Actions */}
-          {selectedRowIds.length > 0 && (
-            <Box display="flex" alignItems="center" gap={1}>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                {selectedRowIds.length} selected
-              </Typography>
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<RequestReviewIcon />}
-                onClick={handleRequestReview}
-                sx={{ minWidth: 'auto' }}
-              >
-                Request Review
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<ChangeStatusIcon />}
-                onClick={() => handleBulkStatusChange('draft')}
-                disabled={bulkStatusChangeLoading}
-                sx={{ minWidth: 'auto' }}
-              >
-                Set to Draft
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<ChangeStatusIcon />}
-                onClick={() => handleBulkStatusChange('published')}
-                disabled={bulkStatusChangeLoading}
-                sx={{ minWidth: 'auto' }}
-              >
-                Set to Published
-              </Button>
-              <Button
-                variant="text"
-                size="small"
-                onClick={() => setSelectedRowIds([])}
-                sx={{ minWidth: 'auto' }}
-              >
-                Clear
-              </Button>
-            </Box>
-          )}
-
-          {/* Right side: View Toggle */}
-            <ToggleButtonGroup
-              value={viewMode}
-              exclusive
-              onChange={(_, newView) => {
-                if (newView) {
-                  setViewMode(newView);
-                  localStorage.setItem('nlj-activities-view-mode', newView);
-                  // Clear selection when switching views
-                  setSelectedRowIds([]);
-                }
-              }}
-              aria-label="view mode"
-              size="small"
-              sx={{ 
-                backgroundColor: 'background.paper',
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 1
-              }}
-            >
-              <ToggleButton 
-                value="card" 
-                aria-label="card view"
-                sx={{ 
-                  px: 1.5,
-                  '&.Mui-selected': {
-                    backgroundColor: 'primary.main',
-                    color: 'primary.contrastText',
-                    '&:hover': {
-                      backgroundColor: 'primary.dark',
-                    }
-                  }
-                }}
-              >
-                <CardViewIcon sx={{ mr: 0.5 }} />
-                Cards
-              </ToggleButton>
-              <ToggleButton 
-                value="table" 
-                aria-label="table view"
-                sx={{ 
-                  px: 1.5,
-                  '&.Mui-selected': {
-                    backgroundColor: 'primary.main',
-                    color: 'primary.contrastText',
-                    '&:hover': {
-                      backgroundColor: 'primary.dark',
-                    }
-                  }
-                }}
-              >
-                <TableViewIcon sx={{ mr: 0.5 }} />
-                Table
-              </ToggleButton>
-            </ToggleButtonGroup>
-        </Box>
+      {/* View Toggle and Results Count */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="body2" color="text.secondary">
+          {content.length} of {total} activities
+        </Typography>
+        
+        <ToggleButtonGroup
+          value={viewMode}
+          exclusive
+          onChange={(_, newView) => {
+            if (newView) {
+              setViewMode(newView);
+              localStorage.setItem('nlj-activities-view-mode', newView);
+              setRowSelectionModel([]);
+            }
+          }}
+          aria-label="view mode"
+          size="small"
+        >
+          <ToggleButton value="card" aria-label="card view">
+            <CardViewIcon sx={{ mr: 0.5 }} />
+            Cards
+          </ToggleButton>
+          <ToggleButton value="table" aria-label="table view">
+            <TableViewIcon sx={{ mr: 0.5 }} />
+            Table
+          </ToggleButton>
+        </ToggleButtonGroup>
       </Box>
 
       {/* Content Display */}
@@ -935,6 +1107,34 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
                       </Box>
                     </Tooltip>
                   </Box>
+
+                  {/* Status row - Show content state for non-published content */}
+                  {item.state && item.state !== 'published' && (
+                    <Box 
+                      display="flex" 
+                      justifyContent="flex-end" 
+                      mb={1}
+                      sx={{ height: '24px', minHeight: '24px', flexShrink: 0 }}
+                    >
+                      <Chip 
+                        label={item.state.replace('_', ' ').toUpperCase()} 
+                        size="small" 
+                        color={
+                          item.state === 'draft' ? 'default' :
+                          item.state === 'submitted' ? 'warning' :
+                          item.state === 'in_review' ? 'info' :
+                          item.state === 'approved' ? 'success' :
+                          item.state === 'rejected' ? 'error' :
+                          'default'
+                        }
+                        variant="outlined"
+                        sx={{ 
+                          fontWeight: 600,
+                          fontSize: '0.7rem'
+                        }}
+                      />
+                    </Box>
+                  )}
 
                   {/* Title - Fixed height with truncation */}
                   <Typography 
@@ -1067,36 +1267,41 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
         </Box>
       ) : (
         <Box>
-          {/* Table View with Simplified MUI DataGrid */}
-          {content.length > 0 && content.every(item => item.id) ? (
+          {/* Custom Toolbar Above DataGrid */}
+          <CustomToolbar />
+          
+          {/* Table View with MUI DataGrid */}
+          {filteredContent.length > 0 && filteredContent.every(item => item.id) ? (
             <DataGrid
-              rows={content}
+              checkboxSelection 
+              rows={filteredContent}
               columns={columns}
+              getRowId={(row) => row.id}
               initialState={{
                 pagination: {
                   paginationModel: { page: 0, pageSize: 15 },
                 },
               }}
               pageSizeOptions={[10, 15, 25, 50]}
-              checkboxSelection={true}
-              disableRowSelectionOnClick={false}
-              onRowSelectionModelChange={(newSelection) => {
-                if (Array.isArray(newSelection)) {
-                  setSelectedRowIds(newSelection as string[]);
-                } else if (newSelection && typeof newSelection === 'object' && 'ids' in newSelection) {
-                  // Handle the {type: 'include', ids: Set(...)} format
-                  const ids = Array.from(newSelection.ids as Set<string>);
-                  setSelectedRowIds(ids);
-                } else {
-                  setSelectedRowIds([]);
-                }
-              }}
-              autoHeight
+              onRowSelectionModelChange={handleRowSelectionModelChange}
+              hideFooter={false}
               sx={{
+                height: Math.min(filteredContent.length * 80 + 120, window.innerHeight - 200), // Auto-size with max height
                 '& .MuiDataGrid-cell': {
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   padding: '8px 16px',
+                  minHeight: '80px',
+                },
+                '& .MuiDataGrid-cell--textLeft': {
+                  justifyContent: 'flex-start',
+                },
+                '& .MuiDataGrid-cell--textCenter': {
+                  justifyContent: 'center',
+                },
+                '& .MuiDataGrid-cell--textRight': {
+                  justifyContent: 'flex-end',
                 },
                 '& .MuiDataGrid-row': {
                   minHeight: '80px !important',
@@ -1108,9 +1313,22 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
                   backgroundColor: 'grey.50',
                   borderBottom: '2px solid',
                   borderBottomColor: 'divider',
+                  minHeight: '56px !important',
                 },
                 '& .MuiDataGrid-columnHeader': {
                   fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                },
+                '& .MuiDataGrid-columnHeader--alignLeft': {
+                  justifyContent: 'flex-start',
+                },
+                '& .MuiDataGrid-columnHeader--alignCenter': {
+                  justifyContent: 'center',
+                },
+                '& .MuiDataGrid-columnHeader--alignRight': {
+                  justifyContent: 'flex-end',
                 },
                 // Ensure action buttons align with table edge
                 '& .MuiDataGrid-cell:last-child': {
@@ -1135,10 +1353,7 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
                 No activities found
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {searchTerm || typeFilter !== 'all' || learningStyleFilter !== 'all' 
-                  ? 'Try adjusting your search or filter criteria'
-                  : 'No activities available yet'
-                }
+                Try adjusting your search or filter criteria, or check if any filters are applied.
               </Typography>
             </Box>
           )}
@@ -1151,10 +1366,7 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
             No activities found
           </Typography>
           <Typography variant="body2" color="text.secondary" mb={3}>
-            {searchTerm || typeFilter !== 'all' || learningStyleFilter !== 'all' 
-              ? 'Try adjusting your search or filter criteria'
-              : 'No activities available yet'
-            }
+            No activities available yet. Create your first activity to get started!
           </Typography>
           {user && (user.role === 'creator' || user.role === 'admin') && (
             <Button 
@@ -1183,15 +1395,56 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({ contentType }) =
         onActivityImported={handleActivityImported}
       />
 
-      {/* Request Review Modal */}
-      <RequestReviewModal
-        open={requestReviewModalOpen}
-        contentItems={getSelectedItems()}
-        onClose={() => {
-          setRequestReviewModalOpen(false);
-        }}
-        onReviewRequested={handleReviewRequested}
-      />
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Delete {getSelectedCount() === 1 ? 'Activity' : 'Activities'}
+        </DialogTitle>
+        <DialogContent>
+          <Typography id="delete-dialog-description">
+            {getSelectedCount() === 1 
+              ? `Are you sure you want to delete "${getSelectedItems()[0]?.title}"? This will withdraw it from any workflows and remove it permanently.`
+              : `Are you sure you want to delete ${getSelectedCount()} activities? This will withdraw them from any workflows and remove them permanently.`
+            }
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmOpen(false)}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmArchive} 
+            color="error" 
+            variant="contained"
+            autoFocus
+          >
+            Delete {getSelectedCount() === 1 ? 'Activity' : `${getSelectedCount()} Activities`}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Toast Notifications */}
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={4000}
+        onClose={() => setToastOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={() => setToastOpen(false)} 
+          severity={toastSeverity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {toastMessage}
+        </Alert>
+      </Snackbar>
+
     </Box>
   );
 };
