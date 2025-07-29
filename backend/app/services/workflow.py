@@ -991,3 +991,24 @@ class WorkflowService:
         
         result = await self.db.execute(query)
         return result.scalars().all()
+    
+    async def get_content_versions(self, content_id: uuid.UUID) -> List[ContentVersion]:
+        """Get all versions for a content item."""
+        from app.models import ContentVersion
+        
+        result = await self.db.execute(
+            select(ContentVersion)
+            .where(ContentVersion.content_id == content_id)
+            .order_by(ContentVersion.version_number.desc())
+        )
+        return result.scalars().all()
+    
+    async def get_version(self, version_id: uuid.UUID) -> Optional[ContentVersion]:
+        """Get a specific version by ID."""
+        from app.models import ContentVersion
+        
+        result = await self.db.execute(
+            select(ContentVersion)
+            .where(ContentVersion.id == version_id)
+        )
+        return result.scalar_one_or_none()

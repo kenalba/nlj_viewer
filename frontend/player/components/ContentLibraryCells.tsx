@@ -3,13 +3,14 @@
  * Optimized for performance to prevent unnecessary re-renders
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Typography,
   Chip,
   IconButton,
-  Tooltip
+  Tooltip,
+  CircularProgress
 } from '@mui/material';
 // Removed DataGrid dependency
 import {
@@ -17,9 +18,12 @@ import {
   Quiz as QuizIcon,
   Games as GamesIcon,
   Assessment as AssessmentIcon,
-  MoreVert as MoreVertIcon
+  MoreVert as MoreVertIcon,
+  History as HistoryIcon
 } from '@mui/icons-material';
 import type { ContentItem } from '../../api/content';
+import { workflowApi } from '../../api/workflow';
+import type { ContentVersion } from '../../types/workflow';
 import { ItemActionsMenu } from './ItemActionsMenu';
 
 // Content type utilities
@@ -153,6 +157,53 @@ export const WorkflowStatusCell = React.memo(({ item, value }: CellProps) => {
       color={getStatusColor(status) as any}
       variant="outlined"
     />
+  );
+});
+
+interface VersionInfoCellProps extends CellProps {
+  versions?: ContentVersion[];
+  versionsLoading?: boolean;
+}
+
+export const VersionInfoCell = React.memo(({ item, versions, versionsLoading }: VersionInfoCellProps) => {
+  if (versionsLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight={32}>
+        <CircularProgress size={16} />
+      </Box>
+    );
+  }
+
+  if (!versions || versions.length === 0) {
+    return (
+      <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+        v1
+      </Typography>
+    );
+  }
+
+  // Sort versions by version number (descending) to get the latest
+  const sortedVersions = [...versions].sort((a, b) => b.version_number - a.version_number);
+  const latestVersion = sortedVersions[0];
+  const totalVersions = versions.length;
+
+  return (
+    <Box display="flex" justifyContent="center" alignItems="center">
+      <Tooltip title={`Version ${latestVersion.version_number} (${totalVersions} total versions)`}>
+        <Chip
+          label={`v${latestVersion.version_number}`}
+          size="small"
+          variant="outlined"
+          color={latestVersion.version_status === 'published' ? 'success' : 'default'}
+          sx={{
+            minWidth: 50,
+            height: 24,
+            fontSize: '0.75rem',
+            fontWeight: 500
+          }}
+        />
+      </Tooltip>
+    </Box>
   );
 });
 

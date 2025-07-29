@@ -3,7 +3,7 @@
  * Replaces the problematic DataGrid with a more reliable solution
  */
 
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -18,6 +18,8 @@ import {
   Typography
 } from '@mui/material';
 import type { ContentItem } from '../../api/content';
+import type { ContentVersion } from '../../types/workflow';
+import { workflowApi } from '../../api/workflow';
 import {
   TitleDescriptionCell,
   ContentTypeCell,
@@ -25,6 +27,7 @@ import {
   CategoryCell,
   DateCell,
   WorkflowStatusCell,
+  VersionInfoCell,
   ActionsCell
 } from './ContentLibraryCells';
 
@@ -36,6 +39,8 @@ interface ContentTableRowProps {
   userRole?: string;
   onPlayContent: (item: ContentItem) => void;
   onEditContent: (item: ContentItem) => void;
+  versions?: ContentVersion[];
+  versionsLoading?: boolean;
 }
 
 const ContentTableRow = React.memo(({ 
@@ -44,7 +49,9 @@ const ContentTableRow = React.memo(({
   onRowSelect, 
   userRole, 
   onPlayContent, 
-  onEditContent 
+  onEditContent,
+  versions,
+  versionsLoading
 }: ContentTableRowProps) => {
   const handleCheckboxChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     onRowSelect(String(item.id), event.target.checked);
@@ -100,6 +107,9 @@ const ContentTableRow = React.memo(({
         <WorkflowStatusCell item={item} value={item.state} />
       </TableCell>
       <TableCell align="center" sx={{ py: 2 }}>
+        <VersionInfoCell item={item} versions={versions} versionsLoading={versionsLoading} />
+      </TableCell>
+      <TableCell align="center" sx={{ py: 2 }}>
         <DateCell item={item} value={item.updated_at} />
       </TableCell>
       <TableCell align="center" sx={{ py: 2 }}>
@@ -120,7 +130,10 @@ const ContentTableRow = React.memo(({
     prevProps.item.title === nextProps.item.title &&
     prevProps.item.content_type === nextProps.item.content_type &&
     prevProps.item.state === nextProps.item.state &&
-    prevProps.userRole === nextProps.userRole
+    prevProps.item.updated_at === nextProps.item.updated_at &&
+    prevProps.userRole === nextProps.userRole &&
+    prevProps.versions === nextProps.versions &&
+    prevProps.versionsLoading === nextProps.versionsLoading
   );
 });
 
@@ -143,6 +156,8 @@ export const ContentTable = React.memo(({
 }: ContentTableProps) => {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(15);
+  const [versionsMap, setVersionsMap] = useState<Map<string, ContentVersion[]>>(new Map());
+  const [versionsLoading, setVersionsLoading] = useState(false);
   
   // Use ref to avoid re-creating callbacks on every selection change
   const selectedIdsRef = useRef(selectedIds);
@@ -150,6 +165,43 @@ export const ContentTable = React.memo(({
   
   const onSelectionChangeRef = useRef(onSelectionChange);
   onSelectionChangeRef.current = onSelectionChange;
+
+  // Batch fetch versions for all content items
+  useEffect(() => {
+    const fetchAllVersions = async () => {
+      if (content.length === 0) return;
+      
+      setVersionsLoading(true);
+      const newVersionsMap = new Map<string, ContentVersion[]>();
+      
+      try {
+        // Batch fetch versions for all content items
+        const versionPromises = content.map(async (item) => {
+          try {
+            const versions = await workflowApi.getContentVersions(String(item.id));
+            return { itemId: String(item.id), versions };
+          } catch (error) {
+            console.error(`Failed to fetch versions for item ${item.id}:`, error);
+            return { itemId: String(item.id), versions: [] };
+          }
+        });
+        
+        const results = await Promise.all(versionPromises);
+        
+        results.forEach(({ itemId, versions }) => {
+          newVersionsMap.set(itemId, versions);
+        });
+        
+        setVersionsMap(newVersionsMap);
+      } catch (error) {
+        console.error('Failed to batch fetch versions:', error);
+      } finally {
+        setVersionsLoading(false);
+      }
+    };
+
+    fetchAllVersions();
+  }, [content]);
 
   // Handle individual row selection - stable callback reference that won't cause re-renders
   const handleRowSelect = useCallback((id: string, isSelected: boolean) => {
@@ -254,6 +306,11 @@ export const ContentTable = React.memo(({
                   Review Status
                 </Typography>
               </TableCell>
+              <TableCell align="center" sx={{ minWidth: 100 }}>
+                <Typography variant="subtitle2" fontWeight={600}>
+                  Version
+                </Typography>
+              </TableCell>
               <TableCell align="center" sx={{ minWidth: 120 }}>
                 <Typography variant="subtitle2" fontWeight={600}>
                   Last Updated
@@ -276,6 +333,8 @@ export const ContentTable = React.memo(({
                 userRole={userRole}
                 onPlayContent={onPlayContent}
                 onEditContent={onEditContent}
+                versions={versionsMap.get(String(item.id))}
+                versionsLoading={versionsLoading}
               />
             ))}
           </TableBody>

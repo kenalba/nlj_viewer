@@ -279,6 +279,47 @@ class MultiStageWorkflowResponse(WorkflowResponse):
 
 # API Endpoints
 
+@router.get("/content/{content_id}/versions", response_model=List[ContentVersionResponse])
+async def get_content_versions(
+    content_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get all versions for a content item."""
+    try:
+        workflow_service = WorkflowService(db)
+        versions = await workflow_service.get_content_versions(content_id)
+        return [ContentVersionResponse.from_orm(version) for version in versions]
+    except WorkflowError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.get("/versions/{version_id}", response_model=ContentVersionResponse)
+async def get_version(
+    version_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get a specific version."""
+    try:
+        workflow_service = WorkflowService(db)
+        version = await workflow_service.get_version(version_id)
+        if not version:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Version not found"
+            )
+        return ContentVersionResponse.from_orm(version)
+    except WorkflowError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
 @router.post("/versions", response_model=ContentVersionResponse)
 async def create_content_version(
     request: CreateVersionRequest,
