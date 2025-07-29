@@ -155,34 +155,73 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
     try {
       setBulkStatusChangeLoading(true);
       
+      let publishedCount = 0;
+      let skippedCount = 0;
+      const results = [];
+      
       for (const item of selectedItems) {
-        if (item.state === 'approved') {
-          await workflowApi.publishVersion({ version_id: item.id });
-        } else if (item.state === 'draft') {
-          const version = await workflowApi.createVersion({
-            content_id: item.id,
-            nlj_data: item.nlj_data || {},
-            title: item.title,
-            description: item.description
+        try {
+          if (item.state === 'approved') {
+            // Use proper publish API for approved content
+            await workflowApi.publishVersion({ version_id: item.id });
+            publishedCount++;
+            results.push({ id: item.id, title: item.title, action: 'published', success: true });
+          } else if (item.state === 'draft') {
+            // Use bulk status change to publish draft content directly for admin users
+            // This maintains the workflow integrity while allowing admin override
+            await workflowApi.bulkChangeStatus([String(item.id)], 'published');
+            publishedCount++;
+            results.push({ id: item.id, title: item.title, action: 'published', success: true });
+          } else {
+            // Skip items that can't be published
+            skippedCount++;
+            results.push({ 
+              id: item.id, 
+              title: item.title, 
+              action: 'skipped', 
+              success: false, 
+              reason: `Cannot publish from ${item.state} state` 
+            });
+          }
+        } catch (itemError) {
+          console.error(`Failed to publish ${item.title}:`, itemError);
+          skippedCount++;
+          results.push({ 
+            id: item.id, 
+            title: item.title, 
+            action: 'failed', 
+            success: false, 
+            reason: itemError.message || 'Unknown error' 
           });
-          
-          await workflowApi.createWorkflow({
-            version_id: version.id,
-            requires_approval: false,
-            auto_publish: true
-          });
-          
-          await workflowApi.submitForReview({ version_id: version.id });
         }
       }
       
+      // Update local state optimistically for successful items
+      const successfulIds = results.filter(r => r.success).map(r => r.id);
+      if (successfulIds.length > 0) {
+        setContent(prevContent => 
+          prevContent.map(item => 
+            successfulIds.includes(item.id) 
+              ? { ...item, state: 'published' as const, published_at: new Date().toISOString() }
+              : item
+          )
+        );
+      }
+      
       setSelectedIds(new Set());
-      showToast(`Successfully published ${selectedItems.length} items`);
-      window.location.reload();
+      
+      // Show detailed success/error messages
+      if (publishedCount > 0 && skippedCount === 0) {
+        showToast(`Successfully published ${publishedCount} items`);
+      } else if (publishedCount > 0 && skippedCount > 0) {
+        showToast(`Published ${publishedCount} items, skipped ${skippedCount} items`, 'info');
+      } else if (skippedCount > 0) {
+        showToast(`Unable to publish ${skippedCount} items. Check their current status.`, 'error');
+      }
       
     } catch (error) {
       console.error('Failed to publish content:', error);
-      setError('Failed to publish content. Please try again.');
+      showToast('Failed to publish content. Please try again.', 'error');
     } finally {
       setBulkStatusChangeLoading(false);
     }
@@ -195,19 +234,134 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
     try {
       setBulkStatusChangeLoading(true);
       
+      let rejectedCount = 0;
+      let skippedCount = 0;
+      const results = [];
+      
       for (const item of selectedItems) {
-        if (item.state === 'in_review' || item.state === 'submitted') {
-          await workflowApi.bulkChangeStatus([String(item.id)], 'rejected');
+        try {
+          if (item.state === 'in_review' || item.state === 'submitted') {
+            await workflowApi.bulkChangeStatus([String(item.id)], 'rejected');
+            rejectedCount++;
+            results.push({ id: item.id, title: item.title, success: true });
+          } else {
+            // Skip items that can't be rejected
+            skippedCount++;
+            results.push({ 
+              id: item.id, 
+              title: item.title, 
+              success: false, 
+              reason: `Cannot reject from ${item.state} state` 
+            });
+          }
+        } catch (itemError) {
+          console.error(`Failed to reject ${item.title}:`, itemError);
+          skippedCount++;
+          results.push({ 
+            id: item.id, 
+            title: item.title, 
+            success: false, 
+            reason: itemError.message || 'Unknown error' 
+          });
         }
       }
       
+      // Update local state optimistically for successful items
+      const successfulIds = results.filter(r => r.success).map(r => r.id);
+      if (successfulIds.length > 0) {
+        setContent(prevContent => 
+          prevContent.map(item => 
+            successfulIds.includes(item.id) 
+              ? { ...item, state: 'rejected' as const }
+              : item
+          )
+        );
+      }
+      
       setSelectedIds(new Set());
-      showToast(`Successfully rejected ${selectedItems.length} items`, 'info');
-      window.location.reload();
+      
+      // Show detailed success/error messages
+      if (rejectedCount > 0 && skippedCount === 0) {
+        showToast(`Successfully rejected ${rejectedCount} items`, 'info');
+      } else if (rejectedCount > 0 && skippedCount > 0) {
+        showToast(`Rejected ${rejectedCount} items, skipped ${skippedCount} items`, 'info');
+      } else if (skippedCount > 0) {
+        showToast(`Unable to reject ${skippedCount} items. Check their current status.`, 'error');
+      }
       
     } catch (error) {
       console.error('Failed to reject content:', error);
-      setError('Failed to reject content. Please try again.');
+      showToast('Failed to reject content. Please try again.', 'error');
+    } finally {
+      setBulkStatusChangeLoading(false);
+    }
+  }, [getSelectedItems, showToast]);
+
+  const handleUnpublishContent = useCallback(async () => {
+    const selectedItems = getSelectedItems();
+    if (selectedItems.length === 0) return;
+
+    try {
+      setBulkStatusChangeLoading(true);
+      
+      let unpublishedCount = 0;
+      let skippedCount = 0;
+      const results = [];
+      
+      for (const item of selectedItems) {
+        try {
+          if (item.state === 'published') {
+            await workflowApi.bulkChangeStatus([String(item.id)], 'draft');
+            unpublishedCount++;
+            results.push({ id: item.id, title: item.title, success: true });
+          } else {
+            // Skip items that can't be unpublished
+            skippedCount++;
+            results.push({ 
+              id: item.id, 
+              title: item.title, 
+              success: false, 
+              reason: `Cannot unpublish from ${item.state} state` 
+            });
+          }
+        } catch (itemError) {
+          console.error(`Failed to unpublish ${item.title}:`, itemError);
+          skippedCount++;
+          results.push({ 
+            id: item.id, 
+            title: item.title, 
+            success: false, 
+            reason: itemError.message || 'Unknown error' 
+          });
+        }
+      }
+      
+      // Update local state optimistically for successful items
+      const successfulIds = results.filter(r => r.success).map(r => r.id);
+      if (successfulIds.length > 0) {
+        setContent(prevContent => 
+          prevContent.map(item => 
+            successfulIds.includes(item.id) 
+              ? { ...item, state: 'draft' as const, published_at: null }
+              : item
+          )
+        );
+      }
+      
+      setSelectedIds(new Set());
+      
+      // Show detailed success/error messages
+      if (unpublishedCount > 0 && skippedCount === 0) {
+        showToast(`Successfully unpublished ${unpublishedCount} items`);
+      } else if (unpublishedCount > 0 && skippedCount > 0) {
+        showToast(`Unpublished ${unpublishedCount} items, skipped ${skippedCount} items`, 'info');
+      } else if (skippedCount > 0) {
+        showToast(`Unable to unpublish ${skippedCount} items. Only published content can be unpublished.`, 'error');
+      }
+      
+    } catch (error) {
+      console.error('Failed to unpublish content:', error);
+      showToast('Failed to unpublish content. Please try again.', 'error');
     } finally {
       setBulkStatusChangeLoading(false);
     }
@@ -353,59 +507,61 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
     }
   }, []);
 
+  // Extract fetchContent function so it can be reused for retry
+  const fetchContent = useCallback(async () => {
+    setLoading(true);
+    setError(null); // Clear any previous errors
+    try {
+      let allowedStates = ['published'];
+      
+      if (user?.role === 'admin') {
+        allowedStates = ['published', 'approved', 'rejected', 'in_review', 'submitted', 'draft'];
+      } else if (user?.role === 'approver') {
+        allowedStates = ['published', 'approved', 'rejected', 'in_review', 'submitted'];
+      } else if (user?.role === 'reviewer') {
+        allowedStates = ['published', 'rejected', 'in_review', 'submitted'];
+      } else if (user?.role === 'creator') {
+        allowedStates = ['published', 'approved', 'rejected', 'in_review', 'submitted', 'draft'];
+      }
+
+      const filters: ContentFilters = {
+        ...(user?.role === 'creator' || user?.role === 'reviewer' || user?.role === 'approver' || user?.role === 'admin' 
+            ? {} 
+            : { state: 'published' }
+        ),
+        size: 100,
+        sort_by: 'title',
+        sort_order: 'asc'
+      };
+
+      if (contentType !== 'all' && contentType !== 'recent') {
+        filters.content_type = contentType;
+      }
+
+      const response = await contentApi.list(filters);
+      
+      let filteredContent = response.items;
+      
+      if (contentType === 'recent') {
+        filteredContent = filteredContent
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, 10);
+      }
+
+      setContent(filteredContent);
+      setTotal(response.total);
+    } catch (err) {
+      console.error('Failed to fetch content:', err);
+      setError('Failed to load activities. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [contentType, user?.role]);
+
   // Fetch content from API
   useEffect(() => {
-    const fetchContent = async () => {
-      setLoading(true);
-      try {
-        let allowedStates = ['published'];
-        
-        if (user?.role === 'admin') {
-          allowedStates = ['published', 'approved', 'rejected', 'in_review', 'submitted', 'draft'];
-        } else if (user?.role === 'approver') {
-          allowedStates = ['published', 'approved', 'rejected', 'in_review', 'submitted'];
-        } else if (user?.role === 'reviewer') {
-          allowedStates = ['published', 'rejected', 'in_review', 'submitted'];
-        } else if (user?.role === 'creator') {
-          allowedStates = ['published', 'approved', 'rejected', 'in_review', 'submitted', 'draft'];
-        }
-
-        const filters: ContentFilters = {
-          ...(user?.role === 'creator' || user?.role === 'reviewer' || user?.role === 'approver' || user?.role === 'admin' 
-              ? {} 
-              : { state: 'published' }
-          ),
-          size: 100,
-          sort_by: 'title',
-          sort_order: 'asc'
-        };
-
-        if (contentType !== 'all' && contentType !== 'recent') {
-          filters.content_type = contentType;
-        }
-
-        const response = await contentApi.list(filters);
-        
-        let filteredContent = response.items;
-        
-        if (contentType === 'recent') {
-          filteredContent = filteredContent
-            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            .slice(0, 10);
-        }
-
-        setContent(filteredContent);
-        setTotal(response.total);
-      } catch (err) {
-        console.error('Failed to fetch content:', err);
-        setError('Failed to load activities. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchContent();
-  }, [contentType, user?.role]);
+  }, [fetchContent]);
 
   const getPageTitle = () => {
     return 'Activities';
@@ -440,7 +596,7 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
     return (
       <Box p={3}>
         <Alert severity="error" action={
-          <Button color="inherit" onClick={() => window.location.reload()}>
+          <Button color="inherit" onClick={fetchContent}>
             Retry
           </Button>
         }>
@@ -540,6 +696,7 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
             bulkStatusChangeLoading={bulkStatusChangeLoading}
             onSubmitForReview={handleSubmitForReview}
             onPublishContent={handlePublishContent}
+            onUnpublishContent={handleUnpublishContent}
             onRejectContent={handleRejectContent}
             onDeleteItems={handleDeleteItems}
           />

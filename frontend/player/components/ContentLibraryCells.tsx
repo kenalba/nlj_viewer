@@ -3,7 +3,7 @@
  * Optimized for performance to prevent unnecessary re-renders
  */
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -17,9 +17,10 @@ import {
   Quiz as QuizIcon,
   Games as GamesIcon,
   Assessment as AssessmentIcon,
-  Edit as EditIcon
+  MoreVert as MoreVertIcon
 } from '@mui/icons-material';
 import type { ContentItem } from '../../api/content';
+import { ItemActionsMenu } from './ItemActionsMenu';
 
 // Content type utilities
 const getContentIcon = (type: string) => {
@@ -140,6 +141,7 @@ export const WorkflowStatusCell = React.memo(({ item, value }: CellProps) => {
       case 'approved': return 'success';
       case 'published': return 'success';
       case 'rejected': return 'error';
+      case 'archived': return 'default';
       default: return 'default';
     }
   };
@@ -161,18 +163,26 @@ interface ActionsCellProps extends CellProps {
 }
 
 export const ActionsCell = React.memo(({ item, userRole, onPlay, onEdit }: ActionsCellProps) => {
-  const handlePlay = React.useCallback(() => {
+  const [moreActionsAnchor, setMoreActionsAnchor] = useState<HTMLElement | null>(null);
+
+  const handlePlay = useCallback(() => {
     onPlay(item);
   }, [item, onPlay]);
 
-  const handleEdit = React.useCallback(() => {
-    onEdit(item);
-  }, [item, onEdit]);
+  const handleMoreActionsClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation(); // Prevent row selection when clicking actions
+    setMoreActionsAnchor(event.currentTarget);
+  }, []);
+
+  const handleMoreActionsClose = useCallback(() => {
+    setMoreActionsAnchor(null);
+  }, []);
 
   const canEdit = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole);
 
-  return canEdit ? (
-    <Box display="flex" gap={0.5} justifyContent="center">
+  return (
+    <Box display="flex" gap={0.5} justifyContent="center" alignItems="center">
+      {/* Primary Action: Play */}
       <Tooltip title={
         item.content_type === 'game' ? 'Play Game' : 
         item.content_type === 'survey' ? 'Take Survey' : 'Start Training'
@@ -191,41 +201,37 @@ export const ActionsCell = React.memo(({ item, userRole, onPlay, onEdit }: Actio
           <PlayIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-      <Tooltip title="Edit Activity">
-        <IconButton
-          size="small"
-          onClick={handleEdit}
-          sx={{ 
-            backgroundColor: 'grey.100',
-            color: 'primary.main',
-            '&:hover': {
-              backgroundColor: 'primary.50',
-              color: 'primary.dark'
-            }
-          }}
-        >
-          <EditIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
+
+      {/* Secondary Actions: More Menu (only if user can perform actions) */}
+      {canEdit && (
+        <>
+          <Tooltip title="More actions">
+            <IconButton
+              size="small"
+              onClick={handleMoreActionsClick}
+              sx={{ 
+                backgroundColor: 'grey.100',
+                color: 'text.secondary',
+                '&:hover': {
+                  backgroundColor: 'grey.200',
+                  color: 'text.primary'
+                }
+              }}
+            >
+              <MoreVertIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+
+          <ItemActionsMenu
+            anchorEl={moreActionsAnchor}
+            open={Boolean(moreActionsAnchor)}
+            onClose={handleMoreActionsClose}
+            item={item}
+            userRole={userRole}
+            onEdit={onEdit}
+          />
+        </>
+      )}
     </Box>
-  ) : (
-    <Tooltip title={
-      item.content_type === 'game' ? 'Play Game' : 
-      item.content_type === 'survey' ? 'Take Survey' : 'Start Training'
-    }>
-      <IconButton
-        size="small"
-        onClick={handlePlay}
-        sx={{ 
-          backgroundColor: 'primary.main',
-          color: 'white',
-          '&:hover': {
-            backgroundColor: 'primary.dark'
-          }
-        }}
-      >
-        <PlayIcon fontSize="small" />
-      </IconButton>
-    </Tooltip>
   );
 });

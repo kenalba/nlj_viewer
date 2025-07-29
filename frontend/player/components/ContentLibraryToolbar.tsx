@@ -4,7 +4,7 @@
  * Optimized with memoization to prevent unnecessary re-renders
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Box,
   Typography,
@@ -14,9 +14,9 @@ import {
 import {
   FileUpload as ImportIcon,
   RateReview as RequestReviewIcon,
-  ChangeCircle as ChangeStatusIcon,
-  Delete as DeleteIcon
+  MoreHoriz as MoreActionsIcon
 } from '@mui/icons-material';
+import { BulkActionsMenu } from './BulkActionsMenu';
 
 interface ContentLibraryToolbarProps {
   searchTerm: string;
@@ -28,6 +28,7 @@ interface ContentLibraryToolbarProps {
   bulkStatusChangeLoading: boolean;
   onSubmitForReview: () => void;
   onPublishContent: () => void;
+  onUnpublishContent: () => void;
   onRejectContent: () => void;
   onDeleteItems: () => void;
 }
@@ -42,15 +43,25 @@ export const ContentLibraryToolbar = React.memo(({
   bulkStatusChangeLoading,
   onSubmitForReview,
   onPublishContent,
+  onUnpublishContent,
   onRejectContent,
   onDeleteItems
 }: ContentLibraryToolbarProps) => {
+  const [moreActionsAnchor, setMoreActionsAnchor] = useState<HTMLElement | null>(null);
+  
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     onSearchChange(e.target.value);
   }, [onSearchChange]);
 
+  const handleMoreActionsClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
+    setMoreActionsAnchor(event.currentTarget);
+  }, []);
+
+  const handleMoreActionsClose = useCallback(() => {
+    setMoreActionsAnchor(null);
+  }, []);
+
   const canPerformBulkActions = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole);
-  const canReject = userRole && ['reviewer', 'approver', 'admin'].includes(userRole);
 
   return (
     <Box
@@ -86,8 +97,10 @@ export const ContentLibraryToolbar = React.memo(({
           <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600 }}>
             {selectedCount} selected
           </Typography>
+          
+          {/* Primary Action: Submit for Review */}
           <Button
-            variant="outlined"
+            variant="contained"
             size="small"
             startIcon={<RequestReviewIcon />}
             onClick={onSubmitForReview}
@@ -96,37 +109,35 @@ export const ContentLibraryToolbar = React.memo(({
           >
             Submit for Review
           </Button>
-          <Button
-            variant="contained" 
-            size="small"
-            startIcon={<ChangeStatusIcon />}
-            onClick={onPublishContent}
-            disabled={bulkStatusChangeLoading}
-            color="success"
-          >
-            Publish
-          </Button>
-          {canReject && (
-            <Button
-              variant="outlined" 
-              size="small"
-              onClick={onRejectContent}
-              disabled={bulkStatusChangeLoading}
-              color="error"
-            >
-              Reject
-            </Button>
-          )}
+          
+          {/* Secondary Actions: More Menu */}
           <Button
             variant="outlined"
             size="small"
-            startIcon={<DeleteIcon />}
-            onClick={onDeleteItems}
+            startIcon={<MoreActionsIcon />}
+            onClick={handleMoreActionsClick}
             disabled={bulkStatusChangeLoading}
-            color="error"
+            color="primary"
+            sx={{
+              minWidth: 'auto',
+              px: 2
+            }}
           >
-            Delete
+            More Actions
           </Button>
+          
+          <BulkActionsMenu
+            anchorEl={moreActionsAnchor}
+            open={Boolean(moreActionsAnchor)}
+            onClose={handleMoreActionsClose}
+            userRole={userRole}
+            selectedCount={selectedCount}
+            loading={bulkStatusChangeLoading}
+            onPublishContent={onPublishContent}
+            onUnpublishContent={onUnpublishContent}
+            onRejectContent={onRejectContent}
+            onDeleteItems={onDeleteItems}
+          />
         </Box>
       )}
     </Box>
