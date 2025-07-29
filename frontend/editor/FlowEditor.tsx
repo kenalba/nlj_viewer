@@ -14,6 +14,7 @@ import {
   Snackbar,
   Tooltip,
   Divider,
+  Badge,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -24,37 +25,61 @@ import {
   Info as InfoIcon,
   AutoFixHigh as AutoLayoutIcon,
   Settings as SettingsIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 
 import { FlowViewer } from './components/flow/FlowViewer';
+import { VersionManagementModal } from './components/VersionManagementModal';
 import type { NLJScenario } from '../types/nlj';
 import type { ActivitySettings } from '../types/settings';
+import type { ContentItem } from '../api/content';
 import { useTheme } from '../contexts/ThemeContext';
 import { useGameContext } from '../contexts/GameContext';
+import { useVersionManagement } from '../hooks/useVersionManagement';
 
 interface FlowEditorProps {
   scenario: NLJScenario;
+  contentItem?: ContentItem; // Optional for version management
   onBack: () => void;
   onPlay?: (scenario: NLJScenario) => void;
   onSave?: (scenario: NLJScenario) => void;
   onExport?: (scenario: NLJScenario) => void;
+  onVersionSave?: (changeSummary: string) => Promise<void>; // Version-aware save
+  canManageVersions?: boolean;
 }
 
 export const FlowEditor: React.FC<FlowEditorProps> = ({
   scenario,
+  contentItem,
   onBack,
   onPlay,
   onSave,
   onExport,
+  onVersionSave,
+  canManageVersions = false,
 }) => {
   const [editedScenario, setEditedScenario] = useState<NLJScenario>(scenario);
   const [isDirty, setIsDirty] = useState(false);
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showVersionManager, setShowVersionManager] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(120);
   const headerRef = useRef<HTMLDivElement>(null);
   const { themeMode } = useTheme();
   const { loadScenario } = useGameContext();
+
+  // Version management (only if contentItem is provided)
+  const versionManagement = contentItem ? useVersionManagement({
+    contentItem,
+    onVersionChange: (version) => {
+      // When a version changes, update the editor with the new data
+      if (version.nlj_data) {
+        setEditedScenario(version.nlj_data);
+        setIsDirty(false); // Reset dirty state after version restore
+      }
+    },
+    autoLoadVersions: true
+  }) : null;
 
   // Update scenario when prop changes (e.g., from template selection)
   useEffect(() => {
@@ -87,6 +112,47 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
     setIsDirty(false);
     setShowSaveSuccess(true);
   }, [editedScenario, onSave]);
+
+  // Version-aware save with change summary
+  const handleVersionSave = useCallback(async (changeSummary: string) => {
+    if (onVersionSave) {
+      await onVersionSave(changeSummary);
+    } else if (versionManagement) {
+      // Create version using the version management hook
+      await versionManagement.createVersion(
+        editedScenario,
+        contentItem!.title,
+        contentItem!.description,
+        changeSummary
+      );
+    }
+    
+    setIsDirty(false);
+    setShowSaveSuccess(true);
+  }, [editedScenario, onVersionSave, versionManagement, contentItem]);
+
+  // Check if there are unsaved changes compared to latest version
+  const hasUnsavedChanges = useCallback(() => {
+    if (!versionManagement?.currentVersion?.nlj_data) return isDirty;
+    
+    // Compare current editor data with latest version
+    try {
+      return JSON.stringify(editedScenario) !== JSON.stringify(versionManagement.currentVersion.nlj_data);
+    } catch {
+      return isDirty;
+    }
+  }, [editedScenario, isDirty, versionManagement?.currentVersion]);
+
+  // Get version statistics for display
+  const versionStats = versionManagement?.getVersionStats() || { total: 0, draft: 0, published: 0, archived: 0 };
+  
+  // Debug: Log the conditions for History button visibility
+  console.log('FlowEditor History Button Debug:', {
+    contentItem: !!contentItem,
+    canManageVersions,
+    versionManagement: !!versionManagement,
+    versionStats
+  });
 
   const handleExport = useCallback((format: 'png' | 'svg' | 'json', data?: any) => {
     if (format === 'json') {
@@ -184,6 +250,11 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h6" component="h1">
               Flow Editor: {editedScenario.name || 'Untitled Scenario'}
+              {contentItem && versionManagement?.currentVersion && (
+                <Typography component="span" variant="h6" color="text.secondary" sx={{ ml: 1 }}>
+                  (v{versionManagement.currentVersion.version_number})
+                </Typography>
+              )}
             </Typography>
             <Stack direction="row" spacing={1} alignItems="center">
               <Chip
@@ -204,7 +275,15 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
                 color="primary"
                 variant="outlined"
               />
-              {isDirty && (
+              {contentItem && versionManagement?.currentVersion && (
+                <Chip
+                  label={`v${versionManagement.currentVersion.version_number}`}
+                  size="small"
+                  color="info"
+                  variant="outlined"
+                />
+              )}
+              {(isDirty || hasUnsavedChanges()) && (
                 <Chip
                   label="Unsaved Changes"
                   size="small"
@@ -216,6 +295,27 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
           </Box>
           
           <Stack direction="row" spacing={1}>
+            {/* Version Management Button (only if contentItem is provided) */}
+            {contentItem && canManageVersions && (
+              <Tooltip title={`Version History (${versionStats.total} versions)`}>
+                <IconButton
+                  onClick={() => setShowVersionManager(true)}
+                  color={showVersionManager ? 'primary' : 'default'}
+                  size="large"
+                  sx={{
+                    backgroundColor: showVersionManager ? 'primary.50' : 'transparent',
+                    '&:hover': {
+                      backgroundColor: showVersionManager ? 'primary.100' : 'action.hover',
+                    },
+                  }}
+                >
+                  <Badge badgeContent={versionStats.total} color="primary" max={99}>
+                    <HistoryIcon />
+                  </Badge>
+                </IconButton>
+              </Tooltip>
+            )}
+            
             <Tooltip title="Activity & Flow Settings">
               <IconButton
                 onClick={() => setShowSettings(true)}
@@ -326,23 +426,49 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
             </IconButton>
           </Tooltip>
           
-          <Tooltip title="Save Changes">
-            <IconButton
-              onClick={handleSave}
-              disabled={!isDirty}
-              size="small"
-              color={isDirty ? 'primary' : 'inherit'}
-              sx={{
-                backgroundColor: isDirty ? 'primary.main' : 'transparent',
-                color: isDirty ? 'primary.contrastText' : 'text.disabled',
-                '&:hover': {
-                  backgroundColor: isDirty ? 'primary.dark' : 'action.hover',
-                },
-              }}
-            >
-              <SaveIcon />
-            </IconButton>
-          </Tooltip>
+          {/* Version-aware save (if version management is available) */}
+          {contentItem && canManageVersions ? (
+            <Tooltip title="Save New Version">
+              <IconButton
+                onClick={() => {
+                  const changeSummary = prompt('Describe your changes:');
+                  if (changeSummary) {
+                    handleVersionSave(changeSummary);
+                  }
+                }}
+                disabled={!hasUnsavedChanges()}
+                size="small"
+                color={hasUnsavedChanges() ? 'primary' : 'inherit'}
+                sx={{
+                  backgroundColor: hasUnsavedChanges() ? 'primary.main' : 'transparent',
+                  color: hasUnsavedChanges() ? 'primary.contrastText' : 'text.disabled',
+                  '&:hover': {
+                    backgroundColor: hasUnsavedChanges() ? 'primary.dark' : 'action.hover',
+                  },
+                }}
+              >
+                <SaveIcon />
+              </IconButton>
+            </Tooltip>
+          ) : (
+            <Tooltip title="Save Changes">
+              <IconButton
+                onClick={handleSave}
+                disabled={!isDirty}
+                size="small"
+                color={isDirty ? 'primary' : 'inherit'}
+                sx={{
+                  backgroundColor: isDirty ? 'primary.main' : 'transparent',
+                  color: isDirty ? 'primary.contrastText' : 'text.disabled',
+                  '&:hover': {
+                    backgroundColor: isDirty ? 'primary.dark' : 'action.hover',
+                  },
+                }}
+              >
+                <SaveIcon />
+              </IconButton>
+            </Tooltip>
+          )}
         </Stack>
       </Paper>
 
@@ -362,6 +488,19 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
           Scenario saved successfully!
         </Alert>
       </Snackbar>
+
+      {/* Version Management Modal */}
+      {contentItem && versionManagement && (
+        <VersionManagementModal
+          open={showVersionManager}
+          onClose={() => setShowVersionManager(false)}
+          contentItem={contentItem}
+          currentNljData={editedScenario}
+          versionManagement={versionManagement}
+          onVersionSave={handleVersionSave}
+          canManageVersions={canManageVersions}
+        />
+      )}
 
     </Box>
   );

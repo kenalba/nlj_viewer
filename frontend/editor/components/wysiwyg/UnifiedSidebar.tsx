@@ -16,6 +16,7 @@ import {
   Close as CloseIcon,
   Link as LinkIcon,
   AccountTree as NodeIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 
 import type { FlowNode, FlowEdge } from '../../flow/types/flow';
@@ -72,14 +73,14 @@ export function UnifiedSidebar({
   const showNode = Boolean(node);
   const showEdge = Boolean(edge);
 
-  // Auto-switch tabs based on selection - prioritize node over edge
+  // Auto-switch tabs based on selection - prioritize node > edge
   useEffect(() => {
     if (showNode) {
-      setActiveTab(0); // Always show node tab when node is selected
+      setActiveTab(0); // Node tab
     } else if (showEdge) {
-      setActiveTab(1); // Show edge tab only when no node is selected
+      setActiveTab(1); // Edge tab
     }
-    // Reset unsaved changes when switching between node and edge
+    // Reset unsaved changes when switching
     setHasUnsavedChanges(false);
   }, [showNode, showEdge]);
 
@@ -109,7 +110,7 @@ export function UnifiedSidebar({
     return 'Editor';
   };
 
-  // Get header background color based on node type (using actual flow node colors)
+  // Get header background color based on content type
   const getHeaderBackgroundColor = () => {
     if (showNode && node) {
       const nodeTypeInfo = getNodeTypeInfo(node.data.nodeType as any);
@@ -117,7 +118,7 @@ export function UnifiedSidebar({
       return nodeTypeInfo?.color || '#666666';
     }
     
-    // Default for edges or when no node is selected
+    // Default for edges or when no specific content is selected
     return '#1976d2'; // Default blue
   };
 
@@ -156,7 +157,7 @@ export function UnifiedSidebar({
     return (
       <Box p={3} textAlign="center">
         <Typography variant="body1" color="textSecondary">
-          Select a node or connection to edit
+          Select a node, connection, or version to edit
         </Typography>
       </Box>
     );
@@ -193,7 +194,9 @@ export function UnifiedSidebar({
         }}
       >
         <Stack direction="row" alignItems="center" spacing={1}>
-          {showNode ? <NodeIcon sx={{ color: 'inherit' }} /> : <LinkIcon sx={{ color: 'inherit' }} />}
+          {showNode ? <NodeIcon sx={{ color: 'inherit' }} /> : 
+           showEdge ? <LinkIcon sx={{ color: 'inherit' }} /> : 
+           <NodeIcon sx={{ color: 'inherit' }} />}
           <Typography variant="subtitle1" sx={{ color: 'inherit', fontWeight: 600 }}>
             {getSidebarTitle()}
           </Typography>

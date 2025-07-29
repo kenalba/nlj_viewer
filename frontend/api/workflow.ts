@@ -351,6 +351,74 @@ export class WorkflowApi {
       data: request,
     });
   }
+
+  // ===== VERSION MANAGEMENT METHODS =====
+
+  // Get all versions for a content item
+  async getContentVersions(contentId: string): Promise<ContentVersion[]> {
+    return this.request<ContentVersion[]>(`/api/workflow/content/${contentId}/versions`);
+  }
+
+  // Get a specific version
+  async getVersion(versionId: string): Promise<ContentVersion> {
+    return this.request<ContentVersion>(`/api/workflow/versions/${versionId}`);
+  }
+
+  // Create a new version based on an existing version (restore/rollback)
+  async restoreVersion(
+    contentId: string, 
+    sourceVersionId: string, 
+    changeSummary?: string
+  ): Promise<ContentVersion> {
+    return this.request<ContentVersion>(`/api/workflow/content/${contentId}/restore`, {
+      method: 'POST',
+      data: {
+        source_version_id: sourceVersionId,
+        change_summary: changeSummary || `Restored from version ${sourceVersionId}`
+      }
+    });
+  }
+
+  // Update version metadata (title, description, change summary)
+  async updateVersionMetadata(
+    versionId: string, 
+    updates: {
+      title?: string;
+      description?: string;
+      change_summary?: string;
+    }
+  ): Promise<ContentVersion> {
+    return this.request<ContentVersion>(`/api/workflow/versions/${versionId}/metadata`, {
+      method: 'PATCH',
+      data: updates
+    });
+  }
+
+  // Archive a version (mark as archived)
+  async archiveVersion(versionId: string): Promise<ContentVersion> {
+    return this.request<ContentVersion>(`/api/workflow/versions/${versionId}/archive`, {
+      method: 'POST'
+    });
+  }
+
+  // Get version comparison data
+  async compareVersions(version1Id: string, version2Id: string): Promise<{
+    version1: ContentVersion;
+    version2: ContentVersion;
+    differences: {
+      field: string;
+      version1_value: any;
+      version2_value: any;
+    }[];
+  }> {
+    return this.request(`/api/workflow/versions/compare`, {
+      method: 'POST',
+      data: {
+        version1_id: version1Id,
+        version2_id: version2Id
+      }
+    });
+  }
 }
 
 // Create and export a default instance
