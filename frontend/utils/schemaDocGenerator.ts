@@ -732,6 +732,90 @@ const NODE_SCHEMAS: Record<string, NodeTypeDocumentation> = {
     ],
     exampleUsage: 'Use for vocabulary building, categorization skills, and analytical thinking.'
   },
+
+  crossword: {
+    nodeType: 'crossword',
+    displayName: 'Mini Crossword',
+    description: 'Interactive crossword puzzle with real-time validation and hints.',
+    bloomsLevel: ['Remember', 'Apply', 'Analyze'],
+    category: 'game',
+    schemaExample: {
+      id: 'crossword1',
+      type: 'crossword',
+      x: 300,
+      y: 200,
+      width: 800,
+      height: 600,
+      text: 'Complete the Mini Crossword',
+      content: 'Solve this crossword puzzle by filling in all the correct answers.',
+      gameSettings: {
+        gridSize: { width: 5, height: 5 },
+        showErrors: true,
+        allowPartialSubmit: false,
+        difficultyLevel: 'easy',
+        grid: [
+          [
+            { letter: "", isBlocked: true },
+            { letter: "C", number: 1, isBlocked: false },
+            { letter: "O", isBlocked: false },
+            { letter: "D", isBlocked: false },
+            { letter: "E", isBlocked: false }
+          ],
+          [
+            { letter: "D", number: 2, isBlocked: false },
+            { letter: "A", isBlocked: false },
+            { letter: "T", isBlocked: false },
+            { letter: "A", isBlocked: false },
+            { letter: "", isBlocked: true }
+          ]
+        ],
+        clues: [
+          {
+            number: 1,
+            clue: "Programming instructions",
+            answer: "CODE",
+            startRow: 0,
+            startCol: 1,
+            direction: "across",
+            length: 4
+          },
+          {
+            number: 2,
+            clue: "Information stored digitally",
+            answer: "DATA",
+            startRow: 1,
+            startCol: 0,
+            direction: "across",
+            length: 4
+          }
+        ]
+      },
+      allowHints: true,
+      scoring: {
+        basePoints: 100,
+        bonusPerCorrectWord: 20,
+        hintPenalty: 5
+      }
+    },
+    commonProps: COMMON_NODE_PROPS,
+    specificProps: ['text', 'content', 'media', 'additionalMediaList', 'gameSettings', 'allowHints', 'scoring'],
+    usageNotes: [
+      'Grid size should be 5x5, 7x7, or similar for mini crosswords',
+      'Each clue must have corresponding grid placement data',
+      'Blocked cells (isBlocked: true) have no letter content',
+      'Number cells indicate the start of across/down words',
+      'Answers should be uppercase in the grid definition'
+    ],
+    validationRules: [
+      'Must have type: "crossword"',
+      'Must have text property',
+      'Must have gameSettings with grid and clues',
+      'Grid dimensions must match gridSize',
+      'Each clue must have valid startRow, startCol, and length',
+      'Clue answers must fit within grid boundaries'
+    ],
+    exampleUsage: 'Use for vocabulary reinforcement, spelling practice, and knowledge testing in an engaging puzzle format.'
+  },
   
   wordle: {
     nodeType: 'wordle',

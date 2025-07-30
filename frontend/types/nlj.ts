@@ -467,6 +467,57 @@ export interface WordleNode extends BaseNode {
   settings?: NodeSettings;
 }
 
+// Crossword game structures
+export interface CrosswordCell {
+  letter?: string;        // Correct letter (undefined for black cells)
+  number?: number;        // Clue number if word starts here
+  isBlocked: boolean;     // Black/blocked cell
+  userInput?: string;     // Player's input
+}
+
+export interface CrosswordClue {
+  number: number;
+  clue: string;
+  answer: string;
+  startRow: number;
+  startCol: number;
+  direction: 'across' | 'down';
+  length: number;
+}
+
+export interface CrosswordGuess {
+  clueNumber: number;
+  direction: 'across' | 'down';
+  guess: string;
+  isCorrect: boolean;
+  timestamp: Date;
+}
+
+export interface CrosswordNode extends BaseNode {
+  type: 'crossword';
+  text: string;
+  content?: string;
+  media?: Media;
+  additionalMediaList?: MediaWrapper[];
+  gameSettings: {
+    grid: CrosswordCell[][];
+    clues: CrosswordClue[];
+    gridSize: { width: number; height: number };
+    timeLimit?: number;
+    showErrors: boolean;
+    allowPartialSubmit: boolean;
+    difficultyLevel: 'easy' | 'medium' | 'hard';
+  };
+  allowHints?: boolean;
+  scoring?: {
+    basePoints?: number;
+    bonusPerCorrectWord?: number;
+    hintPenalty?: number;
+  };
+  // Question-level settings
+  settings?: NodeSettings;
+}
+
 // Updated union type to include all node types
 export type NLJNode = 
   | StartNode 
@@ -486,7 +537,8 @@ export type NLJNode =
   | MultiSelectNode
   | CheckboxNode
   | ConnectionsNode
-  | WordleNode;
+  | WordleNode
+  | CrosswordNode;
 
 // Type guards for node types
 export const isQuestionNode = (node: NLJNode): node is QuestionNode => node.type === 'question';
@@ -494,8 +546,8 @@ export const isSurveyNode = (node: NLJNode): node is LikertScaleNode | RatingNod
   ['likert_scale', 'rating', 'matrix', 'slider', 'text_area'].includes(node.type);
 export const isInteractiveNode = (node: NLJNode): node is QuestionNode | TrueFalseNode | OrderingNode | MatchingNode | ShortAnswerNode | LikertScaleNode | RatingNode | MatrixNode | SliderNode | TextAreaNode | MultiSelectNode | CheckboxNode | ConnectionsNode | WordleNode => 
   !['start', 'end', 'choice', 'interstitial_panel'].includes(node.type);
-export const isAssessmentNode = (node: NLJNode): node is TrueFalseNode | OrderingNode | MatchingNode | ShortAnswerNode | QuestionNode | MultiSelectNode | CheckboxNode | ConnectionsNode | WordleNode => 
-  ['true_false', 'ordering', 'matching', 'short_answer', 'question', 'multi_select', 'checkbox', 'connections', 'wordle'].includes(node.type);
+export const isAssessmentNode = (node: NLJNode): node is TrueFalseNode | OrderingNode | MatchingNode | ShortAnswerNode | QuestionNode | MultiSelectNode | CheckboxNode | ConnectionsNode | WordleNode | CrosswordNode => 
+  ['true_false', 'ordering', 'matching', 'short_answer', 'question', 'multi_select', 'checkbox', 'connections', 'wordle', 'crossword'].includes(node.type);
 export const isConnectionsNode = (node: NLJNode): node is ConnectionsNode => node.type === 'connections';
 export const isConnectionsResponse = (response: NodeResponseValue): response is { foundGroups: ConnectionsGroup[]; mistakes: number; completed: boolean } => 
   typeof response === 'object' && response !== null && 'foundGroups' in response && 'mistakes' in response && 'completed' in response;
@@ -503,6 +555,10 @@ export const isConnectionsResponse = (response: NodeResponseValue): response is 
 export const isWordleNode = (node: NLJNode): node is WordleNode => node.type === 'wordle';
 export const isWordleResponse = (response: NodeResponseValue): response is { guesses: WordleGuess[]; attempts: number; completed: boolean; won: boolean } => 
   typeof response === 'object' && response !== null && 'guesses' in response && 'attempts' in response && 'completed' in response && 'won' in response;
+
+export const isCrosswordNode = (node: NLJNode): node is CrosswordNode => node.type === 'crossword';
+export const isCrosswordResponse = (response: NodeResponseValue): response is { guesses: CrosswordGuess[]; completedWords: number; totalWords: number; completed: boolean } => 
+  typeof response === 'object' && response !== null && 'guesses' in response && 'completedWords' in response && 'totalWords' in response && 'completed' in response;
 
 // Utility function for calculating connections game score
 export const calculateConnectionsScore = (
@@ -550,6 +606,31 @@ export const calculateWordleScore = (
     const maxAttempts = 6; // Standard Wordle max attempts
     const remainingAttempts = maxAttempts - attempts;
     score += remainingAttempts * bonusPerRemainingAttempt;
+  }
+  
+  // TODO: Add hint penalty if hints are used (would need to track hint usage)
+  
+  return Math.max(0, score); // Ensure score is not negative
+};
+
+// Utility function for calculating crossword game score
+export const calculateCrosswordScore = (
+  response: { guesses: CrosswordGuess[]; completedWords: number; totalWords: number; completed: boolean },
+  scoring?: { basePoints?: number; bonusPerCorrectWord?: number; hintPenalty?: number }
+): number => {
+  if (!isCrosswordResponse(response)) return 0;
+  
+  const { completedWords, totalWords, completed } = response;
+  const { basePoints = 50, bonusPerCorrectWord = 10 } = scoring || {};
+  
+  let score = 0;
+  
+  // Points for each completed word
+  score += completedWords * bonusPerCorrectWord;
+  
+  // Bonus for completing the entire crossword
+  if (completed && completedWords === totalWords) {
+    score += basePoints;
   }
   
   // TODO: Add hint penalty if hints are used (would need to track hint usage)

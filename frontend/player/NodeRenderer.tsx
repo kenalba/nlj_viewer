@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Box, Typography, Button, useTheme as useMuiTheme, Stack } from '@mui/material';
 import { Analytics, Refresh } from '@mui/icons-material';
 import type { NLJNode, NLJScenario, ChoiceNode, NodeResponseValue } from '../types/nlj';
-import { isConnectionsNode, isConnectionsResponse, calculateConnectionsScore, isWordleNode, isWordleResponse, calculateWordleScore } from '../types/nlj';
+import { isConnectionsNode, isConnectionsResponse, calculateConnectionsScore, isWordleNode, isWordleResponse, calculateWordleScore, isCrosswordNode, isCrosswordResponse, calculateCrosswordScore } from '../types/nlj';
 import { UnifiedQuestionNode } from './UnifiedQuestionNode';
 import { InterstitialPanel } from './InterstitialPanel';
 import { NodeCard } from './NodeCard';
@@ -19,6 +19,7 @@ import { MultiSelectNode } from './MultiSelectNode';
 import { CheckboxNode } from './CheckboxNode';
 import { ConnectionsNode } from './ConnectionsNode';
 import { WordleNode } from './WordleNode';
+import { CrosswordNode } from './CrosswordNode';
 import { XAPIResultsScreen } from './XAPIResultsScreen';
 import { CompletionModal } from './CompletionModal';
 import { useGameContext } from '../contexts/GameContext';
@@ -188,6 +189,22 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
         completed: response.completed,
         won: response.won,
         score: wordleScore,
+      });
+      
+      // Update the scenario score if applicable
+      if (state.score !== undefined) {
+        // Note: We could add a score update mechanism here if needed
+      }
+    }
+
+    // Handle crossword-specific scoring
+    if (isCrosswordNode(node) && response && isCrosswordResponse(response)) {
+      const crosswordScore = calculateCrosswordScore(response, node.scoring);
+      debugLog('Crossword Score', `Crossword game completed with score: ${crosswordScore}`, {
+        completedWords: response.completedWords,
+        totalWords: response.totalWords,
+        completed: response.completed,
+        score: crosswordScore,
       });
       
       // Update the scenario score if applicable
@@ -519,6 +536,15 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
             key={node.id}
             question={node} 
             onAnswer={(response) => handleQuestionAnswer(true, response)}
+          />
+        );
+
+      case 'crossword':
+        return (
+          <CrosswordNode 
+            key={node.id}
+            node={node} 
+            onContinue={(response) => handleQuestionAnswer(true, response)}
           />
         );
 
