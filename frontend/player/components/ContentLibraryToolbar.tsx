@@ -17,6 +17,8 @@ import {
   MoreHoriz as MoreActionsIcon
 } from '@mui/icons-material';
 import { BulkActionsMenu } from './BulkActionsMenu';
+import { canPerformBulkActions } from '../../utils/permissions';
+import type { User } from '../../api/auth';
 
 interface ContentLibraryToolbarProps {
   searchTerm: string;
@@ -24,7 +26,7 @@ interface ContentLibraryToolbarProps {
   filteredCount: number;
   totalCount: number;
   selectedCount: number;
-  userRole?: string;
+  user?: User | null;
   bulkStatusChangeLoading: boolean;
   onSubmitForReview: () => void;
   onPublishContent: () => void;
@@ -39,7 +41,7 @@ export const ContentLibraryToolbar = React.memo(({
   filteredCount,
   totalCount,
   selectedCount,
-  userRole,
+  user,
   bulkStatusChangeLoading,
   onSubmitForReview,
   onPublishContent,
@@ -61,7 +63,7 @@ export const ContentLibraryToolbar = React.memo(({
     setMoreActionsAnchor(null);
   }, []);
 
-  const canPerformBulkActions = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole.toLowerCase());
+  const canPerformBulk = canPerformBulkActions(user);
 
   return (
     <Box
@@ -92,7 +94,7 @@ export const ContentLibraryToolbar = React.memo(({
       </Box>
       
       {/* Bulk actions when items are selected */}
-      {selectedCount > 0 && canPerformBulkActions && (
+      {selectedCount > 0 && canPerformBulk && (
         <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
           <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600 }}>
             {selectedCount} selected
@@ -130,7 +132,7 @@ export const ContentLibraryToolbar = React.memo(({
             anchorEl={moreActionsAnchor}
             open={Boolean(moreActionsAnchor)}
             onClose={handleMoreActionsClose}
-            userRole={userRole}
+            user={user}
             selectedCount={selectedCount}
             loading={bulkStatusChangeLoading}
             onPublishContent={onPublishContent}

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Box, Typography, Button, useTheme as useMuiTheme, Stack } from '@mui/material';
 import { Analytics, Refresh } from '@mui/icons-material';
 import type { NLJNode, NLJScenario, ChoiceNode, NodeResponseValue } from '../types/nlj';
-import { isConnectionsNode, isConnectionsResponse, calculateConnectionsScore, isWordleNode, isWordleResponse, calculateWordleScore, isCrosswordNode, isCrosswordResponse, calculateCrosswordScore } from '../types/nlj';
+import { isConnectionsNode, isConnectionsResponse, calculateConnectionsScore, isWordleNode, isWordleResponse, calculateWordleScore, isCrosswordNode, isCrosswordResponse, calculateCrosswordScore, isBranchNode } from '../types/nlj';
 import { UnifiedQuestionNode } from './UnifiedQuestionNode';
 import { InterstitialPanel } from './InterstitialPanel';
 import { NodeCard } from './NodeCard';
@@ -20,6 +20,7 @@ import { CheckboxNode } from './CheckboxNode';
 import { ConnectionsNode } from './ConnectionsNode';
 import { WordleNode } from './WordleNode';
 import { CrosswordNode } from './CrosswordNode';
+import { BranchNode } from './BranchNode';
 import { XAPIResultsScreen } from './XAPIResultsScreen';
 import { CompletionModal } from './CompletionModal';
 import { useGameContext } from '../contexts/GameContext';
@@ -32,6 +33,7 @@ import {
   isScenarioComplete,
   applyVariableChanges 
 } from '../utils/scenarioUtils';
+import { interpolateVariables, DEFAULT_FORMATTERS } from '../utils/variableInterpolation';
 import { debugLog } from '../utils/debug';
 
 interface NodeRendererProps {
@@ -40,7 +42,7 @@ interface NodeRendererProps {
 }
 
 export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) => {
-  const { state, navigateToNode, updateVariable, completeScenario } = useGameContext();
+  const { state, navigateToNode, updateVariable, batchUpdateVariables, completeScenario } = useGameContext();
   const { themeMode } = useTheme();
   const muiTheme = useMuiTheme();
   const { playSound } = useAudio();
@@ -48,6 +50,29 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
   const [showResults, setShowResults] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [completionModalDismissed, setCompletionModalDismissed] = useState(false);
+
+  // Helper function to interpolate variables in content
+  const interpolateContent = useCallback((text: string): string => {
+    if (!text) return text;
+    
+    const variableContext = {
+      ...state.variables,
+      // Add system variables
+      currentNodeId: state.currentNodeId,
+      visitedNodeCount: state.visitedNodes.size,
+      score: state.score || 0,
+      completed: state.completed,
+      scenarioName: scenario.name,
+      // Add activity metadata
+      activityType: scenario.activityType || 'training',
+    };
+    
+    return interpolateVariables(text, variableContext, {
+      formatters: DEFAULT_FORMATTERS,
+      fallbackValue: '???',
+      preserveUnknown: false,
+    });
+  }, [state, scenario]);
 
   // Scroll to top when node changes
   useEffect(() => {
@@ -96,14 +121,22 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
       variableChanges: choice.variableChanges,
     });
 
-    // Apply variable changes
+    // Apply variable changes using batch update for better performance
     if (choice.variableChanges) {
       const newVariables = applyVariableChanges(state.variables, choice);
+      
+      // Only update variables that actually changed
+      const changedVariables: Record<string, number | string | boolean> = {};
       Object.entries(newVariables).forEach(([variableId, value]) => {
         if (value !== state.variables[variableId]) {
-          updateVariable(variableId, value);
+          changedVariables[variableId] = value;
         }
       });
+      
+      // Use batch update if there are changes
+      if (Object.keys(changedVariables).length > 0) {
+        batchUpdateVariables(changedVariables);
+      }
     }
 
     // Find next node
@@ -545,6 +578,15 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
             key={node.id}
             node={node} 
             onContinue={(response) => handleQuestionAnswer(true, response)}
+          />
+        );
+
+      case 'branch':
+        return (
+          <BranchNode 
+            key={node.id}
+            node={node} 
+            onNavigate={(targetNodeId) => navigateToNode(targetNodeId)}
           />
         );
 

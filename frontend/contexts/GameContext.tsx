@@ -9,7 +9,8 @@ interface GameContextValue {
   state: GameState;
   loadScenario: (scenario: NLJScenario) => void;
   navigateToNode: (nodeId: string) => void;
-  updateVariable: (variableId: string, value: number) => void;
+  updateVariable: (variableId: string, value: number | string | boolean) => void;
+  batchUpdateVariables: (variables: Record<string, number | string | boolean>) => void;
   completeScenario: (score?: number) => void;
   reset: () => void;
   // Helper function for connections-specific score calculation
@@ -75,9 +76,9 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     // Call original complete scenario
     gameEngine.completeScenario(score);
     
-    // Track completion in xAPI
+    // Track completion in xAPI with variable states
     if (currentScenario.id) {
-      trackActivityCompleted(currentScenario, score);
+      trackActivityCompleted(currentScenario, score, gameEngine.state.variables);
     }
   }, [gameEngine, trackActivityCompleted]);
 

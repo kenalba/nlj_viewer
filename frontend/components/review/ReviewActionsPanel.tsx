@@ -177,20 +177,38 @@ export const ReviewActionsPanel: React.FC<ReviewActionsPanelProps> = ({
       {!compact && <Divider sx={{ my: 2 }} />}
 
       {/* Action Buttons */}
-      <Box display="flex" flexDirection={compact ? "column" : "row"} gap={compact ? 1 : 2} justifyContent="flex-end">
-        {canReject(workflow.current_state) && (
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={loading ? <CircularProgress size={16} /> : <RejectIcon />}
-            onClick={() => handleAction('reject')}
-            disabled={loading}
-            fullWidth={compact}
-          >
-            Reject Content
-          </Button>
-        )}
+      <Box display="flex" flexDirection="column" gap={1}>
+        {/* Top row: Reject and Approve */}
+        <Box display="flex" gap={1}>
+          {canReject(workflow.current_state) && (
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={loading ? <CircularProgress size={16} /> : <RejectIcon />}
+              onClick={() => handleAction('reject')}
+              disabled={loading}
+              fullWidth
+            >
+              Reject
+            </Button>
+          )}
+          
+          {canApprove(workflow.current_state) && (
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={loading ? <CircularProgress size={16} /> : <ApproveIcon />}
+              onClick={() => handleAction('approve')}
+              disabled={loading}
+              fullWidth
+              sx={{ fontWeight: 600 }}
+            >
+              Approve
+            </Button>
+          )}
+        </Box>
         
+        {/* Bottom row: Request Changes (full width) */}
         {canRequestRevision(workflow.current_state) && (
           <Button
             variant="outlined"
@@ -198,23 +216,9 @@ export const ReviewActionsPanel: React.FC<ReviewActionsPanelProps> = ({
             startIcon={loading ? <CircularProgress size={16} /> : <RevisionIcon />}
             onClick={() => handleAction('revision')}
             disabled={loading}
-            fullWidth={compact}
+            fullWidth
           >
             Request Changes
-          </Button>
-        )}
-        
-        {canApprove(workflow.current_state) && (
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={loading ? <CircularProgress size={16} /> : <ApproveIcon />}
-            onClick={() => handleAction('approve')}
-            disabled={loading}
-            fullWidth={compact}
-            sx={{ fontWeight: 600 }}
-          >
-            Approve Content
           </Button>
         )}
       </Box>

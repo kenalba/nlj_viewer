@@ -25,6 +25,8 @@ import type { ContentItem } from '../../api/content';
 import { workflowApi } from '../../api/workflow';
 import type { ContentVersion } from '../../types/workflow';
 import { ItemActionsMenu } from './ItemActionsMenu';
+import { canEditContent } from '../../utils/permissions';
+import type { User } from '../../api/auth';
 
 // Content type utilities
 const getContentIcon = (type: string) => {
@@ -208,12 +210,12 @@ export const VersionInfoCell = React.memo(({ item, versions, versionsLoading }: 
 });
 
 interface ActionsCellProps extends CellProps {
-  userRole?: string;
+  user?: User | null;
   onPlay: (item: ContentItem) => void;
   onEdit: (item: ContentItem) => void;
 }
 
-export const ActionsCell = React.memo(({ item, userRole, onPlay, onEdit }: ActionsCellProps) => {
+export const ActionsCell = React.memo(({ item, user, onPlay, onEdit }: ActionsCellProps) => {
   const [moreActionsAnchor, setMoreActionsAnchor] = useState<HTMLElement | null>(null);
 
   const handlePlay = useCallback(() => {
@@ -229,7 +231,7 @@ export const ActionsCell = React.memo(({ item, userRole, onPlay, onEdit }: Actio
     setMoreActionsAnchor(null);
   }, []);
 
-  const canEdit = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole.toLowerCase());
+  const canEdit = canEditContent(user);
 
   return (
     <Box display="flex" gap={0.5} justifyContent="center" alignItems="center">
@@ -278,7 +280,7 @@ export const ActionsCell = React.memo(({ item, userRole, onPlay, onEdit }: Actio
             open={Boolean(moreActionsAnchor)}
             onClose={handleMoreActionsClose}
             item={item}
-            userRole={userRole}
+            user={user}
             onEdit={onEdit}
           />
         </>

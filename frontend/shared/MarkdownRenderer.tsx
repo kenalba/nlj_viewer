@@ -4,11 +4,22 @@ import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import { Box, Typography, useTheme } from '@mui/material';
 import { HtmlRenderer } from './HtmlRenderer';
+import type { VariableContext } from '../utils/variableInterpolation';
+import { interpolateVariables } from '../utils/variableInterpolation';
+import { useVariableContext } from '../hooks/useVariableContext';
 
 interface MarkdownRendererProps {
   content: string;
   sx?: object;
   component?: React.ElementType;
+  // Variable interpolation props - now optional, will auto-use context if not provided
+  variables?: VariableContext;
+  enableInterpolation?: boolean;
+  interpolationOptions?: {
+    fallbackValue?: string;
+    preserveUnknown?: boolean;
+    formatters?: Record<string, (value: any) => string>;
+  };
 }
 
 // Function to detect if content is HTML
@@ -29,21 +40,42 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   content,
   sx = {},
   component = 'div',
+  variables,
+  enableInterpolation = true,
+  interpolationOptions = {},
 }) => {
   const theme = useTheme();
+  const contextVariables = useVariableContext();
+  
+  // Use provided variables or fall back to context variables
+  const finalVariables = variables || contextVariables;
   
   // Handle undefined or null content
   if (!content) {
     return null;
   }
   
+  // Apply variable interpolation if enabled
+  const processedContent = enableInterpolation 
+    ? interpolateVariables(content, finalVariables, interpolationOptions)
+    : content;
+  
   // Debug: Log the content being rendered
-  console.log('MarkdownRenderer content:', content.substring(0, 100) + (content.length > 100 ? '...' : ''));
+  console.log('MarkdownRenderer content:', processedContent.substring(0, 100) + (processedContent.length > 100 ? '...' : ''));
   
   // If content is HTML, use the HtmlRenderer instead
-  if (isHtmlContent(content)) {
+  if (isHtmlContent(processedContent)) {
     console.log('Detected HTML content, using HtmlRenderer');
-    return <HtmlRenderer content={content} sx={sx} component={component} />;
+    return (
+      <HtmlRenderer 
+        content={processedContent} 
+        sx={sx} 
+        component={component}
+        variables={finalVariables}
+        enableInterpolation={false} // Already interpolated
+        interpolationOptions={interpolationOptions}
+      />
+    );
   }
   
   console.log('Detected markdown content, using ReactMarkdown');
@@ -333,7 +365,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         rehypePlugins={[rehypeRaw]}
         remarkPlugins={[remarkGfm]}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
     </Box>
   );

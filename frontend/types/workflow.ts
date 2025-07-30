@@ -347,15 +347,15 @@ export const canSubmitForReview = (state: WorkflowState): boolean => {
 };
 
 export const canApprove = (state: WorkflowState): boolean => {
-  return state === WorkflowState.IN_REVIEW;
+  return state === WorkflowState.IN_REVIEW || state === WorkflowState.SUBMITTED_FOR_REVIEW;
 };
 
 export const canRequestRevision = (state: WorkflowState): boolean => {
-  return state === WorkflowState.IN_REVIEW;
+  return state === WorkflowState.IN_REVIEW || state === WorkflowState.SUBMITTED_FOR_REVIEW;
 };
 
 export const canReject = (state: WorkflowState): boolean => {
-  return state === WorkflowState.IN_REVIEW;
+  return state === WorkflowState.IN_REVIEW || state === WorkflowState.SUBMITTED_FOR_REVIEW;
 };
 
 export const canPublish = (state: WorkflowState): boolean => {

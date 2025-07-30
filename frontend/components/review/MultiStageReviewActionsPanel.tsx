@@ -390,39 +390,43 @@ export const MultiStageReviewActionsPanel: React.FC<MultiStageReviewActionsPanel
           {!compact && <Divider sx={{ my: 2 }} />}
 
           {/* Review Action Buttons */}
-          <Box display="flex" flexDirection={compact ? "column" : "row"} gap={compact ? 1 : 2}>
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={loading ? <CircularProgress size={16} /> : <RejectIcon />}
-              onClick={() => handleStageReview('reject')}
-              disabled={loading}
-              fullWidth={compact}
-            >
-              Reject
-            </Button>
+          <Box display="flex" flexDirection="column" gap={1}>
+            {/* Top row: Reject and Approve */}
+            <Box display="flex" gap={1}>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={loading ? <CircularProgress size={16} /> : <RejectIcon />}
+                onClick={() => handleStageReview('reject')}
+                disabled={loading}
+                fullWidth
+              >
+                Reject
+              </Button>
+              
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={loading ? <CircularProgress size={16} /> : <ApproveIcon />}
+                onClick={() => handleStageReview('approve')}
+                disabled={loading}
+                fullWidth
+                sx={{ fontWeight: 600 }}
+              >
+                Approve
+              </Button>
+            </Box>
             
+            {/* Bottom row: Request Changes (full width) */}
             <Button
               variant="outlined"
               color="warning"
               startIcon={loading ? <CircularProgress size={16} /> : <RevisionIcon />}
               onClick={() => handleStageReview('request_revision')}
               disabled={loading}
-              fullWidth={compact}
+              fullWidth
             >
               Request Changes
-            </Button>
-            
-            <Button
-              variant="contained"
-              color="success"
-              startIcon={loading ? <CircularProgress size={16} /> : <ApproveIcon />}
-              onClick={() => handleStageReview('approve')}
-              disabled={loading}
-              fullWidth={compact}
-              sx={{ fontWeight: 600 }}
-            >
-              Approve
             </Button>
           </Box>
 

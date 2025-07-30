@@ -19,13 +19,15 @@ import {
   Block as BlockIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material';
+import { canManageUsers } from '../../utils/permissions';
+import type { User } from '../../api/auth';
 
 interface UserTableToolbarProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   selectedCount: number;
   totalCount: number;
-  userRole?: string;
+  user?: User | null;
   bulkActionLoading: boolean;
   onBulkActivate: () => void;
   onBulkDeactivate: () => void;
@@ -37,13 +39,13 @@ export const UserTableToolbar: React.FC<UserTableToolbarProps> = ({
   onSearchChange,
   selectedCount,
   totalCount,
-  userRole,
+  user,
   bulkActionLoading,
   onBulkActivate,
   onBulkDeactivate,
   onBulkDelete
 }) => {
-  const canPerformBulkActions = userRole?.toLowerCase() === 'admin' && selectedCount > 0;
+  const canPerformBulkActions = canManageUsers(user) && selectedCount > 0;
 
   return (
     <Paper sx={{ p: 2, mb: 2 }}>

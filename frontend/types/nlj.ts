@@ -59,6 +59,8 @@ export interface Link {
   sourceNodeId: string;
   targetNodeId: string;
   probability?: number;
+  condition?: string; // For branch conditions on 'link' type
+  label?: string; // Display label for branch conditions
   startPoint: Point;
   endPoint: Point;
   bendPoints?: Point[];
@@ -785,7 +787,7 @@ export interface NLJScenario {
 export interface GameState {
   scenarioId: string;
   currentNodeId: string;
-  variables: Record<string, number>;
+  variables: Record<string, number | string | boolean>;
   visitedNodes: Set<string>;
   completed: boolean;
   score?: number;
@@ -850,7 +852,12 @@ export interface NavigateToNodeAction {
 
 export interface UpdateVariableAction {
   type: 'UPDATE_VARIABLE';
-  payload: { variableId: string; value: number };
+  payload: { variableId: string; value: number | string | boolean };
+}
+
+export interface BatchUpdateVariablesAction {
+  type: 'BATCH_UPDATE_VARIABLES';
+  payload: { variables: Record<string, number | string | boolean> };
 }
 
 export interface CompleteScenarioAction {
@@ -909,6 +916,7 @@ export type GameAction =
   | LoadScenarioAction
   | NavigateToNodeAction
   | UpdateVariableAction
+  | BatchUpdateVariablesAction
   | CompleteScenarioAction
   | ResetAction
   | SubmitResponseAction

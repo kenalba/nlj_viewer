@@ -22,13 +22,15 @@ import {
   Archive as ArchiveIcon
 } from '@mui/icons-material';
 import type { ContentItem } from '../../api/content';
+import { canEditContent, canDeleteContent, canViewAnalytics } from '../../utils/permissions';
+import type { User } from '../../api/auth';
 
 interface ItemActionsMenuProps {
   anchorEl: HTMLElement | null;
   open: boolean;
   onClose: () => void;
   item: ContentItem;
-  userRole?: string;
+  user?: User | null;
   onEdit: (item: ContentItem) => void;
   onDelete?: (item: ContentItem) => void;
 }
@@ -38,13 +40,13 @@ export const ItemActionsMenu: React.FC<ItemActionsMenuProps> = ({
   open,
   onClose,
   item,
-  userRole,
+  user,
   onEdit,
   onDelete
 }) => {
-  const canEdit = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole.toLowerCase());
-  const canDelete = userRole && ['creator', 'admin'].includes(userRole.toLowerCase());
-  const canViewAnalytics = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole.toLowerCase());
+  const canEdit = canEditContent(user);
+  const canDelete = canDeleteContent(user);
+  const canView = canViewAnalytics(user);
 
   const handleAction = useCallback((action: () => void) => {
     onClose();
@@ -140,7 +142,7 @@ export const ItemActionsMenu: React.FC<ItemActionsMenuProps> = ({
       {/* Analytics & Export */}
       <Divider />
       
-      {canViewAnalytics && (
+      {canView && (
         <MenuItem onClick={handleViewAnalytics}>
           <ListItemIcon>
             <AnalyticsIcon color="info" />

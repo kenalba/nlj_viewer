@@ -23,6 +23,7 @@ import {
   CheckBox as CheckboxIcon,
   SportsEsports as ConnectionsIcon,
   Games as WordleIcon,
+  AccountTree as BranchIcon,
 } from '@mui/icons-material';
 
 import { NODE_TYPE_INFO } from './flowUtils';
@@ -69,6 +70,8 @@ export function getNodeIcon(nodeType: FlowNodeType): React.ReactElement {
       return <ConnectionsIcon />;
     case 'wordle':
       return <WordleIcon />;
+    case 'branch':
+      return <BranchIcon />;
     default:
       return <QuestionIcon />;
   }

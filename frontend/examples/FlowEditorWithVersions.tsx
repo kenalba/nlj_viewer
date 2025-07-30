@@ -47,7 +47,7 @@ export const FlowEditorWithVersions: React.FC<FlowEditorWithVersionsProps> = ({
   // Check if user can manage versions
   const canManageVersions = Boolean(
     user && 
-    ['creator', 'reviewer', 'approver', 'admin'].includes(user.role) &&
+    ['creator', 'reviewer', 'approver', 'admin'].includes(user.role.toLowerCase()) &&
     contentItem.state !== 'published' // Don't allow version changes on published content
   );
 

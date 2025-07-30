@@ -62,7 +62,7 @@ export interface XAPIContextActions {
   
   // Activity lifecycle
   trackActivityLaunched: (scenario: NLJScenario) => void;
-  trackActivityCompleted: (scenario: NLJScenario, score?: number) => void;
+  trackActivityCompleted: (scenario: NLJScenario, score?: number, variableStates?: Record<string, number | string | boolean>) => void;
   trackActivitySuspended: (scenario: NLJScenario) => void;
   trackActivityResumed: (scenario: NLJScenario) => void;
   
@@ -357,8 +357,14 @@ export const XAPIProvider: React.FC<XAPIProviderProps> = ({
     trackEvent(event);
   }, [isEnabled, actor, trackEvent]);
   
-  const trackActivityCompleted = useCallback((scenario: NLJScenario, score?: number) => {
+  const trackActivityCompleted = useCallback((scenario: NLJScenario, score?: number, variableStates?: Record<string, number | string | boolean>) => {
     if (!actor) return;
+    
+    // Prepare extensions with variable states if provided
+    const extensions: Record<string, unknown> = {};
+    if (variableStates && Object.keys(variableStates).length > 0) {
+      extensions['https://nlj.com/xapi/extensions/variable-states'] = variableStates;
+    }
     
     const event: LearningActivityEvent = {
       type: 'completed',
@@ -370,7 +376,8 @@ export const XAPIProvider: React.FC<XAPIProviderProps> = ({
       result: createResult({
         completion: true,
         success: score !== undefined ? score > 0 : true,
-        score: score !== undefined ? { raw: score } : undefined
+        score: score !== undefined ? { raw: score } : undefined,
+        extensions: Object.keys(extensions).length > 0 ? extensions : undefined
       }),
       context: createXAPIContext({
         registration: sessionId.current,

@@ -176,6 +176,34 @@ export const FlowEdge = memo(({
             />
           )}
           
+          {/* Branch Condition Label */}
+          {data?.label && (
+            <Tooltip title={`Branch condition: ${data.label}`}>
+              <Chip
+                label={data.label}
+                size="small"
+                variant="filled"
+                sx={{
+                  backgroundColor: alpha('#4A148C', 0.9), // Dark purple for branch conditions
+                  color: '#fff',
+                  fontSize: '0.7rem',
+                  height: 22,
+                  maxWidth: 120,
+                  fontWeight: 'bold',
+                  '& .MuiChip-label': {
+                    px: 1,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  },
+                  '&:hover': {
+                    backgroundColor: alpha('#4A148C', 1),
+                  },
+                }}
+              />
+            </Tooltip>
+          )}
+
           {/* Link Type Indicator */}
           {(data?.nljLink as any)?.type === 'parent-child' && (
             <Tooltip title="Parent-Child Link">

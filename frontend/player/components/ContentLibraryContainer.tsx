@@ -30,7 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { contentApi } from '../../api/content';
 import type { ContentItem, ContentFilters } from '../../api/content';
-import { getAllowedContentStates, canEditContent, canCreateContent } from '../../utils/permissions';
+import { getAllowedContentStates, canEditContent, canCreateContent, canPerformBulkActions } from '../../utils/permissions';
 import { workflowApi } from '../../api/workflow';
 import { CreateActivityModal } from '../../shared/CreateActivityModal';
 import { ImportActivityModal } from '../../shared/ImportActivityModal';
@@ -65,7 +65,7 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
   
   const [viewMode, setViewMode] = useState<'card' | 'table'>(() => {
     const saved = localStorage.getItem('nlj-activities-view-mode');
-    return (saved === 'card' || saved === 'table') ? saved : 'card';
+    return (saved === 'card' || saved === 'table') ? saved : 'table';
   });
 
   const { loadScenario } = useGameContext();
@@ -83,12 +83,19 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
   const filteredContent = useMemo(() => {
     if (!searchTerm) return content;
     const searchLower = searchTerm.toLowerCase();
-    return content.filter(item => (
-      item.title.toLowerCase().includes(searchLower) ||
-      (item.description && item.description.toLowerCase().includes(searchLower)) ||
-      item.content_type.toLowerCase().includes(searchLower) ||
-      (item.learning_style && item.learning_style.toLowerCase().includes(searchLower))
-    ));
+    return content.filter(item => {
+      // Ensure item has required properties before filtering
+      if (!item || !item.id || !item.title || !item.content_type) {
+        return false;
+      }
+      
+      return (
+        item.title.toLowerCase().includes(searchLower) ||
+        (item.description && item.description.toLowerCase().includes(searchLower)) ||
+        item.content_type.toLowerCase().includes(searchLower) ||
+        (item.learning_style && item.learning_style.toLowerCase().includes(searchLower))
+      );
+    });
   }, [content, searchTerm]);
 
   // Optimized selection handler for simple Table
@@ -607,7 +614,7 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
           </Typography>
         </Box>
         
-        {user && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role) && (
+        {canEditContent(user) && (
           <Box display="flex" gap={1}>
             <Button
               variant="outlined"
@@ -640,12 +647,8 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
         </Alert>
       )}
 
-      {/* View Toggle and Results Count */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="body2" color="text.secondary">
-          {content.length} of {total} activities
-        </Typography>
-        
+      {/* View Toggle */}
+      <Box display="flex" justifyContent="flex-end" alignItems="center" mb={2}>        
         <ToggleButtonGroup
           value={viewMode}
           exclusive
@@ -668,7 +671,7 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
       {viewMode === 'card' ? (
         <ContentCardGrid
           content={filteredContent}
-          userRole={user?.role}
+          user={user}
           onPlayContent={handlePlayContent}
           onEditContent={handleEditContent}
         />
@@ -680,7 +683,7 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
             filteredCount={filteredContent.length}
             totalCount={content.length}
             selectedCount={getSelectedCount()}
-            userRole={user?.role}
+            user={user}
             bulkStatusChangeLoading={bulkStatusChangeLoading}
             onSubmitForReview={handleSubmitForReview}
             onPublishContent={handlePublishContent}
@@ -689,23 +692,25 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
             onDeleteItems={handleDeleteItems}
           />
           
-          {filteredContent.length > 0 && filteredContent.every(item => item.id) ? (
-            <ContentTable
-              content={filteredContent}
-              selectedIds={selectedIds}
-              onSelectionChange={handleSelectionChange}
-              userRole={user?.role}
-              onPlayContent={handlePlayContent}
-              onEditContent={handleEditContent}
-            />
-          ) : content.length > 0 ? (
-            <Box textAlign="center" py={8}>
-              <Alert severity="warning" sx={{ mb: 2 }}>
-                <Typography variant="body2">
-                  Some activity data is malformed. Please contact support.
-                </Typography>
-              </Alert>
-            </Box>
+          {filteredContent.length > 0 ? (
+            filteredContent.every(item => item.id) ? (
+              <ContentTable
+                content={filteredContent}
+                selectedIds={selectedIds}
+                onSelectionChange={handleSelectionChange}
+                user={user}
+                onPlayContent={handlePlayContent}
+                onEditContent={handleEditContent}
+              />
+            ) : (
+              <Box textAlign="center" py={8}>
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  <Typography variant="body2">
+                    Some activity data is malformed. Please contact support.
+                  </Typography>
+                </Alert>
+              </Box>
+            )
           ) : (
             <Box textAlign="center" py={8}>
               <Typography variant="h6" color="text.secondary" gutterBottom>

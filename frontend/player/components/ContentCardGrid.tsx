@@ -24,6 +24,8 @@ import {
   Edit as EditIcon
 } from '@mui/icons-material';
 import type { ContentItem } from '../../api/content';
+import { canEditContent } from '../../utils/permissions';
+import type { User } from '../../api/auth';
 
 // Content type utilities (duplicated from cells for standalone usage)
 const getContentIcon = (type: string) => {
@@ -60,12 +62,12 @@ const getIconColor = (type: string) => {
 
 interface ContentCardProps {
   item: ContentItem;
-  userRole?: string;
+  user?: User | null;
   onPlay: (item: ContentItem) => void;
   onEdit: (item: ContentItem) => void;
 }
 
-const ContentCard = React.memo(({ item, userRole, onPlay, onEdit }: ContentCardProps) => {
+const ContentCard = React.memo(({ item, user, onPlay, onEdit }: ContentCardProps) => {
   const handlePlay = useCallback(() => {
     onPlay(item);
   }, [item, onPlay]);
@@ -74,7 +76,7 @@ const ContentCard = React.memo(({ item, userRole, onPlay, onEdit }: ContentCardP
     onEdit(item);
   }, [item, onEdit]);
 
-  const canEdit = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole);
+  const canEdit = canEditContent(user);
 
   return (
     <Card 
@@ -294,14 +296,14 @@ const ContentCard = React.memo(({ item, userRole, onPlay, onEdit }: ContentCardP
 
 interface ContentCardGridProps {
   content: ContentItem[];
-  userRole?: string;
+  user?: User | null;
   onPlayContent: (item: ContentItem) => void;
   onEditContent: (item: ContentItem) => void;
 }
 
 export const ContentCardGrid = React.memo(({ 
   content, 
-  userRole, 
+  user, 
   onPlayContent, 
   onEditContent 
 }: ContentCardGridProps) => {
@@ -318,7 +320,7 @@ export const ContentCardGrid = React.memo(({
         <ContentCard
           key={item.id}
           item={item}
-          userRole={userRole}
+          user={user}
           onPlay={onPlayContent}
           onEdit={onEditContent}
         />

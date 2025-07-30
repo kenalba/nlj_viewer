@@ -8,12 +8,12 @@ import { apiClient } from './client';
 export interface ContentItem {
   id: string;
   title: string;
-  description: string;
+  description?: string | null;
   content_type: 'training' | 'survey' | 'assessment' | 'game' | 'mixed';
-  learning_style: 'visual' | 'auditory' | 'kinesthetic' | 'reading_writing';
+  learning_style?: 'visual' | 'auditory' | 'kinesthetic' | 'reading_writing' | null;
   state: 'draft' | 'submitted' | 'in_review' | 'approved' | 'published' | 'rejected' | 'archived';
   is_template: boolean;
-  template_category: string;
+  template_category?: string | null;
   view_count: number;
   completion_count: number;
   created_at: string;

@@ -206,6 +206,40 @@ export const NODE_TYPE_INFO: Record<string, NodeTypeInfo> = {
     hasChoices: false,
     supportsMedia: true,
   },
+  branch: {
+    type: 'branch',
+    label: 'Branch',
+    description: 'Conditional navigation based on expressions',
+    icon: '🌿',
+    category: 'structure',
+    color: '#4A148C', // Dark purple
+    isInteractive: true,
+    hasChoices: false,
+    supportsMedia: false,
+  },
+  // Legacy type mappings for backward compatibility
+  panel: {
+    type: 'panel',
+    label: 'Info Panel',
+    description: 'Information or content panel (legacy)',
+    icon: '📄',
+    category: 'structure',
+    color: '#E65100', // Darker orange
+    isInteractive: false,
+    hasChoices: false,
+    supportsMedia: true,
+  },
+  multipleChoice: {
+    type: 'multipleChoice',
+    label: 'Multiple Choice',
+    description: 'Question with multiple choice answers (legacy)',
+    icon: '❓',
+    category: 'assessment',
+    color: '#1565C0', // Darker blue
+    isInteractive: true,
+    hasChoices: true,
+    supportsMedia: true,
+  },
 };
 
 // Convert NLJ node to Flow node data
@@ -279,37 +313,96 @@ export function nljLinkToFlowEdgeData(nljLink: Link): FlowEdgeData {
 
 // Convert NLJ scenario to Flow nodes and edges
 export function nljScenarioToFlow(scenario: NLJScenario): { nodes: FlowNode[], edges: FlowEdge[] } {
-  const nodes: FlowNode[] = scenario.nodes.map(nljNode => ({
-    id: nljNode.id,
-    type: 'custom',
-    position: { x: nljNode.x, y: nljNode.y },
-    data: nljNodeToFlowNodeData(nljNode),
-    draggable: true,
-    selectable: true,
-    style: {
-      width: nljNode.width,
-      height: nljNode.height,
-    },
-  }));
+  const nodes: FlowNode[] = scenario.nodes.map(nljNode => {
+    // Normalize node type to match expected types
+    let normalizedType = nljNode.type;
+    if (nljNode.type === 'panel') {
+      normalizedType = 'interstitial_panel';
+    } else if (nljNode.type === 'multipleChoice') {
+      normalizedType = 'question';
+    }
+
+    // Ensure position values are valid numbers, fallback to defaults if not
+    const safeX = typeof nljNode.x === 'number' && !isNaN(nljNode.x) ? nljNode.x : 
+                  (nljNode.position?.x && typeof nljNode.position.x === 'number' && !isNaN(nljNode.position.x) ? nljNode.position.x : 0);
+    const safeY = typeof nljNode.y === 'number' && !isNaN(nljNode.y) ? nljNode.y : 
+                  (nljNode.position?.y && typeof nljNode.position.y === 'number' && !isNaN(nljNode.position.y) ? nljNode.position.y : 0);
+
+    // Debug logging for position validation
+    if (isNaN(safeX) || isNaN(safeY)) {
+      console.warn(`Invalid position detected for node ${nljNode.id}:`, {
+        originalX: nljNode.x,
+        originalY: nljNode.y,
+        positionX: nljNode.position?.x,
+        positionY: nljNode.position?.y,
+        safeX,
+        safeY,
+        node: nljNode
+      });
+    }
+
+    // Create normalized node for data processing
+    const normalizedNode = {
+      ...nljNode,
+      type: normalizedType,
+      x: safeX,
+      y: safeY,
+    };
+
+    return {
+      id: nljNode.id,
+      type: 'custom',
+      position: { x: safeX, y: safeY },
+      data: nljNodeToFlowNodeData(normalizedNode),
+      draggable: true,
+      selectable: true,
+      style: {
+        width: nljNode.width || 250,
+        height: nljNode.height || 120,
+      },
+    };
+  });
 
   // Convert explicit links
-  const edges: FlowEdge[] = scenario.links.map(nljLink => ({
-    id: nljLink.id,
-    source: nljLink.sourceNodeId,
-    target: nljLink.targetNodeId,
-    type: 'custom',
-    data: nljLinkToFlowEdgeData(nljLink),
-    animated: false,
-    style: {
-      stroke: '#666',
-      strokeWidth: 2,
-    },
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-      color: '#666',
-    },
-    label: nljLink.probability !== undefined ? `${Math.round(nljLink.probability * 100)}%` : undefined,
-  }));
+  const edges: FlowEdge[] = scenario.links.map(nljLink => {
+    // Handle different link formats (sourceNodeId/targetNodeId vs source/target)
+    const sourceId = nljLink.sourceNodeId || (nljLink as any).source;
+    const targetId = nljLink.targetNodeId || (nljLink as any).target;
+    
+    if (!sourceId || !targetId) {
+      console.warn('Invalid link found:', nljLink);
+      return null;
+    }
+
+    // Create normalized link for data processing
+    const normalizedLink = {
+      ...nljLink,
+      sourceNodeId: sourceId,
+      targetNodeId: targetId,
+      probability: nljLink.probability || 1.0,
+      startPoint: nljLink.startPoint || { x: 0, y: 0 },
+      endPoint: nljLink.endPoint || { x: 0, y: 0 },
+      bendPoints: nljLink.bendPoints || [],
+    };
+
+    return {
+      id: nljLink.id,
+      source: sourceId,
+      target: targetId,
+      type: 'custom',
+      data: nljLinkToFlowEdgeData(normalizedLink),
+      animated: false,
+      style: {
+        stroke: '#666',
+        strokeWidth: 2,
+      },
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        color: '#666',
+      },
+      label: nljLink.probability !== undefined ? `${Math.round(nljLink.probability * 100)}%` : undefined,
+    };
+  }).filter(Boolean) as FlowEdge[]; // Remove any null entries
 
   // Add parent-child relationships from parentId fields
   scenario.nodes.forEach(node => {

@@ -61,17 +61,89 @@ export const isScenarioComplete = (scenario: NLJScenario, currentNodeId: string)
 };
 
 /**
- * Apply variable changes from a choice
+ * Apply variable changes from a choice with full operation support
  */
 export const applyVariableChanges = (
-  currentVariables: Record<string, number>,
+  currentVariables: Record<string, number | string | boolean>,
   choice: ChoiceNode
-): Record<string, number> => {
+): Record<string, number | string | boolean> => {
   if (!choice.variableChanges) return currentVariables;
   
   const newVariables = { ...currentVariables };
+  
   choice.variableChanges.forEach(change => {
-    newVariables[change.variableId] = change.value;
+    const currentValue = newVariables[change.variableId] || 0;
+    const changeValue = change.value;
+    
+    switch (change.operation) {
+      case 'set':
+        newVariables[change.variableId] = changeValue;
+        break;
+        
+      case 'add':
+        if (typeof currentValue === 'number' && typeof changeValue === 'number') {
+          newVariables[change.variableId] = currentValue + changeValue;
+        } else {
+          console.warn(`Cannot add non-numeric values: ${currentValue} + ${changeValue}`);
+          newVariables[change.variableId] = changeValue;
+        }
+        break;
+        
+      case 'subtract':
+        if (typeof currentValue === 'number' && typeof changeValue === 'number') {
+          newVariables[change.variableId] = currentValue - changeValue;
+        } else {
+          console.warn(`Cannot subtract non-numeric values: ${currentValue} - ${changeValue}`);
+          newVariables[change.variableId] = changeValue;
+        }
+        break;
+        
+      case 'multiply':
+        if (typeof currentValue === 'number' && typeof changeValue === 'number') {
+          newVariables[change.variableId] = currentValue * changeValue;
+        } else {
+          console.warn(`Cannot multiply non-numeric values: ${currentValue} * ${changeValue}`);
+          newVariables[change.variableId] = changeValue;
+        }
+        break;
+        
+      case 'divide':
+        if (typeof currentValue === 'number' && typeof changeValue === 'number') {
+          if (changeValue === 0) {
+            console.warn(`Division by zero attempted for variable ${change.variableId}`);
+            newVariables[change.variableId] = currentValue;
+          } else {
+            newVariables[change.variableId] = currentValue / changeValue;
+          }
+        } else {
+          console.warn(`Cannot divide non-numeric values: ${currentValue} / ${changeValue}`);
+          newVariables[change.variableId] = changeValue;
+        }
+        break;
+        
+      case 'append':
+        if (typeof currentValue === 'string' && typeof changeValue === 'string') {
+          newVariables[change.variableId] = currentValue + changeValue;
+        } else {
+          // Convert to strings and append
+          newVariables[change.variableId] = String(currentValue) + String(changeValue);
+        }
+        break;
+        
+      case 'toggle':
+        if (typeof currentValue === 'boolean') {
+          newVariables[change.variableId] = !currentValue;
+        } else {
+          // Convert to boolean and toggle
+          newVariables[change.variableId] = !Boolean(currentValue);
+        }
+        break;
+        
+      default:
+        console.warn(`Unknown operation: ${change.operation}, defaulting to set`);
+        newVariables[change.variableId] = changeValue;
+        break;
+    }
   });
   
   return newVariables;
@@ -98,7 +170,9 @@ export const VALID_NODE_TYPES = [
   'multi_select',
   'checkbox',
   'connections',
-  'wordle'
+  'wordle',
+  'crossword',
+  'branch'
 ] as const;
 
 /**
@@ -232,6 +306,37 @@ const validateNodeStructure = (node: any): string[] => {
     case 'wordle':
       if (!node.gameData || !node.gameData.targetWord) {
         errors.push(`Wordle node "${node.id}" missing required 'gameData.targetWord' property`);
+      }
+      break;
+      
+    case 'crossword':
+      if (!node.gameSettings || !node.gameSettings.grid || !node.gameSettings.clues) {
+        errors.push(`Crossword node "${node.id}" missing required 'gameSettings.grid' and 'gameSettings.clues' properties`);
+      }
+      break;
+      
+    case 'branch':
+      if (!Array.isArray(node.conditions) || node.conditions.length === 0) {
+        errors.push(`Branch node "${node.id}" missing required 'conditions' array`);
+      } else {
+        // Validate each condition
+        node.conditions.forEach((condition: any, index: number) => {
+          if (!condition.id) {
+            errors.push(`Branch node "${node.id}" condition ${index + 1} missing required 'id' property`);
+          }
+          if (!condition.label || condition.label.trim() === '') {
+            errors.push(`Branch node "${node.id}" condition ${index + 1} missing required 'label' property`);
+          }
+          if (!condition.expression || condition.expression.trim() === '') {
+            errors.push(`Branch node "${node.id}" condition ${index + 1} missing required 'expression' property`);
+          }
+          if (!condition.targetNodeId || condition.targetNodeId.trim() === '') {
+            errors.push(`Branch node "${node.id}" condition ${index + 1} missing required 'targetNodeId' property`);
+          }
+        });
+      }
+      if (!node.evaluationMode || !['first-match', 'priority-order'].includes(node.evaluationMode)) {
+        errors.push(`Branch node "${node.id}" missing or invalid 'evaluationMode' property. Must be 'first-match' or 'priority-order'`);
       }
       break;
   }

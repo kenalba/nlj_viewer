@@ -72,7 +72,8 @@ export type FlowNodeType =
   | 'multi_select'
   | 'checkbox'
   | 'connections'
-  | 'wordle';
+  | 'wordle'
+  | 'branch';
 
 // Available node types for the palette
 export interface NodeTypeInfo {

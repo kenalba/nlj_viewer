@@ -1,0 +1,478 @@
+{
+  "id": "sales-training-expressions",
+  "name": "Sales Training: Dynamic Performance Assessment",
+  "description": "Interactive sales training scenario that uses expressions to dynamically adjust the learning path based on performance and track progress variables",
+  "orientation": "horizontal",
+  "activityType": "training",
+  "variableDefinitions": [
+    {
+      "id": "performance_score",
+      "name": "Performance Score",
+      "type": "number",
+      "initialValue": 0,
+      "description": "Running score based on user's sales performance"
+    },
+    {
+      "id": "experience_level",
+      "name": "Experience Level",
+      "type": "string",
+      "initialValue": "beginner",
+      "description": "User's experience level: beginner, intermediate, or advanced"
+    },
+    {
+      "id": "confidence_rating",
+      "name": "Confidence Rating",
+      "type": "number",
+      "initialValue": 3,
+      "description": "User's self-reported confidence level (1-5 scale)"
+    },
+    {
+      "id": "customer_name",
+      "name": "Customer Name",
+      "type": "string",
+      "initialValue": "Sarah Johnson",
+      "description": "Current customer's name for personalization"
+    },
+    {
+      "id": "product_knowledge",
+      "name": "Product Knowledge",
+      "type": "number",
+      "initialValue": 0,
+      "description": "Score tracking product knowledge mastery"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "title": "Welcome to Dynamic Sales Training",
+      "text": "Welcome to our adaptive sales training system! This scenario will adjust based on your performance and provide personalized feedback.\n\nYour current experience level: **{experience_level}**\nConfidence rating: **{confidence_rating}/5**",
+      "position": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "experience-assessment",
+      "type": "multipleChoice",
+      "title": "Experience Level Assessment",
+      "text": "First, let's assess your sales experience to customize your learning path:",
+      "choices": [
+        {
+          "id": "beginner",
+          "text": "Beginner (Less than 1 year)",
+          "variableChanges": [
+            {
+              "variableId": "experience_level",
+              "operation": "set",
+              "value": "beginner"
+            },
+            {
+              "variableId": "performance_score",
+              "operation": "add",
+              "value": 5
+            }
+          ]
+        },
+        {
+          "id": "intermediate",
+          "text": "Intermediate (1-3 years)",
+          "variableChanges": [
+            {
+              "variableId": "experience_level",
+              "operation": "set",
+              "value": "intermediate"
+            },
+            {
+              "variableId": "performance_score",
+              "operation": "add",
+              "value": 10
+            }
+          ]
+        },
+        {
+          "id": "advanced",
+          "text": "Advanced (3+ years)",
+          "variableChanges": [
+            {
+              "variableId": "experience_level",
+              "operation": "set",
+              "value": "advanced"
+            },
+            {
+              "variableId": "performance_score",
+              "operation": "add",
+              "value": 15
+            }
+          ]
+        }
+      ],
+      "position": {
+        "x": 300,
+        "y": 0
+      }
+    },
+    {
+      "id": "confidence-check",
+      "type": "likertScale",
+      "title": "Confidence Self-Assessment",
+      "text": "How confident do you feel about your current sales abilities?\n\nYour experience level: **{experience_level}**\nCurrent performance score: **{performance_score}**",
+      "scaleType": "1-5",
+      "leftLabel": "Not confident at all",
+      "rightLabel": "Extremely confident",
+      "variableChanges": [
+        {
+          "variableId": "confidence_rating",
+          "operation": "set",
+          "value": "{response}"
+        }
+      ],
+      "position": {
+        "x": 600,
+        "y": 0
+      }
+    },
+    {
+      "id": "adaptive-branch",
+      "type": "branch",
+      "title": "Adaptive Path Selection",
+      "text": "Based on your assessment, we'll direct you to the most appropriate training path.",
+      "conditions": [
+        {
+          "expression": "experience_level === 'beginner' && confidence_rating <= 2",
+          "targetNodeId": "beginner-basics",
+          "label": "Basic Training Path"
+        },
+        {
+          "expression": "experience_level === 'intermediate' || (experience_level === 'beginner' && confidence_rating > 2)",
+          "targetNodeId": "intermediate-scenario",
+          "label": "Intermediate Path"
+        },
+        {
+          "expression": "experience_level === 'advanced' && confidence_rating >= 4",
+          "targetNodeId": "advanced-challenge",
+          "label": "Advanced Challenge"
+        }
+      ],
+      "defaultTargetNodeId": "intermediate-scenario",
+      "position": {
+        "x": 900,
+        "y": 0
+      }
+    },
+    {
+      "id": "beginner-basics",
+      "type": "panel",
+      "title": "Sales Fundamentals",
+      "text": "Welcome to the basics, {customer_name}! Let's start with fundamental sales principles.\n\n**Your Profile:**\n- Experience: {experience_level}\n- Confidence: {confidence_rating}/5\n- Current Score: {performance_score}\n\nAs a {experience_level} salesperson, you'll learn:\n- Building rapport with customers\n- Understanding customer needs\n- Basic objection handling",
+      "position": {
+        "x": 1200,
+        "y": -200
+      }
+    },
+    {
+      "id": "product-knowledge-quiz",
+      "type": "multipleChoice",
+      "title": "Product Knowledge Check",
+      "text": "Let's test your product knowledge. What's the key benefit of our premium service package?",
+      "choices": [
+        {
+          "id": "correct",
+          "text": "24/7 customer support and priority handling",
+          "isCorrect": true,
+          "feedback": "Excellent! You understand our value proposition.",
+          "variableChanges": [
+            {
+              "variableId": "product_knowledge",
+              "operation": "add",
+              "value": 20
+            },
+            {
+              "variableId": "performance_score",
+              "operation": "add",
+              "value": 10
+            }
+          ]
+        },
+        {
+          "id": "partial",
+          "text": "Lower cost than competitors",
+          "isCorrect": false,
+          "feedback": "That's one aspect, but not the key differentiator.",
+          "variableChanges": [
+            {
+              "variableId": "product_knowledge",
+              "operation": "add",
+              "value": 5
+            },
+            {
+              "variableId": "performance_score",
+              "operation": "add",
+              "value": 2
+            }
+          ]
+        },
+        {
+          "id": "incorrect",
+          "text": "Faster delivery times",
+          "isCorrect": false,
+          "feedback": "Not quite. Review our service features.",
+          "variableChanges": [
+            {
+              "variableId": "performance_score",
+              "operation": "subtract",
+              "value": 2
+            }
+          ]
+        }
+      ],
+      "position": {
+        "x": 1500,
+        "y": -200
+      }
+    },
+    {
+      "id": "intermediate-scenario",
+      "type": "panel",
+      "title": "Customer Interaction Scenario",
+      "text": "Great job so far! Your current performance score is **{performance_score}** points.\n\nYou're meeting with {customer_name}, a potential client interested in our services. Your experience level ({experience_level}) gives you good foundation for this interaction.\n\n**Scenario Setup:**\nThe customer has expressed interest but seems hesitant about pricing. Your confidence level of {confidence_rating}/5 will help guide your approach.",
+      "position": {
+        "x": 1200,
+        "y": 0
+      }
+    },
+    {
+      "id": "objection-handling",
+      "type": "multipleChoice",
+      "title": "Handling Price Objections",
+      "text": "{customer_name} says: \"Your prices seem higher than your competitors. Why should I pay more?\"\n\nYour product knowledge score: **{product_knowledge}**\nPerformance score: **{performance_score}**\n\nHow do you respond?",
+      "choices": [
+        {
+          "id": "value-focus",
+          "text": "\"I understand your concern. Let me show you the additional value you get for that investment...\"",
+          "isCorrect": true,
+          "feedback": "Perfect! Addressing the value proposition directly.",
+          "variableChanges": [
+            {
+              "variableId": "performance_score",
+              "operation": "add",
+              "value": 15
+            }
+          ]
+        },
+        {
+          "id": "defensive",
+          "text": "\"Our prices are competitive in the market.\"",
+          "isCorrect": false,
+          "feedback": "Too defensive. Focus on value instead.",
+          "variableChanges": [
+            {
+              "variableId": "performance_score",
+              "operation": "add",
+              "value": 2
+            }
+          ]
+        },
+        {
+          "id": "discount",
+          "text": "\"I can offer you a 10% discount.\"",
+          "isCorrect": false,
+          "feedback": "Discounting too quickly undermines value.",
+          "variableChanges": [
+            {
+              "variableId": "performance_score",
+              "operation": "subtract",
+              "value": 5
+            }
+          ]
+        }
+      ],
+      "position": {
+        "x": 1500,
+        "y": 0
+      }
+    },
+    {
+      "id": "advanced-challenge",
+      "type": "panel",
+      "title": "Advanced Sales Challenge",
+      "text": "Excellent! With your {experience_level} background and {confidence_rating}/5 confidence, you're ready for our most challenging scenario.\n\n**Current Stats:**\n- Performance Score: {performance_score}\n- Product Knowledge: {product_knowledge}\n\nYou're dealing with a high-value enterprise client who has complex requirements and multiple decision-makers.",
+      "position": {
+        "x": 1200,
+        "y": 200
+      }
+    },
+    {
+      "id": "performance-branch",
+      "type": "branch",
+      "title": "Performance-Based Next Steps",
+      "text": "Based on your performance so far, let's determine your next learning step.",
+      "conditions": [
+        {
+          "expression": "performance_score >= 40",
+          "targetNodeId": "high-performer",
+          "label": "High Performer Path"
+        },
+        {
+          "expression": "performance_score >= 20 && performance_score < 40",
+          "targetNodeId": "moderate-performer",
+          "label": "Moderate Performer Path"
+        },
+        {
+          "expression": "performance_score < 20",
+          "targetNodeId": "needs-improvement",
+          "label": "Improvement Needed"
+        }
+      ],
+      "defaultTargetNodeId": "moderate-performer",
+      "position": {
+        "x": 1800,
+        "y": 0
+      }
+    },
+    {
+      "id": "high-performer",
+      "type": "panel",
+      "title": "Congratulations, High Performer!",
+      "text": "Outstanding work! You've achieved a performance score of **{performance_score}** points.\n\n**Your Profile:**\n- Experience Level: {experience_level}\n- Confidence Rating: {confidence_rating}/5\n- Product Knowledge: {product_knowledge}\n\nYou've demonstrated excellent sales skills. Consider mentoring other team members or taking on advanced accounts.",
+      "position": {
+        "x": 2100,
+        "y": -200
+      }
+    },
+    {
+      "id": "moderate-performer",
+      "type": "panel",
+      "title": "Good Progress, Keep Growing!",
+      "text": "Well done! Your performance score of **{performance_score}** shows solid progress.\n\n**Areas for continued development:**\n- Your {experience_level} background gives you a good foundation\n- With confidence at {confidence_rating}/5, you're building skills\n- Product knowledge score: {product_knowledge}\n\nRecommended next steps: Focus on advanced objection handling and closing techniques.",
+      "position": {
+        "x": 2100,
+        "y": 0
+      }
+    },
+    {
+      "id": "needs-improvement",
+      "type": "panel",
+      "title": "Learning Opportunities Identified",
+      "text": "Your current performance score is **{performance_score}**, indicating areas for growth.\n\n**Development Plan:**\n- Experience Level: {experience_level} - Let's build on this foundation\n- Confidence: {confidence_rating}/5 - Practice will help here\n- Product Knowledge: {product_knowledge} - Review materials recommended\n\nDon't worry - every expert was once a beginner. Focus on fundamentals and practice regularly.",
+      "position": {
+        "x": 2100,
+        "y": 200
+      }
+    },
+    {
+      "id": "final-assessment",
+      "type": "panel",
+      "title": "Training Complete - Final Results",
+      "text": "Congratulations on completing the dynamic sales training!\n\n**Final Performance Summary:**\n- Total Score: **{performance_score}** points\n- Experience Level: {experience_level}\n- Final Confidence: {confidence_rating}/5\n- Product Knowledge: {product_knowledge}\n\nThis training adapted to your responses and provided personalized feedback based on your performance. Your variables were tracked throughout to ensure relevant content delivery.",
+      "position": {
+        "x": 2400,
+        "y": 0
+      }
+    }
+  ],
+  "links": [
+    {
+      "id": "start-to-experience",
+      "source": "start",
+      "target": "experience-assessment",
+      "type": "navigation"
+    },
+    {
+      "id": "experience-to-confidence",
+      "source": "experience-assessment",
+      "target": "confidence-check",
+      "type": "navigation"
+    },
+    {
+      "id": "confidence-to-branch",
+      "source": "confidence-check",
+      "target": "adaptive-branch",
+      "type": "navigation"
+    },
+    {
+      "id": "branch-to-beginner",
+      "source": "adaptive-branch",
+      "target": "beginner-basics",
+      "type": "navigation"
+    },
+    {
+      "id": "branch-to-intermediate",
+      "source": "adaptive-branch",
+      "target": "intermediate-scenario",
+      "type": "navigation"
+    },
+    {
+      "id": "branch-to-advanced",
+      "source": "adaptive-branch",
+      "target": "advanced-challenge",
+      "type": "navigation"
+    },
+    {
+      "id": "beginner-to-quiz",
+      "source": "beginner-basics",
+      "target": "product-knowledge-quiz",
+      "type": "navigation"
+    },
+    {
+      "id": "quiz-to-performance-branch",
+      "source": "product-knowledge-quiz",
+      "target": "performance-branch",
+      "type": "navigation"
+    },
+    {
+      "id": "intermediate-to-objection",
+      "source": "intermediate-scenario",
+      "target": "objection-handling",
+      "type": "navigation"
+    },
+    {
+      "id": "objection-to-performance-branch",
+      "source": "objection-handling",
+      "target": "performance-branch",
+      "type": "navigation"
+    },
+    {
+      "id": "advanced-to-performance-branch",
+      "source": "advanced-challenge",
+      "target": "performance-branch",
+      "type": "navigation"
+    },
+    {
+      "id": "performance-to-high",
+      "source": "performance-branch",
+      "target": "high-performer",
+      "type": "navigation"
+    },
+    {
+      "id": "performance-to-moderate",
+      "source": "performance-branch",
+      "target": "moderate-performer",
+      "type": "navigation"
+    },
+    {
+      "id": "performance-to-needs-improvement",
+      "source": "performance-branch",
+      "target": "needs-improvement",
+      "type": "navigation"
+    },
+    {
+      "id": "high-to-final",
+      "source": "high-performer",
+      "target": "final-assessment",
+      "type": "navigation"
+    },
+    {
+      "id": "moderate-to-final",
+      "source": "moderate-performer",
+      "target": "final-assessment",
+      "type": "navigation"
+    },
+    {
+      "id": "needs-improvement-to-final",
+      "source": "needs-improvement",
+      "target": "final-assessment",
+      "type": "navigation"
+    }
+  ]
+}

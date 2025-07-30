@@ -72,21 +72,23 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
         Content
       </Typography>
 
-      {/* Node Title Field */}
-      <Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.75rem' }}>
-          Node Title
-        </Typography>
-        
-        <RichTextEditor
-          value={nljNode.title || ''}
-          onUpdate={(value) => onUpdate({ title: value })}
-          placeholder="Enter node title..."
-          minHeight={40}
-          showToolbar={false}
-          autoFocus={false}
-        />
-      </Box>
+      {/* Node Title Field - Skip for choice nodes */}
+      {nodeType !== 'choice' && (
+        <Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.75rem' }}>
+            Node Title
+          </Typography>
+          
+          <RichTextEditor
+            value={nljNode.title || ''}
+            onUpdate={(value) => onUpdate({ title: value })}
+            placeholder="Enter node title..."
+            minHeight={40}
+            showToolbar={false}
+            autoFocus={false}
+          />
+        </Box>
+      )}
 
       {/* Main Text Field */}
       {hasTextField && (

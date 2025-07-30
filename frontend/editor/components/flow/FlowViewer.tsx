@@ -42,7 +42,7 @@ import {
   Settings as SettingsIcon,
 } from '@mui/icons-material';
 
-import type { NLJScenario, NLJNode, ConnectionsGroup } from '../../../types/nlj';
+import type { NLJScenario, NLJNode, BranchNode, ConnectionsGroup } from '../../../types/nlj';
 import type { ActivitySettings } from '../../../types/settings';
 import type { FlowNode, FlowEdge, FlowNodeData, FlowEdgeData, FlowValidationResult, LayoutConfig, FlowNodeType } from '../../flow/types/flow';
 import { 
@@ -424,6 +424,16 @@ function FlowViewerContent({
           allowHints: true
         };
         break;
+      case 'branch':
+        nljNode = {
+          ...createBaseNode(),
+          type: 'branch',
+          title: 'Branch Node',
+          description: 'Conditional navigation based on expressions',
+          conditions: [],
+          evaluationMode: 'first-match',
+        } as BranchNode;
+        break;
       default:
         nljNode = {
           ...createBaseNode(),
@@ -498,6 +508,38 @@ function FlowViewerContent({
       edge.id === edgeId ? { ...edge, ...updates } : edge
     ));
   }, [setEdges]);
+
+  // Handle edge removal by source/target (for branch nodes)
+  const handleRemoveEdgeBySourceTarget = useCallback((sourceNodeId: string, targetNodeId: string) => {
+    if (!isEditMode) return;
+    
+    setEdges((eds) => eds.filter(edge => 
+      !(edge.source === sourceNodeId && edge.target === targetNodeId)
+    ));
+  }, [isEditMode, setEdges]);
+
+
+  // Handle edge update by source/target (for branch nodes)
+  const handleUpdateEdgeBySourceTarget = useCallback((
+    sourceNodeId: string, 
+    targetNodeId: string, 
+    updates: { label?: string }
+  ) => {
+    if (!isEditMode) return;
+    
+    setEdges((eds) => eds.map(edge => {
+      if (edge.source === sourceNodeId && edge.target === targetNodeId) {
+        return {
+          ...edge,
+          data: {
+            ...edge.data,
+            ...updates,
+          }
+        };
+      }
+      return edge;
+    }));
+  }, [isEditMode, setEdges]);
 
   // Handle edge click for selection
   const onEdgeClick = useCallback((_event: React.MouseEvent, edge: FlowEdge) => {
@@ -801,6 +843,8 @@ function FlowViewerContent({
         onAddNode={handleAddNodeFromEditor}
         onAddEdge={handleAddEdgeFromEditor}
         activitySettings={scenario.settings || {}}
+        onRemoveEdgeBySourceTarget={handleRemoveEdgeBySourceTarget}
+        onUpdateEdgeBySourceTarget={handleUpdateEdgeBySourceTarget}
       />
 
       {/* Validation Results Dialog */}

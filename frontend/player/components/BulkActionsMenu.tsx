@@ -20,12 +20,14 @@ import {
   ContentCopy as DuplicateIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material';
+import { canBulkReject, canBulkPublish } from '../../utils/permissions';
+import type { User } from '../../api/auth';
 
 interface BulkActionsMenuProps {
   anchorEl: HTMLElement | null;
   open: boolean;
   onClose: () => void;
-  userRole?: string;
+  user?: User | null;
   selectedCount: number;
   loading: boolean;
   onPublishContent: () => void;
@@ -38,7 +40,7 @@ export const BulkActionsMenu: React.FC<BulkActionsMenuProps> = ({
   anchorEl,
   open,
   onClose,
-  userRole,
+  user,
   selectedCount,
   loading,
   onPublishContent,
@@ -46,8 +48,8 @@ export const BulkActionsMenu: React.FC<BulkActionsMenuProps> = ({
   onRejectContent,
   onDeleteItems
 }) => {
-  const canReject = userRole && ['reviewer', 'approver', 'admin'].includes(userRole.toLowerCase());
-  const canPublish = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole.toLowerCase());
+  const canReject = canBulkReject(user);
+  const canPublish = canBulkPublish(user);
 
   const handleAction = useCallback((action: () => void) => {
     onClose();

@@ -301,8 +301,13 @@ const AppContent: React.FC = () => {
         onPlay={(scenario) => {
           // Store scenario for playing
           localStorage.setItem(`scenario_${scenario.id}`, JSON.stringify(scenario));
-          // Navigate to game view
-          window.location.href = '/app';
+          // Navigate to play view with the scenario ID
+          if (editingContentItem) {
+            navigate(`/app/play/${editingContentItem.id}`);
+          } else {
+            // For new scenarios, we need to save first or use temporary preview
+            navigate('/app/activities');
+          }
         }}
         onSave={async (scenario) => {
           setEditingScenario(scenario);
@@ -312,16 +317,15 @@ const AppContent: React.FC = () => {
             const isNewScenario = scenario.id.startsWith('new-');
             
             if (isNewScenario) {
-              // Create new content item
+              // Create new content item with complete NLJ scenario data
               const contentData = {
                 title: scenario.name,
                 description: scenario.description || 'Activity created with Flow Editor',
                 nlj_data: {
-                  nodes: scenario.nodes,
-                  links: scenario.links,
-                  variableDefinitions: scenario.variableDefinitions
+                  ...scenario, // Include all scenario properties
+                  id: scenario.id // Ensure ID is preserved
                 },
-                content_type: 'training' as const, // Default to training
+                content_type: (scenario.activityType as any) || 'training', // Use scenario's activity type or default
                 learning_style: 'visual' as const, // Default to visual
                 is_template: false,
                 template_category: 'Custom'
@@ -344,14 +348,12 @@ const AppContent: React.FC = () => {
               
               console.log('Created new content item:', createdContent.id);
             } else {
-              // Update existing content item
+              // Update existing content item with complete NLJ scenario data
               const updateData = {
                 title: scenario.name,
                 description: scenario.description || 'Activity updated with Flow Editor',
                 nlj_data: {
-                  nodes: scenario.nodes,
-                  links: scenario.links,
-                  variableDefinitions: scenario.variableDefinitions
+                  ...scenario // Include all scenario properties
                 }
               };
               
@@ -359,16 +361,31 @@ const AppContent: React.FC = () => {
               console.log('Updated existing content item:', scenario.id);
             }
             
-            // TODO: Show success notification
+            // Show success notification  
             console.log('Scenario saved successfully!');
+            // Note: The FlowEditor component handles showing save success feedback
             
           } catch (error) {
             console.error('Failed to save scenario:', error);
-            // TODO: Show error notification
-            alert('Failed to save scenario. Please try again.');
+            
+            // Provide specific error feedback
+            let errorMessage = 'Failed to save scenario. Please try again.';
+            if (error instanceof Error) {
+              if (error.message.includes('network') || error.message.includes('fetch')) {
+                errorMessage = 'Network error: Please check your connection and try again.';
+              } else if (error.message.includes('400')) {
+                errorMessage = 'Invalid data: Please check your scenario for errors and try again.';
+              } else if (error.message.includes('401') || error.message.includes('403')) {
+                errorMessage = 'Permission denied: You may not have rights to save this content.';
+              }
+            }
+            
+            // Show error alert (TODO: Replace with notification system)
+            alert(errorMessage);
+            throw error; // Re-throw so FlowEditor can handle UI state
           }
         }}
-        onExport={(scenario) => {
+        onExport={(scenario: NLJScenario) => {
           // Download as JSON
           const dataStr = JSON.stringify(scenario, null, 2);
           const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);

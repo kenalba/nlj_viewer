@@ -4,6 +4,7 @@
 
 import { marked } from 'marked';
 import type { NLJNode, NLJScenario } from '../types/nlj';
+import { interpolateVariables, type VariableContext, DEFAULT_FORMATTERS } from './variableInterpolation';
 
 // Type for choice objects that can have text/content properties
 interface ChoiceWithContent {

@@ -10,7 +10,6 @@ import {
   Button,
   Card,
   CardContent,
-  Container,
   Grid,
   Chip,
   Alert
@@ -35,8 +34,8 @@ export const ContentGenerationPage: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4 }}>
+    <Box p={3}>
+      <Box mb={4}>
         <Typography variant="h4" component="h1" gutterBottom>
           Content Generation
         </Typography>
@@ -66,23 +65,15 @@ export const ContentGenerationPage: React.FC = () => {
                 Create comprehensive, customized prompts for generating NLJ scenarios with external AI tools.
               </Typography>
               
-              <Box sx={{ mb: 2 }}>
-                <Chip label="External AI Tools" size="small" sx={{ mr: 1, mb: 1 }} />
-                <Chip label="Customizable Prompts" size="small" sx={{ mr: 1, mb: 1 }} />
-                <Chip label="Schema Documentation" size="small" sx={{ mr: 1, mb: 1 }} />
-                <Chip label="Download & Copy" size="small" sx={{ mr: 1, mb: 1 }} />
-              </Box>
-              
-              <Typography variant="body2" color="text.secondary" paragraph>
-                Features:
+              <Typography variant="body2" color="text.secondary" paragraph sx={{ fontWeight: 600 }}>
+                How to use:
               </Typography>
-              <Typography variant="body2" color="text.secondary" component="ul" sx={{ pl: 2 }}>
-                <li>Audience persona customization</li>
-                <li>Learning objective targeting</li>
-                <li>Content style selection</li>
-                <li>Node type filtering</li>
-                <li>Bloom's taxonomy integration</li>
-                <li>Complete schema documentation</li>
+              <Typography variant="body2" color="text.secondary" component="ol" sx={{ pl: 2, mb: 2 }}>
+                <li>Generate a prompt using the tool below</li>
+                <li>Go to your LLM of choice (Claude, ChatGPT, or NotebookLM)</li>
+                <li>Paste the prompt and upload any source documents</li>
+                <li>Copy the JSON response from the LLM</li>
+                <li>Import it as a new activity using the Import feature</li>
               </Typography>
               
               <Box sx={{ mt: 'auto', pt: 2 }}>
@@ -150,7 +141,7 @@ export const ContentGenerationPage: React.FC = () => {
         open={promptGeneratorOpen}
         onClose={handleClosePromptGenerator}
       />
-    </Container>
+    </Box>
   );
 };
 

@@ -29,6 +29,7 @@ import { FeedbackSection } from './components/FeedbackSection';
 import { SettingsDrawer } from './components/SettingsDrawer';
 import { AssessmentPreview } from '../previews/AssessmentPreview';
 import { ChoiceNodeEditor } from '../editors/ChoiceNodeEditor';
+import { ExpressionsSection } from './components/ExpressionsSection';
 
 interface WYSIWYGNodeEditorContentProps {
   node: FlowNode | null;
@@ -44,6 +45,9 @@ interface WYSIWYGNodeEditorContentProps {
   onAddNode?: (node: FlowNode) => void;
   onAddEdge?: (edge: any) => void;
   activitySettings?: { shuffleAnswerOrder?: boolean; reinforcementEligible?: boolean };
+  // Edge management functions for branch nodes
+  onRemoveEdge?: (sourceNodeId: string, targetNodeId: string) => void;
+  onUpdateEdge?: (sourceNodeId: string, targetNodeId: string, updates: { label?: string }) => void;
 }
 
 export function WYSIWYGNodeEditorContent({
@@ -57,6 +61,8 @@ export function WYSIWYGNodeEditorContent({
   onAddNode,
   onAddEdge,
   activitySettings = {},
+  onRemoveEdge,
+  onUpdateEdge,
 }: WYSIWYGNodeEditorContentProps) {
   const [editedNode, setEditedNode] = useState<FlowNode | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
@@ -245,12 +251,14 @@ export function WYSIWYGNodeEditorContent({
               />
             )}
 
-            {/* Content Section */}
-            <ContentSection
-              node={editedNode}
-              onUpdate={updateNLJNode}
-              theme={theme}
-            />
+            {/* Content Section - Skip for choice nodes since ChoiceNodeEditor handles text */}
+            {nodeType !== 'choice' && (
+              <ContentSection
+                node={editedNode}
+                onUpdate={updateNLJNode}
+                theme={theme}
+              />
+            )}
 
             {/* Interactive Elements Section */}
             {nodeTypeInfo?.isInteractive && (
@@ -260,6 +268,10 @@ export function WYSIWYGNodeEditorContent({
                 theme={theme}
                 allNodes={allNodes}
                 allEdges={allEdges}
+                onAddNode={onAddNode}
+                onAddEdge={onAddEdge}
+                onRemoveEdge={onRemoveEdge}
+                onUpdateEdge={onUpdateEdge}
               />
             )}
 
@@ -283,10 +295,18 @@ export function WYSIWYGNodeEditorContent({
               />
             )}
 
+            {/* Expressions Section for Choice Nodes */}
+            {nodeType === 'choice' && (
+              <ExpressionsSection
+                node={editedNode}
+                onUpdate={updateNLJNode}
+              />
+            )}
+
           </Stack>
         )}
 
-        {/* Preview Tab */}
+        {/* Preview Tab (Non-choice nodes only) */}
         {activeTab === 1 && nodeType !== 'choice' && (
           <Box sx={{ p: 2 }}>
             <AssessmentPreview

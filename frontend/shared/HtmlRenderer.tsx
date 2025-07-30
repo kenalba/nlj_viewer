@@ -1,16 +1,28 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box, useTheme } from '@mui/material';
+import { interpolateVariables, type VariableContext, DEFAULT_FORMATTERS } from '../utils/variableInterpolation';
 
 interface HtmlRendererProps {
   content: string;
   sx?: object;
   component?: React.ElementType;
+  // Variable interpolation props
+  variables?: VariableContext;
+  enableInterpolation?: boolean;
+  interpolationOptions?: {
+    fallbackValue?: string;
+    preserveUnknown?: boolean;
+    formatters?: Record<string, (value: any) => string>;
+  };
 }
 
 export const HtmlRenderer: React.FC<HtmlRendererProps> = ({
   content,
   sx = {},
   component = 'div',
+  variables = {},
+  enableInterpolation = true,
+  interpolationOptions = {},
 }) => {
   const theme = useTheme();
 
@@ -18,6 +30,25 @@ export const HtmlRenderer: React.FC<HtmlRendererProps> = ({
   if (!content) {
     return null;
   }
+
+  // Apply variable interpolation if enabled and variables are provided
+  const processedContent = useMemo(() => {
+    if (!enableInterpolation || Object.keys(variables).length === 0) {
+      return content;
+    }
+
+    const {
+      fallbackValue = '???',
+      preserveUnknown = false,
+      formatters = DEFAULT_FORMATTERS,
+    } = interpolationOptions;
+
+    return interpolateVariables(content, variables, {
+      fallbackValue,
+      preserveUnknown,
+      formatters,
+    });
+  }, [content, variables, enableInterpolation, interpolationOptions]);
 
   return (
     <Box
@@ -128,7 +159,7 @@ export const HtmlRenderer: React.FC<HtmlRendererProps> = ({
         },
         ...sx,
       }}
-      dangerouslySetInnerHTML={{ __html: content }}
+      dangerouslySetInnerHTML={{ __html: processedContent }}
     />
   );
 };

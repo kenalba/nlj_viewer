@@ -46,6 +46,9 @@ interface UnifiedSidebarProps {
   onAddNode?: (node: FlowNode) => void;
   onAddEdge?: (edge: FlowEdge) => void;
   activitySettings?: { shuffleAnswerOrder?: boolean; reinforcementEligible?: boolean };
+  // Edge management functions for branch nodes
+  onRemoveEdgeBySourceTarget?: (sourceNodeId: string, targetNodeId: string) => void;
+  onUpdateEdgeBySourceTarget?: (sourceNodeId: string, targetNodeId: string, updates: { label?: string }) => void;
 }
 
 export function UnifiedSidebar({
@@ -65,6 +68,8 @@ export function UnifiedSidebar({
   onAddNode,
   onAddEdge,
   activitySettings = {},
+  onRemoveEdgeBySourceTarget,
+  onUpdateEdgeBySourceTarget,
 }: UnifiedSidebarProps) {
   const [_activeTab, setActiveTab] = useState(0);
   const [_hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -137,6 +142,8 @@ export function UnifiedSidebar({
           onAddNode={onAddNode}
           onAddEdge={onAddEdge}
           activitySettings={activitySettings}
+          onRemoveEdge={onRemoveEdgeBySourceTarget}
+          onUpdateEdge={onUpdateEdgeBySourceTarget}
         />
       );
     }
@@ -171,7 +178,7 @@ export function UnifiedSidebar({
       variant="persistent"
       PaperProps={{
         sx: {
-          width: '480px',
+          width: '640px',
           top: `${headerHeight}px`,
           height: `calc(100vh - ${headerHeight}px)`,
           borderLeft: '1px solid',

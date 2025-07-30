@@ -30,7 +30,7 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
       
       const startNode = scenario.nodes.find(n => n.type === 'start');
       const initialVariables = scenario.variableDefinitions?.reduce(
-        (acc, def) => ({ ...acc, [def.id]: 0 }),
+        (acc, def) => ({ ...acc, [def.id]: def.initialValue ?? def.defaultValue ?? 0 }),
         {}
       ) || {};
       
@@ -86,6 +86,24 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
       break;
     }
 
+    case 'BATCH_UPDATE_VARIABLES': {
+      const { variables } = action.payload;
+      newState = {
+        ...state,
+        variables: {
+          ...state.variables,
+          ...variables,
+        },
+      };
+      
+      debugLog('Variables', 'Batch updated variables', {
+        updatedVariables: variables,
+        allVariables: newState.variables,
+        changedCount: Object.keys(variables).length,
+      });
+      break;
+    }
+
     case 'COMPLETE_SCENARIO': {
       newState = {
         ...state,
@@ -129,8 +147,12 @@ export const useGameEngine = () => {
     dispatch({ type: 'NAVIGATE_TO_NODE', payload: { nodeId } });
   }, []);
 
-  const updateVariable = useCallback((variableId: string, value: number) => {
+  const updateVariable = useCallback((variableId: string, value: number | string | boolean) => {
     dispatch({ type: 'UPDATE_VARIABLE', payload: { variableId, value } });
+  }, []);
+
+  const batchUpdateVariables = useCallback((variables: Record<string, number | string | boolean>) => {
+    dispatch({ type: 'BATCH_UPDATE_VARIABLES', payload: { variables } });
   }, []);
 
   const completeScenario = useCallback((score?: number) => {
@@ -146,6 +168,7 @@ export const useGameEngine = () => {
     loadScenario,
     navigateToNode,
     updateVariable,
+    batchUpdateVariables,
     completeScenario,
     reset,
   };

@@ -20,6 +20,7 @@ import {
 import type { ContentItem } from '../../api/content';
 import type { ContentVersion } from '../../types/workflow';
 import { workflowApi } from '../../api/workflow';
+import type { User } from '../../api/auth';
 import {
   TitleDescriptionCell,
   ContentTypeCell,
@@ -36,7 +37,7 @@ interface ContentTableRowProps {
   item: ContentItem;
   isSelected: boolean;
   onRowSelect: (id: string, isSelected: boolean) => void;
-  userRole?: string;
+  user?: User | null;
   onPlayContent: (item: ContentItem) => void;
   onEditContent: (item: ContentItem) => void;
   versions?: ContentVersion[];
@@ -47,7 +48,7 @@ const ContentTableRow = React.memo(({
   item, 
   isSelected, 
   onRowSelect, 
-  userRole, 
+  user, 
   onPlayContent, 
   onEditContent,
   versions,
@@ -115,7 +116,7 @@ const ContentTableRow = React.memo(({
       <TableCell align="center" sx={{ py: 2 }}>
         <ActionsCell 
           item={item}
-          userRole={userRole}
+          user={user}
           onPlay={onPlayContent}
           onEdit={onEditContent}
         />
@@ -131,7 +132,7 @@ const ContentTableRow = React.memo(({
     prevProps.item.content_type === nextProps.item.content_type &&
     prevProps.item.state === nextProps.item.state &&
     prevProps.item.updated_at === nextProps.item.updated_at &&
-    prevProps.userRole === nextProps.userRole &&
+    prevProps.user === nextProps.user &&
     prevProps.versions === nextProps.versions &&
     prevProps.versionsLoading === nextProps.versionsLoading
   );
@@ -141,7 +142,7 @@ interface ContentTableProps {
   content: ContentItem[];
   selectedIds: Set<string>;
   onSelectionChange: (newSelectedIds: Set<string>) => void;
-  userRole?: string;
+  user?: User | null;
   onPlayContent: (item: ContentItem) => void;
   onEditContent: (item: ContentItem) => void;
 }
@@ -150,7 +151,7 @@ export const ContentTable = React.memo(({
   content, 
   selectedIds, 
   onSelectionChange,
-  userRole,
+  user,
   onPlayContent,
   onEditContent
 }: ContentTableProps) => {
@@ -330,7 +331,7 @@ export const ContentTable = React.memo(({
                 item={item}
                 isSelected={selectedIds.has(String(item.id))}
                 onRowSelect={handleRowSelect}
-                userRole={userRole}
+                user={user}
                 onPlayContent={onPlayContent}
                 onEditContent={onEditContent}
                 versions={versionsMap.get(String(item.id))}

@@ -1,0 +1,439 @@
+{
+  "id": "sales-training-variables",
+  "name": "Sales Training: Variable Expressions Demo",
+  "description": "Interactive sales training with variable interpolation and performance-based branching",
+  "orientation": "horizontal", 
+  "activityType": "training",
+  "variableDefinitions": [
+    {
+      "id": "score",
+      "name": "Performance Score",
+      "type": "number",
+      "initialValue": 0,
+      "description": "Running performance score"
+    },
+    {
+      "id": "experience",
+      "name": "Experience Level", 
+      "type": "string",
+      "initialValue": "beginner",
+      "description": "User's experience level"
+    },
+    {
+      "id": "confidence",
+      "name": "Confidence Level",
+      "type": "number",
+      "initialValue": 3,
+      "description": "Self-reported confidence (1-5 scale)"
+    },
+    {
+      "id": "customer_name",
+      "name": "Customer Name",
+      "type": "string", 
+      "initialValue": "Sarah",
+      "description": "Customer's name for personalization"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "title": "Sales Training Welcome",
+      "text": "Welcome to Sales Training!\n\nYour current stats:\n- Experience: {experience}\n- Confidence: {confidence}/5\n- Score: {score} points",
+      "x": 0,
+      "y": 0,
+      "width": 300,
+      "height": 150
+    },
+    {
+      "id": "experience_question",
+      "type": "question",
+      "text": "What's your sales experience level?\n\nCurrent score: {score}",
+      "title": "Experience Assessment",
+      "x": 350,
+      "y": 0,
+      "width": 400,
+      "height": 200
+    },
+    {
+      "id": "experience_choice_1",
+      "type": "choice",
+      "parentId": "experience_question",
+      "text": "Beginner (Less than 1 year)",
+      "feedback": "Great starting point! Everyone begins somewhere.",
+      "isCorrect": true,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "experience",
+          "operation": "set",
+          "value": "beginner"
+        },
+        {
+          "variableId": "score",
+          "operation": "add", 
+          "value": 5
+        }
+      ],
+      "x": 200,
+      "y": 250,
+      "width": 300,
+      "height": 120
+    },
+    {
+      "id": "experience_choice_2",
+      "type": "choice",
+      "parentId": "experience_question", 
+      "text": "Intermediate (1-3 years)",
+      "feedback": "Good foundation to build on!",
+      "isCorrect": true,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "experience",
+          "operation": "set",
+          "value": "intermediate"
+        },
+        {
+          "variableId": "score",
+          "operation": "add",
+          "value": 10
+        }
+      ],
+      "x": 550,
+      "y": 250,
+      "width": 300,
+      "height": 120
+    },
+    {
+      "id": "experience_choice_3",
+      "type": "choice",
+      "parentId": "experience_question",
+      "text": "Advanced (3+ years)",
+      "feedback": "Excellent experience level!",
+      "isCorrect": true,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "experience", 
+          "operation": "set",
+          "value": "advanced"
+        },
+        {
+          "variableId": "score",
+          "operation": "add",
+          "value": 15
+        }
+      ],
+      "x": 900,
+      "y": 250,
+      "width": 300,
+      "height": 120
+    },
+    {
+      "id": "confidence_likert",
+      "type": "likertScale",
+      "title": "Confidence Assessment",
+      "text": "How confident are you in your sales abilities?\n\nExperience: {experience}\nCurrent score: {score}",
+      "scaleType": "1-5",
+      "leftLabel": "Not confident",
+      "rightLabel": "Very confident",
+      "x": 550,
+      "y": 420,
+      "width": 400,
+      "height": 200,
+      "variableChanges": [
+        {
+          "variableId": "confidence",
+          "operation": "set",
+          "value": "{response}"
+        }
+      ]
+    },
+    {
+      "id": "customer_intro",
+      "type": "interstitial_panel",
+      "title": "Meet Your Customer",
+      "content": "You're meeting with {customer_name}, a potential client.\n\nYour profile:\n- Experience: {experience} \n- Confidence: {confidence}/5\n- Score: {score} points",
+      "x": 550,
+      "y": 670,
+      "width": 400,
+      "height": 150
+    },
+    {
+      "id": "sales_question",
+      "type": "question",
+      "text": "{customer_name} asks about pricing. How do you respond?\n\nYour experience: {experience}\nConfidence: {confidence}/5",
+      "title": "Sales Approach",
+      "x": 550,
+      "y": 870,
+      "width": 400,
+      "height": 200
+    },
+    {
+      "id": "sales_choice_1",
+      "type": "choice",
+      "parentId": "sales_question",
+      "text": "Let me show you the value you'll get for your investment.",
+      "feedback": "Excellent! Value-focused selling is most effective.",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "score",
+          "operation": "add",
+          "value": 20
+        }
+      ],
+      "x": 200,
+      "y": 1120,
+      "width": 300,
+      "height": 120
+    },
+    {
+      "id": "sales_choice_2",
+      "type": "choice",
+      "parentId": "sales_question",
+      "text": "Here are all the features included in our package.",
+      "feedback": "Good information, but focus on benefits over features.",
+      "isCorrect": true,
+      "choiceType": "NEUTRAL",
+      "variableChanges": [
+        {
+          "variableId": "score", 
+          "operation": "add",
+          "value": 10
+        }
+      ],
+      "x": 550,
+      "y": 1120,
+      "width": 300,
+      "height": 120
+    },
+    {
+      "id": "sales_choice_3",
+      "type": "choice",
+      "parentId": "sales_question",
+      "text": "I can offer you a 10% discount right now.",
+      "feedback": "Avoid discounting too early - it undermines value.",
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "variableChanges": [
+        {
+          "variableId": "score",
+          "operation": "subtract",
+          "value": 5
+        }
+      ],
+      "x": 900,
+      "y": 1120,
+      "width": 300,
+      "height": 120
+    },
+    {
+      "id": "performance_branch",
+      "type": "branch",
+      "title": "Performance Check",
+      "text": "Based on your performance, determine next steps.",
+      "conditions": [
+        {
+          "expression": "score >= 30",
+          "targetNodeId": "high_performer", 
+          "label": "High Performance"
+        },
+        {
+          "expression": "score >= 15",
+          "targetNodeId": "good_performer",
+          "label": "Good Performance"
+        }
+      ],
+      "defaultTargetNodeId": "needs_practice",
+      "x": 550,
+      "y": 1300,
+      "width": 400,
+      "height": 150
+    },
+    {
+      "id": "high_performer",
+      "type": "interstitial_panel",
+      "title": "Excellent Performance!",
+      "content": "Outstanding work!\n\nFinal Results:\n- Experience: {experience}\n- Confidence: {confidence}/5  \n- Final Score: {score} points\n\n{customer_name} was impressed with your approach!",
+      "x": 200,
+      "y": 1550,
+      "width": 300,
+      "height": 200
+    },
+    {
+      "id": "good_performer", 
+      "type": "interstitial_panel",
+      "title": "Good Performance",
+      "content": "Well done!\n\nFinal Results:\n- Experience: {experience}\n- Confidence: {confidence}/5\n- Final Score: {score} points\n\n{customer_name} appreciated your professionalism.",
+      "x": 550,
+      "y": 1550,
+      "width": 300,
+      "height": 200
+    },
+    {
+      "id": "needs_practice",
+      "type": "interstitial_panel",
+      "title": "Keep Practicing",
+      "content": "Room for improvement.\n\nFinal Results:\n- Experience: {experience}\n- Confidence: {confidence}/5\n- Final Score: {score} points\n\nTip: Focus on value, not just price when talking to {customer_name}!",
+      "x": 900,
+      "y": 1550,
+      "width": 300,
+      "height": 200
+    }
+  ],
+  "links": [
+    {
+      "id": "start-experience",
+      "type": "link",
+      "sourceNodeId": "start",
+      "targetNodeId": "experience_question",
+      "startPoint": { "x": 300, "y": 75 },
+      "endPoint": { "x": 350, "y": 100 }
+    },
+    {
+      "id": "experience-choice1",
+      "type": "parent-child",
+      "sourceNodeId": "experience_question",
+      "targetNodeId": "experience_choice_1",
+      "startPoint": { "x": 550, "y": 200 },
+      "endPoint": { "x": 350, "y": 250 }
+    },
+    {
+      "id": "experience-choice2",
+      "type": "parent-child",
+      "sourceNodeId": "experience_question",
+      "targetNodeId": "experience_choice_2",
+      "startPoint": { "x": 550, "y": 200 },
+      "endPoint": { "x": 700, "y": 250 }
+    },
+    {
+      "id": "experience-choice3",
+      "type": "parent-child",
+      "sourceNodeId": "experience_question",
+      "targetNodeId": "experience_choice_3",
+      "startPoint": { "x": 550, "y": 200 },
+      "endPoint": { "x": 1050, "y": 250 }
+    },
+    {
+      "id": "choice1-confidence",
+      "type": "link",
+      "sourceNodeId": "experience_choice_1",
+      "targetNodeId": "confidence_likert",
+      "startPoint": { "x": 350, "y": 370 },
+      "endPoint": { "x": 750, "y": 420 }
+    },
+    {
+      "id": "choice2-confidence",
+      "type": "link",
+      "sourceNodeId": "experience_choice_2",
+      "targetNodeId": "confidence_likert",
+      "startPoint": { "x": 700, "y": 370 },
+      "endPoint": { "x": 750, "y": 420 }
+    },
+    {
+      "id": "choice3-confidence",
+      "type": "link",
+      "sourceNodeId": "experience_choice_3",
+      "targetNodeId": "confidence_likert",
+      "startPoint": { "x": 1050, "y": 370 },
+      "endPoint": { "x": 750, "y": 420 }
+    },
+    {
+      "id": "confidence-intro",
+      "type": "link",
+      "sourceNodeId": "confidence_likert",
+      "targetNodeId": "customer_intro",
+      "startPoint": { "x": 750, "y": 620 },
+      "endPoint": { "x": 750, "y": 670 }
+    },
+    {
+      "id": "intro-question",
+      "type": "link",
+      "sourceNodeId": "customer_intro",
+      "targetNodeId": "sales_question",
+      "startPoint": { "x": 750, "y": 820 },
+      "endPoint": { "x": 750, "y": 870 }
+    },
+    {
+      "id": "sales-choice1",
+      "type": "parent-child",
+      "sourceNodeId": "sales_question",
+      "targetNodeId": "sales_choice_1",
+      "startPoint": { "x": 750, "y": 1070 },
+      "endPoint": { "x": 350, "y": 1120 }
+    },
+    {
+      "id": "sales-choice2",
+      "type": "parent-child",
+      "sourceNodeId": "sales_question",
+      "targetNodeId": "sales_choice_2",
+      "startPoint": { "x": 750, "y": 1070 },
+      "endPoint": { "x": 700, "y": 1120 }
+    },
+    {
+      "id": "sales-choice3",
+      "type": "parent-child",
+      "sourceNodeId": "sales_question",
+      "targetNodeId": "sales_choice_3",
+      "startPoint": { "x": 750, "y": 1070 },
+      "endPoint": { "x": 1050, "y": 1120 }
+    },
+    {
+      "id": "saleschoice1-branch",
+      "type": "link",
+      "sourceNodeId": "sales_choice_1",
+      "targetNodeId": "performance_branch",
+      "startPoint": { "x": 350, "y": 1240 },
+      "endPoint": { "x": 750, "y": 1300 }
+    },
+    {
+      "id": "saleschoice2-branch",
+      "type": "link",
+      "sourceNodeId": "sales_choice_2",
+      "targetNodeId": "performance_branch",
+      "startPoint": { "x": 700, "y": 1240 },
+      "endPoint": { "x": 750, "y": 1300 }
+    },
+    {
+      "id": "saleschoice3-branch",
+      "type": "link",
+      "sourceNodeId": "sales_choice_3",
+      "targetNodeId": "performance_branch",
+      "startPoint": { "x": 1050, "y": 1240 },
+      "endPoint": { "x": 750, "y": 1300 }
+    },
+    {
+      "id": "branch-high",
+      "type": "link",
+      "sourceNodeId": "performance_branch",
+      "targetNodeId": "high_performer",
+      "condition": "score >= 30",
+      "label": "score >= 30",
+      "startPoint": { "x": 550, "y": 1375 },
+      "endPoint": { "x": 350, "y": 1550 }
+    },
+    {
+      "id": "branch-good",
+      "type": "link",
+      "sourceNodeId": "performance_branch",
+      "targetNodeId": "good_performer",
+      "condition": "score >= 15",
+      "label": "score >= 15",
+      "startPoint": { "x": 750, "y": 1450 },
+      "endPoint": { "x": 700, "y": 1550 }
+    },
+    {
+      "id": "branch-needs",
+      "type": "link",
+      "sourceNodeId": "performance_branch", 
+      "targetNodeId": "needs_practice",
+      "condition": "default",
+      "label": "default",
+      "startPoint": { "x": 950, "y": 1375 },
+      "endPoint": { "x": 1050, "y": 1550 }
+    }
+  ]
+}
