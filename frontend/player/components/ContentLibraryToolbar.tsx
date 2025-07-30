@@ -9,12 +9,16 @@ import {
   Box,
   Typography,
   TextField,
-  Button
+  Button,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import {
   FileUpload as ImportIcon,
   RateReview as RequestReviewIcon,
-  MoreHoriz as MoreActionsIcon
+  MoreHoriz as MoreActionsIcon,
+  ViewModule as CardViewIcon,
+  TableRows as TableViewIcon
 } from '@mui/icons-material';
 import { BulkActionsMenu } from './BulkActionsMenu';
 import { canPerformBulkActions } from '../../utils/permissions';
@@ -33,6 +37,8 @@ interface ContentLibraryToolbarProps {
   onUnpublishContent: () => void;
   onRejectContent: () => void;
   onDeleteItems: () => void;
+  viewMode: 'card' | 'table';
+  onViewModeChange: (event: React.MouseEvent<HTMLElement>, newView: 'card' | 'table' | null) => void;
 }
 
 export const ContentLibraryToolbar = React.memo(({
@@ -47,7 +53,9 @@ export const ContentLibraryToolbar = React.memo(({
   onPublishContent,
   onUnpublishContent,
   onRejectContent,
-  onDeleteItems
+  onDeleteItems,
+  viewMode,
+  onViewModeChange
 }: ContentLibraryToolbarProps) => {
   const [moreActionsAnchor, setMoreActionsAnchor] = useState<HTMLElement | null>(null);
   
@@ -79,7 +87,7 @@ export const ContentLibraryToolbar = React.memo(({
         gap: 1
       }}
     >
-      <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
+      <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
         <TextField
           placeholder="Search activities..."
           size="small"
@@ -88,13 +96,13 @@ export const ContentLibraryToolbar = React.memo(({
           onChange={handleSearchChange}
           sx={{ minWidth: '200px' }}
         />
-        <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+        <Typography variant="body2" color="text.secondary">
           {filteredCount} of {totalCount} activities
         </Typography>
       </Box>
       
-      {/* Bulk actions when items are selected */}
-      {selectedCount > 0 && canPerformBulk && (
+      {/* Right side: View toggle or bulk actions */}
+      {selectedCount > 0 && canPerformBulk ? (
         <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
           <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600 }}>
             {selectedCount} selected
@@ -141,6 +149,24 @@ export const ContentLibraryToolbar = React.memo(({
             onDeleteItems={onDeleteItems}
           />
         </Box>
+      ) : (
+        /* View toggle when no items are selected */
+        <ToggleButtonGroup
+          value={viewMode}
+          exclusive
+          onChange={onViewModeChange}
+          aria-label="view mode"
+          size="small"
+        >
+          <ToggleButton value="card" aria-label="card view">
+            <CardViewIcon sx={{ mr: 0.5 }} />
+            Cards
+          </ToggleButton>
+          <ToggleButton value="table" aria-label="table view">
+            <TableViewIcon sx={{ mr: 0.5 }} />
+            Table
+          </ToggleButton>
+        </ToggleButtonGroup>
       )}
     </Box>
   );

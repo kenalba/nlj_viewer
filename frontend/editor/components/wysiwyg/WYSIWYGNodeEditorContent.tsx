@@ -39,6 +39,7 @@ interface WYSIWYGNodeEditorContentProps {
   // For choice-based assessments
   allNodes?: FlowNode[];
   allEdges?: any[];
+  scenario?: NLJScenario; // Add scenario prop for variable access
   // For handling unsaved changes
   onUnsavedChanges?: (hasChanges: boolean) => void;
   // For adding new nodes and edges
@@ -57,6 +58,7 @@ export function WYSIWYGNodeEditorContent({
   theme = 'unfiltered',
   allNodes = [],
   allEdges = [],
+  scenario,
   onUnsavedChanges,
   onAddNode,
   onAddEdge,
@@ -300,6 +302,11 @@ export function WYSIWYGNodeEditorContent({
               <ExpressionsSection
                 node={editedNode}
                 onUpdate={updateNLJNode}
+                availableVariables={scenario?.variableDefinitions?.map(v => ({
+                  id: v.id,
+                  name: v.name,
+                  type: v.type
+                }))}
               />
             )}
 

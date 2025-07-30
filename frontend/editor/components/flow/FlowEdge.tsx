@@ -177,10 +177,10 @@ export const FlowEdge = memo(({
           )}
           
           {/* Branch Condition Label */}
-          {data?.label && (
-            <Tooltip title={`Branch condition: ${data.label}`}>
+          {(data?.label || data?.nljLink?.condition) && (
+            <Tooltip title={`Branch condition: ${data?.nljLink?.condition || data?.label || 'No condition'}`}>
               <Chip
-                label={data.label}
+                label={data?.label || data?.nljLink?.condition || 'Condition'}
                 size="small"
                 variant="filled"
                 sx={{

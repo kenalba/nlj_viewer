@@ -306,6 +306,7 @@ export function nljLinkToFlowEdgeData(nljLink: Link): FlowEdgeData {
   return {
     nljLink,
     probability: nljLink.probability,
+    label: nljLink.label || nljLink.condition, // Show label or condition for branch conditions
     isSelected: false,
     isHovered: false,
   };
@@ -479,13 +480,85 @@ export function flowToNljScenario(
   };
 }
 
+// Calculate dynamic node size based on content
+export function calculateNodeSize(node: FlowNode): { width: number; height: number } {
+  const minWidth = 200;
+  const minHeight = 100;
+  const maxWidth = 400;
+  const maxHeight = 300;
+  
+  // Get content from the node
+  const nljNode = node.data.nljNode;
+  const title = nljNode?.title || node.data.label || '';
+  const content = nljNode?.content || nljNode?.text || '';
+  const description = nljNode?.description || '';
+  
+  // Calculate content length (rough estimate)
+  const totalTextLength = title.length + content.length + description.length;
+  
+  // Base sizing on content length
+  let width = minWidth;
+  let height = minHeight;
+  
+  // Adjust width based on title and content length
+  if (totalTextLength > 50) {
+    width = Math.min(maxWidth, minWidth + Math.floor(totalTextLength / 3));
+  }
+  
+  // Adjust height based on content structure
+  const hasTitle = title.length > 0;
+  const hasContent = content.length > 0;
+  const hasDescription = description.length > 0;
+  const hasChoices = nljNode?.choices && nljNode.choices.length > 0;
+  const hasOptions = nljNode?.options && nljNode.options.length > 0;
+  
+  // Add height for each content section
+  if (hasTitle) height += 20;
+  if (hasContent && content.length > 100) height += Math.min(80, Math.floor(content.length / 5));
+  if (hasDescription) height += Math.min(40, Math.floor(description.length / 10));
+  if (hasChoices) height += Math.min(60, nljNode.choices.length * 15);
+  if (hasOptions) height += Math.min(60, nljNode.options.length * 15);
+  
+  // Node type specific adjustments
+  const nodeType = node.data.nodeType;
+  if (nodeType === 'question' || nodeType === 'true_false') {
+    height += 40; // Extra space for interactive elements
+  } else if (nodeType === 'matching' || nodeType === 'ordering') {
+    height += 60; // More space for complex interactions
+  } else if (nodeType === 'connections' || nodeType === 'wordle') {
+    width = Math.max(width, 280);
+    height = Math.max(height, 180);
+  }
+  
+  return {
+    width: Math.min(maxWidth, Math.max(minWidth, width)),
+    height: Math.min(maxHeight, Math.max(minHeight, height))
+  };
+}
+
 // Auto-layout algorithms
 export function calculateAutoLayout(
   nodes: FlowNode[],
   edges: FlowEdge[],
   config: LayoutConfig
 ): { nodes: FlowNode[], edges: FlowEdge[] } {
-  const updatedNodes = [...nodes];
+  // First, update all nodes with dynamic sizing
+  const updatedNodes = nodes.map(node => {
+    const size = calculateNodeSize(node);
+    return {
+      ...node,
+      style: {
+        ...node.style,
+        width: size.width,
+        height: size.height,
+      },
+      // Also set measured dimensions so React Flow knows the actual size
+      measured: {
+        width: size.width,
+        height: size.height,
+      },
+    };
+  });
   
   switch (config.algorithm) {
     case 'hierarchical':
@@ -620,9 +693,9 @@ function calculateHierarchicalLayout(
     const nodesAtLevel = nodesByLevel.get(level) || [];
     const indexInLevel = nodesAtLevel.findIndex(n => n.id === node.id);
     
-    // Get actual node dimensions from the DOM or use defaults
-    const nodeWidth = node.measured?.width || node.data.nljNode.width || 250;
-    const nodeHeight = node.measured?.height || node.data.nljNode.height || 120;
+    // Use the dynamic sizing we calculated earlier
+    const nodeWidth = node.style?.width || 250;
+    const nodeHeight = node.style?.height || 120;
     
     let x: number, y: number;
     
@@ -634,7 +707,8 @@ function calculateHierarchicalLayout(
       // Calculate the starting position for this level
       const levelWidths = nodesAtLevel.map(n => n.measured?.width || n.data.nljNode.width || 250);
       const totalLevelWidth = levelWidths.reduce((sum, w) => sum + w, 0);
-      const totalSpacing = (nodesAtLevel.length - 1) * Math.max(nodeSpacing, 100);
+      const actualSpacing = Math.max(nodeSpacing, 50); // Reduced from 100 to 50
+      const totalSpacing = (nodesAtLevel.length - 1) * actualSpacing;
       totalWidthNeeded = totalLevelWidth + totalSpacing;
       
       // Start from the left edge of the level
@@ -643,7 +717,7 @@ function calculateHierarchicalLayout(
       // Position this specific node
       for (let i = 0; i < indexInLevel; i++) {
         const prevNodeWidth = nodesAtLevel[i].measured?.width || nodesAtLevel[i].data.nljNode.width || 250;
-        startX += prevNodeWidth + Math.max(nodeSpacing, 100);
+        startX += prevNodeWidth + actualSpacing;
       }
       
       x = startX + nodeWidth / 2;
@@ -655,7 +729,7 @@ function calculateHierarchicalLayout(
         const maxHeightInLevel = Math.max(
           ...prevLevelNodes.map(n => n.measured?.height || n.data.nljNode.height || 120)
         );
-        cumulativeY += maxHeightInLevel + Math.max(levelSpacing, 200);
+        cumulativeY += maxHeightInLevel + Math.max(levelSpacing, 100); // Reduced from 200 to 100
       }
       
       y = cumulativeY;
@@ -668,7 +742,8 @@ function calculateHierarchicalLayout(
       // Calculate the starting position for this level
       const levelHeights = nodesAtLevel.map(n => n.measured?.height || n.data.nljNode.height || 120);
       const totalLevelHeight = levelHeights.reduce((sum, h) => sum + h, 0);
-      const totalSpacing = (nodesAtLevel.length - 1) * Math.max(nodeSpacing, 80);
+      const actualVerticalSpacing = Math.max(nodeSpacing, 40); // Reduced from 80 to 40
+      const totalSpacing = (nodesAtLevel.length - 1) * actualVerticalSpacing;
       totalHeightNeeded = totalLevelHeight + totalSpacing;
       
       // Start from the top edge of the level
@@ -677,7 +752,7 @@ function calculateHierarchicalLayout(
       // Position this specific node
       for (let i = 0; i < indexInLevel; i++) {
         const prevNodeHeight = nodesAtLevel[i].measured?.height || nodesAtLevel[i].data.nljNode.height || 120;
-        startY += prevNodeHeight + Math.max(nodeSpacing, 80);
+        startY += prevNodeHeight + actualVerticalSpacing;
       }
       
       // Calculate X position based on cumulative widths of previous levels
@@ -726,23 +801,24 @@ function calculateForceLayout(
   const cols = Math.ceil(Math.sqrt(nodes.length));
   const rows = Math.ceil(nodes.length / cols);
   
-  const nodeWidth = 300;
-  const nodeHeight = 200;
-  const padding = 100;
+  // Calculate average node dimensions for spacing
+  const avgWidth = nodes.reduce((sum, node) => sum + (node.style?.width || 250), 0) / nodes.length;
+  const avgHeight = nodes.reduce((sum, node) => sum + (node.style?.height || 120), 0) / nodes.length;
+  const padding = Math.max(100, avgWidth * 0.3);
   
   updatedNodes.forEach((node, index) => {
     const col = index % cols;
     const row = Math.floor(index / cols);
     
-    // Position start nodes at the top, end nodes at the bottom
-    const x = col * (nodeWidth + padding);
-    let y = row * (nodeHeight + padding);
+    // Use dynamic spacing based on average node size
+    const x = col * (avgWidth + padding);
+    let y = row * (avgHeight + padding);
     
     // Adjust positioning for special node types
     if (node.data.isStart) {
-      y = -nodeHeight; // Move start nodes above the grid
+      y = -(node.style?.height || avgHeight); // Move start nodes above the grid
     } else if (node.data.isEnd) {
-      y = rows * (nodeHeight + padding); // Move end nodes below the grid
+      y = rows * (avgHeight + padding); // Move end nodes below the grid
     }
     
     node.position = { x, y };
@@ -757,10 +833,10 @@ function calculateCircularLayout(
   edges: FlowEdge[],
   _config: LayoutConfig
 ): { nodes: FlowNode[], edges: FlowEdge[] } {
-  // Calculate radius accounting for node dimensions
+  // Calculate radius accounting for dynamic node dimensions
   // Note: config parameter is available for future enhancements
   const maxNodeDimension = Math.max(
-    ...nodes.map(n => Math.max(n.data.nljNode.width || 250, n.data.nljNode.height || 120))
+    ...nodes.map(n => Math.max(n.style?.width || 250, n.style?.height || 120))
   );
   const radius = Math.max(350, nodes.length * 70 + maxNodeDimension);
   

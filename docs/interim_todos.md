@@ -1,47 +1,22 @@
-# Current Priority Items
+OTHER: 
 
-## Immediate Priorities (Next 2-3 weeks)
+REVIEWS:
 
-* ✅ **COMPLETED**: Fix the broken search and filtering flows on the Activities page.
-* ✅ **COMPLETED**: Improve visual treatment of activities table with Card/Table toggle.
-* ✅ **COMPLETED**: Implement approval workflow system with reviewer interface.
-* ✅ **COMPLETED**: Enhanced delete functionality with comprehensive workflow state handling.
-* ✅ **COMPLETED**: Success alert notifications for content management operations.
+* Update Review Queue to have actual data?
+* Add due dates to reviews.
+* Add some workflow templates for reviews.
 
-## Current User Requirements
+* Concatenate text and content into just content - no reason to have both.
+NOW:
 
-* **Content Status Management**: When content is submitted for review, it should show as "Draft" status rather than "Published". Users need clarity on what's awaiting review vs what's live.
-
-* **Bulk Status Operations**: 
-  - ✅ **COMPLETED**: Bulk delete operations that handle all workflow states (published, submitted, in_review, etc.)
-  - **REMAINING**: General bulk status change operations (Published to Draft, Draft to Published, etc.)
-
-* **Review Interface Enhancements**: When reviewing an activity, reviewers should be able to:
-  - "Play" the content to preview it in the Player interface
-  - "View" the content to see it in Flow Editor (read-only mode)
-  - Navigate seamlessly between review actions and content preview
-
-## Medium-Term Priorities
-
-* **BIG: LLM Content Generation Integration**
-    - ✅ **FOUNDATION COMPLETE**: LLM Prompt Generator provides comprehensive prompts for external generation
-    - **NEXT PHASE**: Integrate OpenWebUI + LangChain for in-app content generation with RAG capabilities
-    - Add document upload for context-aware content generation
-    - LLM generation of metadata on learning activities (keywords, topics, etc) for intelligent recommendations
-    - Content recommendation system: "look at our content index + learner info and recommend content"
-
-## Technical Debt
-
-* **Flow Editor Node Selection**: Bottom edge is not tied to the actual node bottom, but a static distance from the top edge. This makes selection difficult for taller nodes.
-
-## Status Updates
-
-**Platform Status**: 96% complete for core learning delivery
-**Recent Completion**: Enhanced content management with robust delete operations and user feedback
-**Next Major Initiative**: LLM Content Generation (pending completion of current priorities)
-**Dependencies**: All workflow prerequisites now complete ✅
-
-**Latest Update (2025-07-29)**: 
-- Completed comprehensive delete functionality that handles all content states (published, submitted, in_review, draft)
-- Added success alert notifications to improve user experience during content operations
-- Enhanced error handling with multi-stage fallback deletion process
+* ✅ We aren't seeing condition information on our links with conditions.
+* ✅ Our nodes within the flow editor should show our rendered content, NOT the pre-rendered markdown/html. Those nodes should be closer to a preview than they currently are.    
+* ✅ Add "Submit For Review" to the More button, too.
+* ✅ Make the More menu smaller.
+* ✅ Move cards/table toggle to the same row as the search bar, on the right side.
+* ✅ Include search bar + cards/table toggle on the card view.
+* ✅ Fix version lookup, since that's currently happening once for each row
+* ✅ Variable selector in Flow Editor wasn't showing all scenario variables (now fixed)
+* ✅ Autolayout uses far too much space between nodes, making it hard to actually read / look at. Let's make them closer. 
+* Let's add a More button to the card view of our activities, so we can do the same actions we can on table on our card
+* In the Flow Editor, our bottom edge is not tied to the bottom of the actual node, but a static distance from the top edge. This makes selection difficult. (Still needs fixing - React Flow measured dimensions issue)

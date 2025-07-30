@@ -16,10 +16,10 @@ import {
   Edit as EditIcon,
   ContentCopy as DuplicateIcon,
   Analytics as AnalyticsIcon,
-  FolderOpen as MoveIcon,
   GetApp as ExportIcon,
   Delete as DeleteIcon,
-  Archive as ArchiveIcon
+  Archive as ArchiveIcon,
+  Send as SubmitIcon
 } from '@mui/icons-material';
 import type { ContentItem } from '../../api/content';
 import { canEditContent, canDeleteContent, canViewAnalytics } from '../../utils/permissions';
@@ -33,6 +33,7 @@ interface ItemActionsMenuProps {
   user?: User | null;
   onEdit: (item: ContentItem) => void;
   onDelete?: (item: ContentItem) => void;
+  onSubmitForReview?: (item: ContentItem) => void;
 }
 
 export const ItemActionsMenu: React.FC<ItemActionsMenuProps> = ({
@@ -42,7 +43,8 @@ export const ItemActionsMenu: React.FC<ItemActionsMenuProps> = ({
   item,
   user,
   onEdit,
-  onDelete
+  onDelete,
+  onSubmitForReview
 }) => {
   const canEdit = canEditContent(user);
   const canDelete = canDeleteContent(user);
@@ -84,12 +86,12 @@ export const ItemActionsMenu: React.FC<ItemActionsMenuProps> = ({
     });
   }, [handleAction, item]);
 
-  const handleMove = useCallback(() => {
-    handleAction(() => {
-      // TODO: Implement move to category functionality
-      console.log('Moving:', item.title);
-    });
-  }, [handleAction, item]);
+
+  const handleSubmitForReview = useCallback(() => {
+    if (onSubmitForReview) {
+      handleAction(() => onSubmitForReview(item));
+    }
+  }, [handleAction, onSubmitForReview, item]);
 
   return (
     <Menu
@@ -106,10 +108,21 @@ export const ItemActionsMenu: React.FC<ItemActionsMenuProps> = ({
       }}
       PaperProps={{
         sx: {
-          minWidth: 180,
+          minWidth: 160, // Reduced from 180
           boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
           border: '1px solid',
-          borderColor: 'divider'
+          borderColor: 'divider',
+          '& .MuiMenuItem-root': {
+            py: 0.75, // Reduced padding
+            minHeight: 36, // Reduced from default 48
+            fontSize: '0.875rem', // Smaller font
+          },
+          '& .MuiListItemIcon-root': {
+            minWidth: 32, // Reduced from 40
+          },
+          '& .MuiSvgIcon-root': {
+            fontSize: '1.1rem', // Smaller icons
+          }
         }
       }}
     >
@@ -123,21 +136,22 @@ export const ItemActionsMenu: React.FC<ItemActionsMenuProps> = ({
         </MenuItem>
       )}
 
+      {/* Submit for Review - show for any item that can be edited */}
+      {canEdit && onSubmitForReview && (
+        <MenuItem onClick={handleSubmitForReview}>
+          <ListItemIcon>
+            <SubmitIcon color="info" />
+          </ListItemIcon>
+          <ListItemText primary="Submit for Review" />
+        </MenuItem>
+      )}
+
       <MenuItem onClick={handleDuplicate}>
         <ListItemIcon>
           <DuplicateIcon />
         </ListItemIcon>
         <ListItemText primary="Duplicate" />
       </MenuItem>
-
-      {canEdit && (
-        <MenuItem onClick={handleMove}>
-          <ListItemIcon>
-            <MoveIcon />
-          </ListItemIcon>
-          <ListItemText primary="Move to Category" />
-        </MenuItem>
-      )}
 
       {/* Analytics & Export */}
       <Divider />

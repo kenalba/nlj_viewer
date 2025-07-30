@@ -381,6 +381,17 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
     setDeleteConfirmOpen(true);
   }, [getSelectedItems]);
 
+  const handleDeleteSingleItem = useCallback((item: ContentItem) => {
+    // Set the item to be deleted and open confirmation dialog
+    setSelectedIds(new Set([String(item.id)]));
+    setDeleteConfirmOpen(true);
+  }, []);
+
+  const handleSubmitSingleItemForReview = useCallback((item: ContentItem) => {
+    // Navigate to the submit for review page with this single item
+    navigate('/app/submit-review', { state: { contentItems: [item] } });
+  }, [navigate]);
+
   const handleConfirmArchive = useCallback(async () => {
     const selectedItems = getSelectedItems();
     if (selectedItems.length === 0) return;
@@ -647,25 +658,24 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
         </Alert>
       )}
 
-      {/* View Toggle */}
-      <Box display="flex" justifyContent="flex-end" alignItems="center" mb={2}>        
-        <ToggleButtonGroup
-          value={viewMode}
-          exclusive
-          onChange={handleViewModeChange}
-          aria-label="view mode"
-          size="small"
-        >
-          <ToggleButton value="card" aria-label="card view">
-            <CardViewIcon sx={{ mr: 0.5 }} />
-            Cards
-          </ToggleButton>
-          <ToggleButton value="table" aria-label="table view">
-            <TableViewIcon sx={{ mr: 0.5 }} />
-            Table
-          </ToggleButton>
-        </ToggleButtonGroup>
-      </Box>
+
+      {/* Search and view controls */}
+      <ContentLibraryToolbar
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        filteredCount={filteredContent.length}
+        totalCount={content.length}
+        selectedCount={getSelectedCount()}
+        user={user}
+        bulkStatusChangeLoading={bulkStatusChangeLoading}
+        onSubmitForReview={handleSubmitForReview}
+        onPublishContent={handlePublishContent}
+        onUnpublishContent={handleUnpublishContent}
+        onRejectContent={handleRejectContent}
+        onDeleteItems={handleDeleteItems}
+        viewMode={viewMode}
+        onViewModeChange={handleViewModeChange}
+      />
 
       {/* Content Display */}
       {viewMode === 'card' ? (
@@ -677,20 +687,6 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
         />
       ) : (
         <Box>
-          <ContentLibraryToolbar
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            filteredCount={filteredContent.length}
-            totalCount={content.length}
-            selectedCount={getSelectedCount()}
-            user={user}
-            bulkStatusChangeLoading={bulkStatusChangeLoading}
-            onSubmitForReview={handleSubmitForReview}
-            onPublishContent={handlePublishContent}
-            onUnpublishContent={handleUnpublishContent}
-            onRejectContent={handleRejectContent}
-            onDeleteItems={handleDeleteItems}
-          />
           
           {filteredContent.length > 0 ? (
             filteredContent.every(item => item.id) ? (
@@ -701,6 +697,8 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
                 user={user}
                 onPlayContent={handlePlayContent}
                 onEditContent={handleEditContent}
+                onDeleteContent={handleDeleteSingleItem}
+                onSubmitForReview={handleSubmitSingleItemForReview}
               />
             ) : (
               <Box textAlign="center" py={8}>

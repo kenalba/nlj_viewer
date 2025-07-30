@@ -213,9 +213,11 @@ interface ActionsCellProps extends CellProps {
   user?: User | null;
   onPlay: (item: ContentItem) => void;
   onEdit: (item: ContentItem) => void;
+  onDelete?: (item: ContentItem) => void;
+  onSubmitForReview?: (item: ContentItem) => void;
 }
 
-export const ActionsCell = React.memo(({ item, user, onPlay, onEdit }: ActionsCellProps) => {
+export const ActionsCell = React.memo(({ item, user, onPlay, onEdit, onDelete, onSubmitForReview }: ActionsCellProps) => {
   const [moreActionsAnchor, setMoreActionsAnchor] = useState<HTMLElement | null>(null);
 
   const handlePlay = useCallback(() => {
@@ -282,6 +284,8 @@ export const ActionsCell = React.memo(({ item, user, onPlay, onEdit }: ActionsCe
             item={item}
             user={user}
             onEdit={onEdit}
+            onDelete={onDelete}
+            onSubmitForReview={onSubmitForReview}
           />
         </>
       )}

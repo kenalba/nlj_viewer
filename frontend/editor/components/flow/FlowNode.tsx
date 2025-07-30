@@ -28,6 +28,7 @@ import {
 import type { FlowNodeProps, FlowNodeData } from '../../flow/types/flow';
 // NODE_TYPE_INFO is now imported via getNodeTypeInfo utility
 import { getNodeIcon, getNodeTypeInfo } from '../../flow/utils/nodeTypeUtils.tsx';
+import { MarkdownRenderer } from '../../../shared/MarkdownRenderer';
 
 // Custom handle component
 const CustomHandle = memo(({ 
@@ -222,20 +223,53 @@ export const FlowNode = memo(({
 
         {/* Node Content */}
         <Box sx={{ p: 1.5 }}>
+          {/* Node Title */}
           <Typography 
             variant="body2" 
             sx={{ 
-              fontWeight: 'medium',
-              mb: 1,
+              fontWeight: 'bold',
+              mb: 0.5,
               wordBreak: 'break-word',
-              lineHeight: 1.4,
+              lineHeight: 1.3,
               color: getTextColor(),
               textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-              fontSize: '0.875rem',
+              fontSize: '0.8rem',
             }}
           >
-            {nodeData?.label || 'Untitled'}
+            {nodeData?.label || nodeData?.nljNode?.title || 'Untitled'}
           </Typography>
+          
+          {/* Content Preview */}
+          {(nodeData?.nljNode?.content || nodeData?.nljNode?.text) && (
+            <Box 
+              sx={{ 
+                maxHeight: '60px',
+                overflow: 'hidden',
+                mb: 1,
+                '& *': { 
+                  fontSize: '0.7rem !important',
+                  lineHeight: '1.2 !important',
+                  color: `${alpha(getTextColor(), 0.9)} !important`,
+                  textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                  margin: '0 !important',
+                  padding: '0 !important',
+                },
+                WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+                maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+              }}
+            >
+              <MarkdownRenderer 
+                content={nodeData.nljNode.content || nodeData.nljNode.text || ''}
+                enableInterpolation={false}
+                sx={{ 
+                  '& p': { fontSize: '0.7rem', lineHeight: 1.2, margin: 0 },
+                  '& h1, & h2, & h3, & h4, & h5, & h6': { fontSize: '0.75rem', margin: 0 },
+                  '& ul, & ol': { margin: 0, paddingLeft: '12px' },
+                  '& li': { fontSize: '0.7rem', lineHeight: 1.2 },
+                }}
+              />
+            </Box>
+          )}
           
           {/* Node Details */}
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>

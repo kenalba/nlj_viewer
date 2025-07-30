@@ -40,6 +40,8 @@ interface ContentTableRowProps {
   user?: User | null;
   onPlayContent: (item: ContentItem) => void;
   onEditContent: (item: ContentItem) => void;
+  onDeleteContent?: (item: ContentItem) => void;
+  onSubmitForReview?: (item: ContentItem) => void;
   versions?: ContentVersion[];
   versionsLoading?: boolean;
 }
@@ -51,6 +53,8 @@ const ContentTableRow = React.memo(({
   user, 
   onPlayContent, 
   onEditContent,
+  onDeleteContent,
+  onSubmitForReview,
   versions,
   versionsLoading
 }: ContentTableRowProps) => {
@@ -119,6 +123,8 @@ const ContentTableRow = React.memo(({
           user={user}
           onPlay={onPlayContent}
           onEdit={onEditContent}
+          onDelete={onDeleteContent}
+          onSubmitForReview={onSubmitForReview}
         />
       </TableCell>
     </TableRow>
@@ -145,6 +151,8 @@ interface ContentTableProps {
   user?: User | null;
   onPlayContent: (item: ContentItem) => void;
   onEditContent: (item: ContentItem) => void;
+  onDeleteContent?: (item: ContentItem) => void;
+  onSubmitForReview?: (item: ContentItem) => void;
 }
 
 export const ContentTable = React.memo(({ 
@@ -153,7 +161,9 @@ export const ContentTable = React.memo(({
   onSelectionChange,
   user,
   onPlayContent,
-  onEditContent
+  onEditContent,
+  onDeleteContent,
+  onSubmitForReview
 }: ContentTableProps) => {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(15);
@@ -334,6 +344,8 @@ export const ContentTable = React.memo(({
                 user={user}
                 onPlayContent={onPlayContent}
                 onEditContent={onEditContent}
+                onDeleteContent={onDeleteContent}
+                onSubmitForReview={onSubmitForReview}
                 versions={versionsMap.get(String(item.id))}
                 versionsLoading={versionsLoading}
               />

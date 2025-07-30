@@ -586,19 +586,21 @@ function FlowViewerContent({
     reactFlowInstance.setViewport({ x: 0, y: 0, zoom: 1 });
   }, [reactFlowInstance]);
 
-  // Node types for palette
+  // Node types for palette (exclude legacy entries)
   const nodeTypeOptions = useMemo(() => {
-    return Object.values(NODE_TYPE_INFO).map(info => ({
-      type: info.type,
-      label: info.label,
-      description: info.description,
-      icon: info.icon,
-      category: info.category,
-      color: info.color,
-      isInteractive: info.isInteractive,
-      hasChoices: info.hasChoices,
-      supportsMedia: info.supportsMedia,
-    }));
+    return Object.values(NODE_TYPE_INFO)
+      .filter(info => !info.description.includes('(legacy)')) // Filter out legacy entries
+      .map(info => ({
+        type: info.type,
+        label: info.label,
+        description: info.description,
+        icon: info.icon,
+        category: info.category,
+        color: info.color,
+        isInteractive: info.isInteractive,
+        hasChoices: info.hasChoices,
+        supportsMedia: info.supportsMedia,
+      }));
   }, []);
 
   // Expose functions via useEffect to parent component
@@ -831,6 +833,7 @@ function FlowViewerContent({
         onEdgeDelete={onEdgeDelete}
         allNodes={nodes}
         allEdges={edges}
+        scenario={scenario}
         isOpen={Boolean(editingNodeId || editingEdgeId)}
         onClose={() => {
           setEditingNodeId(null);

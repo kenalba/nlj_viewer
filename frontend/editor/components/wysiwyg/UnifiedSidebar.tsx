@@ -20,6 +20,7 @@ import {
 } from '@mui/icons-material';
 
 import type { FlowNode, FlowEdge } from '../../flow/types/flow';
+import type { NLJScenario } from '../../../types/nlj';
 import { WYSIWYGNodeEditorContent } from './WYSIWYGNodeEditorContent';
 import { EdgeEditor } from './EdgeEditor';
 import { getNodeIcon, getNodeTypeInfo } from '../../flow/utils/nodeTypeUtils';
@@ -38,6 +39,7 @@ interface UnifiedSidebarProps {
   // Shared props
   allNodes: FlowNode[];
   allEdges: FlowEdge[];
+  scenario?: NLJScenario; // Add scenario prop for variable access
   isOpen: boolean;
   onClose: () => void;
   theme?: 'hyundai' | 'unfiltered' | 'custom';
@@ -60,6 +62,7 @@ export function UnifiedSidebar({
   onEdgeDelete,
   allNodes,
   allEdges,
+  scenario,
   isOpen,
   onClose,
   theme = 'unfiltered',
@@ -138,6 +141,7 @@ export function UnifiedSidebar({
           theme={theme}
           allNodes={allNodes}
           allEdges={allEdges}
+          scenario={scenario}
           onUnsavedChanges={handleUnsavedChanges}
           onAddNode={onAddNode}
           onAddEdge={onAddEdge}

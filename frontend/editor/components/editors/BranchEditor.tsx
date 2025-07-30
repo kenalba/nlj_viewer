@@ -80,8 +80,10 @@ export const BranchEditor: React.FC<BranchEditorProps> = ({
 
   // Ensure we have valid conditions array
   const conditions = nljNode.conditions || [];
-  const evaluationMode = nljNode.evaluationMode || 'first-match';
   const defaultTargetNodeId = nljNode.defaultTargetNodeId || '';
+  
+  // Always use first-match mode by default
+  const evaluationMode = 'first-match';
 
   const handleAddCondition = useCallback(() => {
     const newCondition: BranchCondition = {
@@ -224,9 +226,7 @@ export const BranchEditor: React.FC<BranchEditorProps> = ({
     onUpdate({ conditions: updatedConditions });
   }, [conditions, onUpdate, node.id, onRemoveEdge]);
 
-  const handleEvaluationModeChange = useCallback((mode: 'first-match' | 'priority-order') => {
-    onUpdate({ evaluationMode: mode });
-  }, [onUpdate]);
+  // Remove evaluation mode handler since we're using first-match by default
 
   const handleDefaultTargetChange = useCallback((targetNodeId: string) => {
     const oldDefaultTarget = nljNode.defaultTargetNodeId;
@@ -261,22 +261,9 @@ export const BranchEditor: React.FC<BranchEditorProps> = ({
           Branch Conditions
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Define conditions that determine which path to take through the scenario.
+          Define conditions that determine which path to take. Conditions are evaluated from top to bottom, stopping at the first match.
         </Typography>
       </Box>
-
-      {/* Evaluation Mode */}
-      <FormControl size="small">
-        <InputLabel>Evaluation Mode</InputLabel>
-        <Select
-          value={evaluationMode}
-          label="Evaluation Mode"
-          onChange={(e) => handleEvaluationModeChange(e.target.value as 'first-match' | 'priority-order')}
-        >
-          <MenuItem value="first-match">First Match (stop at first true condition)</MenuItem>
-          <MenuItem value="priority-order">Priority Order (evaluate all, use highest priority)</MenuItem>
-        </Select>
-      </FormControl>
 
       {/* Conditions List */}
       <Paper variant="outlined">
@@ -495,9 +482,7 @@ export const BranchEditor: React.FC<BranchEditorProps> = ({
       {/* Instructions */}
       <Alert severity="info" icon={<BranchIcon />}>
         <Typography variant="body2">
-          <strong>Branch Logic:</strong> Conditions are evaluated in order from top to bottom. 
-          In "First Match" mode, navigation stops at the first true condition. 
-          In "Priority Order" mode, all conditions are evaluated and the highest priority (topmost) true condition is used.
+          <strong>Branch Logic:</strong> Conditions are evaluated from top to bottom, stopping at the first true condition. If no conditions match, the default target (if specified) will be used.
         </Typography>
       </Alert>
 
