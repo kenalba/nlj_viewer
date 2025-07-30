@@ -14,7 +14,6 @@ import {
   Snackbar,
   Tooltip,
   Divider,
-  Badge,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -26,10 +25,12 @@ import {
   AutoFixHigh as AutoLayoutIcon,
   Settings as SettingsIcon,
   History as HistoryIcon,
+  Functions as FunctionsIcon,
 } from '@mui/icons-material';
 
 import { FlowViewer } from './components/flow/FlowViewer';
 import { VersionManagementModal } from './components/VersionManagementModal';
+import { VariableBrowserModal } from './components/VariableBrowserModal';
 import type { NLJScenario } from '../types/nlj';
 import type { ActivitySettings } from '../types/settings';
 import type { ContentItem } from '../api/content';
@@ -63,6 +64,7 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showVersionManager, setShowVersionManager] = useState(false);
+  const [showVariables, setShowVariables] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(120);
   const headerRef = useRef<HTMLDivElement>(null);
   const { themeMode } = useTheme();
@@ -250,11 +252,6 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h6" component="h1">
               Flow Editor: {editedScenario.name || 'Untitled Scenario'}
-              {contentItem && versionManagement?.currentVersion && (
-                <Typography component="span" variant="h6" color="text.secondary" sx={{ ml: 1 }}>
-                  (v{versionManagement.currentVersion.version_number})
-                </Typography>
-              )}
             </Typography>
             <Stack direction="row" spacing={1} alignItems="center">
               <Chip
@@ -275,9 +272,16 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
                 color="primary"
                 variant="outlined"
               />
-              {contentItem && versionManagement?.currentVersion && (
+              {contentItem && versionManagement?.currentVersion ? (
                 <Chip
                   label={`v${versionManagement.currentVersion.version_number}`}
+                  size="small"
+                  color="info"
+                  variant="outlined"
+                />
+              ) : (
+                <Chip
+                  label="v1.0"
                   size="small"
                   color="info"
                   variant="outlined"
@@ -295,8 +299,8 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
           </Box>
           
           <Stack direction="row" spacing={1}>
-            {/* Version Management Button (only if contentItem is provided) */}
-            {contentItem && canManageVersions && (
+            {/* Version Management Button */}
+            {contentItem && canManageVersions ? (
               <Tooltip title={`Version History (${versionStats.total} versions)`}>
                 <IconButton
                   onClick={() => setShowVersionManager(true)}
@@ -309,12 +313,45 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
                     },
                   }}
                 >
-                  <Badge badgeContent={versionStats.total} color="primary" max={99}>
-                    <HistoryIcon />
-                  </Badge>
+                  <HistoryIcon />
                 </IconButton>
               </Tooltip>
+            ) : (
+              <Tooltip title="Version History (Not available for this scenario)">
+                <span>
+                  <IconButton
+                    disabled
+                    size="large"
+                    sx={{ opacity: 0.5 }}
+                  >
+                    <HistoryIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
             )}
+            
+            <Tooltip title="Activity Variables & Parameters">
+              <IconButton
+                onClick={() => setShowVariables(true)}
+                color={showVariables ? 'primary' : 'default'}
+                size="large"
+                sx={{
+                  backgroundColor: showVariables ? 'primary.50' : 'transparent',
+                  '&:hover': {
+                    backgroundColor: showVariables ? 'primary.100' : 'action.hover',
+                  },
+                }}
+              >
+                <Badge 
+                  badgeContent={editedScenario.variableDefinitions?.length || 0} 
+                  color="primary" 
+                  max={99}
+                  invisible={(editedScenario.variableDefinitions?.length || 0) === 0}
+                >
+                  <FunctionsIcon />
+                </Badge>
+              </IconButton>
+            </Tooltip>
             
             <Tooltip title="Activity & Flow Settings">
               <IconButton
@@ -501,6 +538,14 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
           canManageVersions={canManageVersions}
         />
       )}
+
+      {/* Variables Browser Modal */}
+      <VariableBrowserModal
+        open={showVariables}
+        onClose={() => setShowVariables(false)}
+        scenario={editedScenario}
+        onScenarioChange={handleScenarioChange}
+      />
 
     </Box>
   );

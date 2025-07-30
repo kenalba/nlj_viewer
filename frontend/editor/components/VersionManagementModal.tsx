@@ -281,14 +281,14 @@ export const VersionManagementModal: React.FC<VersionManagementModalProps> = ({
                           </Box>
                         }
                         secondary={
-                          <Stack spacing={0.5}>
-                            <Typography variant="caption" color="text.secondary">
+                          <Box component="span">
+                            <Typography variant="caption" color="text.secondary" component="span" display="block">
                               {version.change_summary || 'No description provided'}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography variant="caption" color="text.secondary" component="span" display="block">
                               Created: {new Date(version.created_at).toLocaleString()}
                             </Typography>
-                          </Stack>
+                          </Box>
                         }
                       />
                       

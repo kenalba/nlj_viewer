@@ -43,7 +43,9 @@ export interface MediaWrapper {
 
 export interface VariableChange {
   variableId: string;
-  value: number;
+  operation: 'set' | 'add' | 'subtract' | 'multiply' | 'divide' | 'append' | 'toggle';
+  value: number | string | boolean;
+  expression?: string; // For future advanced mode
 }
 
 export interface Point {
@@ -518,6 +520,21 @@ export interface CrosswordNode extends BaseNode {
   settings?: NodeSettings;
 }
 
+// Branch node for conditional navigation based on expressions
+export interface BranchNode extends BaseNode {
+  type: 'branch';
+  title?: string;
+  description?: string;
+  conditions: Array<{
+    id: string;
+    label: string;
+    expression: string;
+    targetNodeId: string;
+  }>;
+  defaultTargetNodeId?: string;
+  evaluationMode: 'first-match' | 'priority-order';
+}
+
 // Updated union type to include all node types
 export type NLJNode = 
   | StartNode 
@@ -538,7 +555,8 @@ export type NLJNode =
   | CheckboxNode
   | ConnectionsNode
   | WordleNode
-  | CrosswordNode;
+  | CrosswordNode
+  | BranchNode;
 
 // Type guards for node types
 export const isQuestionNode = (node: NLJNode): node is QuestionNode => node.type === 'question';
@@ -559,6 +577,8 @@ export const isWordleResponse = (response: NodeResponseValue): response is { gue
 export const isCrosswordNode = (node: NLJNode): node is CrosswordNode => node.type === 'crossword';
 export const isCrosswordResponse = (response: NodeResponseValue): response is { guesses: CrosswordGuess[]; completedWords: number; totalWords: number; completed: boolean } => 
   typeof response === 'object' && response !== null && 'guesses' in response && 'completedWords' in response && 'totalWords' in response && 'completed' in response;
+
+export const isBranchNode = (node: NLJNode): node is BranchNode => node.type === 'branch';
 
 // Utility function for calculating connections game score
 export const calculateConnectionsScore = (
@@ -680,7 +700,24 @@ export interface AssessmentMetadata {
 export interface VariableDefinition {
   id: string;
   name: string;
-  type: 'integer' | 'string' | 'boolean';
+  type: 'number' | 'string' | 'boolean';
+  defaultValue: number | string | boolean;
+  description?: string;
+  allowRuntimeOverride?: boolean; // Can be set via URL parameters
+}
+
+
+// Activity parameters for runtime injection
+export interface ActivityParameters {
+  variables?: Record<string, number | string | boolean>;
+  metadata?: JSONObject;
+}
+
+// Expression evaluation context
+export interface VariableContext {
+  activityVariables: Record<string, number | string | boolean>;
+  runtimeParameters: Record<string, number | string | boolean>;
+  nodeVariables: Record<string, number | string | boolean>;
 }
 
 export interface TagValue {

@@ -42,6 +42,7 @@ import {
   Logout as LogoutIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { canEditContent, canReviewContent, canManageUsers } from '../utils/permissions';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -104,9 +105,9 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
 
   // Role-based navigation items
   const getNavigationItems = (): SidebarItem[] => {
-    const canEdit = user?.role && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role);
-    const canReview = user?.role && ['reviewer', 'approver', 'admin'].includes(user.role);
-    const isAdmin = user?.role === 'admin';
+    const canEdit = canEditContent(user);
+    const canReview = canReviewContent(user);
+    const isAdmin = canManageUsers(user);
     
     const items: SidebarItem[] = [
       {

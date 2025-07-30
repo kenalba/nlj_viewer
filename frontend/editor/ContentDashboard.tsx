@@ -145,12 +145,12 @@ export const ContentDashboard: React.FC<ContentDashboardProps> = ({ onEditScenar
   };
 
   const canEdit = (item: ContentItem) => {
-    return item.created_by === user?.username || user?.role === 'admin';
+    return item.created_by === user?.username || user?.role?.toLowerCase() === 'admin';
   };
 
   const canReview = (item: ContentItem) => {
     const userRole = user?.role;
-    if (userRole === 'admin') return true;
+    if (userRole?.toLowerCase() === 'admin') return true;
     
     switch (item.state) {
       case 'pending_sgm': return userRole === 'approver';

@@ -22,9 +22,10 @@ import { SubmitForReviewPage } from './pages/SubmitForReviewPage';
 import { UserDetailPage } from './pages/UserDetailPage';
 import { PeopleTab } from './components/people/PeopleTab';
 import { useAuth } from './contexts/AuthContext';
-import { contentApi } from './api/content';
+import { contentApi, type ContentItem } from './api/content';
 import { HomePage } from './components/HomePage';
 import type { NLJScenario } from './types/nlj';
+import { canEditContent, canReviewContent, canManageUsers, getAppMode } from './utils/permissions';
 
 const AppContent: React.FC = () => {
   const { state, reset } = useGameContext();
@@ -33,6 +34,7 @@ const AppContent: React.FC = () => {
   const navigate = useNavigate();
   const [currentScenario, setCurrentScenario] = useState<NLJScenario | null>(null);
   const [editingScenario, setEditingScenario] = useState<NLJScenario | null>(null);
+  const [editingContentItem, setEditingContentItem] = useState<ContentItem | null>(null);
   const [loadingScenario, setLoadingScenario] = useState<boolean>(false);
   const [scenarioError, setScenarioError] = useState<string | null>(null);
   
@@ -56,9 +58,9 @@ const AppContent: React.FC = () => {
     navigate('/app/activities');
   };
 
-  const canEdit = user?.role && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role);
-  const canReview = user?.role && ['reviewer', 'approver', 'admin'].includes(user.role);
-  const isAdmin = user?.role === 'admin';
+  const canEdit = canEditContent(user);
+  const canReview = canReviewContent(user);
+  const isAdmin = canManageUsers(user);
 
   // Load scenario from Content API when editing
   useEffect(() => {
@@ -85,6 +87,7 @@ const AppContent: React.FC = () => {
           };
           
           setEditingScenario(scenario);
+          setEditingContentItem(contentItem);
         } catch (error) {
           console.error('Failed to load scenario for editing:', error);
           setScenarioError('Failed to load scenario. Please try again.');
@@ -100,6 +103,9 @@ const AppContent: React.FC = () => {
       // Clear editing scenario when not on flow page
       if (editingScenario) {
         setEditingScenario(null);
+      }
+      if (editingContentItem) {
+        setEditingContentItem(null);
       }
       if (scenarioError) {
         setScenarioError(null);
@@ -285,8 +291,11 @@ const AppContent: React.FC = () => {
     return (
       <FlowEditor
         scenario={scenarioToEdit!}
+        contentItem={editingContentItem}
+        canManageVersions={!!editingContentItem}
         onBack={() => {
           setEditingScenario(null);
+          setEditingContentItem(null);
           window.history.back();
         }}
         onPlay={(scenario) => {
@@ -397,7 +406,7 @@ export const App: React.FC = () => {
     templates: 20
   };
 
-  const appMode = user?.role && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role) ? 'editor' : 'player';
+  const appMode = getAppMode(user);
   
   // Debug the actual pathname for troubleshooting
   console.log('App Current pathname:', location.pathname);

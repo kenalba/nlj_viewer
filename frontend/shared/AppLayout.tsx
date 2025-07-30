@@ -81,7 +81,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const getDefaultTitle = () => {
     if (title) return title;
     // Show unified title, but indicate available features based on user role
-    const canEdit = user?.role && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role);
+    const canEdit = user?.role && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role.toLowerCase());
     return canEdit ? 'NLJ Platform' : 'NLJ Player';
   };
 

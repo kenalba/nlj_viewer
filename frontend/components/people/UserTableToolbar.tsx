@@ -43,7 +43,7 @@ export const UserTableToolbar: React.FC<UserTableToolbarProps> = ({
   onBulkDeactivate,
   onBulkDelete
 }) => {
-  const canPerformBulkActions = userRole === 'admin' && selectedCount > 0;
+  const canPerformBulkActions = userRole?.toLowerCase() === 'admin' && selectedCount > 0;
 
   return (
     <Paper sx={{ p: 2, mb: 2 }}>

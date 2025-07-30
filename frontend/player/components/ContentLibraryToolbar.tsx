@@ -61,7 +61,7 @@ export const ContentLibraryToolbar = React.memo(({
     setMoreActionsAnchor(null);
   }, []);
 
-  const canPerformBulkActions = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole);
+  const canPerformBulkActions = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole.toLowerCase());
 
   return (
     <Box
@@ -107,7 +107,7 @@ export const ContentLibraryToolbar = React.memo(({
             disabled={bulkStatusChangeLoading}
             color="primary"
           >
-            Submit for Review
+            Review
           </Button>
           
           {/* Secondary Actions: More Menu */}
@@ -123,7 +123,7 @@ export const ContentLibraryToolbar = React.memo(({
               px: 2
             }}
           >
-            More Actions
+            More
           </Button>
           
           <BulkActionsMenu

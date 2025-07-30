@@ -30,6 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { contentApi } from '../../api/content';
 import type { ContentItem, ContentFilters } from '../../api/content';
+import { getAllowedContentStates, canEditContent, canCreateContent } from '../../utils/permissions';
 import { workflowApi } from '../../api/workflow';
 import { CreateActivityModal } from '../../shared/CreateActivityModal';
 import { ImportActivityModal } from '../../shared/ImportActivityModal';
@@ -512,23 +513,10 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
     setLoading(true);
     setError(null); // Clear any previous errors
     try {
-      let allowedStates = ['published'];
-      
-      if (user?.role === 'admin') {
-        allowedStates = ['published', 'approved', 'rejected', 'in_review', 'submitted', 'draft'];
-      } else if (user?.role === 'approver') {
-        allowedStates = ['published', 'approved', 'rejected', 'in_review', 'submitted'];
-      } else if (user?.role === 'reviewer') {
-        allowedStates = ['published', 'rejected', 'in_review', 'submitted'];
-      } else if (user?.role === 'creator') {
-        allowedStates = ['published', 'approved', 'rejected', 'in_review', 'submitted', 'draft'];
-      }
+      const allowedStates = getAllowedContentStates(user);
 
       const filters: ContentFilters = {
-        ...(user?.role === 'creator' || user?.role === 'reviewer' || user?.role === 'approver' || user?.role === 'admin' 
-            ? {} 
-            : { state: 'published' }
-        ),
+        ...(canEditContent(user) ? {} : { state: 'published' }),
         size: 100,
         sort_by: 'title',
         sort_order: 'asc'
@@ -739,7 +727,7 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
           <Typography variant="body2" color="text.secondary" mb={3}>
             No activities available yet. Create your first activity to get started!
           </Typography>
-          {user && (user.role === 'creator' || user.role === 'admin') && (
+          {canCreateContent(user) && (
             <Button 
               variant="contained" 
               startIcon={<AddIcon />}

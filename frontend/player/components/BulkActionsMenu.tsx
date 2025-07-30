@@ -46,8 +46,8 @@ export const BulkActionsMenu: React.FC<BulkActionsMenuProps> = ({
   onRejectContent,
   onDeleteItems
 }) => {
-  const canReject = userRole && ['reviewer', 'approver', 'admin'].includes(userRole);
-  const canPublish = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole);
+  const canReject = userRole && ['reviewer', 'approver', 'admin'].includes(userRole.toLowerCase());
+  const canPublish = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole.toLowerCase());
 
   const handleAction = useCallback((action: () => void) => {
     onClose();

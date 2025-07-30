@@ -48,6 +48,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usersAPI } from '../api/users';
 import type { User } from '../api/auth';
+import { canEditUser } from '../utils/permissions';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -85,7 +86,7 @@ export const UserDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState(0);
 
-  const canEdit = currentUser?.role === 'admin' || currentUser?.id === userId;
+  const canEdit = canEditUser(currentUser, { id: userId } as User);
 
   // Fetch user data
   const fetchUser = useCallback(async () => {

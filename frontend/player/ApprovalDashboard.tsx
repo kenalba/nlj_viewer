@@ -45,6 +45,7 @@ import {
   FilterList as FilterIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { canManageUsers, canReviewContent } from '../utils/permissions';
 import { workflowApi } from '../api/workflow';
 import type { 
   PendingReview, 
@@ -256,7 +257,7 @@ export const ApprovalDashboard: React.FC = () => {
     );
   };
 
-  if (!user || !['reviewer', 'approver', 'admin'].includes(user.role)) {
+  if (!canReviewContent(user)) {
     return (
       <Box p={3}>
         <Alert severity="warning">
@@ -344,7 +345,7 @@ export const ApprovalDashboard: React.FC = () => {
               </Badge>
             }
           />
-          {user.role === 'admin' && (
+          {canManageUsers(user) && (
             <Tab 
               label={
                 <Badge badgeContent={filteredAllReviews.length} color="secondary">

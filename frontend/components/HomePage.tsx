@@ -49,8 +49,8 @@ export const HomePage: React.FC = () => {
   const { user } = useAuth();
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
-  const canEdit = user?.role && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role);
-  const canReview = user?.role && ['reviewer', 'approver', 'admin'].includes(user.role);
+  const canEdit = user?.role && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role.toLowerCase());
+  const canReview = user?.role && ['reviewer', 'approver', 'admin'].includes(user.role.toLowerCase());
 
   // Mock data - would come from API in real implementation
   const usageMetrics = {

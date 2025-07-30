@@ -42,9 +42,9 @@ export const ItemActionsMenu: React.FC<ItemActionsMenuProps> = ({
   onEdit,
   onDelete
 }) => {
-  const canEdit = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole);
-  const canDelete = userRole && ['creator', 'admin'].includes(userRole);
-  const canViewAnalytics = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole);
+  const canEdit = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole.toLowerCase());
+  const canDelete = userRole && ['creator', 'admin'].includes(userRole.toLowerCase());
+  const canViewAnalytics = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole.toLowerCase());
 
   const handleAction = useCallback((action: () => void) => {
     onClose();

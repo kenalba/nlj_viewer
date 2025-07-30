@@ -229,7 +229,7 @@ export const ActionsCell = React.memo(({ item, userRole, onPlay, onEdit }: Actio
     setMoreActionsAnchor(null);
   }, []);
 
-  const canEdit = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole);
+  const canEdit = userRole && ['creator', 'reviewer', 'approver', 'admin'].includes(userRole.toLowerCase());
 
   return (
     <Box display="flex" gap={0.5} justifyContent="center" alignItems="center">

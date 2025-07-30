@@ -171,7 +171,8 @@ export const PeopleTab: React.FC = () => {
   const userStats = useMemo(() => {
     const activeUsers = users.filter(user => user.is_active).length;
     const roleCount = users.reduce((acc, user) => {
-      acc[user.role] = (acc[user.role] || 0) + 1;
+      const normalizedRole = user.role.toLowerCase();
+      acc[normalizedRole] = (acc[normalizedRole] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
