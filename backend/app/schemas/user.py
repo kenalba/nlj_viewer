@@ -18,7 +18,7 @@ class UserBase(BaseModel):
     username: str = Field(..., min_length=3, max_length=50, description="Unique username")
     email: EmailStr = Field(..., description="User email address")
     full_name: str | None = Field(None, max_length=255, description="Full display name")
-    role: UserRole = Field(default=UserRole.CREATOR, description="User role for permissions")
+    role: UserRole = Field(default=UserRole.PLAYER, description="User role for permissions")
 
 
 class UserCreate(UserBase):
@@ -31,7 +31,7 @@ class UserCreate(UserBase):
                 "username": "johndoe",
                 "email": "john@example.com",
                 "full_name": "John Doe",
-                "role": "creator",
+                "role": "CREATOR",
                 "password": "securepassword123"
             }
         }
@@ -40,6 +40,7 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     """Schema for user update requests."""
+    username: str | None = Field(None, min_length=3, max_length=50, description="Username")
     email: EmailStr | None = None
     full_name: str | None = Field(None, max_length=255)
     role: UserRole | None = None
@@ -50,7 +51,7 @@ class UserUpdate(BaseModel):
             "example": {
                 "email": "newemail@example.com",
                 "full_name": "John Updated Doe",
-                "role": "reviewer",
+                "role": "REVIEWER",
                 "is_active": True
             }
         }
@@ -74,7 +75,7 @@ class UserResponse(UserBase):
                 "username": "johndoe",
                 "email": "john@example.com",
                 "full_name": "John Doe",
-                "role": "creator",
+                "role": "CREATOR",
                 "is_active": True,
                 "is_verified": False,
                 "created_at": "2025-01-24T10:00:00Z",
@@ -147,7 +148,7 @@ class TokenResponse(BaseModel):
                     "id": "123e4567-e89b-12d3-a456-426614174000",
                     "username": "johndoe",
                     "email": "john@example.com",
-                    "role": "creator"
+                    "role": "CREATOR"
                 }
             }
         }

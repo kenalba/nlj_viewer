@@ -23,10 +23,12 @@ if TYPE_CHECKING:
 
 class UserRole(str, Enum):
     """User roles for access control."""
-    CREATOR = "creator"
-    REVIEWER = "reviewer"
-    APPROVER = "approver"
-    ADMIN = "admin"
+    PLAYER = "PLAYER"
+    LEARNER = "LEARNER"
+    CREATOR = "CREATOR"
+    REVIEWER = "REVIEWER"
+    APPROVER = "APPROVER"
+    ADMIN = "ADMIN"
 
 
 class User(Base):
@@ -67,7 +69,7 @@ class User(Base):
     full_name: Mapped[str | None] = mapped_column(String(255))
     role: Mapped[UserRole] = mapped_column(
         SQLEnum(UserRole),
-        default=UserRole.CREATOR,
+        default=UserRole.PLAYER,
         nullable=False
     )
     

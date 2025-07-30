@@ -19,6 +19,8 @@ import { PlayActivityLoader } from './player/PlayActivityLoader';
 import { DetailedReviewPage } from './pages/DetailedReviewPage';
 import { ContentGenerationPage } from './pages/ContentGenerationPage';
 import { SubmitForReviewPage } from './pages/SubmitForReviewPage';
+import { UserDetailPage } from './pages/UserDetailPage';
+import { PeopleTab } from './components/people/PeopleTab';
 import { useAuth } from './contexts/AuthContext';
 import { contentApi } from './api/content';
 import { HomePage } from './components/HomePage';
@@ -56,6 +58,7 @@ const AppContent: React.FC = () => {
 
   const canEdit = user?.role && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role);
   const canReview = user?.role && ['reviewer', 'approver', 'admin'].includes(user.role);
+  const isAdmin = user?.role === 'admin';
 
   // Load scenario from Content API when editing
   useEffect(() => {
@@ -154,6 +157,16 @@ const AppContent: React.FC = () => {
   
   if (path.includes('/approvals') && canReview) {
     return <ApprovalDashboard />;
+  }
+
+  // Handle People management routes (admin only)
+  if (path.includes('/people') && isAdmin) {
+    // User detail page: /app/people/[userId]
+    if (path.includes('/app/people/') && path.split('/').length > 3) {
+      return <UserDetailPage />;
+    }
+    // Main people page: /app/people
+    return <PeopleTab />;
   }
 
   // Handle detailed review page

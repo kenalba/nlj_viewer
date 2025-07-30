@@ -25,7 +25,8 @@ async def list_users(
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(20, ge=1, le=100, description="Items per page"),
     role: UserRole | None = Query(None, description="Filter by user role"),
-    active_only: bool = Query(True, description="Show only active users")
+    active_only: bool = Query(False, description="Show only active users"),
+    search: str | None = Query(None, description="Search users by username, email, or full name")
 ) -> UserList:
     """
     List users with pagination and filtering.
@@ -48,12 +49,14 @@ async def list_users(
         skip=skip,
         limit=per_page,
         role_filter=role,
-        active_only=active_only
+        active_only=active_only,
+        search=search
     )
     
     total = await user_service.get_user_count(
         role_filter=role,
-        active_only=active_only
+        active_only=active_only,
+        search=search
     )
     
     return UserList(
@@ -152,6 +155,14 @@ async def update_user(
         )
     
     # Check for username conflicts (if username is being updated)
+    if user_update.username and user_update.username != existing_user.username:
+        if await user_service.username_exists(user_update.username):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username already registered"
+            )
+    
+    # Check for email conflicts (if email is being updated)
     if user_update.email and user_update.email != existing_user.email:
         if await user_service.email_exists(user_update.email):
             raise HTTPException(

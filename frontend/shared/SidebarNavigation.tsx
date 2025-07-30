@@ -32,6 +32,7 @@ import {
   ContentCopy as TemplateIcon,
   RateReview as ReviewIcon,
   AutoAwesome as GenerateIcon,
+  People as PeopleIcon,
   ExpandLess,
   ExpandMore,
   ChevronLeft as ChevronLeftIcon,
@@ -105,6 +106,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
   const getNavigationItems = (): SidebarItem[] => {
     const canEdit = user?.role && ['creator', 'reviewer', 'approver', 'admin'].includes(user.role);
     const canReview = user?.role && ['reviewer', 'approver', 'admin'].includes(user.role);
+    const isAdmin = user?.role === 'admin';
     
     const items: SidebarItem[] = [
       {
@@ -120,6 +122,16 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
         path: '/app/activities'
       }
     ];
+
+    // Add People management for admin users
+    if (isAdmin) {
+      items.push({
+        id: 'people',
+        label: 'People',
+        icon: <PeopleIcon />,
+        path: '/app/people'
+      });
+    }
 
     // Add approval dashboard for reviewers and approvers
     if (canReview) {

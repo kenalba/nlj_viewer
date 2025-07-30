@@ -14,7 +14,7 @@ export interface RegisterRequest {
   email: string;
   full_name: string;
   password: string;
-  role?: 'creator' | 'reviewer' | 'approver' | 'admin';
+  role?: 'PLAYER' | 'LEARNER' | 'CREATOR' | 'REVIEWER' | 'APPROVER' | 'ADMIN';
 }
 
 export interface User {
@@ -22,7 +22,7 @@ export interface User {
   username: string;
   email: string;
   full_name: string;
-  role: 'creator' | 'reviewer' | 'approver' | 'admin';
+  role: 'PLAYER' | 'LEARNER' | 'CREATOR' | 'REVIEWER' | 'APPROVER' | 'ADMIN';
   is_active: boolean;
   created_at: string;
   updated_at: string;

@@ -22,9 +22,10 @@ export interface UserFilters {
 }
 
 export interface UserUpdate {
+  username?: string;
   email?: string;
   full_name?: string;
-  role?: 'creator' | 'reviewer' | 'approver' | 'admin';
+  role?: 'PLAYER' | 'LEARNER' | 'CREATOR' | 'REVIEWER' | 'APPROVER' | 'ADMIN';
   is_active?: boolean;
 }
 
@@ -64,6 +65,11 @@ export const usersAPI = {
 
   async deactivateUser(userId: string): Promise<{ message: string }> {
     const response = await apiClient.post(`/api/users/${userId}/deactivate`);
+    return response.data;
+  },
+
+  async deleteUser(userId: string): Promise<{ message: string }> {
+    const response = await apiClient.delete(`/api/users/${userId}`);
     return response.data;
   },
 

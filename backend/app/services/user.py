@@ -191,7 +191,8 @@ class UserService:
         skip: int = 0,
         limit: int = 100,
         role_filter: UserRole | None = None,
-        active_only: bool = True
+        active_only: bool = False,
+        search: str | None = None
     ) -> list[User]:
         """
         Get list of users with filtering and pagination.
@@ -201,6 +202,7 @@ class UserService:
             limit: Maximum number of users to return
             role_filter: Filter by user role
             active_only: Only return active users
+            search: Search users by username, email, or full name
             
         Returns:
             List of users
@@ -213,6 +215,14 @@ class UserService:
         if role_filter:
             query = query.where(User.role == role_filter)
         
+        if search:
+            search_term = f"%{search.lower()}%"
+            query = query.where(
+                (User.username.ilike(search_term)) |
+                (User.email.ilike(search_term)) |
+                (User.full_name.ilike(search_term))
+            )
+        
         query = query.offset(skip).limit(limit).order_by(User.created_at.desc())
         
         result = await self.db.execute(query)
@@ -221,7 +231,8 @@ class UserService:
     async def get_user_count(
         self,
         role_filter: UserRole | None = None,
-        active_only: bool = True
+        active_only: bool = False,
+        search: str | None = None
     ) -> int:
         """Get total count of users with filtering."""
         query = select(func.count(User.id))
@@ -231,6 +242,14 @@ class UserService:
         
         if role_filter:
             query = query.where(User.role == role_filter)
+        
+        if search:
+            search_term = f"%{search.lower()}%"
+            query = query.where(
+                (User.username.ilike(search_term)) |
+                (User.email.ilike(search_term)) |
+                (User.full_name.ilike(search_term))
+            )
         
         result = await self.db.execute(query)
         return result.scalar() or 0
