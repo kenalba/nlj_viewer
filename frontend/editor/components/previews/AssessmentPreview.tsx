@@ -10,6 +10,8 @@ import {
 } from '@mui/material';
 
 import type { FlowNode } from '../../flow/types/flow';
+import type { NLJScenario } from '../../../types/nlj';
+import { SettingsProvider } from '../../../contexts/SettingsContext';
 import { UnifiedQuestionNode } from '../../../player/UnifiedQuestionNode';
 import { TrueFalseNode } from '../../../player/TrueFalseNode';
 import { LikertScaleNode } from '../../../player/LikertScaleNode';
@@ -40,6 +42,15 @@ export const AssessmentPreview: React.FC<AssessmentPreviewProps> = ({
 }) => {
   const nodeType = node.data.nodeType;
   const nljNode = node.data.nljNode;
+
+  // Create a minimal scenario for SettingsProvider
+  const previewScenario: NLJScenario = {
+    id: 'preview',
+    name: 'Preview',
+    nodes: [nljNode],
+    links: [],
+    variableDefinitions: []
+  };
 
   // Get connected choice nodes for choice-based assessments
   const getConnectedChoiceNodes = () => {
@@ -225,32 +236,34 @@ export const AssessmentPreview: React.FC<AssessmentPreviewProps> = ({
   };
 
   return (
-    <Box sx={{ minHeight: 200 }}>
-      <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-        This is how your content will appear in the game:
-      </Typography>
-      
-      <Box sx={{ 
-        border: '2px solid', 
-        borderColor: 'divider', 
-        borderRadius: 2,
-        p: 2,
-        bgcolor: 'background.paper',
-        position: 'relative',
-        '&::before': {
-          content: '"PREVIEW"',
-          position: 'absolute',
-          top: -10,
-          right: 8,
+    <SettingsProvider scenario={previewScenario}>
+      <Box sx={{ minHeight: 200 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+          This is how your content will appear in the game:
+        </Typography>
+        
+        <Box sx={{ 
+          border: '2px solid', 
+          borderColor: 'divider', 
+          borderRadius: 2,
+          p: 2,
           bgcolor: 'background.paper',
-          color: 'text.secondary',
-          fontSize: '0.75rem',
-          px: 1,
-          fontWeight: 'bold',
-        }
-      }}>
-        {renderPreview()}
+          position: 'relative',
+          '&::before': {
+            content: '"PREVIEW"',
+            position: 'absolute',
+            top: -10,
+            right: 8,
+            bgcolor: 'background.paper',
+            color: 'text.secondary',
+            fontSize: '0.75rem',
+            px: 1,
+            fontWeight: 'bold',
+          }
+        }}>
+          {renderPreview()}
+        </Box>
       </Box>
-    </Box>
+    </SettingsProvider>
   );
 };

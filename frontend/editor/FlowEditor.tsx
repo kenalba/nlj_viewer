@@ -342,14 +342,7 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
                   },
                 }}
               >
-                <Badge 
-                  badgeContent={editedScenario.variableDefinitions?.length || 0} 
-                  color="primary" 
-                  max={99}
-                  invisible={(editedScenario.variableDefinitions?.length || 0) === 0}
-                >
-                  <FunctionsIcon />
-                </Badge>
+                <FunctionsIcon />
               </IconButton>
             </Tooltip>
             
@@ -417,14 +410,16 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
       >
         <Stack direction="row" spacing={1} alignItems="center">
           <Tooltip title="Restore Original">
-            <IconButton
-              onClick={handleRestore}
-              disabled={!isDirty}
-              size="small"
-              color={isDirty ? 'default' : 'inherit'}
-            >
-              <RestoreIcon />
-            </IconButton>
+            <span>
+              <IconButton
+                onClick={handleRestore}
+                disabled={!isDirty}
+                size="small"
+                color={isDirty ? 'default' : 'inherit'}
+              >
+                <RestoreIcon />
+              </IconButton>
+            </span>
           </Tooltip>
           
           <Tooltip title="Auto Layout">
@@ -489,21 +484,23 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
             </Tooltip>
           ) : (
             <Tooltip title="Save Changes">
-              <IconButton
-                onClick={handleSave}
-                disabled={!isDirty}
-                size="small"
-                color={isDirty ? 'primary' : 'inherit'}
-                sx={{
-                  backgroundColor: isDirty ? 'primary.main' : 'transparent',
-                  color: isDirty ? 'primary.contrastText' : 'text.disabled',
-                  '&:hover': {
-                    backgroundColor: isDirty ? 'primary.dark' : 'action.hover',
-                  },
-                }}
-              >
-                <SaveIcon />
-              </IconButton>
+              <span>
+                <IconButton
+                  onClick={handleSave}
+                  disabled={!isDirty}
+                  size="small"
+                  color={isDirty ? 'primary' : 'inherit'}
+                  sx={{
+                    backgroundColor: isDirty ? 'primary.main' : 'transparent',
+                    color: isDirty ? 'primary.contrastText' : 'text.disabled',
+                    '&:hover': {
+                      backgroundColor: isDirty ? 'primary.dark' : 'action.hover',
+                    },
+                  }}
+                >
+                  <SaveIcon />
+                </IconButton>
+              </span>
             </Tooltip>
           )}
         </Stack>

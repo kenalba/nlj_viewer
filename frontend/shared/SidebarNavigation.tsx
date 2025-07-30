@@ -103,18 +103,25 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
     console.log('Navigate to profile');
   };
 
-  // Role-based navigation items
+  // Role-based navigation items with structured dividers
   const getNavigationItems = (): SidebarItem[] => {
     const canEdit = canEditContent(user);
     const canReview = canReviewContent(user);
     const isAdmin = canManageUsers(user);
     
     const items: SidebarItem[] = [
+      // Main navigation
       {
         id: 'home',
         label: 'Home',
         icon: <HomeIcon />,
         path: '/app'
+      },
+      {
+        id: 'divider-main',
+        label: '',
+        icon: <></>,
+        path: undefined
       },
       {
         id: 'activities',
@@ -124,13 +131,13 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
       }
     ];
 
-    // Add People management for admin users
-    if (isAdmin) {
+    // Add creation/editing features for users with appropriate roles
+    if (canEdit) {
       items.push({
-        id: 'people',
-        label: 'People',
-        icon: <PeopleIcon />,
-        path: '/app/people'
+        id: 'generate',
+        label: 'Content Generation',
+        icon: <GenerateIcon />,
+        path: '/app/generate'
       });
     }
 
@@ -144,20 +151,33 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
       });
     }
 
-    // Add creation/editing features for users with appropriate roles
-    if (canEdit) {
-      items.push({
-        id: 'generate',
-        label: 'Content Generation',
-        icon: <GenerateIcon />,
-        path: '/app/generate'
-      });
+    // Add divider and People management for admin users
+    if (isAdmin) {
+      items.push(
+        {
+          id: 'divider-admin',
+          label: '',
+          icon: <></>,
+          path: undefined
+        },
+        {
+          id: 'people',
+          label: 'People',
+          icon: <PeopleIcon />,
+          path: '/app/people'
+        }
+      );
     }
 
     return items;
   };
 
   const renderNavItem = (item: SidebarItem, level = 0) => {
+    // Handle divider items
+    if (item.id.startsWith('divider-')) {
+      return <Divider key={item.id} sx={{ my: 1 }} />;
+    }
+
     const isActive = location.pathname === item.path;
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedItems.includes(item.id);

@@ -220,196 +220,217 @@ export const VariableBrowserModal: React.FC<VariableBrowserModalProps> = ({
         {/* Variables Tab */}
         {activeTab === 0 && (
           <Box sx={{ pt: 2 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h6">Current Variables</Typography>
-              <Button
-                startIcon={<AddIcon />}
-                variant="outlined"
-                onClick={() => setShowAddForm(true)}
-              >
-                Add Variable
-              </Button>
-            </Box>
+            <Typography variant="h6" mb={2}>Current Variables</Typography>
 
-            {/* Add Variable Form */}
-            {showAddForm && (
-              <Card sx={{ mb: 3, border: '2px dashed', borderColor: 'primary.main' }}>
-                <CardContent>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Add New Variable
-                  </Typography>
-                  
-                  <Stack spacing={2}>
-                    <TextField
-                      label="Variable Name"
-                      value={newVariable.name}
-                      onChange={(e) => setNewVariable(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="e.g., score, userRole, completed"
-                      fullWidth
-                      size="small"
-                    />
-
-                    <FormControl size="small">
-                      <InputLabel>Variable Type</InputLabel>
-                      <Select
-                        value={newVariable.type}
-                        onChange={(e) => handleTypeChange(e.target.value as 'number' | 'string' | 'boolean')}
-                        label="Variable Type"
-                      >
-                        <MenuItem value="number">Number</MenuItem>
-                        <MenuItem value="string">String (Text)</MenuItem>
-                        <MenuItem value="boolean">Boolean (True/False)</MenuItem>
-                      </Select>
-                    </FormControl>
-
-                    <TextField
-                      label="Default Value"
-                      value={newVariable.defaultValue}
-                      onChange={(e) => {
-                        let value: number | string | boolean = e.target.value;
-                        if (newVariable.type === 'number') {
-                          value = parseFloat(e.target.value) || 0;
-                        } else if (newVariable.type === 'boolean') {
-                          value = e.target.value === 'true';
-                        }
-                        setNewVariable(prev => ({ ...prev, defaultValue: value }));
-                      }}
-                      type={newVariable.type === 'number' ? 'number' : 'text'}
-                      fullWidth
-                      size="small"
-                    />
-
-                    <TextField
-                      label="Description (Optional)"
-                      value={newVariable.description}
-                      onChange={(e) => setNewVariable(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="What is this variable used for?"
-                      fullWidth
-                      size="small"
-                      multiline
-                      rows={2}
-                    />
-
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={newVariable.allowRuntimeOverride}
-                          onChange={(e) => setNewVariable(prev => ({ ...prev, allowRuntimeOverride: e.target.checked }))}
-                        />
-                      }
-                      label="Allow runtime override (can be set via URL parameters)"
-                    />
-                  </Stack>
-                </CardContent>
-
-                <CardActions>
-                  <Button
-                    startIcon={<CheckIcon />}
-                    onClick={handleAddVariable}
-                    disabled={!newVariable.name.trim()}
-                    color="primary"
-                  >
-                    Add Variable
-                  </Button>
-                  <Button
-                    startIcon={<CancelIcon />}
-                    onClick={() => {
-                      setShowAddForm(false);
-                      setNewVariable(DEFAULT_NEW_VARIABLE);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </CardActions>
-              </Card>
+            {/* Empty state message if no variables */}
+            {variables.length === 0 && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                No variables defined yet. Click "Add variable" below to get started with expressions and branching logic.
+              </Alert>
             )}
 
-            {/* Variables List */}
-            {variables.length === 0 ? (
-              <Alert severity="info">
-                No variables defined yet. Add your first variable to get started with expressions and branching logic.
-              </Alert>
-            ) : (
-              <TableContainer component={Paper} variant="outlined" sx={{ mt: 2 }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell width="30%">Name</TableCell>
-                      <TableCell width="15%">Type</TableCell>
-                      <TableCell width="20%">Default</TableCell>
-                      <TableCell width="25%">Description</TableCell>
-                      <TableCell width="10%">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {variables.map((variable) => (
-                      <TableRow key={variable.id} hover>
-                        <TableCell>
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <Chip
-                              label={getTypeIcon(variable.type)}
-                              size="small"
-                              color={getTypeColor(variable.type) as any}
-                              sx={{ minWidth: 32, fontSize: '0.75rem' }}
-                            />
-                            <Typography variant="body2" fontWeight="medium">
-                              {variable.name}
-                            </Typography>
-                            {variable.allowRuntimeOverride && (
-                              <Chip
-                                label="URL"
-                                size="small"
-                                color="info"
-                                variant="outlined"
-                                sx={{ fontSize: '0.6rem', height: 20 }}
-                              />
-                            )}
-                          </Box>
-                        </TableCell>
-                        <TableCell>
+            {/* Variables Table with Add Row */}
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell width="30%">Name</TableCell>
+                    <TableCell width="15%">Type</TableCell>
+                    <TableCell width="20%">Default</TableCell>
+                    <TableCell width="25%">Description</TableCell>
+                    <TableCell width="10%">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {/* Existing Variables */}
+                  {variables.map((variable) => (
+                    <TableRow key={variable.id} hover>
+                      <TableCell>
+                        <Box display="flex" alignItems="center" gap={1}>
                           <Chip
-                            label={variable.type}
+                            label={getTypeIcon(variable.type)}
                             size="small"
                             color={getTypeColor(variable.type) as any}
-                            variant="outlined"
+                            sx={{ minWidth: 32, fontSize: '0.75rem' }}
                           />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" fontFamily="monospace">
-                            {String(variable.defaultValue)}
+                          <Typography variant="body2" fontWeight="medium">
+                            {variable.name}
                           </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" color="text.secondary" noWrap>
-                            {variable.description || '-'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Box display="flex" gap={0.5}>
-                            <Tooltip title="Edit">
+                          {variable.allowRuntimeOverride && (
+                            <Chip
+                              label="URL"
+                              size="small"
+                              color="info"
+                              variant="outlined"
+                              sx={{ fontSize: '0.6rem', height: 20 }}
+                            />
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={variable.type}
+                          size="small"
+                          color={getTypeColor(variable.type) as any}
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontFamily="monospace">
+                          {String(variable.defaultValue)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary" noWrap>
+                          {variable.description || '-'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Box display="flex" gap={0.5}>
+                          <Tooltip title="Edit">
+                            <IconButton
+                              size="small"
+                              onClick={() => setEditingVariable(variable.id)}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDeleteVariable(variable.id)}
+                              color="error"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+
+                  {/* Add Variable Row */}
+                  {showAddForm ? (
+                    <TableRow sx={{ backgroundColor: 'action.hover' }}>
+                      <TableCell>
+                        <TextField
+                          value={newVariable.name}
+                          onChange={(e) => setNewVariable(prev => ({ ...prev, name: e.target.value }))}
+                          placeholder="Variable name"
+                          size="small"
+                          fullWidth
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <FormControl size="small" fullWidth>
+                          <Select
+                            value={newVariable.type}
+                            onChange={(e) => handleTypeChange(e.target.value as 'number' | 'string' | 'boolean')}
+                            displayEmpty
+                          >
+                            <MenuItem value="number">Number</MenuItem>
+                            <MenuItem value="string">String</MenuItem>
+                            <MenuItem value="boolean">Boolean</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          value={newVariable.defaultValue}
+                          onChange={(e) => {
+                            let value: number | string | boolean = e.target.value;
+                            if (newVariable.type === 'number') {
+                              value = parseFloat(e.target.value) || 0;
+                            } else if (newVariable.type === 'boolean') {
+                              value = e.target.value === 'true';
+                            }
+                            setNewVariable(prev => ({ ...prev, defaultValue: value }));
+                          }}
+                          type={newVariable.type === 'number' ? 'number' : 'text'}
+                          size="small"
+                          fullWidth
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          value={newVariable.description}
+                          onChange={(e) => setNewVariable(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="Description"
+                          size="small"
+                          fullWidth
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Box display="flex" gap={0.5}>
+                          <Tooltip title="Save Variable">
+                            <span>
                               <IconButton
                                 size="small"
-                                onClick={() => setEditingVariable(variable.id)}
+                                onClick={handleAddVariable}
+                                disabled={!newVariable.name.trim()}
+                                color="primary"
                               >
-                                <EditIcon fontSize="small" />
+                                <CheckIcon fontSize="small" />
                               </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Delete">
-                              <IconButton
-                                size="small"
-                                onClick={() => handleDeleteVariable(variable.id)}
-                                color="error"
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                            </span>
+                          </Tooltip>
+                          <Tooltip title="Cancel">
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                setShowAddForm(false);
+                                setNewVariable(DEFAULT_NEW_VARIABLE);
+                              }}
+                            >
+                              <CancelIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    <TableRow 
+                      hover 
+                      sx={{ 
+                        cursor: 'pointer',
+                        backgroundColor: 'action.selected',
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                        }
+                      }}
+                      onClick={() => setShowAddForm(true)}
+                    >
+                      <TableCell colSpan={5}>
+                        <Box display="flex" alignItems="center" gap={1} sx={{ color: 'text.secondary' }}>
+                          <AddIcon fontSize="small" />
+                          <Typography variant="body2">
+                            Add variable
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            {/* URL Override Option */}
+            {showAddForm && (
+              <Box sx={{ mt: 2, p: 2, backgroundColor: 'action.hover', borderRadius: 1 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={newVariable.allowRuntimeOverride}
+                      onChange={(e) => setNewVariable(prev => ({ ...prev, allowRuntimeOverride: e.target.checked }))}
+                      size="small"
+                    />
+                  }
+                  label="Allow runtime override (can be set via URL parameters)"
+                />
+              </Box>
             )}
           </Box>
         )}
