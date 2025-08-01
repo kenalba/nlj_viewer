@@ -51,11 +51,21 @@ A full-stack TypeScript application for creating, managing, and delivering inter
 - **Version Control**: Content versioning with publication workflow
 - **Approval System**: Multi-stage content approval process (planned)
 
+### **Public Activity Sharing (Latest Complete ✅)**
+- **Secure Token-Based Sharing**: Cryptographically secure share tokens with optional expiration dates
+- **QR Code Generation**: Automatic QR code creation for mobile-friendly sharing and access
+- **Public Player Interface**: Unauthenticated access to shared activities with clean, branded interface
+- **Share Analytics**: Real-time tracking of public views, completions, and engagement metrics
+- **Comprehensive Share Management**: Create, revoke, and monitor public shares through unified modal interface
+- **Cross-Platform Access**: Works across desktop and mobile devices with responsive design
+- **Backend Integration**: FastAPI endpoints with PostgreSQL storage for share tokens and analytics
+
 ### **Analytics & Tracking**
 - **xAPI Integration**: Comprehensive event tracking with learning analytics
 - **Usage Metrics**: Platform-wide analytics dashboard with completion rates, user engagement
 - **Post-Activity Results**: Detailed performance analysis and event logs
 - **Real-time Monitoring**: Live activity tracking and user progress
+- **Public Share Analytics**: Track performance of publicly shared activities
 
 ## Quick Start
 
@@ -96,6 +106,11 @@ sudo nginx -s reload
   - `PromptConfiguration`: AI generation parameter configuration with presets
   - `GenerationProgress`: Real-time generation tracking and error handling
   - `GenerationResults`: Results display and Flow Editor integration
+- **Public Sharing System**: Complete public activity sharing infrastructure
+  - `ShareModal`: Consolidated sharing interface with QR code generation and analytics
+  - `PublicActivityPlayer`: Unauthenticated activity player for shared content
+  - `SharedTokenService`: Backend service for secure token management and analytics
+  - Public routing system bypassing authentication for `/shared/[token]` URLs
 - **Question Components**: Specialized components for each question type
   - `TrueFalseNode`: Interactive True/False buttons with submit/continue workflow and keyboard support
   - `OrderingNode`: Drag-and-drop item reordering with validation

@@ -19,7 +19,8 @@ import {
   GetApp as ExportIcon,
   Delete as DeleteIcon,
   Archive as ArchiveIcon,
-  Send as SubmitIcon
+  Send as SubmitIcon,
+  Visibility as ViewDetailsIcon
 } from '@mui/icons-material';
 import type { ContentItem } from '../../api/content';
 import { contentApi } from '../../api/content';
@@ -35,6 +36,7 @@ interface ItemActionsMenuProps {
   onEdit: (item: ContentItem) => void;
   onDelete?: (item: ContentItem) => void;
   onSubmitForReview?: (item: ContentItem) => void;
+  onViewDetails?: (item: ContentItem) => void;
 }
 
 export const ItemActionsMenu: React.FC<ItemActionsMenuProps> = ({
@@ -45,7 +47,8 @@ export const ItemActionsMenu: React.FC<ItemActionsMenuProps> = ({
   user,
   onEdit,
   onDelete,
-  onSubmitForReview
+  onSubmitForReview,
+  onViewDetails
 }) => {
   const canEdit = canEditContent(user);
   const canDelete = canDeleteContent(user);
@@ -134,6 +137,12 @@ export const ItemActionsMenu: React.FC<ItemActionsMenuProps> = ({
     }
   }, [handleAction, onSubmitForReview, item]);
 
+  const handleViewDetails = useCallback(() => {
+    if (onViewDetails) {
+      handleAction(() => onViewDetails(item));
+    }
+  }, [handleAction, onViewDetails, item]);
+
   return (
     <Menu
       anchorEl={anchorEl}
@@ -167,6 +176,16 @@ export const ItemActionsMenu: React.FC<ItemActionsMenuProps> = ({
         }
       }}
     >
+      {/* View Details Action - Available to all users */}
+      {onViewDetails && (
+        <MenuItem onClick={handleViewDetails}>
+          <ListItemIcon>
+            <ViewDetailsIcon color="info" />
+          </ListItemIcon>
+          <ListItemText primary="View Details" />
+        </MenuItem>
+      )}
+
       {/* Content Actions */}
       {canEdit && (
         <MenuItem onClick={handleEdit}>

@@ -12,6 +12,7 @@ import {
   Tooltip,
   CircularProgress
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 // Removed DataGrid dependency
 import {
   PlayArrow as PlayIcon,
@@ -63,36 +64,51 @@ interface CellProps {
   value?: any;
 }
 
-export const TitleDescriptionCell = React.memo(({ item }: CellProps) => (
-  <Box sx={{ py: 1, textAlign: 'left', width: '100%' }}>
-    <Typography 
-      variant="subtitle2" 
-      sx={{ 
-        fontWeight: 600, 
-        lineHeight: 1.2,
-        mb: 0.5
-      }}
-    >
-      {item.title}
-    </Typography>
-    <Typography 
-      variant="body2" 
-      color="text.secondary"
-      sx={{
-        overflow: 'hidden',
-        display: '-webkit-box',
-        WebkitLineClamp: 3,
-        WebkitBoxOrient: 'vertical',
-        fontSize: '0.85rem',
-        lineHeight: 1.3,
-        wordBreak: 'break-word',
-        maxHeight: '4rem'
-      }}
-    >
-      {item.description || 'No description available'}
-    </Typography>
-  </Box>
-));
+export const TitleDescriptionCell = React.memo(({ item }: CellProps) => {
+  const navigate = useNavigate();
+
+  const handleTitleClick = useCallback(() => {
+    navigate(`/app/activities/${item.id}`);
+  }, [navigate, item.id]);
+
+  return (
+    <Box sx={{ py: 1, textAlign: 'left', width: '100%' }}>
+      <Typography 
+        variant="subtitle2" 
+        sx={{ 
+          fontWeight: 600, 
+          lineHeight: 1.2,
+          mb: 0.5,
+          cursor: 'pointer',
+          color: 'primary.main',
+          '&:hover': {
+            textDecoration: 'underline',
+            color: 'primary.dark'
+          }
+        }}
+        onClick={handleTitleClick}
+      >
+        {item.title}
+      </Typography>
+      <Typography 
+        variant="body2" 
+        color="text.secondary"
+        sx={{
+          overflow: 'hidden',
+          display: '-webkit-box',
+          WebkitLineClamp: 3,
+          WebkitBoxOrient: 'vertical',
+          fontSize: '0.85rem',
+          lineHeight: 1.3,
+          wordBreak: 'break-word',
+          maxHeight: '4rem'
+        }}
+      >
+        {item.description || 'No description available'}
+      </Typography>
+    </Box>
+  );
+});
 
 export const ContentTypeCell = React.memo(({ item, value }: CellProps) => (
   <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
@@ -215,9 +231,10 @@ interface ActionsCellProps extends CellProps {
   onEdit: (item: ContentItem) => void;
   onDelete?: (item: ContentItem) => void;
   onSubmitForReview?: (item: ContentItem) => void;
+  onViewDetails?: (item: ContentItem) => void;
 }
 
-export const ActionsCell = React.memo(({ item, user, onPlay, onEdit, onDelete, onSubmitForReview }: ActionsCellProps) => {
+export const ActionsCell = React.memo(({ item, user, onPlay, onEdit, onDelete, onSubmitForReview, onViewDetails }: ActionsCellProps) => {
   const [moreActionsAnchor, setMoreActionsAnchor] = useState<HTMLElement | null>(null);
 
   const handlePlay = useCallback(() => {
@@ -286,6 +303,7 @@ export const ActionsCell = React.memo(({ item, user, onPlay, onEdit, onDelete, o
             onEdit={onEdit}
             onDelete={onDelete}
             onSubmitForReview={onSubmitForReview}
+            onViewDetails={onViewDetails}
           />
         </>
       )}

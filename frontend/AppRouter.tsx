@@ -9,6 +9,7 @@ import { useAuth } from './contexts/AuthContext';
 import { LoginPage } from './pages/LoginPage';  
 import { App } from './App';
 import { LoadingSpinner } from './shared/LoadingSpinner';
+import { PublicActivityPlayer } from './components/PublicActivityPlayer';
 
 // Protected Route component
 interface ProtectedRouteProps {
@@ -51,6 +52,12 @@ export const AppRouter: React.FC = () => {
   return (
     <Router basename="/">
       <Routes>
+        {/* Public Routes - No authentication required */}
+        <Route 
+          path="/shared/:token" 
+          element={<PublicActivityPlayer />} 
+        />
+
         {/* Auth Routes */}
         <Route 
           path="/login" 

@@ -31,6 +31,7 @@ import {
   VersionInfoCell,
   ActionsCell
 } from './ContentLibraryCells';
+import { useNavigate } from 'react-router-dom';
 
 // Memoized table row component to prevent cascading re-renders
 interface ContentTableRowProps {
@@ -42,6 +43,7 @@ interface ContentTableRowProps {
   onEditContent: (item: ContentItem) => void;
   onDeleteContent?: (item: ContentItem) => void;
   onSubmitForReview?: (item: ContentItem) => void;
+  onViewDetails?: (item: ContentItem) => void;
   versions?: ContentVersion[];
   versionsLoading?: boolean;
 }
@@ -55,6 +57,7 @@ const ContentTableRow = React.memo(({
   onEditContent,
   onDeleteContent,
   onSubmitForReview,
+  onViewDetails,
   versions,
   versionsLoading
 }: ContentTableRowProps) => {
@@ -125,6 +128,7 @@ const ContentTableRow = React.memo(({
           onEdit={onEditContent}
           onDelete={onDeleteContent}
           onSubmitForReview={onSubmitForReview}
+          onViewDetails={onViewDetails}
         />
       </TableCell>
     </TableRow>
@@ -140,7 +144,8 @@ const ContentTableRow = React.memo(({
     prevProps.item.updated_at === nextProps.item.updated_at &&
     prevProps.user === nextProps.user &&
     prevProps.versions === nextProps.versions &&
-    prevProps.versionsLoading === nextProps.versionsLoading
+    prevProps.versionsLoading === nextProps.versionsLoading &&
+    prevProps.onViewDetails === nextProps.onViewDetails
   );
 });
 
@@ -165,6 +170,7 @@ export const ContentTable = React.memo(({
   onDeleteContent,
   onSubmitForReview
 }: ContentTableProps) => {
+  const navigate = useNavigate();
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(15);
   const [versionsMap, setVersionsMap] = useState<Map<string, ContentVersion[]>>(new Map());
@@ -260,9 +266,14 @@ export const ContentTable = React.memo(({
     setPage(0);
   }, []);
 
+  // Handle view details navigation
+  const handleViewDetails = useCallback((item: ContentItem) => {
+    navigate(`/app/activities/${item.id}`);
+  }, [navigate]);
+
   return (
     <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-      <TableContainer sx={{ maxHeight: 'calc(100vh - 300px)' }}>
+      <TableContainer>
         <Table stickyHeader>
           <TableHead>
             <TableRow>
@@ -346,6 +357,7 @@ export const ContentTable = React.memo(({
                 onEditContent={onEditContent}
                 onDeleteContent={onDeleteContent}
                 onSubmitForReview={onSubmitForReview}
+                onViewDetails={handleViewDetails}
                 versions={versionsMap.get(String(item.id))}
                 versionsLoading={versionsLoading}
               />

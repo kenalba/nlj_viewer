@@ -23,9 +23,17 @@ interface GameViewProps {
   scenario: NLJScenario;
   onHome: () => void;
   reviewMode?: boolean;
+  onComplete?: () => void;
+  isPublicView?: boolean;
 }
 
-export const GameView: React.FC<GameViewProps> = ({ scenario, onHome, reviewMode = false }) => {
+export const GameView: React.FC<GameViewProps> = ({ 
+  scenario, 
+  onHome, 
+  reviewMode = false, 
+  onComplete,
+  isPublicView = false 
+}) => {
   const { state } = useGameContext();
   const { trackActivityLaunched } = useXAPI();
   
@@ -110,7 +118,12 @@ export const GameView: React.FC<GameViewProps> = ({ scenario, onHome, reviewMode
             overflow: 'visible',
           }}>
             <CardTransition nodeId={state.currentNodeId}>
-              <NodeRenderer node={currentNode} scenario={scenario} />
+              <NodeRenderer 
+                node={currentNode} 
+                scenario={scenario} 
+                onComplete={onComplete}
+                isPublicView={isPublicView}
+              />
             </CardTransition>
           </Container>
         </Box>

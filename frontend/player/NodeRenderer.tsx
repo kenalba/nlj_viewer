@@ -42,9 +42,16 @@ import { debugLog } from '../utils/debug';
 interface NodeRendererProps {
   node: NLJNode;
   scenario: NLJScenario;
+  onComplete?: () => void;
+  isPublicView?: boolean;
 }
 
-export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) => {
+export const NodeRenderer: React.FC<NodeRendererProps> = ({ 
+  node, 
+  scenario, 
+  onComplete,
+  isPublicView = false 
+}) => {
   const { state, navigateToNode, updateVariable, batchUpdateVariables, completeScenario } = useGameContext();
   const { themeMode } = useTheme();
   const muiTheme = useMuiTheme();
@@ -94,8 +101,13 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
         nodeType: node.type,
       });
       completeScenario();
+      
+      // Call public completion callback if provided
+      if (onComplete) {
+        onComplete();
+      }
     }
-  }, [node.id, node.type, state.completed, completeScenario]);
+  }, [node.id, node.type, state.completed, completeScenario, onComplete]);
 
   // Show completion modal when scenario is completed
   useEffect(() => {

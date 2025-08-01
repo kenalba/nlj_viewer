@@ -22,10 +22,12 @@ import { SubmitForReviewPage } from './pages/SubmitForReviewPage';
 import { UserDetailPage } from './pages/UserDetailPage';
 import SourceLibraryPage from './pages/SourceLibraryPage';
 import SourceDetailPage from './pages/SourceDetailPage';
+import ActivityDetailPage from './pages/ActivityDetailPage';
 import { PeopleTab } from './components/people/PeopleTab';
 import { useAuth } from './contexts/AuthContext';
 import { contentApi, type ContentItem } from './api/content';
 import { HomePage } from './components/HomePage';
+import { PublicActivityPlayer } from './components/PublicActivityPlayer';
 import type { NLJScenario } from './types/nlj';
 import { canEditContent, canReviewContent, canManageUsers, getAppMode } from './utils/permissions';
 
@@ -209,6 +211,11 @@ const AppContent: React.FC = () => {
   const path = location.pathname;
   
   if (path.includes('/activities')) {
+    // Activity detail page: /app/activities/[id]
+    if (path.includes('/app/activities/') && path.split('/').length > 3) {
+      return <ActivityDetailPage />;
+    }
+    // Main activities page: /app/activities
     return <ContentLibrary contentType="all" />;
   }
   
