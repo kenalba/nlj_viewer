@@ -447,6 +447,7 @@ const NODE_SCHEMAS: Record<string, NodeTypeDocumentation> = {
       'Must have text property',
       'Must have ratingType and range properties'
     ],
+    
     exampleUsage: 'Use for experience ratings, quality assessments, and preference measurements.'
   },
   
@@ -719,16 +720,20 @@ const NODE_SCHEMAS: Record<string, NodeTypeDocumentation> = {
     usageNotes: [
       'Interactive word puzzle game',
       'Four groups of four words each',
-      'Difficulty-based color coding',
-      'Mistake tracking and scoring'
+      'Difficulty-based color coding (yellow=easiest, purple=hardest)',
+      'Mistake tracking and scoring',
+      'CRITICAL: Use gameData.groups structure, NOT categories/items arrays'
     ],
     commonProps: COMMON_NODE_PROPS,
     specificProps: ['text', 'content', 'media', 'additionalMediaList', 'gameData', 'scoring', 'timeLimit', 'required'],
     validationRules: [
       'Must have type: "connections"',
       'Must have text property',
-      'Must have gameData with exactly 4 groups',
-      'Each group must have exactly 4 words'
+      'Must have gameData object (NOT categories/items arrays)',
+      'gameData must contain exactly 4 groups in an array',
+      'Each group must have exactly 4 words in a words array',
+      'Each group must have category, words, and difficulty properties',
+      'Difficulty must be yellow, green, blue, OR purple'
     ],
     exampleUsage: 'Use for vocabulary building, categorization skills, and analytical thinking.'
   },
@@ -937,8 +942,8 @@ export function getNodeTypesByBloomsLevel(level: string): NodeTypeDocumentation[
 /**
  * Generate complete schema documentation as markdown
  */
-export function generateSchemaDocumentation(): string {
-  const nodeTypes = getAllNodeTypes();
+export function generateSchemaDocumentation(filteredNodeTypes?: NodeTypeDocumentation[]): string {
+  const nodeTypes = filteredNodeTypes || getAllNodeTypes();
   const categories = ['structural', 'question', 'survey', 'game', 'choice'] as const;
   
   let markdown = `# NLJ Schema Documentation
@@ -952,7 +957,7 @@ The Non-Linear Journey (NLJ) schema supports ${nodeTypes.length} different node 
 `;
 
   categories.forEach(category => {
-    const categoryNodes = getNodeTypesByCategory(category);
+    const categoryNodes = nodeTypes.filter(node => node.category === category);
     if (categoryNodes.length === 0) return;
     
     markdown += `### ${category.charAt(0).toUpperCase() + category.slice(1)} Nodes\n\n`;
@@ -980,6 +985,59 @@ The Non-Linear Journey (NLJ) schema supports ${nodeTypes.length} different node 
       markdown += `---\n\n`;
     });
   });
+  
+  // Add Links documentation
+  markdown += `## Link Schema
+
+Links connect nodes together to create the flow of the scenario. Each link must specify its type and connection points.
+
+### Navigation Link (\`link\`)
+
+Used for normal flow navigation between nodes.
+
+**Schema Example:**
+\`\`\`json
+{
+  "id": "start-to-question1",
+  "type": "link",
+  "sourceNodeId": "start",
+  "targetNodeId": "question1"
+}
+\`\`\`
+
+**Properties:**
+- \`id\`: Unique identifier for the link
+- \`type\`: Must be "link" for navigation links
+- \`sourceNodeId\`: ID of the source node
+- \`targetNodeId\`: ID of the target node
+
+### Parent-Child Link (\`parent-child\`)
+
+Used to connect question nodes to their choice nodes.
+
+**Schema Example:**
+\`\`\`json
+{
+  "id": "question1-to-choice1",
+  "type": "parent-child",
+  "sourceNodeId": "question1",
+  "targetNodeId": "choice1"
+}
+\`\`\`
+
+**Properties:**
+- \`id\`: Unique identifier for the link
+- \`type\`: Must be "parent-child" for question-choice relationships
+- \`sourceNodeId\`: ID of the question node
+- \`targetNodeId\`: ID of the choice node
+
+**Critical Link Requirements:**
+- ALL links must have a \`type\` property set to either "link" or "parent-child"
+- Navigation links use \`type: "link"\`
+- Question-to-choice connections use \`type: "parent-child"\`
+- Choice-to-next-node connections use \`type: "link"\`
+
+`;
   
   return markdown;
 }

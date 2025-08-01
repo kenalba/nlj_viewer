@@ -20,6 +20,7 @@ export interface PromptConfiguration {
 export interface GenerateContentRequest {
   source_document_ids: string[];
   prompt_config: PromptConfiguration;
+  generated_prompt?: string;
   activity_name?: string;
   activity_description?: string;
 }

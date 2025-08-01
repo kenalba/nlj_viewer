@@ -32,6 +32,7 @@ import { GenerationProgress } from '../components/content-studio/GenerationProgr
 import { GenerationResults } from '../components/content-studio/GenerationResults';
 import { type SourceDocument } from '../api/sources';
 import { generateContent, pollGenerationStatus, type PromptConfiguration as ApiPromptConfiguration } from '../api/generation';
+import { generateUnifiedPrompt, type ContentStudioConfig } from '../utils/promptGenerator';
 import type { NLJScenario } from '../types/nlj';
 
 interface ContentGenerationState {
@@ -103,11 +104,17 @@ export const ContentGenerationPage: React.FC = () => {
     setStudioState(prev => ({ ...prev, generationStatus: 'generating', error: null }));
 
     try {
+      // Generate unified prompt from configuration
+      console.log('📝 Generating unified prompt from configuration...');
+      const unifiedPrompt = generateUnifiedPrompt(studioState.promptConfig as ContentStudioConfig);
+      console.log(`✅ Generated unified prompt (${unifiedPrompt.length} chars)`);
+
       // Start generation
       console.log('📝 Generating content with documents:', studioState.selectedDocuments.map(d => d.original_filename));
       const response = await generateContent({
         source_document_ids: studioState.selectedDocuments.map(doc => doc.id),
         prompt_config: studioState.promptConfig,
+        generated_prompt: unifiedPrompt,
         activity_name: `Generated Activity - ${new Date().toLocaleDateString()}`,
         activity_description: `Generated from ${studioState.selectedDocuments.length} source document(s)`
       });

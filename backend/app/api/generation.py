@@ -31,6 +31,7 @@ class ContentStudioGenerateRequest(BaseModel):
     """Request schema for Content Studio integrated generation."""
     source_document_ids: List[uuid.UUID] = Field(..., description="Selected source document IDs")
     prompt_config: Dict[str, Any] = Field(..., description="Prompt configuration from Content Studio")
+    generated_prompt: Optional[str] = Field(None, description="Pre-generated prompt text from frontend")
     activity_name: Optional[str] = Field(None, description="Name for generated activity")
     activity_description: Optional[str] = Field(None, description="Description for generated activity")
 
@@ -345,7 +346,8 @@ async def content_studio_generate(
         session = await service.create_generation_session(
             user_id=current_user.id,
             prompt_config=request.prompt_config,
-            source_document_ids=request.source_document_ids
+            source_document_ids=request.source_document_ids,
+            generated_prompt_text=request.generated_prompt
         )
         
         # Start generation in background with proper session management

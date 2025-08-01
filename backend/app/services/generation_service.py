@@ -5,6 +5,9 @@ Manages AI content generation sessions with full lineage tracking.
 
 import uuid
 import time
+import os
+import json
+import re
 from datetime import datetime
 from typing import List, Optional, Dict, Any, Tuple
 
@@ -29,12 +32,95 @@ class GenerationService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.source_service = SourceDocumentService(db)
+        self._schema_examples_cache = None
+    
+    def _get_node_schema_examples(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Load node schema examples from generated documentation file.
+        Uses caching to avoid re-reading the file on every request.
+        """
+        if self._schema_examples_cache is not None:
+            return self._schema_examples_cache
+        
+        try:
+            # Path to generated schema documentation
+            schema_file_path = os.path.join(os.path.dirname(__file__), '..', '..', 'nlj-schema-docs.md')
+            
+            if not os.path.exists(schema_file_path):
+                print(f"⚠️  Schema documentation file not found: {schema_file_path}")
+                print("Run 'npm run generate:schema' to generate the schema documentation")
+                return {}
+            
+            with open(schema_file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Extract JSON schema examples using regex
+            examples = {}
+            
+            # Pattern to match node type sections: #### NodeName (`node_type`)
+            node_sections = re.findall(
+                r'#### ([^(]+)\s*\(`([^`]+)`\).*?\*\*Schema Example:\*\*\s*```json\s*(\{.*?\})\s*```',
+                content,
+                re.DOTALL
+            )
+            
+            for display_name, node_type, json_str in node_sections:
+                try:
+                    schema_example = json.loads(json_str)
+                    examples[node_type] = {
+                        'displayName': display_name.strip(),
+                        'example': schema_example
+                    }
+                except json.JSONDecodeError as e:
+                    print(f"⚠️  Failed to parse JSON for {node_type}: {e}")
+                    continue
+            
+            print(f"✅ Loaded {len(examples)} node schema examples from generated documentation")
+            self._schema_examples_cache = examples
+            return examples
+            
+        except Exception as e:
+            print(f"❌ Error loading schema examples: {e}")
+            return {}
+    
+    def _get_node_example_json(self, node_type: str, node_id: str, current_y: int) -> Dict[str, Any]:
+        """
+        Get a node example from the schema documentation and customize it with the provided ID and position.
+        """
+        schema_examples = self._get_node_schema_examples()
+        
+        if node_type not in schema_examples:
+            print(f"⚠️  No schema example found for node type: {node_type}")
+            return {
+                "id": node_id,
+                "type": node_type,
+                "text": f"Sample {node_type.replace('_', ' ')} node",
+                "x": 100,
+                "y": current_y,
+                "width": 400,
+                "height": 200
+            }
+        
+        # Get the base example and customize it
+        base_example = schema_examples[node_type]['example'].copy()
+        base_example['id'] = node_id
+        base_example['x'] = 100
+        base_example['y'] = current_y
+        
+        # Ensure required positioning fields
+        if 'width' not in base_example:
+            base_example['width'] = 400
+        if 'height' not in base_example:
+            base_example['height'] = 200
+            
+        return base_example
     
     async def create_generation_session(
         self,
         user_id: uuid.UUID,
         prompt_config: Dict[str, Any],
-        source_document_ids: List[uuid.UUID]
+        source_document_ids: List[uuid.UUID],
+        generated_prompt_text: Optional[str] = None
     ) -> GenerationSession:
         """
         Create a new generation session.
@@ -63,6 +149,11 @@ class GenerationService:
             prompt_config=prompt_config,
             status=GenerationStatus.PENDING
         )
+        
+        # Add generated prompt text if provided
+        if generated_prompt_text:
+            # Store in prompt_config for now since we can't add the field without migration
+            session.prompt_config['generated_prompt_text'] = generated_prompt_text
         
         # Add source documents
         session.source_documents = source_docs
@@ -145,10 +236,22 @@ class GenerationService:
             
             print(f"✅ Successfully uploaded {len(claude_file_ids)} documents to Claude")
             
-            # Generate prompt text from configuration
-            print(f"📝 Building prompt from config...")
-            prompt_text = self._build_prompt_from_config(session.prompt_config)
-            print(f"📝 Generated prompt ({len(prompt_text)} chars): {prompt_text[:200]}...")
+            # Use pre-generated prompt if available, otherwise build from config
+            if 'generated_prompt_text' in session.prompt_config:
+                print(f"📝 Using pre-generated prompt from frontend...")
+                prompt_text = session.prompt_config['generated_prompt_text']
+                print(f"📝 Frontend prompt ({len(prompt_text)} chars)")
+            else:
+                print(f"📝 Building prompt from config...")
+                prompt_text = self._build_prompt_from_config(session.prompt_config)
+                print(f"📝 Generated prompt ({len(prompt_text)} chars)")
+            print("=" * 80)
+            print("🔍 FULL GENERATED PROMPT:")
+            print("=" * 80)
+            print(prompt_text)
+            print("=" * 80)
+            print("🔍 END OF PROMPT")
+            print("=" * 80)
             
             # Call Claude API
             print(f"🤖 Calling Claude API with {len(claude_file_ids)} files...")
@@ -156,7 +259,7 @@ class GenerationService:
             generated_content, error_message, tokens_used = await claude_service.generate_content(
                 prompt_text=prompt_text,
                 file_ids=claude_file_ids,
-                model=session.prompt_config.get('model', 'claude-3-5-sonnet-20241022'),
+                model=session.prompt_config.get('model', 'claude-sonnet-4-20250514'),
                 max_tokens=session.prompt_config.get('max_tokens', 8192),
                 temperature=session.prompt_config.get('temperature', 0.1)
             )
@@ -336,7 +439,7 @@ class GenerationService:
             ""
         ])
         
-        # Add dynamic schema examples based on enabled node types
+        # Add dynamic schema examples based on enabled node types (using single source of truth)
         prompt_parts.extend(self._generate_schema_examples(enabled_types, include_variables, include_branching))
         
         prompt_parts.extend([
@@ -345,7 +448,9 @@ class GenerationService:
             "- Question nodes have type \"question\", choice nodes have type \"choice\"",
             "- Choice nodes MUST have parentId pointing to their question node",
             "- Each choice MUST have: id, parentId, text, isCorrect (boolean), feedback (string)",
-            "- Links connect start->question, and choice->next_node",
+            "- **ALL LINKS MUST HAVE TYPE PROPERTY**: use \"type\": \"link\" for navigation, \"type\": \"parent-child\" for question-choice connections",
+            "- Navigation links: {\"type\": \"link\", \"sourceNodeId\": \"node1\", \"targetNodeId\": \"node2\"}",
+            "- Parent-child links: {\"type\": \"parent-child\", \"sourceNodeId\": \"question1\", \"targetNodeId\": \"choice1\"}",
             "- Node positioning uses direct x, y, width, height properties",
             "- Text content goes directly in \"text\" property",
             "- Use meaningful node IDs and provide specific feedback for each choice",
@@ -392,7 +497,7 @@ class GenerationService:
             
             # Add link from previous node to current node (if previous node is not a question with choices)
             if previous_node_id:
-                links.append(f'    {{ "id": "{previous_node_id}-to-{node_id}", "sourceNodeId": "{previous_node_id}", "targetNodeId": "{node_id}" }}')
+                links.append(f'    {{ "id": "{previous_node_id}-to-{node_id}", "type": "link", "sourceNodeId": "{previous_node_id}", "targetNodeId": "{node_id}" }}')
             
             if node_type == 'question':
                 # Multiple choice question with choices
@@ -424,128 +529,37 @@ class GenerationService:
                     f'      "x": 450, "y": {current_y + 250}, "width": 300, "height": 100',
                     '    },'
                 ])
-                # Question links to its choices via parentId, choices link to next node
+                # Add parent-child links from question to choices
                 links.extend([
-                    f'    {{ "id": "{node_id}_choice1-to-{next_node_id}", "sourceNodeId": "{node_id}_choice1", "targetNodeId": "{next_node_id}" }}',
-                    f'    {{ "id": "{node_id}_choice2-to-{next_node_id}", "sourceNodeId": "{node_id}_choice2", "targetNodeId": "{next_node_id}" }}'
+                    f'    {{ "id": "{node_id}-to-{node_id}_choice1", "type": "parent-child", "sourceNodeId": "{node_id}", "targetNodeId": "{node_id}_choice1" }}',
+                    f'    {{ "id": "{node_id}-to-{node_id}_choice2", "type": "parent-child", "sourceNodeId": "{node_id}", "targetNodeId": "{node_id}_choice2" }}'
+                ])
+                # Navigation links from choices to next node
+                links.extend([
+                    f'    {{ "id": "{node_id}_choice1-to-{next_node_id}", "type": "link", "sourceNodeId": "{node_id}_choice1", "targetNodeId": "{next_node_id}" }}',
+                    f'    {{ "id": "{node_id}_choice2-to-{next_node_id}", "type": "link", "sourceNodeId": "{node_id}_choice2", "targetNodeId": "{next_node_id}" }}'
                 ])
                 current_y += 400
                 previous_node_id = None  # Choices handle the linking, not the question itself
                 
             else:
-                # All other node types link directly to the next node
-                if node_type == 'true_false':
-                    node_examples.extend([
-                        '    {',
-                        f'      "id": "{node_id}",',
-                        '      "type": "true_false",',
-                        '      "text": "This statement is true or false?",',
-                        '      "correctAnswer": true,',
-                        f'      "x": 100, "y": {current_y}, "width": 400, "height": 200',
-                        '    },'
-                    ])
-                    current_y += 250
+                # All other node types - use schema examples from generated documentation
+                example_json = self._get_node_example_json(node_type, node_id, current_y)
                 
-                elif node_type == 'ordering':
-                    node_examples.extend([
-                        '    {',
-                        f'      "id": "{node_id}",',
-                        '      "type": "ordering",',
-                        '      "text": "Put these items in the correct order:",',
-                        '      "items": [',
-                        '        { "id": "item1", "text": "First step", "correctOrder": 1 },',
-                        '        { "id": "item2", "text": "Second step", "correctOrder": 2 },',
-                        '        { "id": "item3", "text": "Third step", "correctOrder": 3 }',
-                        '      ],',
-                        f'      "x": 100, "y": {current_y}, "width": 400, "height": 300',
-                        '    },'
-                    ])
-                    current_y += 350
-                    
-                elif node_type == 'matching':
-                    node_examples.extend([
-                        '    {',
-                        f'      "id": "{node_id}",',
-                        '      "type": "matching",',
-                        '      "text": "Match the items on the left with those on the right:",',
-                        '      "leftItems": [',
-                        '        { "id": "left1", "text": "Item A" },',
-                        '        { "id": "left2", "text": "Item B" }',
-                        '      ],',
-                        '      "rightItems": [',
-                        '        { "id": "right1", "text": "Match 1" },',
-                        '        { "id": "right2", "text": "Match 2" }',
-                        '      ],',
-                        '      "correctMatches": [',
-                        '        { "leftId": "left1", "rightId": "right1" },',
-                        '        { "leftId": "left2", "rightId": "right2" }',
-                        '      ],',
-                        f'      "x": 100, "y": {current_y}, "width": 500, "height": 300',
-                        '    },'
-                    ])
-                    current_y += 350
-                    
-                elif node_type == 'short_answer':
-                    node_examples.extend([
-                        '    {',
-                        f'      "id": "{node_id}",',
-                        '      "type": "short_answer",',
-                        '      "text": "What is your answer to this question?",',
-                        '      "correctAnswers": ["correct answer", "alternative answer"],',
-                        '      "caseSensitive": false,',
-                        f'      "x": 100, "y": {current_y}, "width": 400, "height": 200',
-                        '    },'
-                    ])
-                    current_y += 250
-                    
-                elif node_type == 'likert_scale':
-                    node_examples.extend([
-                        '    {',
-                        f'      "id": "{node_id}",',
-                        '      "type": "likert_scale",',
-                        '      "text": "How much do you agree with this statement?",',
-                        '      "scaleType": "agreement",',
-                        '      "scaleSize": 5,',
-                        f'      "x": 100, "y": {current_y}, "width": 400, "height": 200',
-                        '    },'
-                    ])
-                    current_y += 250
-                    
-                elif node_type == 'branch':
-                    branch_text = 'Based on your score ({score}), we\'ll direct you to the appropriate path.' if include_variables else 'This branch directs users based on conditions.'
-                    condition_expr = 'score >= 80' if include_variables else 'userLevel === "advanced"'
-                    node_examples.extend([
-                        '    {',
-                        f'      "id": "{node_id}",',
-                        '      "type": "branch",',
-                        f'      "title": "Conditional Branch",',
-                        f'      "text": "{branch_text}",',
-                        '      "conditions": [',
-                        '        {',
-                        f'          "expression": "{condition_expr}",',
-                        f'          "targetNodeId": "{next_node_id}",',
-                        '          "label": "High Performance Path"',
-                        '        }',
-                        '      ],',
-                        f'      "defaultTargetNodeId": "{next_node_id}",',
-                        f'      "x": 100, "y": {current_y}, "width": 400, "height": 200',
-                        '    },'
-                    ])
-                    current_y += 250
-                    
-                elif node_type == 'interstitial_panel':
-                    node_examples.extend([
-                        '    {',
-                        f'      "id": "{node_id}",',
-                        '      "type": "interstitial_panel",',
-                        '      "text": "This is informational content between questions.",',
-                        f'      "x": 100, "y": {current_y}, "width": 400, "height": 150',
-                        '    },'
-                    ])
-                    current_y += 200
+                # Convert to formatted JSON string for the prompt
+                example_str = json.dumps(example_json, indent=6)[2:-1]  # Remove outer braces and adjust indent
+                node_examples.extend([
+                    f'    {{',
+                    example_str,
+                    '    },'
+                ])
                 
-                # For non-question nodes, add link to next node and update previous_node_id
-                links.append(f'    {{ "id": "{node_id}-to-{next_node_id}", "sourceNodeId": "{node_id}", "targetNodeId": "{next_node_id}" }}')
+                # Update current_y based on the example height
+                node_height = example_json.get('height', 200)
+                current_y += node_height + 50  # Add some spacing
+                
+                # Add link to next node
+                links.append(f'    {{ "id": "{node_id}-to-{next_node_id}", "type": "link", "sourceNodeId": "{node_id}", "targetNodeId": "{next_node_id}" }}')
                 previous_node_id = node_id
                 
             node_counter += 1

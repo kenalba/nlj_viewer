@@ -60,7 +60,7 @@ class GenerationSession(Base):
     prompt_config: Mapped[dict[str, Any]] = mapped_column(
         JSON,
         nullable=False,
-        comment="LLM prompt configuration used for generation"
+        comment="LLM prompt configuration used for generation (includes generated_prompt_text if provided)"
     )
     
     # Claude API integration
