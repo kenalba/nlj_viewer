@@ -4,9 +4,10 @@ Manages AI content generation sessions and activity creation.
 """
 
 import uuid
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -24,6 +25,23 @@ from app.schemas.generation import (
 )
 
 router = APIRouter(prefix="/generation", tags=["generation"])
+
+# Additional schemas for Content Studio integration
+class ContentStudioGenerateRequest(BaseModel):
+    """Request schema for Content Studio integrated generation."""
+    source_document_ids: List[uuid.UUID] = Field(..., description="Selected source document IDs")
+    prompt_config: Dict[str, Any] = Field(..., description="Prompt configuration from Content Studio")
+    activity_name: Optional[str] = Field(None, description="Name for generated activity")
+    activity_description: Optional[str] = Field(None, description="Description for generated activity")
+
+class GenerationProgressResponse(BaseModel):
+    """Response for generation progress tracking."""
+    session_id: uuid.UUID = Field(..., description="Generation session ID")
+    status: str = Field(..., description="Current generation status")
+    progress_percentage: Optional[int] = Field(None, description="Progress percentage (0-100)")
+    current_step: Optional[str] = Field(None, description="Current processing step")
+    error_message: Optional[str] = Field(None, description="Error message if failed")
+    generated_content: Optional[Dict[str, Any]] = Field(None, description="Generated NLJ content if completed")
 
 
 @router.post(
@@ -230,8 +248,8 @@ async def retry_generation_session(
     
     service = GenerationService(db)
     
-    # Start retry in background
-    background_tasks.add_task(service.retry_failed_session, session_id, current_user.id)
+    # Start retry in background with proper session management  
+    background_tasks.add_task(_retry_generation_task, session_id, current_user.id)
     
     session = await service.get_session_by_id(session_id, current_user.id)
     if not session:
@@ -294,3 +312,195 @@ async def get_generation_statistics(
     stats = await service.get_session_statistics(current_user.id)
     
     return GenerationStatisticsResponse(**stats)
+
+
+@router.post(
+    "/content-studio/generate",
+    response_model=GenerationProgressResponse,
+    summary="Content Studio Generation",
+    description="Simplified endpoint for Content Studio integrated generation workflow."
+)
+async def content_studio_generate(
+    request: ContentStudioGenerateRequest,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> GenerationProgressResponse:
+    """
+    Simplified generation endpoint for Content Studio.
+    Creates session, starts generation, and returns tracking info.
+    """
+    
+    # Permission check
+    if current_user.role not in [UserRole.CREATOR, UserRole.REVIEWER, UserRole.APPROVER, UserRole.ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions to generate content"
+        )
+    
+    try:
+        service = GenerationService(db)
+        
+        # Create and start generation session in one step
+        session = await service.create_generation_session(
+            user_id=current_user.id,
+            prompt_config=request.prompt_config,
+            source_document_ids=request.source_document_ids
+        )
+        
+        # Start generation in background with proper session management
+        background_tasks.add_task(_start_generation_task, session.id, current_user.id)
+        
+        # Update session status
+        session.status = GenerationStatus.PROCESSING
+        await db.commit()
+        
+        # Handle both enum and string status values
+        status_str = session.status.value if hasattr(session.status, 'value') else session.status
+        
+        return GenerationProgressResponse(
+            session_id=session.id,
+            status=status_str,
+            progress_percentage=10,
+            current_step="Starting generation...",
+            error_message=None,
+            generated_content=None
+        )
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to start generation: {str(e)}"
+        )
+
+
+@router.get(
+    "/content-studio/sessions/{session_id}/status",
+    response_model=GenerationProgressResponse,
+    summary="Content Studio Generation Status",
+    description="Get generation status for Content Studio polling."
+)
+async def content_studio_generation_status(
+    session_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> GenerationProgressResponse:
+    """Get generation status for Content Studio frontend polling."""
+    
+    service = GenerationService(db)
+    session = await service.get_session_by_id(session_id, current_user.id)
+    
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Generation session not found"
+        )
+    
+    # Map status to progress percentage
+    progress_map = {
+        GenerationStatus.PENDING: 0,
+        GenerationStatus.PROCESSING: 50,
+        GenerationStatus.COMPLETED: 100,
+        GenerationStatus.FAILED: None,
+        GenerationStatus.CANCELLED: None
+    }
+    
+    # Get generated content if completed
+    generated_content = None
+    if session.status == GenerationStatus.COMPLETED:
+        print(f"🔍 Session {session_id} completed, checking for validated_nlj...")
+        print(f"🔍 session.validated_nlj is: {session.validated_nlj}")
+        print(f"🔍 session.generated_content is: {session.generated_content}")
+        if session.validated_nlj:
+            generated_content = session.validated_nlj
+            print(f"✅ Using validated_nlj: {type(generated_content)}")
+        elif session.generated_content and isinstance(session.generated_content, dict) and 'generated_json' in session.generated_content:
+            generated_content = session.generated_content['generated_json']
+            print(f"✅ Using generated_content['generated_json']: {type(generated_content)}")
+        else:
+            print(f"❌ No valid content found in session")
+    
+    # Handle both enum and string status values
+    status_str = session.status.value if hasattr(session.status, 'value') else session.status
+    
+    print(f"🔍 Returning GenerationProgressResponse:")
+    print(f"  - session_id: {session.id}")
+    print(f"  - status: {status_str}")
+    print(f"  - progress_percentage: {progress_map.get(session.status)}")
+    print(f"  - error_message: {session.error_message}")
+    print(f"  - generated_content type: {type(generated_content)}")
+    print(f"  - generated_content keys: {list(generated_content.keys()) if isinstance(generated_content, dict) else 'Not a dict'}")
+    
+    return GenerationProgressResponse(
+        session_id=session.id,
+        status=status_str,
+        progress_percentage=progress_map.get(session.status),
+        current_step=status_str.replace('_', ' ').title(),
+        error_message=session.error_message,
+        generated_content=generated_content
+    )
+
+
+async def _start_generation_task(session_id: uuid.UUID, user_id: uuid.UUID):
+    """
+    Background task to start content generation with proper database session management.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"🚀 Starting background generation task for session {session_id}")
+    
+    from app.core.database import AsyncSessionLocal
+    
+    async with AsyncSessionLocal() as db:
+        try:
+            logger.info(f"🔧 Creating GenerationService for session {session_id}")
+            service = GenerationService(db)
+            
+            logger.info(f"🎯 Calling start_generation for session {session_id}")
+            success = await service.start_generation(session_id, user_id)
+            
+            if success:
+                logger.info(f"✅ Generation completed successfully for session {session_id}")
+            else:
+                logger.error(f"❌ Generation failed for session {session_id} (returned False)")
+                
+        except Exception as e:
+            logger.error(f"💥 Background generation task failed for session {session_id}: {str(e)}")
+            logger.error(f"Exception type: {type(e).__name__}")
+            import traceback
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            
+            # Try to update session status to failed
+            try:
+                session = await db.get(GenerationSession, session_id)
+                if session:
+                    session.fail_with_error(f"Background task error: {str(e)}")
+                    await db.commit()
+                    logger.info(f"🔄 Updated session {session_id} status to failed")
+            except Exception as update_error:
+                logger.error(f"Failed to update session status: {update_error}")
+                await db.rollback()
+
+
+async def _retry_generation_task(session_id: uuid.UUID, user_id: uuid.UUID):
+    """
+    Background task to retry failed generation with proper database session management.
+    """
+    from app.core.database import AsyncSessionLocal
+    
+    async with AsyncSessionLocal() as db:
+        try:
+            service = GenerationService(db)
+            await service.retry_failed_session(session_id, user_id)
+        except Exception as e:
+            # Log the error but don't raise it since this is a background task
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Background retry generation task failed for session {session_id}: {str(e)}")
+            await db.rollback()

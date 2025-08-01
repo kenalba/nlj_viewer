@@ -59,6 +59,23 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
   onVersionSave,
   canManageVersions = false,
 }) => {
+  // Guard against null/undefined scenario
+  if (!scenario) {
+    return (
+      <Box sx={{ 
+        height: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        bgcolor: 'background.default'
+      }}>
+        <Typography variant="h6" color="text.secondary">
+          No scenario data available
+        </Typography>
+      </Box>
+    );
+  }
+
   const [editedScenario, setEditedScenario] = useState<NLJScenario>(scenario);
   const [isDirty, setIsDirty] = useState(false);
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
@@ -124,7 +141,7 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
       await versionManagement.createVersion(
         editedScenario,
         contentItem!.title,
-        contentItem!.description,
+        contentItem!.description || '',
         changeSummary
       );
     }
@@ -228,7 +245,7 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [editedScenario.name]); // Re-run when scenario name changes
+  }, [editedScenario?.name]); // Re-run when scenario name changes
 
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>

@@ -902,6 +902,30 @@ export function getOptionalNodeTypesByCategory(category: NodeTypeDocumentation['
 }
 
 /**
+ * Get all optional node types grouped by category (for UI configuration)
+ * Returns an object with category names as keys and arrays of node type strings as values
+ */
+export function getAllOptionalNodeTypesByCategory(): Record<string, string[]> {
+  const categories = ['structural', 'question', 'survey', 'game'] as const;
+  const result: Record<string, string[]> = {};
+
+  categories.forEach(category => {
+    const categoryNodes = Object.values(NODE_SCHEMAS).filter(node => {
+      if (node.category !== category) return false;
+      // Exclude required structural nodes (start, end)
+      if (category === 'structural' && REQUIRED_STRUCTURAL_NODES.includes(node.nodeType as any)) {
+        return false;
+      }
+      return true;
+    });
+    
+    result[category] = categoryNodes.map(node => node.nodeType);
+  });
+
+  return result;
+}
+
+/**
  * Get node types by Bloom's taxonomy level
  */
 export function getNodeTypesByBloomsLevel(level: string): NodeTypeDocumentation[] {

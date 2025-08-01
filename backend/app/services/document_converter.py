@@ -18,7 +18,7 @@ from dataclasses import dataclass
 
 import aiofiles
 from docx import Document
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
 
 from app.core.config import settings
 
@@ -172,6 +172,50 @@ class DocumentConverter:
             print(f"Error extracting DOCX metadata: {e}")
         
         return metadata
+    
+    async def truncate_pdf_if_needed(self, pdf_path: str, max_pages: int = 100) -> tuple[str, bool, int]:
+        """
+        Truncate PDF to maximum number of pages if it exceeds the limit.
+        
+        Args:
+            pdf_path: Path to the PDF file
+            max_pages: Maximum number of pages to keep (default: 100 for Claude API)
+            
+        Returns:
+            Tuple of (file_path, was_truncated, original_page_count)
+        """
+        try:
+            reader = PdfReader(pdf_path)
+            page_count = len(reader.pages)
+            
+            print(f"📄 PDF has {page_count} pages, Claude limit is {max_pages} pages")
+            
+            if page_count <= max_pages:
+                print(f"✅ PDF is within limit, no truncation needed")
+                return pdf_path, False, page_count
+            
+            print(f"✂️ Truncating PDF from {page_count} to {max_pages} pages")
+            
+            # Create truncated version
+            writer = PdfWriter()
+            for i in range(min(max_pages, page_count)):
+                writer.add_page(reader.pages[i])
+            
+            # Create new filename for truncated version
+            path_obj = Path(pdf_path)
+            truncated_path = path_obj.parent / f"{path_obj.stem}_truncated{path_obj.suffix}"
+            
+            # Write truncated PDF
+            with open(truncated_path, 'wb') as output_file:
+                writer.write(output_file)
+            
+            print(f"✅ Created truncated PDF: {truncated_path}")
+            return str(truncated_path), True, page_count
+            
+        except Exception as e:
+            print(f"❌ Error truncating PDF: {e}")
+            # Return original file if truncation fails, but report the issue
+            return pdf_path, False, page_count if 'page_count' in locals() else 0
     
     async def convert_to_pdf(self, input_path: str, file_type: str) -> Optional[str]:
         """

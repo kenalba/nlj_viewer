@@ -703,7 +703,8 @@ export interface VariableDefinition {
   id: string;
   name: string;
   type: 'number' | 'string' | 'boolean';
-  defaultValue: number | string | boolean;
+  initialValue: number | string | boolean;
+  defaultValue?: number | string | boolean; // Legacy field for backwards compatibility
   description?: string;
   allowRuntimeOverride?: boolean; // Can be set via URL parameters
 }

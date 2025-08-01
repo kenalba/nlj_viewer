@@ -29,6 +29,40 @@ import { HomePage } from './components/HomePage';
 import type { NLJScenario } from './types/nlj';
 import { canEditContent, canReviewContent, canManageUsers, getAppMode } from './utils/permissions';
 
+// Preview component for generated content
+const PreviewGeneratedContent: React.FC<{ onHome: () => void }> = ({ onHome }) => {
+  const { dispatch } = useGameContext();
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    const previewData = sessionStorage.getItem('preview_activity');
+    if (previewData) {
+      try {
+        const previewScenario: NLJScenario = JSON.parse(previewData);
+        dispatch({ type: 'LOAD_SCENARIO', payload: previewScenario });
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Failed to parse preview data:', error);
+        navigate('/app/content-generation');
+      }
+    } else {
+      navigate('/app/content-generation');
+    }
+  }, [dispatch, navigate]);
+  
+  if (isLoading) {
+    return (
+      <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="400px" gap={2}>
+        <CircularProgress />
+        <Typography>Loading preview...</Typography>
+      </Box>
+    );
+  }
+  
+  return null; // Will be handled by the game view route after scenario loads
+};
+
 const AppContent: React.FC = () => {
   const { state, reset } = useGameContext();
   const { user } = useAuth();
@@ -44,6 +78,21 @@ const AppContent: React.FC = () => {
   // Load scenario from localStorage when game state changes
   useEffect(() => {
     if (state.scenarioId) {
+      // Check if this is a preview scenario (from sessionStorage)
+      const previewData = sessionStorage.getItem('preview_activity');
+      if (previewData && location.pathname.includes('/app/preview-generated')) {
+        try {
+          const previewScenario = JSON.parse(previewData);
+          if (previewScenario.id === state.scenarioId) {
+            setCurrentScenario(previewScenario);
+            return;
+          }
+        } catch (error) {
+          console.error('Failed to parse preview data:', error);
+        }
+      }
+      
+      // Otherwise load from localStorage as usual
       const scenarioData = localStorage.getItem(`scenario_${state.scenarioId}`);
       if (scenarioData) {
         setCurrentScenario(JSON.parse(scenarioData));
@@ -51,7 +100,7 @@ const AppContent: React.FC = () => {
     } else {
       setCurrentScenario(null);
     }
-  }, [state.scenarioId]);
+  }, [state.scenarioId, location.pathname]);
 
   const handleHome = () => {
     reset();
@@ -209,6 +258,18 @@ const AppContent: React.FC = () => {
     return <SubmitForReviewPage />;
   }
   
+  // Handle preview of generated content
+  if (path.includes('/app/preview-generated')) {
+    return (
+      <PreviewGeneratedContent 
+        onHome={() => {
+          sessionStorage.removeItem('preview_activity');
+          navigate('/app/content-generation');
+        }}
+      />
+    );
+  }
+
   // Handle playing specific activities with content-aware URLs
   if (path.includes('/app/play/')) {
     const pathSegments = path.split('/');
@@ -237,11 +298,15 @@ const AppContent: React.FC = () => {
   }
   
   if (path.includes('/app/flow') && canEdit) {
-    // Parse URL structure: /app/flow/new or /app/flow/edit/[id]
+    // Parse URL structure: /app/flow/new or /app/flow/edit/[id] or /app/flow?scenario=ID
     const pathSegments = path.split('/');
     const flowIndex = pathSegments.indexOf('flow');
-    const action = pathSegments[flowIndex + 1]; // 'new' or 'edit'
+    const action = pathSegments[flowIndex + 1]; // 'new' or 'edit' or undefined for query param
     const editId = action === 'edit' ? pathSegments[flowIndex + 2] : null;
+    
+    // Check for scenario query parameter (from Content Studio)
+    const urlParams = new URLSearchParams(location.search);
+    const scenarioParam = urlParams.get('scenario');
     
     // Show loading state while fetching scenario
     if (loadingScenario) {
@@ -268,6 +333,19 @@ const AppContent: React.FC = () => {
     
     // Determine scenario to edit
     let scenarioToEdit = editingScenario;
+    
+    // Handle scenario from Content Studio (query parameter)
+    if (scenarioParam && !editingScenario) {
+      const scenarioData = localStorage.getItem(`scenario_${scenarioParam}`);
+      const navigationState = location.state as any;
+      if (scenarioData) {
+        scenarioToEdit = JSON.parse(scenarioData);
+        setEditingScenario(scenarioToEdit);
+      } else if (navigationState?.generatedScenario) {
+        scenarioToEdit = navigationState.generatedScenario;
+        setEditingScenario(scenarioToEdit);
+      }
+    }
     
     // If creating new activity and no editing scenario, check for template in navigation state
     if (action === 'new' && !editingScenario) {
@@ -302,7 +380,7 @@ const AppContent: React.FC = () => {
     return (
       <FlowEditor
         scenario={scenarioToEdit!}
-        contentItem={editingContentItem}
+        contentItem={editingContentItem || undefined}
         canManageVersions={!!editingContentItem}
         onBack={() => {
           setEditingScenario(null);

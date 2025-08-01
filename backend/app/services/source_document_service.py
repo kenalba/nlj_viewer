@@ -176,9 +176,9 @@ class SourceDocumentService:
             
             if file_object:
                 source_doc.claude_file_id = file_object.id
-                source_doc.uploaded_to_claude_at = datetime.utcnow()
+                source_doc.uploaded_to_claude_at = datetime.now(timezone.utc)
                 # Files expire after 24 hours according to Claude documentation
-                source_doc.expires_at = datetime.utcnow() + timedelta(hours=24)
+                source_doc.expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
                 await self.db.commit()
                 return True
             
@@ -361,7 +361,7 @@ class SourceDocumentService:
         query = select(SourceDocument).where(
             and_(
                 SourceDocument.expires_at.is_not(None),
-                SourceDocument.expires_at < datetime.utcnow()
+                SourceDocument.expires_at < datetime.now(timezone.utc)
             )
         )
         

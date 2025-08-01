@@ -59,8 +59,18 @@ class ClaudeService:
             return None
             
         try:
+            # Check if PDF needs truncation due to Claude's 100-page limit
+            actual_file_path = file_path
+            was_truncated = False
+            original_pages = 0
+            if file_path.lower().endswith('.pdf'):
+                from app.services.document_converter import document_converter
+                actual_file_path, was_truncated, original_pages = await document_converter.truncate_pdf_if_needed(file_path, max_pages=100)
+                if was_truncated:
+                    print(f"⚠️ PDF was truncated from {original_pages} to 100 pages for Claude API compatibility")
+            
             # Read file content
-            async with aiofiles.open(file_path, 'rb') as f:
+            async with aiofiles.open(actual_file_path, 'rb') as f:
                 file_content = await f.read()
             
             # Determine content type
@@ -290,39 +300,100 @@ class ClaudeService:
     
     def _extract_json_from_response(self, response_text: str) -> Optional[Dict[str, Any]]:
         """
-        Extract JSON content from Claude's response.
-        Looks for JSON blocks and tries to parse them.
+        Extract JSON content from Claude's response using a robust parsing approach.
         """
-        try:
-            # Look for JSON code blocks first
-            import re
-            json_pattern = r'```(?:json)?\s*(\{.*?\})\s*```'
-            matches = re.findall(json_pattern, response_text, re.DOTALL)
-            
+        import json
+        
+        # Method 1: Look for JSON code blocks first (most reliable)
+        code_block_patterns = [
+            r'```json\s*(.*?)\s*```',
+            r'```\s*(.*?)\s*```'
+        ]
+        
+        import re
+        for pattern in code_block_patterns:
+            matches = re.findall(pattern, response_text, re.DOTALL)
             for match in matches:
                 try:
-                    return json.loads(match)
-                except json.JSONDecodeError:
-                    continue
-            
-            # If no code blocks, try to find JSON-like content
-            # Look for content that starts with { and ends with }
-            brace_pattern = r'\{(?:[^{}]|{[^{}]*})*\}'
-            matches = re.findall(brace_pattern, response_text, re.DOTALL)
-            
-            for match in matches:
-                try:
-                    parsed = json.loads(match)
-                    # Basic validation - should have typical NLJ structure
-                    if isinstance(parsed, dict) and ('nodes' in parsed or 'id' in parsed):
+                    parsed = json.loads(match.strip())
+                    if isinstance(parsed, dict) and self._is_valid_nlj_structure(parsed):
                         return parsed
                 except json.JSONDecodeError:
                     continue
+        
+        # Method 2: Use a JSON decoder that can handle partial streams
+        # This is much more robust than regex
+        def extract_json_objects(text: str):
+            """Extract all valid JSON objects from text using incremental parsing."""
+            decoder = json.JSONDecoder()
+            idx = 0
+            objects = []
             
+            while idx < len(text):
+                text_slice = text[idx:].lstrip()
+                if not text_slice:
+                    break
+                    
+                if text_slice[0] == '{':
+                    try:
+                        obj, end_idx = decoder.raw_decode(text_slice)
+                        if isinstance(obj, dict):
+                            objects.append(obj)
+                        idx += end_idx + (len(text[idx:]) - len(text_slice))
+                    except json.JSONDecodeError:
+                        idx += 1
+                else:
+                    idx += 1
+            
+            return objects
+        
+        # Try to extract JSON objects from the response
+        try:
+            json_objects = extract_json_objects(response_text)
+            
+            # Sort by preference: complete NLJ schemas first, then by size
+            def score_json_object(obj):
+                if not isinstance(obj, dict):
+                    return 0
+                score = len(str(obj))  # Base score on size
+                if 'nodes' in obj and 'links' in obj and 'id' in obj:
+                    score += 10000  # Heavily prefer complete NLJ schemas
+                elif 'nodes' in obj or 'links' in obj:
+                    score += 1000   # Somewhat prefer partial NLJ structures
+                return score
+            
+            json_objects.sort(key=score_json_object, reverse=True)
+            
+            # Return the best candidate
+            for obj in json_objects:
+                if self._is_valid_nlj_structure(obj):
+                    return obj
+            
+            # If no perfect match, return the largest object that looks reasonable
+            for obj in json_objects:
+                if isinstance(obj, dict) and len(obj) > 2:
+                    return obj
+                    
         except Exception as e:
-            print(f"Error extracting JSON from response: {e}")
+            print(f"Error in JSON extraction: {e}")
         
         return None
+    
+    def _is_valid_nlj_structure(self, obj: Dict[str, Any]) -> bool:
+        """Check if an object looks like a valid NLJ structure."""
+        if not isinstance(obj, dict):
+            return False
+        
+        # Must have basic NLJ fields
+        required_fields = ['id', 'name', 'nodes', 'links']
+        has_required = all(field in obj for field in required_fields)
+        
+        if has_required:
+            # Validate nodes and links are arrays
+            return (isinstance(obj.get('nodes'), list) and 
+                   isinstance(obj.get('links'), list))
+        
+        return False
     
     async def validate_nlj_schema(self, nlj_data: Dict[str, Any]) -> Tuple[bool, List[str]]:
         """

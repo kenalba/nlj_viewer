@@ -43,6 +43,7 @@ import {
   getSourceDocument, 
   uploadToClaudeAPI,
   generateDocumentSummary,
+  deleteSourceDocument,
   type SourceDocument 
 } from '../api/sources';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
@@ -146,6 +147,27 @@ const SourceDetailPage: React.FC = () => {
     generateSummaryMutation.mutate(document.id);
   };
 
+  // Delete document mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteSourceDocument,
+    onSuccess: () => {
+      // Navigate back to sources list after successful deletion
+      navigate('/app/sources');
+    },
+    onError: (error) => {
+      console.error('Failed to delete document:', error);
+    },
+  });
+
+  const handleDelete = () => {
+    if (!document) return;
+    
+    // Show confirmation dialog
+    if (window.confirm(`Are you sure you want to delete "${document.original_filename}"? This action cannot be undone.`)) {
+      deleteMutation.mutate(document.id);
+    }
+  };
+
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
   };
@@ -230,9 +252,10 @@ const SourceDetailPage: React.FC = () => {
             variant="outlined"
             color="error"
             startIcon={<DeleteIcon />}
-            onClick={() => console.log('Delete document')}
+            onClick={handleDelete}
+            disabled={deleteMutation.isPending}
           >
-            Delete
+            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
           </Button>
         </Stack>
       </Box>

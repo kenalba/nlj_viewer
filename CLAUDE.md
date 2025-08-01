@@ -38,10 +38,16 @@ A full-stack TypeScript application for creating, managing, and delivering inter
 - **Progress Tracking**: Visual progress indicators and completion tracking
 - **Media Support**: Images, videos, and rich content integration
 
-### **Content Management**
+### **Content Management & AI Generation**
+- **Content Studio**: Integrated AI-powered content generation with Claude API
+  - Document upload and management (PDF, DOCX, PPTX) with Claude Files API
+  - Source document library with metadata extraction and reuse capabilities
+  - Real-time content generation with progress tracking and error handling
+  - Direct integration with Flow Editor for seamless content creation workflow
+- **LLM Content Generation**: Comprehensive prompt generation system for external AI tools
+- **Document Intelligence**: AI-generated metadata including summaries, keywords, learning objectives
 - **Trivie Excel Support**: Import and convert Trivie quiz Excel files to NLJ format
 - **Survey Templates**: Pre-built automotive and cross-industry employee feedback surveys
-- **LLM Content Generation**: Comprehensive prompt generation system for AI-powered content creation
 - **Version Control**: Content versioning with publication workflow
 - **Approval System**: Multi-stage content approval process (planned)
 
@@ -84,6 +90,12 @@ sudo nginx -s reload
 - **NodeRenderer**: Dynamic rendering of all question types and panel nodes
 - **ScenarioLoader**: File upload, sample scenario selection, and LLM prompt generation with Trivie Excel support
 - **GameView**: Main gameplay interface with progress tracking
+- **Content Studio**: Integrated AI content generation system
+  - `ContentGenerationPage`: Tabbed interface with Prompt Generator and Content Studio
+  - `SourceLibrarySelection`: Document selection and management interface
+  - `PromptConfiguration`: AI generation parameter configuration with presets
+  - `GenerationProgress`: Real-time generation tracking and error handling
+  - `GenerationResults`: Results display and Flow Editor integration
 - **Question Components**: Specialized components for each question type
   - `TrueFalseNode`: Interactive True/False buttons with submit/continue workflow and keyboard support
   - `OrderingNode`: Drag-and-drop item reordering with validation
@@ -122,10 +134,13 @@ React Context + useReducer pattern for:
 ## Usage
 
 1. **Load Scenario**: Upload NLJ JSON file, Trivie Excel file, or select sample
-2. **Generate LLM Prompts**: Create customized prompts for LLM-powered content generation
-3. **Navigate**: Progress through various question types with interactive elements
-4. **Receive Feedback**: Immediate validation, scoring, and audio feedback
-5. **Track Progress**: Visual completion indicators and scenario completion
+2. **Generate Content**: 
+   - **Content Studio**: Upload documents → configure AI parameters → generate scenarios directly in-platform
+   - **Prompt Generator**: Create customized prompts for external LLM tools (ChatGPT, Claude, etc.)
+3. **Edit & Refine**: Use Flow Editor to customize generated or uploaded scenarios
+4. **Navigate**: Progress through various question types with interactive elements
+5. **Receive Feedback**: Immediate validation, scoring, and audio feedback
+6. **Track Progress**: Visual completion indicators and scenario completion
 
 ## Development
 
@@ -280,7 +295,32 @@ Supports comprehensive activity schema including:
 - **Role-Based Dashboard**: Different layouts and features for creators/admins vs players
 - **Enhanced Flow Editor Integration**: Complete database integration with save/load from PostgreSQL
 
-## Latest Completion: Variable Interpolation & Permissions System Refactoring ✅
+## Latest Completion: Content Studio Integration ✅
+
+✅ **Phase 7 Complete**: AI-Powered Content Studio with Claude API Integration
+- **Integrated Content Studio**: Full integration with Anthropic Claude API for in-app content generation
+  - Claude Files API integration for document upload and management (500MB limit, 24-hour expiration)
+  - Claude Messages API for content generation with document context awareness
+  - Real-time generation progress tracking with polling and status updates
+- **Source Document Management**: Complete document lifecycle management
+  - Multi-format support (PDF, DOCX, PPTX) with automatic conversion to PDF
+  - Document library with metadata display, usage tracking, and reuse capabilities
+  - Source detail pages with comprehensive metadata extraction and PDF preview
+- **Content Generation Workflow**: Streamlined creation process integrated into existing interface
+  - Tabbed interface within Content Generation page (Prompt Generator + Content Studio)
+  - Document selection with filtering and multi-select capabilities
+  - Comprehensive prompt configuration with presets and validation
+  - Direct handoff to Flow Editor with generated scenarios
+- **Database Schema Enhancements**: Full tracking and lineage support
+  - Source documents with Claude API integration and usage metrics
+  - Generation sessions with prompt configuration and progress tracking
+  - Activity-source linkage for content lineage and provenance
+- **Backend Services**: Complete API infrastructure for content generation
+  - FastAPI endpoints for document management and generation workflows
+  - Background task processing with proper session management
+  - Comprehensive error handling and validation with schema compliance
+
+## Previous Completion: Variable Interpolation & Permissions System Refactoring ✅
 
 ✅ **Phase 6 Complete**: Advanced Variable Management and Permissions System
 - **Variable Interpolation Engine**: Comprehensive expression evaluation system with support for mathematical operations, string manipulation, and conditional logic
@@ -308,12 +348,14 @@ Supports comprehensive activity schema including:
 - **Unified Modal Integration**: Consistent "New Activity" experience across ContentDashboard, HomePage, and ContentLibrary
 - **Responsive Design**: Compact 2-row layout that fits without scrolling, with proper spacing and visual hierarchy
 
-## Next Priority: Content Creation Enhancements
+## Next Priority: Content Studio Refinements
 
-🔄 **UPCOMING**: Advanced Content Creation Tools
-- Extract LLM Prompt Construction as standalone sidebar feature
-- Add content creation templates to New Activity workflow  
-- Implement Import Activity functionality with file upload and JSON paste
+🔄 **UPCOMING**: Content Studio UX Improvements
+- Fix Question Types and Interactions field being empty on Content Generation flow
+- Improve source selection scalability and performance
+- Add Upload Source flow directly to source selection interface
+- Simplify Content Generation page by removing tabs and combining approaches
+- Move from grid to flexbox layout for better responsiveness and scalability
 - Enhanced content management and approval workflows
 
 ## Future Enhancements

@@ -4,7 +4,7 @@ Manages persistent source library with Claude Files API integration.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import TYPE_CHECKING, List
 
@@ -232,7 +232,7 @@ class SourceDocument(Base):
         """Check if Claude Files API upload has expired."""
         if not self.expires_at:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
     
     def needs_reupload(self) -> bool:
         """Check if document needs to be re-uploaded to Claude."""
@@ -241,7 +241,7 @@ class SourceDocument(Base):
     def increment_usage(self) -> None:
         """Increment usage count and update last used timestamp."""
         self.usage_count += 1
-        self.last_used_at = datetime.utcnow()
+        self.last_used_at = datetime.now(timezone.utc)
     
     def add_tag(self, tag: str) -> None:
         """Add a tag if it doesn't already exist."""
