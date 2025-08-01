@@ -289,7 +289,7 @@ async def get_content_versions(
     try:
         workflow_service = WorkflowService(db)
         versions = await workflow_service.get_content_versions(content_id)
-        return [ContentVersionResponse.from_orm(version) for version in versions]
+        return [ContentVersionResponse.model_validate(version) for version in versions]
     except WorkflowError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -312,7 +312,7 @@ async def get_version(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Version not found"
             )
-        return ContentVersionResponse.from_orm(version)
+        return ContentVersionResponse.model_validate(version)
     except WorkflowError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -337,7 +337,7 @@ async def create_content_version(
             description=request.description,
             change_summary=request.change_summary
         )
-        return ContentVersionResponse.from_orm(version)
+        return ContentVersionResponse.model_validate(version)
     except WorkflowError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -360,7 +360,7 @@ async def create_approval_workflow(
             auto_publish=request.auto_publish,
             assigned_reviewer_id=request.assigned_reviewer_id
         )
-        return WorkflowResponse.from_orm(workflow)
+        return WorkflowResponse.model_validate(workflow)
     except WorkflowError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -381,7 +381,7 @@ async def submit_for_review(
             version_id=request.version_id,
             reviewer_id=request.reviewer_id
         )
-        return WorkflowResponse.from_orm(workflow)
+        return WorkflowResponse.model_validate(workflow)
     except WorkflowError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -404,7 +404,7 @@ async def assign_reviewer(
             reviewer_id=request.reviewer_id,
             assigner_id=current_user.id
         )
-        return WorkflowResponse.from_orm(workflow)
+        return WorkflowResponse.model_validate(workflow)
     except WorkflowError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -429,7 +429,7 @@ async def approve_content(
             feedback_areas=request.feedback_areas,
             auto_publish=request.auto_publish
         )
-        return WorkflowResponse.from_orm(workflow)
+        return WorkflowResponse.model_validate(workflow)
     except WorkflowError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -453,7 +453,7 @@ async def request_revision(
             comments=request.comments,
             feedback_areas=request.feedback_areas
         )
-        return WorkflowResponse.from_orm(workflow)
+        return WorkflowResponse.model_validate(workflow)
     except WorkflowError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -477,7 +477,7 @@ async def reject_content(
             comments=request.comments,
             feedback_areas=request.feedback_areas
         )
-        return WorkflowResponse.from_orm(workflow)
+        return WorkflowResponse.model_validate(workflow)
     except WorkflowError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -498,7 +498,7 @@ async def publish_version(
             version_id=request.version_id,
             publisher_id=current_user.id
         )
-        return ContentVersionResponse.from_orm(version)
+        return ContentVersionResponse.model_validate(version)
     except WorkflowError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -521,7 +521,7 @@ async def withdraw_submission(
             creator_id=current_user.id,
             reason=request.reason
         )
-        return WorkflowResponse.from_orm(workflow)
+        return WorkflowResponse.model_validate(workflow)
     except WorkflowError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -548,7 +548,7 @@ async def get_pending_reviews(
         responses = []
         for workflow in workflows:
             responses.append(PendingReviewResponse(
-                workflow=WorkflowResponse.from_orm(workflow),
+                workflow=WorkflowResponse.model_validate(workflow),
                 content_id=workflow.content_version.content_id,
                 content_title=workflow.content_version.title,
                 content_description=workflow.content_version.description,
@@ -575,7 +575,7 @@ async def get_workflow_history(
     try:
         workflow_service = WorkflowService(db)
         reviews = await workflow_service.get_workflow_history(workflow_id)
-        return [ReviewResponse.from_orm(review) for review in reviews]
+        return [ReviewResponse.model_validate(review) for review in reviews]
     except WorkflowError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

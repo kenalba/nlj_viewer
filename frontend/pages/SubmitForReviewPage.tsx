@@ -233,6 +233,7 @@ export const SubmitForReviewPage: React.FC = () => {
       }
 
       setSuccess(true);
+      console.log('Review submission successful, showing success state');
 
     } catch (err: any) {
       console.error('Failed to submit for review:', err);

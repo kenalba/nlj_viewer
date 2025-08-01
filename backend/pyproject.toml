@@ -9,30 +9,33 @@ dependencies = [
     "fastapi",
     "uvicorn[standard]",
     "python-multipart",
-    
     # Database
     "sqlalchemy",
-    "alembic", 
+    "alembic",
     "psycopg2-binary",
     "asyncpg",
-    
     # Data validation and serialization
     "pydantic",
     "pydantic-settings",
     "email-validator",
-    
     # Authentication
     "python-jose[cryptography]",
     "passlib[bcrypt]",
-    
     # HTTP client for external integrations
     "httpx",
-    
     # Excel file processing (for Trivie imports)
     "openpyxl",
-    
     # Environment management
     "python-dotenv",
+    "greenlet>=3.2.3",
+    # Claude API integration
+    "anthropic",
+    # Document conversion
+    "python-docx",
+    "pypdf",
+    "python-magic",
+    # File handling
+    "aiofiles",
 ]
 
 [project.optional-dependencies]

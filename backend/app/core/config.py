@@ -44,12 +44,18 @@ class Settings(BaseSettings):
     
     # File upload settings
     MAX_FILE_SIZE: int = Field(
-        default=10 * 1024 * 1024,  # 10MB
+        default=500 * 1024 * 1024,  # 500MB (Claude Files API limit)
         description="Maximum file upload size in bytes"
     )
     UPLOAD_DIR: str = Field(
         default="uploads",
         description="Directory for file uploads"
+    )
+    
+    # Claude API settings
+    CLAUDE_API_KEY: str = Field(
+        default="",
+        description="Anthropic Claude API key for content generation"
     )
     
     # Feature flags

@@ -152,7 +152,7 @@ class WorkflowService:
         
         # Log the state change
         # Use the current user ID (submitter) when no reviewer is specified
-        log_reviewer_id = reviewer_id if reviewer_id else workflow.created_by
+        log_reviewer_id = reviewer_id if reviewer_id else workflow.content_version.created_by
         await self._log_state_change(
             workflow.id,
             log_reviewer_id,

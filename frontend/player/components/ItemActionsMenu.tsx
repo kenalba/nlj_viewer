@@ -173,25 +173,24 @@ export const ItemActionsMenu: React.FC<ItemActionsMenuProps> = ({
       </MenuItem>
 
       {/* Destructive Actions */}
-      {canDelete && onDelete && (
-        <>
-          <Divider />
-          <MenuItem 
-            onClick={handleDelete}
-            sx={{ 
-              color: 'error.main',
-              '&:hover': {
-                backgroundColor: 'error.50'
-              }
-            }}
-          >
-            <ListItemIcon>
-              <DeleteIcon color="error" />
-            </ListItemIcon>
-            <ListItemText primary="Delete" />
-          </MenuItem>
-        </>
-      )}
+      {canDelete && onDelete && [
+        <Divider key="delete-divider" />,
+        <MenuItem 
+          key="delete-item"
+          onClick={handleDelete}
+          sx={{ 
+            color: 'error.main',
+            '&:hover': {
+              backgroundColor: 'error.50'
+            }
+          }}
+        >
+          <ListItemIcon>
+            <DeleteIcon color="error" />
+          </ListItemIcon>
+          <ListItemText primary="Delete" />
+        </MenuItem>
+      ]}
     </Menu>
   );
 };

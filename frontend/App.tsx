@@ -20,6 +20,8 @@ import { DetailedReviewPage } from './pages/DetailedReviewPage';
 import { ContentGenerationPage } from './pages/ContentGenerationPage';
 import { SubmitForReviewPage } from './pages/SubmitForReviewPage';
 import { UserDetailPage } from './pages/UserDetailPage';
+import SourceLibraryPage from './pages/SourceLibraryPage';
+import SourceDetailPage from './pages/SourceDetailPage';
 import { PeopleTab } from './components/people/PeopleTab';
 import { useAuth } from './contexts/AuthContext';
 import { contentApi, type ContentItem } from './api/content';
@@ -194,6 +196,15 @@ const AppContent: React.FC = () => {
     return <ContentGenerationPage />;
   }
   
+  if (path.includes('/sources') && canEdit) {
+    // Source detail page: /app/sources/[id]
+    if (path.includes('/app/sources/') && path.split('/').length > 3) {
+      return <SourceDetailPage />;
+    }
+    // Main sources page: /app/sources
+    return <SourceLibraryPage />;
+  }
+  
   if (path.includes('/app/submit-review') && canEdit) {
     return <SubmitForReviewPage />;
   }
@@ -317,7 +328,7 @@ const AppContent: React.FC = () => {
             const isNewScenario = scenario.id.startsWith('new-');
             
             if (isNewScenario) {
-              // Create new content item with complete NLJ scenario data
+              // Create new content item with complete NLJ scenario data as draft
               const contentData = {
                 title: scenario.name,
                 description: scenario.description || 'Activity created with Flow Editor',
@@ -328,7 +339,8 @@ const AppContent: React.FC = () => {
                 content_type: (scenario.activityType as any) || 'training', // Use scenario's activity type or default
                 learning_style: 'visual' as const, // Default to visual
                 is_template: false,
-                template_category: 'Custom'
+                template_category: 'Custom',
+                state: 'draft' // Explicitly save as draft
               };
               
               const createdContent = await contentApi.create(contentData);
@@ -349,12 +361,15 @@ const AppContent: React.FC = () => {
               console.log('Created new content item:', createdContent.id);
             } else {
               // Update existing content item with complete NLJ scenario data
+              // Keep content in draft state when editing (unless it's published)
               const updateData = {
                 title: scenario.name,
                 description: scenario.description || 'Activity updated with Flow Editor',
                 nlj_data: {
                   ...scenario // Include all scenario properties
-                }
+                },
+                // Preserve existing state, but ensure drafts remain drafts
+                ...(editingContentItem?.state !== 'published' && { state: 'draft' })
               };
               
               await contentApi.update(scenario.id, updateData);

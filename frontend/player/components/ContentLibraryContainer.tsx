@@ -122,6 +122,8 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
   // Optimized content handlers
   const handlePlayContent = useCallback(async (item: ContentItem) => {
     try {
+      // Allow playing of any content, including drafts for preview purposes
+      // This enables creators to preview their content before publishing
       const fullContentItem = await contentApi.get(item.id);
       
       const fullScenario = {

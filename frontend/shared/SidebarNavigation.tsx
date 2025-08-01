@@ -32,6 +32,7 @@ import {
   ContentCopy as TemplateIcon,
   RateReview as ReviewIcon,
   AutoAwesome as GenerateIcon,
+  LibraryBooks as SourcesIcon,
   People as PeopleIcon,
   ExpandLess,
   ExpandMore,
@@ -133,12 +134,20 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
 
     // Add creation/editing features for users with appropriate roles
     if (canEdit) {
-      items.push({
-        id: 'generate',
-        label: 'Content Generation',
-        icon: <GenerateIcon />,
-        path: '/app/generate'
-      });
+      items.push(
+        {
+          id: 'generate',
+          label: 'Content Generation',
+          icon: <GenerateIcon />,
+          path: '/app/generate'
+        },
+        {
+          id: 'sources',
+          label: 'Source Library',
+          icon: <SourcesIcon />,
+          path: '/app/sources'
+        }
+      );
     }
 
     // Add approval dashboard for reviewers and approvers

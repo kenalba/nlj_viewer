@@ -203,16 +203,18 @@ async def get_content(
     
     # Permission check: role-based access
     if current_user.role == UserRole.CREATOR:
-        # Creators can only see their own content or published content
-        if content.created_by != current_user.id and not content.is_published():
+        # Creators can see their own content, published content, or any content for preview
+        # Allow preview access to draft content for testing/preview purposes
+        if content.created_by != current_user.id and content.state not in ["draft", "submitted", "in_review", "published"]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied"
             )
     elif current_user.role == UserRole.REVIEWER:
-        # Reviewers can see their own content, submitted content, or published content
+        # Reviewers can see their own content, submitted content, published content, or draft content for preview
+        # Allow preview access to all content including drafts
         if (content.created_by != current_user.id and 
-            content.state not in ["submitted", "in_review", "published"]):
+            content.state not in ["draft", "submitted", "in_review", "published"]):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied"

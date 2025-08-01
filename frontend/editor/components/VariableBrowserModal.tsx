@@ -245,67 +245,166 @@ export const VariableBrowserModal: React.FC<VariableBrowserModalProps> = ({
                   {/* Existing Variables */}
                   {variables.map((variable) => (
                     <TableRow key={variable.id} hover>
-                      <TableCell>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Chip
-                            label={getTypeIcon(variable.type)}
-                            size="small"
-                            color={getTypeColor(variable.type) as any}
-                            sx={{ minWidth: 32, fontSize: '0.75rem' }}
-                          />
-                          <Typography variant="body2" fontWeight="medium">
-                            {variable.name}
-                          </Typography>
-                          {variable.allowRuntimeOverride && (
-                            <Chip
-                              label="URL"
+                      {editingVariable === variable.id ? (
+                        // Edit Mode Row
+                        <>
+                          <TableCell>
+                            <TextField
+                              defaultValue={variable.name}
+                              onBlur={(e) => {
+                                if (e.target.value.trim() && e.target.value !== variable.name) {
+                                  handleEditVariable(variable.id, { name: e.target.value.trim() });
+                                }
+                              }}
+                              placeholder="Variable name"
                               size="small"
-                              color="info"
+                              fullWidth
                               variant="outlined"
-                              sx={{ fontSize: '0.6rem', height: 20 }}
+                              autoFocus
                             />
-                          )}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={variable.type}
-                          size="small"
-                          color={getTypeColor(variable.type) as any}
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontFamily="monospace">
-                          {String(variable.defaultValue)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" color="text.secondary" noWrap>
-                          {variable.description || '-'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Box display="flex" gap={0.5}>
-                          <Tooltip title="Edit">
-                            <IconButton
+                          </TableCell>
+                          <TableCell>
+                            <FormControl size="small" fullWidth>
+                              <Select
+                                value={variable.type}
+                                onChange={(e) => {
+                                  const newType = e.target.value as 'number' | 'string' | 'boolean';
+                                  const newDefaultValue = getDefaultValueForType(newType);
+                                  handleEditVariable(variable.id, { 
+                                    type: newType, 
+                                    defaultValue: newDefaultValue 
+                                  });
+                                }}
+                                displayEmpty
+                              >
+                                <MenuItem value="number">Number</MenuItem>
+                                <MenuItem value="string">String</MenuItem>
+                                <MenuItem value="boolean">Boolean</MenuItem>
+                              </Select>
+                            </FormControl>
+                          </TableCell>
+                          <TableCell>
+                            <TextField
+                              defaultValue={String(variable.defaultValue)}
+                              onBlur={(e) => {
+                                let value: number | string | boolean = e.target.value;
+                                if (variable.type === 'number') {
+                                  value = parseFloat(e.target.value) || 0;
+                                } else if (variable.type === 'boolean') {
+                                  value = e.target.value === 'true';
+                                }
+                                if (value !== variable.defaultValue) {
+                                  handleEditVariable(variable.id, { defaultValue: value });
+                                }
+                              }}
+                              type={variable.type === 'number' ? 'number' : 'text'}
                               size="small"
-                              onClick={() => setEditingVariable(variable.id)}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete">
-                            <IconButton
+                              fullWidth
+                              variant="outlined"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <TextField
+                              defaultValue={variable.description || ''}
+                              onBlur={(e) => {
+                                if (e.target.value !== variable.description) {
+                                  handleEditVariable(variable.id, { description: e.target.value });
+                                }
+                              }}
+                              placeholder="Description"
                               size="small"
-                              onClick={() => handleDeleteVariable(variable.id)}
-                              color="error"
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </TableCell>
+                              fullWidth
+                              variant="outlined"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Box display="flex" gap={0.5}>
+                              <Tooltip title="Save Changes">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => setEditingVariable(null)}
+                                  color="primary"
+                                >
+                                  <CheckIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Cancel">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => setEditingVariable(null)}
+                                >
+                                  <CancelIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        </>
+                      ) : (
+                        // Display Mode Row
+                        <>
+                          <TableCell>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <Chip
+                                label={getTypeIcon(variable.type)}
+                                size="small"
+                                color={getTypeColor(variable.type) as any}
+                                sx={{ minWidth: 32, fontSize: '0.75rem' }}
+                              />
+                              <Typography variant="body2" fontWeight="medium">
+                                {variable.name}
+                              </Typography>
+                              {variable.allowRuntimeOverride && (
+                                <Chip
+                                  label="URL"
+                                  size="small"
+                                  color="info"
+                                  variant="outlined"
+                                  sx={{ fontSize: '0.6rem', height: 20 }}
+                                />
+                              )}
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={variable.type}
+                              size="small"
+                              color={getTypeColor(variable.type) as any}
+                              variant="outlined"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" fontFamily="monospace">
+                              {String(variable.defaultValue)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" color="text.secondary" noWrap>
+                              {variable.description || '-'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Box display="flex" gap={0.5}>
+                              <Tooltip title="Edit">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => setEditingVariable(variable.id)}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Delete">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleDeleteVariable(variable.id)}
+                                  color="error"
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        </>
+                      )}
                     </TableRow>
                   ))}
 

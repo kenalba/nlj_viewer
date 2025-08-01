@@ -519,7 +519,7 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
           variant="filled"
           sx={{ width: '100%' }}
         >
-          Scenario saved successfully!
+          Draft saved successfully!
         </Alert>
       </Snackbar>
 

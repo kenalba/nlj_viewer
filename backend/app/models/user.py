@@ -17,6 +17,8 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models.content import ContentItem
+    from app.models.source_document import SourceDocument
+    from app.models.generation_session import GenerationSession
     # TODO: Uncomment when ApprovalStep model is implemented
     # from app.models.workflow import ApprovalStep
 
@@ -93,6 +95,14 @@ class User(Base):
     
     # Relationships using modern typing
     created_content: Mapped[list["ContentItem"]] = relationship(
+        back_populates="creator",
+        lazy="selectin"
+    )
+    source_documents: Mapped[list["SourceDocument"]] = relationship(
+        back_populates="owner",
+        lazy="selectin"
+    )
+    generation_sessions: Mapped[list["GenerationSession"]] = relationship(
         back_populates="creator",
         lazy="selectin"
     )
