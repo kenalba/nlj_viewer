@@ -66,6 +66,7 @@ from app.api.content import router as content_router
 from app.api.workflow import router as workflow_router
 from app.api.sources import router as sources_router
 from app.api.generation import router as generation_router
+from app.api.shared_tokens import auth_router as sharing_router, public_router as public_sharing_router
 
 app.include_router(auth_router, prefix="/api/auth", tags=["authentication"])
 app.include_router(users_router, prefix="/api/users", tags=["users"])
@@ -73,6 +74,8 @@ app.include_router(content_router, prefix="/api", tags=["content"])
 app.include_router(workflow_router, tags=["workflow"])
 app.include_router(sources_router, prefix="/api", tags=["sources"])
 app.include_router(generation_router, prefix="/api", tags=["generation"])
+app.include_router(sharing_router, prefix="/api", tags=["sharing"])
+app.include_router(public_sharing_router, tags=["public"])
 
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from app.models.workflow import ContentVersion, ApprovalWorkflow
     from app.models.generation_session import GenerationSession
     from app.models.activity_source import ActivitySource
+    from app.models.shared_token import SharedToken
 
 
 class ContentState(str, Enum):
@@ -180,6 +181,13 @@ class ContentItem(Base):
         lazy="selectin"
     )
     
+    # Public sharing tokens
+    shared_tokens: Mapped[list["SharedToken"]] = relationship(
+        back_populates="content",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    
     def __repr__(self) -> str:
         return f"<ContentItem(title={self.title}, state={self.state})>"
     
@@ -270,3 +278,20 @@ class ContentItem(Base):
         if len(sources) == 1:
             return f"Source: {sources[0].get_display_name()}"
         return f"{len(sources)} source documents"
+    
+    def can_be_shared(self) -> bool:
+        """Check if content can be publicly shared."""
+        # Allow sharing of any content (draft, published, etc.)
+        # Users should be able to share their work for feedback/testing
+        return True
+    
+    def get_active_share_token(self) -> "SharedToken | None":
+        """Get the currently active share token, if any."""
+        for token in self.shared_tokens:
+            if token.is_valid:
+                return token
+        return None
+    
+    def has_active_share(self) -> bool:
+        """Check if content has an active public share."""
+        return self.get_active_share_token() is not None

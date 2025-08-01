@@ -42,6 +42,12 @@ class Settings(BaseSettings):
         description="Allowed origins for CORS"
     )
     
+    # Frontend URL for public sharing
+    FRONTEND_URL: str | None = Field(
+        default=None,
+        description="Frontend URL for generating public share links. If not set, will be derived from request or default to localhost:5173"
+    )
+    
     # File upload settings
     MAX_FILE_SIZE: int = Field(
         default=500 * 1024 * 1024,  # 500MB (Claude Files API limit)
