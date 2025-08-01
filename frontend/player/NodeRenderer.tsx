@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, useTheme as useMuiTheme, Stack } from '@mui/material';
 import { Analytics, Refresh } from '@mui/icons-material';
 import type { NLJNode, NLJScenario, ChoiceNode, NodeResponseValue } from '../types/nlj';
@@ -23,6 +24,8 @@ import { CrosswordNode } from './CrosswordNode';
 import { BranchNode } from './BranchNode';
 import { XAPIResultsScreen } from './XAPIResultsScreen';
 import { CompletionModal } from './CompletionModal';
+import { ErrorBoundary } from '../shared/ErrorBoundary';
+import { MalformedNodeDisplay, validateNode } from '../shared/MalformedNodeDisplay';
 import { useGameContext } from '../contexts/GameContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAudio } from '../contexts/AudioContext';
@@ -291,11 +294,12 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
   }, [node.id, node.type, state.score, scenario, navigateToNode, playSound, completeScenario]);
 
   // Completion modal handlers
+  const navigate = useNavigate();
+  
   const handleGoHome = useCallback(() => {
-    // For now, just restart to go to landing page
-    // This could be enhanced to navigate to an actual home page
-    window.location.reload();
-  }, []);
+    // Navigate to Activities page instead of reloading
+    navigate('/app/activities');
+  }, [navigate]);
 
   const handleRestartFromModal = useCallback(() => {
     handleRestart();
@@ -323,7 +327,31 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
   }, [node.type, handleContinue]);
 
   const renderNodeContent = () => {
-    switch (node.type) {
+    // First, validate the node structure
+    const validation = validateNode(node);
+    if (!validation.isValid) {
+      return (
+        <MalformedNodeDisplay
+          node={node}
+          error={validation.errors.join('; ')}
+          onSkip={() => {
+            // Try to find the next node and navigate to it
+            const nextNode = findNextNode(scenario, node.id);
+            if (nextNode) {
+              navigateToNode(nextNode.id);
+            } else {
+              // If no next node, complete the scenario
+              completeScenario();
+            }
+          }}
+          onHome={handleGoHome}
+        />
+      );
+    }
+
+    // Wrap each node rendering in a try-catch for additional safety
+    try {
+      switch (node.type) {
       case 'start':
         return (
           <NodeCard animate={false}>
@@ -592,17 +620,66 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
 
       default:
         return (
-          <NodeCard animate={false}>
-            <Typography color="error">
-              Unknown node type: {node.type}
-            </Typography>
-          </NodeCard>
+          <MalformedNodeDisplay
+            node={node}
+            error={`Unknown node type: ${node.type}`}
+            onSkip={() => {
+              const nextNode = findNextNode(scenario, node.id);
+              if (nextNode) {
+                navigateToNode(nextNode.id);
+              } else {
+                completeScenario();
+              }
+            }}
+            onHome={handleGoHome}
+          />
         );
+      }
+    } catch (error) {
+      console.error('Error rendering node:', error, { nodeId: node.id, nodeType: node.type });
+      return (
+        <MalformedNodeDisplay
+          node={node}
+          error={error instanceof Error ? error.message : 'Unexpected rendering error'}
+          onSkip={() => {
+            const nextNode = findNextNode(scenario, node.id);
+            if (nextNode) {
+              navigateToNode(nextNode.id);
+            } else {
+              completeScenario();
+            }
+          }}
+          onHome={handleGoHome}
+        />
+      );
     }
   };
 
   return (
-    <>
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        console.error('NodeRenderer ErrorBoundary caught error:', error, errorInfo, {
+          nodeId: node.id,
+          nodeType: node.type,
+          scenarioId: scenario.id
+        });
+      }}
+      fallback={
+        <MalformedNodeDisplay
+          node={node}
+          error="A critical error occurred while rendering this content"
+          onSkip={() => {
+            const nextNode = findNextNode(scenario, node.id);
+            if (nextNode) {
+              navigateToNode(nextNode.id);
+            } else {
+              completeScenario();
+            }
+          }}
+          onHome={handleGoHome}
+        />
+      }
+    >
       {renderNodeContent()}
       <CompletionModal
         open={showCompletionModal}
@@ -617,6 +694,6 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({ node, scenario }) =>
         score={state.score}
         xapiEnabled={xapiEnabled}
       />
-    </>
+    </ErrorBoundary>
   );
 };

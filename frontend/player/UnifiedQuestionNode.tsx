@@ -5,7 +5,6 @@ import {
   Button,
   Radio,
   Stack,
-  Alert,
   Collapse,
   Divider,
   useTheme as useMuiTheme,
@@ -13,10 +12,10 @@ import {
 import type { QuestionNode, ChoiceNode } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from '../shared/MediaViewer';
+import { MultipleChoiceFeedback } from '../shared/FeedbackDisplay';
 import { useTheme } from '../contexts/ThemeContext';
 import { useXAPI } from '../contexts/XAPIContext';
 import { useNodeSettings } from '../hooks/useNodeSettings';
-import { getAlertFeedbackColors } from '../utils/feedbackColors';
 import { useIsMobile } from '../utils/mobileDetection';
 import { MarkdownRenderer } from '../shared/MarkdownRenderer';
 import { MediaDisplay } from '../shared/MediaDisplay';
@@ -142,16 +141,6 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
     return () => document.removeEventListener('keydown', handleKeyPress);
   }, [disabled, showFeedback, shuffledChoices, selectedChoice, handleChoiceClick, handleSubmit, handleContinue]);
 
-  const getFeedbackSeverity = (choiceType: string) => {
-    switch (choiceType) {
-      case 'CORRECT':
-        return 'success';
-      case 'INCORRECT':
-        return 'error';
-      default:
-        return 'info';
-    }
-  };
 
   return (
     <NodeCard animate={false}>
@@ -332,29 +321,11 @@ export const UnifiedQuestionNode: React.FC<UnifiedQuestionNodeProps> = ({
                   },
                 }}
               >
-                <Alert 
-                  severity={getFeedbackSeverity(selectedChoiceNode.choiceType)}
-                  sx={{ 
-                    borderRadius: (muiTheme.shape.borderRadius as number) * 1.5,
-                    mb: 2,
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    boxShadow: 'none',
-                    p: 0,
-                    '& .MuiAlert-icon': {
-                      color: getAlertFeedbackColors(
-                        muiTheme, 
-                        themeMode, 
-                        getFeedbackSeverity(selectedChoiceNode.choiceType) as 'success' | 'error' | 'warning' | 'info'
-                      ).iconColor,
-                    },
-                  }}
-                >
-                  <MarkdownRenderer
-                    content={selectedChoiceNode.feedback || 'Thank you for your response.'}
-                    sx={{ fontSize: '0.95rem', color: 'text.primary' }}
-                  />
-                </Alert>
+                <MultipleChoiceFeedback
+                  feedback={selectedChoiceNode.feedback || 'Thank you for your response.'}
+                  isCorrect={selectedChoiceNode.choiceType === 'CORRECT'}
+                  choiceType={selectedChoiceNode.choiceType}
+                />
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
                   <Button
                     variant="contained"

@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, Typography, TextField, Button, Alert } from '@mui/material';
+import { Box, Typography, TextField, Button } from '@mui/material';
 import { Edit } from '@mui/icons-material';
 import type { ShortAnswerNode as ShortAnswerNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from '../shared/MediaViewer';
+import { ShortAnswerFeedback } from '../shared/FeedbackDisplay';
 import { useAudio } from '../contexts/AudioContext';
 import { useNodeSettings } from '../hooks/useNodeSettings';
 import { MarkdownRenderer } from '../shared/MarkdownRenderer';
@@ -75,26 +76,6 @@ export const ShortAnswerNode: React.FC<ShortAnswerNodeProps> = ({ question, onAn
     }
   };
 
-  const getFeedbackMessage = () => {
-    const isCorrect = isAnswerCorrect(userAnswer);
-    
-    if (isCorrect) {
-      return 'Correct! Well done.';
-    } else {
-      // Show the first correct answer as an example
-      const exampleAnswer = question.correctAnswers[0];
-      if (question.correctAnswers.length === 1) {
-        return `Incorrect. The correct answer is: "${exampleAnswer}"`;
-      } else {
-        return `Incorrect. One correct answer is: "${exampleAnswer}"`;
-      }
-    }
-  };
-
-  const getFeedbackSeverity = () => {
-    const isCorrect = isAnswerCorrect(userAnswer);
-    return isCorrect ? 'success' : 'error';
-  };
 
   return (
     <NodeCard animate={true}>
@@ -185,26 +166,11 @@ export const ShortAnswerNode: React.FC<ShortAnswerNodeProps> = ({ question, onAn
       </Box>
 
       {showFeedback && (
-        <Alert 
-          severity={getFeedbackSeverity() as 'success' | 'error'} 
-          sx={{ 
-            mt: 2,
-            borderRadius: 2,
-            '& .MuiAlert-message': {
-              width: '100%',
-              textAlign: 'center'
-            }
-          }}
-        >
-          <Box>
-            <Typography gutterBottom>
-              {getFeedbackMessage()}
-            </Typography>
-            <Typography sx={{ mt: 1, fontStyle: 'italic' }}>
-              Your answer: "{userAnswer}"
-            </Typography>
-          </Box>
-        </Alert>
+        <ShortAnswerFeedback
+          isCorrect={isAnswerCorrect(userAnswer)}
+          userAnswer={userAnswer}
+          correctAnswers={question.correctAnswers}
+        />
       )}
     </NodeCard>
   );

@@ -11,6 +11,7 @@ import {
 import type { CheckboxNode as CheckboxNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from '../shared/MediaViewer';
+import { CheckboxFeedback } from '../shared/FeedbackDisplay';
 import { useAudio } from '../contexts/AudioContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useXAPI } from '../contexts/XAPIContext';
@@ -25,6 +26,7 @@ interface CheckboxNodeProps {
 export const CheckboxNode: React.FC<CheckboxNodeProps> = ({ question, onAnswer }) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showValidation, setShowValidation] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const [questionStartTime] = useState(new Date());
   const { playSound } = useAudio();
   const { themeMode } = useTheme();
@@ -91,8 +93,15 @@ export const CheckboxNode: React.FC<CheckboxNodeProps> = ({ question, onAnswer }
       timeSpent
     );
     
+    // Show feedback instead of immediately calling onAnswer
+    setShowFeedback(true);
+  }, [selectedIds, validateSelections, calculateCorrectness, playSound, trackQuestionAnswered, question.id, questionStartTime]);
+
+  const handleContinue = useCallback(() => {
+    const isCorrect = calculateCorrectness();
+    playSound('navigate');
     onAnswer(isCorrect);
-  }, [selectedIds, validateSelections, calculateCorrectness, playSound, trackQuestionAnswered, question.id, questionStartTime, onAnswer]);
+  }, [calculateCorrectness, playSound, onAnswer]);
 
   // Keyboard support
   useEffect(() => {
@@ -120,13 +129,17 @@ export const CheckboxNode: React.FC<CheckboxNodeProps> = ({ question, onAnswer }
       // Handle Enter key
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
-        handleSubmit();
+        if (showFeedback) {
+          handleContinue();
+        } else {
+          handleSubmit();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSubmit, playSound, question.options]);
+  }, [handleSubmit, handleContinue, playSound, question.options, showFeedback]);
 
   const validationError = validateSelections();
   const minSelections = question.minSelections || 0;
@@ -245,6 +258,7 @@ export const CheckboxNode: React.FC<CheckboxNodeProps> = ({ question, onAnswer }
         <Button
           variant="contained"
           onClick={handleSubmit}
+          disabled={showFeedback}
           size="large"
           sx={{
             minWidth: '120px',
@@ -267,8 +281,43 @@ export const CheckboxNode: React.FC<CheckboxNodeProps> = ({ question, onAnswer }
       </Box>
 
       <FormHelperText sx={{ textAlign: 'center', mt: 2 }}>
-        Press 1-{Math.min(9, question.options.length)} to toggle options • Press Enter to submit
+        Press 1-{Math.min(9, question.options.length)} to toggle options • Press Enter to {showFeedback ? 'continue' : 'submit'}
       </FormHelperText>
+
+      {showFeedback && (
+        <Box sx={{ mt: 3 }}>
+          <CheckboxFeedback
+            isCorrect={calculateCorrectness()}
+            selectedCount={selectedIds.length}
+            correctOptions={question.options.filter(opt => opt.isCorrect).map(opt => opt.text)}
+          />
+          
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Button
+              variant="contained"
+              onClick={handleContinue}
+              size="large"
+              sx={{
+                minWidth: '120px',
+                borderRadius: 3,
+                px: 4,
+                py: 1.5,
+                ...(themeMode === 'unfiltered' && {
+                  background: 'linear-gradient(45deg, #FF6B6B, #4ECDC4)',
+                  boxShadow: '0 4px 16px rgba(246, 250, 36, 0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #FF5252, #26C6DA)',
+                    boxShadow: '0 6px 20px rgba(246, 250, 36, 0.4)',
+                    transform: 'translateY(-2px)',
+                  },
+                }),
+              }}
+            >
+              Continue
+            </Button>
+          </Box>
+        </Box>
+      )}
     </NodeCard>
   );
 };

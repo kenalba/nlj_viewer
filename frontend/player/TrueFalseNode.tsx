@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, Alert } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import { CheckCircle, Cancel } from '@mui/icons-material';
 import type { TrueFalseNode as TrueFalseNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from '../shared/MediaViewer';
+import { TrueFalseFeedback } from '../shared/FeedbackDisplay';
 import { useAudio } from '../contexts/AudioContext';
 import { useXAPI } from '../contexts/XAPIContext';
 import { useNodeSettings } from '../hooks/useNodeSettings';
@@ -98,21 +99,6 @@ export const TrueFalseNode: React.FC<TrueFalseNodeProps> = ({ question, onAnswer
     onAnswer(isCorrect);
   };
 
-  const getFeedbackMessage = () => {
-    if (selectedAnswer === null) return '';
-    
-    const isCorrect = selectedAnswer === question.correctAnswer;
-    if (isCorrect) {
-      return 'Correct! Well done.';
-    } else {
-      return `Incorrect. The correct answer is: ${question.correctAnswer ? 'True' : 'False'}`;
-    }
-  };
-
-  const getFeedbackSeverity = () => {
-    if (selectedAnswer === null) return 'info';
-    return selectedAnswer === question.correctAnswer ? 'success' : 'error';
-  };
 
   return (
     <NodeCard animate={true}>
@@ -208,20 +194,10 @@ export const TrueFalseNode: React.FC<TrueFalseNodeProps> = ({ question, onAnswer
 
       {showFeedback && (
         <Box>
-          <Alert 
-            severity={getFeedbackSeverity() as 'success' | 'error' | 'info'} 
-            sx={{ 
-              mt: 2,
-              mb: 2,
-              borderRadius: 2,
-              '& .MuiAlert-message': {
-                width: '100%',
-                textAlign: 'center'
-              }
-            }}
-          >
-            {getFeedbackMessage()}
-          </Alert>
+          <TrueFalseFeedback
+            isCorrect={selectedAnswer === question.correctAnswer}
+            correctAnswer={question.correctAnswer}
+          />
           
           {/* Continue Button */}
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>

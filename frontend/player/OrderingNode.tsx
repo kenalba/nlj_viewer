@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, Alert, Paper, IconButton, FormHelperText } from '@mui/material';
+import { Box, Typography, Button, Paper, IconButton, FormHelperText } from '@mui/material';
 import { DragIndicator, CheckCircle } from '@mui/icons-material';
 import type { OrderingNode as OrderingNodeType, OrderingItem } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from '../shared/MediaViewer';
+import { OrderingFeedback } from '../shared/FeedbackDisplay';
 import { useAudio } from '../contexts/AudioContext';
 import { useNodeSettings } from '../hooks/useNodeSettings';
 import { useIsMobile } from '../utils/mobileDetection';
@@ -18,14 +19,25 @@ interface OrderingNodeProps {
 export const OrderingNode: React.FC<OrderingNodeProps> = ({ question, onAnswer }) => {
   const settings = useNodeSettings(question.id);
   const [orderedItems, setOrderedItems] = useState<OrderingItem[]>(() => {
-    // Use settings to determine if items should be shuffled
-    const shouldShuffle = settings.shuffleAnswerOrder;
+    // Ordering questions should always shuffle by default (otherwise it's too easy!)
+    // Only skip shuffling if explicitly disabled in settings
+    const shouldShuffle = settings.shuffleAnswerOrder !== false; // Default to true
     if (import.meta.env.DEV) {
       console.log(`OrderingNode ${question.id}: shuffleAnswerOrder=${shouldShuffle}, reinforcementEligible=${settings.reinforcementEligible}`);
     }
-    return shouldShuffle 
-      ? [...question.items].sort(() => Math.random() - 0.5) 
-      : [...question.items];
+    
+    // Create a copy of items for manipulation
+    const itemsCopy = [...question.items];
+    
+    if (shouldShuffle) {
+      // Shuffle the items randomly using Fisher-Yates algorithm
+      for (let i = itemsCopy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [itemsCopy[i], itemsCopy[j]] = [itemsCopy[j], itemsCopy[i]];
+      }
+    }
+    
+    return itemsCopy;
   });
   const [showFeedback, setShowFeedback] = useState(false);
   const [draggedItem, setDraggedItem] = useState<OrderingItem | null>(null);
@@ -72,12 +84,8 @@ export const OrderingNode: React.FC<OrderingNodeProps> = ({ question, onAnswer }
   const handleSubmit = () => {
     setShowFeedback(true);
     
-    // Check if the order is correct
-    const isCorrect = orderedItems.every((item, index) => {
-      return item.correctOrder === index + 1;
-    });
-    
-    if (isCorrect) {
+    const correct = isCorrect();
+    if (correct) {
       playSound('correct');
     } else {
       playSound('incorrect');
@@ -85,13 +93,9 @@ export const OrderingNode: React.FC<OrderingNodeProps> = ({ question, onAnswer }
   };
 
   const handleContinue = () => {
-    // Check if the order is correct
-    const isCorrect = orderedItems.every((item, index) => {
-      return item.correctOrder === index + 1;
-    });
-    
+    const correct = isCorrect();
     playSound('navigate');
-    onAnswer(isCorrect);
+    onAnswer(correct);
   };
 
   // Add keyboard support for Enter key
@@ -111,24 +115,14 @@ export const OrderingNode: React.FC<OrderingNodeProps> = ({ question, onAnswer }
     return () => document.removeEventListener('keydown', handleKeyPress);
   }, [showFeedback, handleContinue, handleSubmit]);
 
-  const getFeedbackMessage = () => {
-    const isCorrect = orderedItems.every((item, index) => {
+  const isCorrect = () => {
+    return orderedItems.every((item, index) => {
       return item.correctOrder === index + 1;
     });
-    
-    if (isCorrect) {
-      return 'Correct! You have arranged the items in the proper order.';
-    } else {
-      const correctOrder = [...question.items].sort((a, b) => a.correctOrder - b.correctOrder);
-      return `Incorrect. The correct order is: ${correctOrder.map(item => `${item.correctOrder}. ${item.text}`).join(', ')}`;
-    }
   };
 
-  const getFeedbackSeverity = () => {
-    const isCorrect = orderedItems.every((item, index) => {
-      return item.correctOrder === index + 1;
-    });
-    return isCorrect ? 'success' : 'error';
+  const getCorrectOrder = () => {
+    return [...question.items].sort((a, b) => a.correctOrder - b.correctOrder);
   };
 
   return (
@@ -227,21 +221,12 @@ export const OrderingNode: React.FC<OrderingNodeProps> = ({ question, onAnswer }
 
       {showFeedback && (
         <Box sx={{ mt: 2 }}>
-          <Alert 
-            severity={getFeedbackSeverity() as 'success' | 'error'} 
-            sx={{ 
-              borderRadius: 2,
-              mb: 2,
-              '& .MuiAlert-message': {
-                width: '100%',
-                textAlign: 'center'
-              }
-            }}
-          >
-            {getFeedbackMessage()}
-          </Alert>
+          <OrderingFeedback
+            isCorrect={isCorrect()}
+            correctOrder={getCorrectOrder()}
+          />
           
-          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
             <Button
               variant="contained"
               onClick={handleContinue}
