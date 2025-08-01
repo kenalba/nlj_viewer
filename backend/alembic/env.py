@@ -18,6 +18,9 @@ from app.core.config import settings
 from app.models.user import User  # noqa: F401
 from app.models.content import ContentItem  # noqa: F401
 from app.models.workflow import ContentVersion, ApprovalWorkflow, WorkflowReview  # noqa: F401
+from app.models.source_document import SourceDocument  # noqa: F401
+from app.models.generation_session import GenerationSession  # noqa: F401
+from app.models.activity_source import ActivitySource  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
