@@ -48,13 +48,13 @@ export const PlayActivityLoader: React.FC<PlayActivityLoaderProps> = ({
         // Load the content item
         const contentItem = await contentApi.get(contentId);
 
-        // Check if content is published or if user has review permissions
-        const isPublished = contentItem.state === 'published';
-        const hasAccessToNonPublished = isReviewMode && canReview;
+        // // Check if content is published or if user has review permissions
+        // const isPublished = contentItem.state === 'published';
+        // const hasAccessToNonPublished = isReviewMode && canReview;
 
-        if (!isPublished && !hasAccessToNonPublished) {
-          throw new Error('This content is not published and cannot be accessed.');
-        }
+        // if (!isPublished && !hasAccessToNonPublished) {
+        //   throw new Error('This content is not published and cannot be accessed.');
+        // }
 
         // Convert ContentItem to NLJScenario format
         const scenario: NLJScenario = {

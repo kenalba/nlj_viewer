@@ -154,7 +154,7 @@ class ClaudeService:
         self,
         prompt_text: str,
         file_ids: List[str],
-        model: str = "claude-3-5-sonnet-20241022",
+        model: str = "claude-sonnet-4-20250514",
         max_tokens: int = 8192,
         temperature: float = 0.1
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[int]]:
@@ -481,7 +481,7 @@ class ClaudeService:
         self,
         file_id: str,
         prompt: str,
-        model: str = "claude-3-5-sonnet-20241022",
+        model: str = "claude-sonnet-4-20250514",
         max_tokens: int = 4096,
         temperature: float = 0.1
     ) -> Optional[str]:

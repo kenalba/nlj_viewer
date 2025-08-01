@@ -17,7 +17,10 @@ export const findNextNode = (
   }
   
   // Find direct link (for non-choice nodes)
-  const directLink = links.find(link => link.type === 'link');
+  // First try explicit 'link' type, then fall back to any non-parent-child link, then any link
+  const directLink = links.find(link => link.type === 'link') || 
+                    links.find(link => link.type !== 'parent-child') || 
+                    links[0];
   return directLink?.targetNodeId || null;
 };
 

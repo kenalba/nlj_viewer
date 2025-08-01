@@ -22,6 +22,7 @@ import {
   Send as SubmitIcon
 } from '@mui/icons-material';
 import type { ContentItem } from '../../api/content';
+import { contentApi } from '../../api/content';
 import { canEditContent, canDeleteContent, canViewAnalytics } from '../../utils/permissions';
 import type { User } from '../../api/auth';
 
@@ -79,12 +80,52 @@ export const ItemActionsMenu: React.FC<ItemActionsMenuProps> = ({
     });
   }, [handleAction, item]);
 
-  const handleExport = useCallback(() => {
-    handleAction(() => {
-      // TODO: Implement export functionality
-      console.log('Exporting:', item.title);
-    });
-  }, [handleAction, item]);
+  const handleExport = useCallback(async () => {
+    try {
+      // Fetch the full content item with NLJ data
+      const fullContentItem = await contentApi.get(item.id);
+      
+      // Create the exportable scenario object
+      const exportScenario = {
+        id: fullContentItem.id.toString(),
+        name: fullContentItem.title,
+        description: fullContentItem.description || '',
+        orientation: 'portrait' as const,
+        activityType: fullContentItem.content_type,
+        nodes: fullContentItem.nlj_data?.nodes || [],
+        links: fullContentItem.nlj_data?.links || [],
+        variableDefinitions: fullContentItem.nlj_data?.variableDefinitions || [],
+        // Include additional metadata for reference
+        metadata: {
+          exportedAt: new Date().toISOString(),
+          exportedBy: user?.username || 'Unknown',
+          originalId: fullContentItem.id,
+          createdAt: fullContentItem.created_at,
+          updatedAt: fullContentItem.updated_at,
+          state: fullContentItem.state,
+          contentType: fullContentItem.content_type,
+          learningStyle: fullContentItem.learning_style,
+          templateCategory: fullContentItem.template_category
+        }
+      };
+      
+      // Create and download the JSON file
+      const dataStr = JSON.stringify(exportScenario, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+      const exportFileDefaultName = `${fullContentItem.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+      
+    } catch (error) {
+      console.error('Failed to export activity:', error);
+      // You could add a toast notification here if available
+    }
+    
+    onClose(); // Close the menu after export
+  }, [item, user, onClose]);
 
 
   const handleSubmitForReview = useCallback(() => {

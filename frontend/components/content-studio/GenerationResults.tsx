@@ -91,7 +91,7 @@ export const GenerationResults: React.FC<GenerationResultsProps> = ({
       // Navigate to the Flow Editor with the new activity
       if (response.data.activity_id) {
         setTimeout(() => {
-          navigate(`/app/flow/${response.data.activity_id}`);
+          navigate(`/app/flow/edit/${response.data.activity_id}`);
         }, 1500);
       }
     } catch (error: any) {
