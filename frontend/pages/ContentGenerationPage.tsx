@@ -1,9 +1,9 @@
 /**
- * Content Generation Page
- * Provides access to the LLM Prompt Generator for creating content
+ * Unified Content Studio
+ * Single interface for generating Activities and Media content
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -13,65 +13,147 @@ import {
   CardContent,
   Grid,
   Chip,
-  Alert
+  Alert,
+  Divider,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  TextField,
+  Stack,
+  CircularProgress
 } from '@mui/material';
 import {
   AutoAwesome as GenerateIcon,
-  Description as PromptIcon,
-  Science as StudioIcon,
-  Download as DownloadIcon,
-  ContentCopy as CopyIcon,
   Source as SourceIcon,
   Settings as ConfigIcon,
-  PlayArrow as PlayIcon
+  PlayArrow as PlayIcon,
+  AudioFile as PodcastIcon,
+  VideoFile as VideoIcon,
+  Assignment as ActivityIcon,
+  Mic as MediaIcon,
+  RecordVoiceOver as InterviewIcon,
+  School as EducationalIcon,
+  Forum as DiscussionIcon,
+  Engineering as TechnicalIcon
 } from '@mui/icons-material';
-import { LLMPromptGenerator } from '../shared/LLMPromptGenerator';
 import { SourceLibrarySelection } from '../components/content-studio/SourceLibrarySelection';
 import { PromptConfiguration } from '../components/content-studio/PromptConfiguration';
 import { GenerationProgress } from '../components/content-studio/GenerationProgress';
 import { GenerationResults } from '../components/content-studio/GenerationResults';
 import { type SourceDocument } from '../api/sources';
 import { generateContent, pollGenerationStatus, type PromptConfiguration as ApiPromptConfiguration } from '../api/generation';
+import { generatePodcastScript, generatePodcast, getGenerationStatus, type PodcastScriptRequest, type MediaGenerationRequest } from '../api/media';
 import { generateUnifiedPrompt, type ContentStudioConfig } from '../utils/promptGenerator';
 import type { NLJScenario } from '../types/nlj';
 
 interface ContentGenerationState {
   selectedDocuments: SourceDocument[];
+  selectedKeywords: string[];
+  selectedObjectives: string[];
+  contentType: 'activity' | 'media';
+  mediaType: 'podcast' | 'video';
+  podcastStyle: string;
+  podcastLength: string;
+  podcastDepth: string;
+  customInstructions: string;
   promptConfig: ApiPromptConfiguration | null;
-  generationStatus: 'idle' | 'generating' | 'completed' | 'error';
+  generationStatus: 'idle' | 'generating' | 'transcript-generated' | 'audio-generating' | 'completed' | 'error';
   generatedContent: NLJScenario | null;
+  generatedTranscript: string | null;
+  editedTranscript: string;
+  generatedMediaId: string | null;
+  audioGenerationProgress: string | null;
   error: string | null;
-  activeStep: number;
   sessionId: string | null;
 }
 
+// Podcast template options with icons
+const PODCAST_STYLES = [
+  { 
+    value: 'npr_interview', 
+    label: 'NPR Interview', 
+    description: 'Conversational interview format with host and expert',
+    icon: InterviewIcon
+  },
+  { 
+    value: 'educational_summary', 
+    label: 'Educational Summary', 
+    description: 'Structured educational overview with narrator',
+    icon: EducationalIcon
+  },
+  { 
+    value: 'conversational_deep_dive', 
+    label: 'Deep Dive Discussion', 
+    description: 'In-depth analysis with multiple perspectives',
+    icon: DiscussionIcon
+  },
+  { 
+    value: 'technical_breakdown', 
+    label: 'Technical Breakdown', 
+    description: 'Detailed technical explanation with examples',
+    icon: TechnicalIcon
+  }
+];
+
+const LENGTH_OPTIONS = [
+  { value: 'short', label: 'Short (3-5 min)', description: '500-800 words' },
+  { value: 'medium', label: 'Medium (5-8 min)', description: '800-1200 words' },
+  { value: 'long', label: 'Long (8-12 min)', description: '1200-1800 words' }
+];
+
+const DEPTH_OPTIONS = [
+  { value: 'surface', label: 'Surface Level', description: 'High-level overview with key points' },
+  { value: 'balanced', label: 'Balanced', description: 'Moderate detail with examples' },
+  { value: 'deep', label: 'Deep Analysis', description: 'Thorough analysis with nuanced discussion' }
+];
+
 export const ContentGenerationPage: React.FC = () => {
   const navigate = useNavigate();
-  const [promptGeneratorOpen, setPromptGeneratorOpen] = useState(false);
-  const [activeMode, setActiveMode] = useState<'prompt' | 'studio' | null>(null);
   
-  // Content Studio state
-  const [studioState, setStudioState] = useState<ContentGenerationState>({
+  // Unified Content Studio state
+  const [state, setState] = useState<ContentGenerationState>({
     selectedDocuments: [],
+    selectedKeywords: [],
+    selectedObjectives: [],
+    contentType: 'activity',
+    mediaType: 'podcast',
+    podcastStyle: 'npr_interview',
+    podcastLength: 'medium',
+    podcastDepth: 'balanced',
+    customInstructions: '',
     promptConfig: null,
     generationStatus: 'idle',
     generatedContent: null,
+    generatedTranscript: null,
+    editedTranscript: '',
+    generatedMediaId: null,
+    audioGenerationProgress: null,
     error: null,
-    activeStep: 0,
     sessionId: null
   });
 
-  const handleOpenPromptGenerator = () => {
-    setPromptGeneratorOpen(true);
-  };
+  // Extract all keywords and objectives from selected documents
+  const availableKeywords = useMemo(() => {
+    const allKeywords = state.selectedDocuments.flatMap(doc => doc.keywords || []);
+    return [...new Set(allKeywords)]; // Remove duplicates
+  }, [state.selectedDocuments]);
 
-  const handleClosePromptGenerator = () => {
-    setPromptGeneratorOpen(false);
-  };
+  const availableObjectives = useMemo(() => {
+    const allObjectives = state.selectedDocuments.flatMap(doc => doc.learning_objectives || []);
+    return [...new Set(allObjectives)]; // Remove duplicates
+  }, [state.selectedDocuments]);
 
-  // Content Studio handlers
+  // Document selection handler
   const handleDocumentSelection = (documents: SourceDocument[]) => {
-    setStudioState(prev => ({ ...prev, selectedDocuments: documents }));
+    setState(prev => ({ 
+      ...prev, 
+      selectedDocuments: documents,
+      // Auto-select some keywords/objectives when documents change
+      selectedKeywords: availableKeywords.slice(0, 5),
+      selectedObjectives: availableObjectives.slice(0, 3)
+    }));
   };
 
   const handlePromptConfiguration = useCallback((config: any) => {
@@ -81,46 +163,95 @@ export const ContentGenerationPage: React.FC = () => {
       style: config.content_style,
       nodeTypes: Object.values(config.node_types_enabled || {}).flat().length
     });
-    setStudioState(prev => ({ ...prev, promptConfig: config }));
+    setState(prev => ({ ...prev, promptConfig: config }));
   }, []);
 
   const handleStartGeneration = async () => {
     console.log('🎨 Content generation requested', {
-      documents: studioState.selectedDocuments.length,
-      config: studioState.promptConfig ? 'configured' : 'missing'
+      documents: state.selectedDocuments.length,
+      contentType: state.contentType,
+      config: state.promptConfig ? 'configured' : 'missing'
     });
     
-    if (!studioState.promptConfig || studioState.selectedDocuments.length === 0) {
+    if (state.selectedDocuments.length === 0) {
       console.error('❌ Generation prerequisites not met');
-      setStudioState(prev => ({
+      setState(prev => ({
         ...prev,
         generationStatus: 'error',
-        error: 'Please select documents and configure generation settings'
+        error: 'Please select at least one source document'
       }));
       return;
     }
 
-    console.log('🚀 Starting generation process...');
-    setStudioState(prev => ({ ...prev, generationStatus: 'generating', error: null }));
+    // For media generation, generate transcript first
+    if (state.contentType === 'media' && state.mediaType === 'podcast') {
+      console.log('🎙️ Starting podcast transcript generation...');
+      setState(prev => ({ ...prev, generationStatus: 'generating', error: null }));
+
+      try {
+        const scriptRequest: PodcastScriptRequest = {
+          source_document_id: state.selectedDocuments[0].id, // Use first document for now
+          selected_keywords: state.selectedKeywords,
+          selected_objectives: state.selectedObjectives,
+          style: state.podcastStyle,
+          length_preference: state.podcastLength,
+          conversation_depth: state.podcastDepth
+        };
+
+        const scriptResponse = await generatePodcastScript(scriptRequest);
+        
+        setState(prev => ({
+          ...prev,
+          generationStatus: 'transcript-generated',
+          generatedTranscript: scriptResponse.script,
+          editedTranscript: scriptResponse.script
+        }));
+
+        console.log('✅ Podcast transcript generated successfully');
+        return;
+      } catch (error) {
+        console.error('💥 Transcript generation failed:', error);
+        setState(prev => ({
+          ...prev,
+          generationStatus: 'error',
+          error: error instanceof Error ? error.message : 'Failed to generate transcript'
+        }));
+        return;
+      }
+    }
+
+    // For activity generation, check if prompt config is required
+    if (!state.promptConfig) {
+      console.error('❌ Activity generation requires configuration');
+      setState(prev => ({
+        ...prev,
+        generationStatus: 'error',
+        error: 'Please configure generation settings for activities'
+      }));
+      return;
+    }
+
+    console.log('🚀 Starting activity generation process...');
+    setState(prev => ({ ...prev, generationStatus: 'generating', error: null }));
 
     try {
       // Generate unified prompt from configuration
       console.log('📝 Generating unified prompt from configuration...');
-      const unifiedPrompt = generateUnifiedPrompt(studioState.promptConfig as ContentStudioConfig);
+      const unifiedPrompt = generateUnifiedPrompt(state.promptConfig as ContentStudioConfig);
       console.log(`✅ Generated unified prompt (${unifiedPrompt.length} chars)`);
 
       // Start generation
-      console.log('📝 Generating content with documents:', studioState.selectedDocuments.map(d => d.original_filename));
+      console.log('📝 Generating content with documents:', state.selectedDocuments.map(d => d.original_filename));
       const response = await generateContent({
-        source_document_ids: studioState.selectedDocuments.map(doc => doc.id),
-        prompt_config: studioState.promptConfig,
+        source_document_ids: state.selectedDocuments.map(doc => doc.id),
+        prompt_config: state.promptConfig,
         generated_prompt: unifiedPrompt,
         activity_name: `Generated Activity - ${new Date().toLocaleDateString()}`,
-        activity_description: `Generated from ${studioState.selectedDocuments.length} source document(s)`
+        activity_description: `Generated from ${state.selectedDocuments.length} source document(s)`
       });
 
       console.log('✅ Generation initiated, session ID:', response.session_id);
-      setStudioState(prev => ({
+      setState(prev => ({
         ...prev,
         sessionId: response.session_id
       }));
@@ -132,7 +263,7 @@ export const ContentGenerationPage: React.FC = () => {
         (progress) => {
           console.log('📊 Progress update:', progress);
           // Update progress in real-time
-          setStudioState(prev => ({
+          setState(prev => ({
             ...prev,
             generationStatus: progress.status === 'processing' ? 'generating' : 
                              progress.status === 'completed' ? 'completed' :
@@ -155,11 +286,10 @@ export const ContentGenerationPage: React.FC = () => {
           nodeCount: generatedScenario.nodes?.length || 0
         });
         
-        setStudioState(prev => ({
+        setState(prev => ({
           ...prev,
           generationStatus: 'completed',
-          generatedContent: generatedScenario,
-          activeStep: 3
+          generatedContent: generatedScenario
         }));
       } else {
         console.error('❌ No content in final status response');
@@ -168,10 +298,97 @@ export const ContentGenerationPage: React.FC = () => {
 
     } catch (error) {
       console.error('💥 Generation failed:', error);
-      setStudioState(prev => ({
+      setState(prev => ({
         ...prev,
         generationStatus: 'error',
         error: error instanceof Error ? error.message : 'Generation failed'
+      }));
+    }
+  };
+
+  const handleGenerateAudio = async () => {
+    if (!state.editedTranscript || state.selectedDocuments.length === 0) {
+      setState(prev => ({
+        ...prev,
+        error: 'Missing transcript or source documents for audio generation'
+      }));
+      return;
+    }
+
+    console.log('🎵 Starting audio generation from transcript...');
+    setState(prev => ({ ...prev, generationStatus: 'audio-generating', audioGenerationProgress: 'Starting audio generation...', error: null }));
+
+    try {
+      const generationRequest: MediaGenerationRequest = {
+        source_document_id: state.selectedDocuments[0].id,
+        media_type: 'podcast',
+        media_style: state.podcastStyle,
+        selected_keywords: state.selectedKeywords,
+        selected_objectives: state.selectedObjectives,
+        voice_config: {
+          host: 'female_professional',
+          guest: 'male_professional',
+          narrator: 'female_conversational'
+        },
+        generation_config: {
+          length_preference: state.podcastLength,
+          conversation_depth: state.podcastDepth,
+          custom_script: state.editedTranscript // Pass the edited transcript
+        }
+      };
+
+      // Start audio generation (this creates the media item and starts background processing)
+      const mediaItem = await generatePodcast(generationRequest);
+      console.log('📝 Audio generation started, polling for completion...', mediaItem.id);
+
+      // Poll for completion status
+      let attempts = 0;
+      const maxAttempts = 60; // 5 minutes max (5 second intervals)
+      
+      while (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+        attempts++;
+        
+        // Update progress indicator
+        const progressText = `Generating audio... ${attempts}/${maxAttempts} (${Math.round(attempts / maxAttempts * 100)}%)`;
+        setState(prev => ({ ...prev, audioGenerationProgress: progressText }));
+        
+        try {
+          const statusResponse = await getGenerationStatus(mediaItem.id);
+          console.log(`🔄 Audio generation status check ${attempts}/${maxAttempts}:`, statusResponse.status);
+          
+          if (statusResponse.status === 'completed') {
+            console.log('✅ Audio generation completed successfully');
+            setState(prev => ({
+              ...prev,
+              generationStatus: 'completed',
+              generatedMediaId: mediaItem.id,
+              audioGenerationProgress: null
+            }));
+            return;
+          } else if (statusResponse.status === 'failed') {
+            throw new Error(statusResponse.error || 'Audio generation failed');
+          }
+          // Continue polling if status is 'generating'
+        } catch (statusError) {
+          console.error('💥 Status check failed:', statusError);
+          // Continue polling unless it's a clear failure
+          if (attempts >= maxAttempts) {
+            throw statusError;
+          }
+        }
+      }
+      
+      // Timeout reached
+      throw new Error('Audio generation timed out after 5 minutes');
+
+    } catch (error) {
+      console.error('💥 Audio generation failed:', error);
+      setState(prev => ({
+        ...prev,
+        generationStatus: 'transcript-generated', // Return to transcript state
+        audioGenerationProgress: null,
+        error: error instanceof Error ? error.message : 'Failed to generate audio'
       }));
     }
   };
@@ -187,172 +404,565 @@ export const ContentGenerationPage: React.FC = () => {
   };
 
   const canProceedToGeneration = () => {
-    return studioState.selectedDocuments.length > 0 && studioState.promptConfig !== null;
+    if (state.selectedDocuments.length === 0) return false;
+    // For activity generation, require prompt config
+    if (state.contentType === 'activity') {
+      return state.promptConfig !== null;
+    }
+    // For media generation, just need documents
+    return true;
   };
 
-  const renderPromptGeneration = () => (
-    <Box>
-      <Alert severity="info" sx={{ mb: 4 }}>
-        <Typography variant="body2">
-          The LLM Prompt Generator creates detailed prompts for external AI tools like ChatGPT, Claude, or other language models to generate NLJ scenario content.
-        </Typography>
-      </Alert>
+  // Render Focus section (keywords and objectives)
+  const renderFocusSection = () => (
+    <Card>
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6">
+            2. Focus & Objectives
+          </Typography>
+        </Box>
+        
+        {state.selectedDocuments.length === 0 ? (
+          <Alert severity="info">
+            Select source documents to see available keywords and learning objectives.
+          </Alert>
+        ) : (
+          <Grid container spacing={3}>
+            {availableKeywords.length > 0 && (
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Focus Keywords ({state.selectedKeywords.length} selected)
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {availableKeywords.map((keyword) => (
+                    <Chip
+                      key={keyword}
+                      label={keyword}
+                      size="small"
+                      variant={state.selectedKeywords.includes(keyword) ? 'filled' : 'outlined'}
+                      onClick={() => setState(prev => ({
+                        ...prev,
+                        selectedKeywords: prev.selectedKeywords.includes(keyword)
+                          ? prev.selectedKeywords.filter(k => k !== keyword)
+                          : [...prev.selectedKeywords, keyword]
+                      }))}
+                    />
+                  ))}
+                </Box>
+              </Grid>
+            )}
 
-      <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
-        <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <CardContent sx={{ flexGrow: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <PromptIcon color="primary" sx={{ mr: 1 }} />
-              <Typography variant="h6" component="h2">
-                LLM Prompt Generator
-              </Typography>
-            </Box>
-            
-            <Typography variant="body1" paragraph>
-              Create comprehensive, customized prompts for generating NLJ scenarios with external AI tools.
-            </Typography>
-            
-            <Typography variant="body2" color="text.secondary" paragraph sx={{ fontWeight: 600 }}>
-              How to use:
-            </Typography>
-            <Typography variant="body2" color="text.secondary" component="ol" sx={{ pl: 2, mb: 2 }}>
-              <li>Generate a prompt using the tool below</li>
-              <li>Go to your LLM of choice (Claude, ChatGPT, or NotebookLM)</li>
-              <li>Paste the prompt and upload any source documents</li>
-              <li>Copy the JSON response from the LLM</li>
-              <li>Import it as a new activity using the Import feature</li>
-            </Typography>
-            
-            <Box sx={{ mt: 'auto', pt: 2 }}>
-              <Button
-                variant="contained"
-                startIcon={<GenerateIcon />}
-                onClick={handleOpenPromptGenerator}
-                fullWidth
-              >
-                Open Prompt Generator
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
-
-        <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <CardContent sx={{ flexGrow: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <StudioIcon color="primary" sx={{ mr: 1 }} />
-              <Typography variant="h6" component="h2">
-                Integrated Content Studio
-              </Typography>
-              <Chip label="Now Available" size="small" color="success" sx={{ ml: 1 }} />
-            </Box>
-            
-            <Typography variant="body1" paragraph>
-              Direct integration with AI services for in-app content generation using your source documents.
-            </Typography>
-            
-            <Box sx={{ mb: 2 }}>
-              <Chip label="Claude API" size="small" variant="outlined" sx={{ mr: 1, mb: 1 }} />
-              <Chip label="Document Upload" size="small" variant="outlined" sx={{ mr: 1, mb: 1 }} />
-              <Chip label="Context Awareness" size="small" variant="outlined" sx={{ mr: 1, mb: 1 }} />
-              <Chip label="Flow Editor Integration" size="small" variant="outlined" sx={{ mr: 1, mb: 1 }} />
-            </Box>
-            
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Features:
-            </Typography>
-            <Typography variant="body2" color="text.secondary" component="ul" sx={{ pl: 2 }}>
-              <li>Upload and manage source documents</li>
-              <li>Generate content directly in the platform</li>
-              <li>Automatic schema validation</li>
-              <li>Seamless Flow Editor integration</li>
-              <li>Progress tracking and error handling</li>
-            </Typography>
-            
-            <Box sx={{ mt: 'auto', pt: 2 }}>
-              <Button
-                variant="contained"
-                startIcon={<StudioIcon />}
-                onClick={() => setActiveMode('studio')}
-                fullWidth
-              >
-                Try Content Studio
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
-      </Box>
-    </Box>
+            {availableObjectives.length > 0 && (
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Learning Objectives ({state.selectedObjectives.length} selected)
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {availableObjectives.map((objective, index) => (
+                    <Chip
+                      key={index}
+                      label={objective}
+                      size="small"
+                      variant={state.selectedObjectives.includes(objective) ? 'filled' : 'outlined'}
+                      onClick={() => setState(prev => ({
+                        ...prev,
+                        selectedObjectives: prev.selectedObjectives.includes(objective)
+                          ? prev.selectedObjectives.filter(o => o !== objective)
+                          : [...prev.selectedObjectives, objective]
+                      }))}
+                      sx={{ 
+                        height: 'auto',
+                        '& .MuiChip-label': {
+                          display: 'block',
+                          whiteSpace: 'normal',
+                          textAlign: 'left'
+                        }
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Grid>
+            )}
+          </Grid>
+        )}
+      </CardContent>
+    </Card>
   );
 
-  const renderContentStudio = () => {
-    if (studioState.activeStep === 3 && studioState.generatedContent) {
+  // Render Content Type selection
+  const renderContentTypeSection = () => (
+    <Card>
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6">
+            3. Content Type
+          </Typography>
+        </Box>
+        
+        <FormControl component="fieldset">
+          <FormLabel component="legend">What would you like to generate?</FormLabel>
+          <RadioGroup
+            row
+            value={state.contentType}
+            onChange={(e) => setState(prev => ({ ...prev, contentType: e.target.value as 'activity' | 'media' }))}
+            sx={{ mt: 1 }}
+          >
+            <FormControlLabel
+              value="activity"
+              control={<Radio />}
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <ActivityIcon />
+                  <Typography variant="body1">Activity</Typography>
+                </Box>
+              }
+            />
+            <FormControlLabel
+              value="media"
+              control={<Radio />}
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <MediaIcon />
+                  <Typography variant="body1">Media</Typography>
+                </Box>
+              }
+            />
+          </RadioGroup>
+        </FormControl>
+
+        {state.contentType === 'media' && (
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Media Type
+            </Typography>
+            <Stack direction="row" spacing={2}>
+              <Button
+                variant={state.mediaType === 'podcast' ? 'contained' : 'outlined'}
+                startIcon={<PodcastIcon />}
+                onClick={() => setState(prev => ({ ...prev, mediaType: 'podcast' }))}
+              >
+                Podcast
+              </Button>
+              <Button
+                variant={state.mediaType === 'video' ? 'contained' : 'outlined'}
+                startIcon={<VideoIcon />}
+                disabled
+                onClick={() => setState(prev => ({ ...prev, mediaType: 'video' }))}
+              >
+                Video (Coming Soon)
+              </Button>
+            </Stack>
+          </Box>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  // Render Configuration section
+  const renderConfigurationSection = () => (
+    <Card>
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <ConfigIcon color="primary" sx={{ mr: 1.5 }} />
+          <Typography variant="h6">
+            4. Configuration
+          </Typography>
+        </Box>
+        
+        {state.contentType === 'activity' && (
+          <PromptConfiguration
+            selectedDocuments={state.selectedDocuments}
+            onConfigurationChange={handlePromptConfiguration}
+          />
+        )}
+        
+        {state.contentType === 'media' && state.mediaType === 'podcast' && (
+          <Box>
+            <Typography variant="body2" color="text.secondary" paragraph>
+              Configure your podcast generation settings below.
+            </Typography>
+            
+            {/* Podcast Style Selection */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Podcast Style
+              </Typography>
+              <Grid container spacing={1.5}>
+                {PODCAST_STYLES.map((style) => {
+                  const IconComponent = style.icon;
+                  const isSelected = state.podcastStyle === style.value;
+                  
+                  return (
+                    <Grid item xs={6} key={style.value}>
+                      <Card
+                        variant="outlined"
+                        sx={{
+                          cursor: 'pointer',
+                          border: isSelected ? '2px solid' : '1px solid',
+                          borderColor: isSelected ? 'primary.main' : 'divider',
+                          bgcolor: isSelected ? 'rgba(25, 118, 210, 0.08)' : 'background.paper',
+                          '&:hover': { 
+                            borderColor: isSelected ? 'primary.main' : 'primary.light',
+                            boxShadow: 2
+                          },
+                          transition: 'all 0.2s ease',
+                          height: '100%'
+                        }}
+                        onClick={() => setState(prev => ({
+                          ...prev,
+                          podcastStyle: style.value
+                        }))}
+                      >
+                        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                            <IconComponent 
+                              color={isSelected ? 'primary' : 'action'} 
+                              sx={{ mt: 0.25, fontSize: 20 }}
+                            />
+                            <Box sx={{ flex: 1 }}>
+                              <Typography 
+                                variant="subtitle2" 
+                                sx={{ 
+                                  color: 'text.primary',
+                                  fontWeight: 600,
+                                  fontSize: '0.875rem',
+                                  mb: 0.5
+                                }}
+                              >
+                                {style.label}
+                              </Typography>
+                              <Typography 
+                                variant="body2" 
+                                sx={{ 
+                                  color: 'text.secondary',
+                                  fontSize: '0.75rem',
+                                  lineHeight: 1.3
+                                }}
+                              >
+                                {style.description}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </Box>
+
+            {/* Length and Depth Configuration */}
+            <Grid container spacing={3} sx={{ mb: 3 }}>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Length
+                </Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
+                  {LENGTH_OPTIONS.map((option) => (
+                    <Chip
+                      key={option.value}
+                      label={option.label}
+                      variant={state.podcastLength === option.value ? 'filled' : 'outlined'}
+                      onClick={() => setState(prev => ({
+                        ...prev,
+                        podcastLength: option.value
+                      }))}
+                      sx={{ cursor: 'pointer' }}
+                    />
+                  ))}
+                </Stack>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Depth
+                </Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
+                  {DEPTH_OPTIONS.map((option) => (
+                    <Chip
+                      key={option.value}
+                      label={option.label}
+                      variant={state.podcastDepth === option.value ? 'filled' : 'outlined'}
+                      onClick={() => setState(prev => ({
+                        ...prev,
+                        podcastDepth: option.value
+                      }))}
+                      sx={{ cursor: 'pointer' }}
+                    />
+                  ))}
+                </Stack>
+              </Grid>
+            </Grid>
+            
+            <TextField
+              fullWidth
+              label="Custom Instructions (Optional)"
+              placeholder="Additional instructions for podcast generation..."
+              multiline
+              rows={3}
+              value={state.customInstructions}
+              onChange={(e) => setState(prev => ({ ...prev, customInstructions: e.target.value }))}
+            />
+          </Box>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  // Render the unified Content Studio
+  const renderUnifiedStudio = () => {
+    // Show results if generation is completed
+    if (state.generationStatus === 'completed' && state.generatedContent) {
       return (
         <GenerationResults
-          generatedContent={studioState.generatedContent}
-          sessionId={studioState.sessionId}
+          generatedContent={state.generatedContent}
+          sessionId={state.sessionId}
           onOpenInFlowEditor={handleOpenInFlowEditor}
         />
       );
     }
 
+    // Show transcript editing if transcript has been generated
+    if ((state.generationStatus === 'transcript-generated' || state.generationStatus === 'audio-generating') && state.generatedTranscript) {
+      return (
+        <Stack spacing={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="h6">
+                  Review & Edit Transcript
+                </Typography>
+                <Chip 
+                  label="Transcript Generated" 
+                  color="success" 
+                  size="small" 
+                />
+              </Box>
+              
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Review the generated transcript and make any edits before creating the audio. You can modify the content, adjust the conversation flow, or add additional context.
+              </Typography>
+              
+              <TextField
+                fullWidth
+                multiline
+                value={state.editedTranscript}
+                onChange={(e) => setState(prev => ({ ...prev, editedTranscript: e.target.value }))}
+                placeholder="Edit your podcast transcript here..."
+                sx={{ 
+                  mb: 3,
+                  '& .MuiInputBase-root': {
+                    minHeight: 'calc(100vh - 400px)', // Use viewport height minus space for header/buttons
+                    alignItems: 'flex-start'
+                  },
+                  '& .MuiInputBase-inputMultiline': {
+                    fontFamily: 'monospace',
+                    fontSize: '0.875rem',
+                    minHeight: 'calc(100vh - 450px) !important', // Ensure textarea fills the space
+                    resize: 'vertical'
+                  }
+                }}
+              />
+              
+              {state.error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {state.error}
+                </Alert>
+              )}
+              
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setState(prev => ({ 
+                    ...prev, 
+                    generationStatus: 'idle',
+                    generatedTranscript: null,
+                    editedTranscript: '',
+                    audioGenerationProgress: null,
+                    error: null
+                  }))}
+                  disabled={state.generationStatus === 'generating' || state.generationStatus === 'audio-generating'}
+                >
+                  Start Over
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleGenerateAudio}
+                  disabled={!state.editedTranscript.trim() || state.generationStatus === 'audio-generating'}
+                  startIcon={state.generationStatus === 'audio-generating' ? <CircularProgress size={16} /> : <PlayIcon />}
+                >
+                  {state.generationStatus === 'audio-generating' 
+                    ? (state.audioGenerationProgress || 'Generating Audio...') 
+                    : 'Generate Audio'
+                  }
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Stack>
+      );
+    }
+
+    // Show completion screen for media generation
+    if (state.generationStatus === 'completed' && state.generatedMediaId) {
+      return (
+        <Stack spacing={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="h6">
+                  🎉 Podcast Generated Successfully!
+                </Typography>
+                <Chip 
+                  label="Audio Generated" 
+                  color="success" 
+                  size="small" 
+                />
+              </Box>
+              
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Your podcast has been generated and is ready to listen to. You can find it in your Media Library or listen to it directly.
+              </Typography>
+              
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setState(prev => ({ 
+                    ...prev, 
+                    generationStatus: 'idle',
+                    generatedTranscript: null,
+                    editedTranscript: '',
+                    generatedMediaId: null,
+                    audioGenerationProgress: null,
+                    error: null
+                  }))}
+                >
+                  Generate Another
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={() => navigate('/app/media')}
+                  startIcon={<PodcastIcon />}
+                >
+                  Go to Media Library
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => navigate(`/app/media/${state.generatedMediaId}`)}
+                  startIcon={<PlayIcon />}
+                >
+                  Listen Now
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Stack>
+      );
+    }
+
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {/* Source Selection */}
+      <Stack spacing={1}>
+        {/* Step 1: Source Selection */}
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0 }}>
               <SourceIcon color="primary" sx={{ mr: 1.5 }} />
               <Typography variant="h6">
                 1. Select Source Documents
               </Typography>
             </Box>
             <SourceLibrarySelection
-              selectedDocuments={studioState.selectedDocuments}
+              selectedDocuments={state.selectedDocuments}
               onSelectionChange={handleDocumentSelection}
             />
           </CardContent>
         </Card>
 
-        {/* Configuration */}
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <ConfigIcon color="primary" sx={{ mr: 1.5 }} />
-              <Typography variant="h6">
-                2. Configure Generation
-              </Typography>
-            </Box>
-            <PromptConfiguration
-              selectedDocuments={studioState.selectedDocuments}
-              onConfigurationChange={handlePromptConfiguration}
-            />
-          </CardContent>
-        </Card>
+        {/* Step 2: Focus & Objectives */}
+        {renderFocusSection()}
 
-        {/* Generation */}
+        {/* Step 3: Content Type */}
+        {renderContentTypeSection()}
+
+        {/* Step 4: Configuration */}
+        {renderConfigurationSection()}
+
+        {/* Step 5: Generate */}
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <PlayIcon color="primary" sx={{ mr: 1.5 }} />
               <Typography variant="h6">
-                3. Generate Content
+                5. Generate Content
               </Typography>
             </Box>
+            
             {!canProceedToGeneration() && (
               <Alert severity="warning" sx={{ mb: 2 }}>
-                Complete steps 1 and 2 to enable content generation
+                {state.selectedDocuments.length === 0 
+                  ? 'Please select source documents to continue'
+                  : state.contentType === 'activity' 
+                    ? 'Please configure generation settings for activities'
+                    : 'Ready to generate media content'
+                }
               </Alert>
             )}
-            <GenerationProgress
-              status={studioState.generationStatus}
-              error={studioState.error}
-              onStartGeneration={handleStartGeneration}
-              selectedDocuments={studioState.selectedDocuments}
-              promptConfig={studioState.promptConfig}
-            />
+            
+            <Box>
+              {state.generationStatus === 'generating' && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    {state.contentType === 'media' 
+                      ? 'Generating podcast transcript with Claude AI...'
+                      : 'Generating activity content...'
+                    }
+                  </Typography>
+                  <Box sx={{ width: '100%' }}>
+                    <div style={{ 
+                      height: '4px', 
+                      backgroundColor: '#e0e0e0', 
+                      borderRadius: '2px',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        height: '100%',
+                        backgroundColor: '#1976d2',
+                        animation: 'progress 2s infinite linear',
+                        transformOrigin: '0% 50%'
+                      }} />
+                    </div>
+                  </Box>
+                  <style>
+                    {`@keyframes progress {
+                      0% { transform: translateX(-100%) scaleX(0); }
+                      40% { transform: translateX(-100%) scaleX(0.4); }
+                      100% { transform: translateX(100%) scaleX(0.5); }
+                    }`}
+                  </style>
+                </Box>
+              )}
+              
+              <Button
+                variant="contained"
+                size="large"
+                onClick={handleStartGeneration}
+                disabled={!canProceedToGeneration() || state.generationStatus === 'generating'}
+                startIcon={state.contentType === 'media' ? <PodcastIcon /> : <GenerateIcon />}
+                sx={{ minWidth: 200 }}
+              >
+                {state.generationStatus === 'generating' 
+                  ? 'Generating...'
+                  : state.contentType === 'media' 
+                    ? 'Generate Transcript'
+                    : 'Generate Activity'
+                }
+              </Button>
+            </Box>
           </CardContent>
         </Card>
-      </Box>
+      </Stack>
     );
   };
 
@@ -361,164 +971,15 @@ export const ContentGenerationPage: React.FC = () => {
       {/* Header */}
       <Box mb={4}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Content Generation
+          Content Studio
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Choose your preferred method for creating learning content with AI assistance.
+          Generate Activities and Media content from your source documents using AI.
         </Typography>
       </Box>
 
-      {/* Unified Interface - Show both options */}
-      {activeMode === null && (
-        <Box sx={{ display: 'flex', gap: 4, flexDirection: { xs: 'column', md: 'row' } }}>
-          {/* Prompt Generator Option */}
-          <Card 
-            sx={{ 
-              flex: 1,
-              display: 'flex', 
-              flexDirection: 'column',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease-in-out',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: 4
-              }
-            }}
-            onClick={() => setActiveMode('prompt')}
-          >
-            <CardContent sx={{ flexGrow: 1, p: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <PromptIcon color="primary" sx={{ mr: 2, fontSize: 32 }} />
-                <Typography variant="h5" component="h2">
-                  Prompt Generator
-                </Typography>
-              </Box>
-              
-              <Typography variant="body1" paragraph>
-                Create comprehensive, customized prompts for external AI tools like ChatGPT, Claude, or NotebookLM.
-              </Typography>
-              
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, mb: 1 }}>
-                Best for:
-              </Typography>
-              <Typography variant="body2" color="text.secondary" component="ul" sx={{ pl: 2, mb: 3 }}>
-                <li>Using your preferred AI tool</li>
-                <li>Maximum control over generation</li>
-                <li>Custom prompting strategies</li>
-                <li>Working with external documents</li>
-              </Typography>
-
-              <Box sx={{ mt: 'auto' }}>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  size="large"
-                  startIcon={<GenerateIcon />}
-                  sx={{ py: 1.5 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleOpenPromptGenerator();
-                  }}
-                >
-                  Create Prompt
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-
-          {/* Content Studio Option */}
-          <Card 
-            sx={{ 
-              flex: 1,
-              display: 'flex', 
-              flexDirection: 'column',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease-in-out',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: 4
-              }
-            }}
-            onClick={() => setActiveMode('studio')}
-          >
-            <CardContent sx={{ flexGrow: 1, p: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <StudioIcon color="primary" sx={{ mr: 2, fontSize: 32 }} />
-                <Typography variant="h5" component="h2">
-                  Content Studio
-                </Typography>
-                <Chip label="Integrated" size="small" color="success" sx={{ ml: 2 }} />
-              </Box>
-              
-              <Typography variant="body1" paragraph>
-                Direct integration with Claude AI for in-app content generation using your uploaded documents.
-              </Typography>
-              
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, mb: 1 }}>
-                Best for:
-              </Typography>
-              <Typography variant="body2" color="text.secondary" component="ul" sx={{ pl: 2, mb: 3 }}>
-                <li>One-click content generation</li>
-                <li>Document-based context</li>
-                <li>Seamless Flow Editor integration</li>
-                <li>Progress tracking & validation</li>
-              </Typography>
-
-              <Box sx={{ mt: 'auto' }}>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  size="large"
-                  startIcon={<StudioIcon />}
-                  sx={{ py: 1.5 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveMode('studio');
-                  }}
-                >
-                  Launch Studio
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-      )}
-
-      {/* Prompt Generator Mode */}
-      {activeMode === 'prompt' && (
-        <Box>
-          {/* Back button */}
-          <Button 
-            startIcon={<PromptIcon />} 
-            onClick={() => setActiveMode(null)}
-            sx={{ mb: 3 }}
-          >
-            Back to Options
-          </Button>
-          {renderPromptGeneration()}
-        </Box>
-      )}
-
-      {/* Content Studio Mode */}
-      {activeMode === 'studio' && (
-        <Box>
-          {/* Back button */}
-          <Button 
-            startIcon={<StudioIcon />} 
-            onClick={() => setActiveMode(null)}
-            sx={{ mb: 3 }}
-          >
-            Back to Options
-          </Button>
-          {renderContentStudio()}
-        </Box>
-      )}
-
-      {/* LLM Prompt Generator Modal */}
-      <LLMPromptGenerator
-        open={promptGeneratorOpen}
-        onClose={handleClosePromptGenerator}
-      />
+      {/* Unified Content Studio Interface */}
+      {renderUnifiedStudio()}
     </Box>
   );
 };

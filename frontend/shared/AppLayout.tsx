@@ -58,12 +58,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const shouldHideSidebar = useMemo(() => {
     const isFlowEditor = location.pathname.includes('/flow');
     const isPlayingActivity = location.pathname.includes('/app/play/');
-    console.log('AppLayout shouldHideSidebar calculation:', { 
-      pathname: location.pathname, 
-      isFlowEditor, 
-      isPlayingActivity,
-      shouldHide: isFlowEditor || isPlayingActivity
-    });
     return isFlowEditor || isPlayingActivity;
   }, [location.pathname]);
 

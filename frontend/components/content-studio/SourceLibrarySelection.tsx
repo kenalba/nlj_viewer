@@ -450,10 +450,6 @@ export const SourceLibrarySelection: React.FC<SourceLibrarySelectionProps> = ({
               variant="outlined"
             />
           )}
-          
-          <Typography variant="body2" color="text.secondary">
-            Showing {Math.min(pagination.limit, pagination.total)} of {pagination.total} documents
-          </Typography>
         </Box>
       </Box>
 

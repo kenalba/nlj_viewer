@@ -33,6 +33,7 @@ import {
   RateReview as ReviewIcon,
   AutoAwesome as GenerateIcon,
   LibraryBooks as SourcesIcon,
+  AudioFile as MediaIcon,
   People as PeopleIcon,
   ExpandLess,
   ExpandMore,
@@ -111,7 +112,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
     const isAdmin = canManageUsers(user);
     
     const items: SidebarItem[] = [
-      // Main navigation
+      // Home
       {
         id: 'home',
         label: 'Home',
@@ -119,48 +120,63 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
         path: '/app'
       },
       {
-        id: 'divider-main',
+        id: 'divider-content',
         label: '',
         icon: <></>,
         path: undefined
       },
+      // Content section
       {
         id: 'activities',
         label: 'Activities',
         icon: <FolderIcon />,
         path: '/app/activities'
+      },
+      {
+        id: 'sources',
+        label: 'Sources',
+        icon: <SourcesIcon />,
+        path: '/app/sources'
+      },
+      {
+        id: 'media',
+        label: 'Media',
+        icon: <MediaIcon />,
+        path: '/app/media'
       }
     ];
 
-    // Add creation/editing features for users with appropriate roles
-    if (canEdit) {
-      items.push(
-        {
-          id: 'generate',
-          label: 'Content Generation',
+    // Add creation/workflow section for users with appropriate roles
+    if (canEdit || canReview) {
+      items.push({
+        id: 'divider-workflow',
+        label: '',
+        icon: <></>,
+        path: undefined
+      });
+      
+      // Add approvals for reviewers and approvers
+      if (canReview) {
+        items.push({
+          id: 'approvals',
+          label: 'Approvals',
+          icon: <ReviewIcon />,
+          path: '/app/approvals'
+        });
+      }
+      
+      // Add generation for content creators
+      if (canEdit) {
+        items.push({
+          id: 'generation',
+          label: 'Generation',
           icon: <GenerateIcon />,
           path: '/app/generate'
-        },
-        {
-          id: 'sources',
-          label: 'Source Library',
-          icon: <SourcesIcon />,
-          path: '/app/sources'
-        }
-      );
+        });
+      }
     }
 
-    // Add approval dashboard for reviewers and approvers
-    if (canReview) {
-      items.push({
-        id: 'approvals',
-        label: 'Approvals',
-        icon: <ReviewIcon />,
-        path: '/app/approvals'
-      });
-    }
-
-    // Add divider and People management for admin users
+    // Add admin section for admin users
     if (isAdmin) {
       items.push(
         {

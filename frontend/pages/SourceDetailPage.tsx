@@ -35,6 +35,7 @@ import {
   Tag as TagIcon,
   Preview as PreviewIcon,
   Description as DescriptionIcon,
+  AudioFile as AudioFileIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -137,8 +138,22 @@ const SourceDetailPage: React.FC = () => {
   // Generate summary mutation
   const generateSummaryMutation = useMutation({
     mutationFn: generateDocumentSummary,
-    onSuccess: () => {
+    onMutate: () => {
+      setIsGeneratingSummary(true);
+    },
+    onSuccess: (data) => {
+      console.log('Generate summary completed successfully:', data);
       queryClient.invalidateQueries({ queryKey: ['source', id] });
+      // Force a refetch to immediately update the UI
+      queryClient.refetchQueries({ queryKey: ['source', id] });
+    },
+    onError: (error) => {
+      console.error('Generate summary failed:', error);
+      setIsGeneratingSummary(false);
+    },
+    onSettled: () => {
+      // Only stop loading after we've confirmed the data is updated
+      setTimeout(() => setIsGeneratingSummary(false), 1000);
     },
   });
 
@@ -233,6 +248,14 @@ const SourceDetailPage: React.FC = () => {
             onClick={() => console.log('Generate activity')}
           >
             Generate Activity
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<AudioFileIcon />}
+            onClick={() => navigate(`/app/generate-podcast?source=${document.id}`)}
+          >
+            Generate Podcast
           </Button>
           <Button
             variant="outlined"
@@ -353,28 +376,31 @@ const SourceDetailPage: React.FC = () => {
                     <Typography variant="h6">AI-Generated Content Analysis</Typography>
                     <Button
                       variant="outlined"
-                      startIcon={generateSummaryMutation.isPending ? <CircularProgress size={16} /> : <GenerateIcon />}
+                      startIcon={isGeneratingSummary ? <CircularProgress size={16} /> : <GenerateIcon />}
                       onClick={handleGenerateSummary}
-                      disabled={generateSummaryMutation.isPending}
+                      disabled={isGeneratingSummary}
                     >
-                      {generateSummaryMutation.isPending ? 'Generating...' : 'Generate Analysis'}
+                      {isGeneratingSummary ? 'Generating...' : 'Generate Analysis'}
                     </Button>
                   </Box>
                   
                   {document.summary ? (
                     <Box>
-                      <Paper sx={{ p: 2, bgcolor: 'grey.50', mb: 3 }}>
+                      <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper', mb: 3 }}>
+                        <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+                          Summary
+                        </Typography>
                         <Typography variant="body2">
                           {document.summary}
                         </Typography>
-                      </Paper>
+                      </Box>
 
-                      {/* AI-Generated Metadata Sections */}
-                      <Grid container spacing={2}>
+                      {/* AI-Generated Metadata Sections - Flexbox layout */}
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                         {/* Keywords */}
                         {document.keywords && document.keywords.length > 0 && (
-                          <Grid item xs={12} md={6}>
-                            <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
+                            <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 600 }}>
                               <TagIcon fontSize="small" />
                               Keywords
                             </Typography>
@@ -383,45 +409,108 @@ const SourceDetailPage: React.FC = () => {
                                 <Chip key={index} label={keyword} size="small" variant="outlined" />
                               ))}
                             </Box>
-                          </Grid>
+                          </Box>
                         )}
 
-                        {/* Learning Objectives */}
-                        {document.learning_objectives && document.learning_objectives.length > 0 && (
-                          <Grid item xs={12} md={6}>
-                            <Typography variant="subtitle2" gutterBottom>
-                              Learning Objectives
-                            </Typography>
-                            <Box component="ul" sx={{ pl: 2, m: 0 }}>
-                              {document.learning_objectives.map((objective, index) => (
-                                <Typography key={index} component="li" variant="body2" sx={{ mb: 0.5 }}>
-                                  {objective}
-                                </Typography>
+                        {/* Row-based sections */}
+                        {(() => {
+                          const sections = [
+                            document.learning_objectives && document.learning_objectives.length > 0 && {
+                              title: 'Learning Objectives',
+                              content: (
+                                <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                                  {document.learning_objectives.map((objective, index) => (
+                                    <Typography key={index} component="li" variant="body2" sx={{ mb: 0.5 }}>
+                                      {objective}
+                                    </Typography>
+                                  ))}
+                                </Box>
+                              )
+                            },
+                            document.key_concepts && document.key_concepts.length > 0 && {
+                              title: 'Key Concepts',
+                              content: (
+                                <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                                  {document.key_concepts.map((concept, index) => (
+                                    <Typography key={index} component="li" variant="body2" sx={{ mb: 0.5 }}>
+                                      {concept}
+                                    </Typography>
+                                  ))}
+                                </Box>
+                              )
+                            },
+                            document.actionable_items && document.actionable_items.length > 0 && {
+                              title: 'Actionable Items',
+                              content: (
+                                <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                                  {document.actionable_items.map((item, index) => (
+                                    <Typography key={index} component="li" variant="body2" sx={{ mb: 0.5 }}>
+                                      {item}
+                                    </Typography>
+                                  ))}
+                                </Box>
+                              )
+                            },
+                            document.assessment_opportunities && document.assessment_opportunities.length > 0 && {
+                              title: 'Assessment Opportunities',
+                              content: (
+                                <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                                  {document.assessment_opportunities.map((opportunity, index) => (
+                                    <Typography key={index} component="li" variant="body2" sx={{ mb: 0.5 }}>
+                                      {opportunity}
+                                    </Typography>
+                                  ))}
+                                </Box>
+                              )
+                            },
+                            document.content_gaps && document.content_gaps.length > 0 && {
+                              title: 'Content Gaps',
+                              content: (
+                                <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                                  {document.content_gaps.map((gap, index) => (
+                                    <Typography key={index} component="li" variant="body2" sx={{ mb: 0.5, color: 'error.dark', fontWeight: 500 }}>
+                                      {gap}
+                                    </Typography>
+                                  ))}
+                                </Box>
+                              )
+                            }
+                          ].filter(Boolean);
+
+                          if (sections.length === 0) return null;
+
+                          // Group sections into rows
+                          const rows = [];
+                          for (let i = 0; i < sections.length; i += 3) {
+                            rows.push(sections.slice(i, i + 3));
+                          }
+
+                          return rows.map((row, rowIndex) => (
+                            <Box key={rowIndex} sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
+                              {row.map((section, index) => (
+                                <Box key={index} sx={{ 
+                                  flex: 1, 
+                                  minHeight: '120px', 
+                                  p: 2, 
+                                  border: '1px solid', 
+                                  borderColor: 'divider', 
+                                  borderRadius: 2, 
+                                  bgcolor: 'background.paper' 
+                                }}>
+                                  <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+                                    {section.title}
+                                  </Typography>
+                                  {section.content}
+                                </Box>
                               ))}
                             </Box>
-                          </Grid>
-                        )}
+                          ));
+                        })()}
 
-                        {/* Key Concepts */}
-                        {document.key_concepts && document.key_concepts.length > 0 && (
-                          <Grid item xs={12} md={6}>
-                            <Typography variant="subtitle2" gutterBottom>
-                              Key Concepts
-                            </Typography>
-                            <Box component="ul" sx={{ pl: 2, m: 0 }}>
-                              {document.key_concepts.map((concept, index) => (
-                                <Typography key={index} component="li" variant="body2" sx={{ mb: 0.5 }}>
-                                  {concept}
-                                </Typography>
-                              ))}
-                            </Box>
-                          </Grid>
-                        )}
-
-                        {/* Subject Matter Areas */}
+                        {/* Subject Areas */}
                         {document.subject_matter_areas && document.subject_matter_areas.length > 0 && (
-                          <Grid item xs={12} md={6}>
-                            <Typography variant="subtitle2" gutterBottom>
+                          <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
+                            <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
                               Subject Areas
                             </Typography>
                             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
@@ -429,57 +518,9 @@ const SourceDetailPage: React.FC = () => {
                                 <Chip key={index} label={area} size="small" color="primary" variant="outlined" />
                               ))}
                             </Box>
-                          </Grid>
+                          </Box>
                         )}
-
-                        {/* Actionable Items */}
-                        {document.actionable_items && document.actionable_items.length > 0 && (
-                          <Grid item xs={12}>
-                            <Typography variant="subtitle2" gutterBottom>
-                              Actionable Items
-                            </Typography>
-                            <Box component="ul" sx={{ pl: 2, m: 0 }}>
-                              {document.actionable_items.map((item, index) => (
-                                <Typography key={index} component="li" variant="body2" sx={{ mb: 0.5 }}>
-                                  {item}
-                                </Typography>
-                              ))}
-                            </Box>
-                          </Grid>
-                        )}
-
-                        {/* Assessment Opportunities */}
-                        {document.assessment_opportunities && document.assessment_opportunities.length > 0 && (
-                          <Grid item xs={12}>
-                            <Typography variant="subtitle2" gutterBottom>
-                              Assessment Opportunities
-                            </Typography>
-                            <Box component="ul" sx={{ pl: 2, m: 0 }}>
-                              {document.assessment_opportunities.map((opportunity, index) => (
-                                <Typography key={index} component="li" variant="body2" sx={{ mb: 0.5 }}>
-                                  {opportunity}
-                                </Typography>
-                              ))}
-                            </Box>
-                          </Grid>
-                        )}
-
-                        {/* Content Gaps */}
-                        {document.content_gaps && document.content_gaps.length > 0 && (
-                          <Grid item xs={12}>
-                            <Typography variant="subtitle2" gutterBottom>
-                              Content Gaps
-                            </Typography>
-                            <Box component="ul" sx={{ pl: 2, m: 0 }}>
-                              {document.content_gaps.map((gap, index) => (
-                                <Typography key={index} component="li" variant="body2" sx={{ mb: 0.5, color: 'warning.main' }}>
-                                  {gap}
-                                </Typography>
-                              ))}
-                            </Box>
-                          </Grid>
-                        )}
-                      </Grid>
+                      </Box>
                     </Box>
                   ) : (
                     <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>

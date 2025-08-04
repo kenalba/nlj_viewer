@@ -23,6 +23,9 @@ import { UserDetailPage } from './pages/UserDetailPage';
 import SourceLibraryPage from './pages/SourceLibraryPage';
 import SourceDetailPage from './pages/SourceDetailPage';
 import ActivityDetailPage from './pages/ActivityDetailPage';
+import MediaLibraryPage from './pages/MediaLibraryPage';
+import MediaDetailPage from './pages/MediaDetailPage';
+import PodcastGenerationPage from './pages/PodcastGenerationPage';
 import { PeopleTab } from './components/people/PeopleTab';
 import { useAuth } from './contexts/AuthContext';
 import { contentApi, type ContentItem } from './api/content';
@@ -248,17 +251,30 @@ const AppContent: React.FC = () => {
     return <ContentDashboard onEditScenario={setEditingScenario} />;
   }
   
+  if (path.includes('/generate-podcast') && canEdit) {
+    return <PodcastGenerationPage />;
+  }
+  
   if (path.includes('/generate') && canEdit) {
     return <ContentGenerationPage />;
   }
   
-  if (path.includes('/sources') && canEdit) {
+  if (path.includes('/sources')) {
     // Source detail page: /app/sources/[id]
     if (path.includes('/app/sources/') && path.split('/').length > 3) {
       return <SourceDetailPage />;
     }
     // Main sources page: /app/sources
     return <SourceLibraryPage />;
+  }
+
+  if (path.includes('/media')) {
+    // Media detail page: /app/media/[id]
+    if (path.includes('/app/media/') && path.split('/').length > 3) {
+      return <MediaDetailPage />;
+    }
+    // Main media page: /app/media
+    return <MediaLibraryPage />;
   }
   
   if (path.includes('/app/submit-review') && canEdit) {
@@ -524,10 +540,6 @@ export const App: React.FC = () => {
   };
 
   const appMode = getAppMode(user);
-  
-  // Debug the actual pathname for troubleshooting
-  console.log('App Current pathname:', location.pathname);
-  console.log('App Current search:', location.search);
 
   return (
     <GameProvider>

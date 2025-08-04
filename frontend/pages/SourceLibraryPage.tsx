@@ -26,6 +26,10 @@ import {
   Paper,
   Avatar,
   Stack,
+  IconButton,
+  Menu,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -39,11 +43,14 @@ import {
   Person as PersonIcon,
   CalendarToday as CalendarIcon,
   Folder as FolderIcon,
+  MoreVert as MoreVertIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
-import { SourceDocument, getSourceDocuments, uploadSourceDocument } from '../api/sources';
+import { SourceDocument, getSourceDocuments, uploadSourceDocument, deleteSourceDocument } from '../api/sources';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import SourceDocumentCard from '../components/sources/SourceDocumentCard';
 import UploadSourceModal from '../components/sources/UploadSourceModal';
@@ -57,8 +64,10 @@ const SourceLibraryPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [viewMode, setViewMode] = useState<'card' | 'table'>(() => {
     const saved = localStorage.getItem('nlj-sources-view-mode');
-    return (saved === 'card' || saved === 'table') ? saved : 'card';
+    return (saved === 'card' || saved === 'table') ? saved : 'table';
   });
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedDocument, setSelectedDocument] = useState<SourceDocument | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -84,6 +93,21 @@ const SourceLibraryPage: React.FC = () => {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: deleteSourceDocument,
+    onSuccess: () => {
+      setSuccessMessage('Document deleted successfully!');
+      queryClient.invalidateQueries({ queryKey: ['sources'] });
+      setAnchorEl(null);
+      setSelectedDocument(null);
+    },
+    onError: (error: any) => {
+      setErrorMessage(error.response?.data?.detail || 'Failed to delete document');
+      setAnchorEl(null);
+      setSelectedDocument(null);
+    },
+  });
+
   const handleDocumentClick = (document: SourceDocument) => {
     navigate(`/app/sources/${document.id}`);
   };
@@ -96,6 +120,32 @@ const SourceLibraryPage: React.FC = () => {
     if (newView) {
       setViewMode(newView);
       localStorage.setItem('nlj-sources-view-mode', newView);
+    }
+  };
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>, document: SourceDocument) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+    setSelectedDocument(document);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedDocument(null);
+  };
+
+  const handleEditDocument = () => {
+    if (selectedDocument) {
+      navigate(`/app/sources/${selectedDocument.id}`);
+    }
+    handleMenuClose();
+  };
+
+  const handleDeleteDocument = () => {
+    if (selectedDocument && window.confirm(`Are you sure you want to delete "${selectedDocument.original_filename}"? This action cannot be undone.`)) {
+      deleteMutation.mutate(selectedDocument.id);
+    } else {
+      handleMenuClose();
     }
   };
 
@@ -177,13 +227,14 @@ const SourceLibraryPage: React.FC = () => {
               }}
             />
           </Grid>
-          <Grid item xs={12} sm={3} md={3}>
+          <Grid item xs={12} sm={3} md={2}>
             <FormControl fullWidth>
               <InputLabel>File Type</InputLabel>
               <Select
                 value={selectedFileType}
                 onChange={(e) => setSelectedFileType(e.target.value)}
                 label="File Type"
+                sx={{ minWidth: 120 }}
               >
                 <MenuItem value="">All Types</MenuItem>
                 {fileTypes.map((type) => (
@@ -194,7 +245,7 @@ const SourceLibraryPage: React.FC = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={3} md={4}>
+          <Grid item xs={12} sm={3} md={5}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
               <Typography variant="body2" color="text.secondary">
                 {documentsResponse?.total || 0} documents
@@ -264,6 +315,7 @@ const SourceLibraryPage: React.FC = () => {
                   <TableCell align="center">Claude</TableCell>
                   <TableCell align="center">Created</TableCell>
                   <TableCell align="center">Usage</TableCell>
+                  <TableCell align="center">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -337,6 +389,15 @@ const SourceLibraryPage: React.FC = () => {
                         {document.usage_count} times
                       </Typography>
                     </TableCell>
+                    <TableCell align="center">
+                      <IconButton
+                        onClick={(e) => handleMenuClick(e, document)}
+                        size="small"
+                        disabled={deleteMutation.isPending}
+                      >
+                        <MoreVertIcon />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -344,6 +405,28 @@ const SourceLibraryPage: React.FC = () => {
           </TableContainer>
         </Card>
       )}
+
+      {/* Actions Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        <MenuItem onClick={handleEditDocument}>
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Edit Details</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleDeleteDocument} sx={{ color: 'error.main' }}>
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" sx={{ color: 'error.main' }} />
+          </ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
 
       {/* Floating Action Button for mobile */}
       <Fab
