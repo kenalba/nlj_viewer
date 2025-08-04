@@ -311,14 +311,20 @@ class SourceDocumentService:
             # Clean up any temporary conversion files
             document_converter.cleanup_temp_file(document.file_path)
             
-            # Delete from database
-            await self.db.delete(document)
+            # Delete from database - use proper SQLAlchemy syntax
+            from sqlalchemy import delete as sql_delete
+            delete_stmt = sql_delete(SourceDocument).where(SourceDocument.id == document.id)
+            await self.db.execute(delete_stmt)
             await self.db.commit()
             
+            print(f"Successfully deleted document {document.id}")
             return True
             
         except Exception as e:
             print(f"Error deleting document: {e}")
+            import traceback
+            traceback.print_exc()
+            await self.db.rollback()
             return False
     
     async def increment_usage(self, document_id: uuid.UUID, user_id: uuid.UUID) -> bool:
@@ -403,7 +409,7 @@ class SourceDocumentService:
                     return None
                 print(f"Successfully uploaded to Claude, file ID: {document.claude_file_id}")
             
-            # Generate comprehensive metadata using Claude Messages API
+            # Generate comprehensive metadata using Claude Messages API with prefilling
             prompt = """Please analyze this document and provide comprehensive metadata in the following JSON format. All fields are optional - only include them if you can determine the information from the content:
 
 {
@@ -424,55 +430,116 @@ class SourceDocumentService:
 Analyze the document thoroughly and provide only valid JSON with the fields you can determine. Focus on making this metadata useful for creating training content and learning activities."""
 
             print("Calling Claude API for comprehensive metadata generation...")
-            response = await claude_service.generate_content_with_file(
+            response = await claude_service.generate_content_with_file_and_prefill(
                 file_id=document.claude_file_id,
-                prompt=prompt
+                prompt=prompt,
+                prefill="{"
             )
             
             print(f"Claude API response: {response[:200] if response else 'None'}...")
             
             if response:
-                # Try to parse the JSON response
+                # With prefilling, the response should be clean JSON
                 try:
                     import json
+                    print(f"Attempting to parse JSON response: {response[:200]}...")
                     metadata = json.loads(response)
+                    print(f"Successfully parsed JSON with {len(metadata)} fields")
                     
                     # Update document with all available metadata
                     if 'summary' in metadata:
                         document.summary = metadata['summary']
+                        print(f"Updated summary: {len(metadata['summary'])} characters")
                     if 'keywords' in metadata:
                         document.keywords = metadata['keywords']
+                        print(f"Updated keywords: {len(metadata['keywords'])} items")
                     if 'learning_objectives' in metadata:
                         document.learning_objectives = metadata['learning_objectives']
+                        print(f"Updated learning objectives: {len(metadata['learning_objectives'])} items")
                     if 'content_type_classification' in metadata:
                         document.content_type_classification = metadata['content_type_classification']
+                        print(f"Updated content type: {metadata['content_type_classification']}")
                     if 'difficulty_level' in metadata:
                         document.difficulty_level = metadata['difficulty_level']
+                        print(f"Updated difficulty level: {metadata['difficulty_level']}")
                     if 'estimated_reading_time' in metadata:
                         document.estimated_reading_time = metadata['estimated_reading_time']
+                        print(f"Updated reading time: {metadata['estimated_reading_time']} minutes")
                     if 'key_concepts' in metadata:
                         document.key_concepts = metadata['key_concepts']
+                        print(f"Updated key concepts: {len(metadata['key_concepts'])} items")
                     if 'target_audience' in metadata:
                         document.target_audience = metadata['target_audience']
+                        print(f"Updated target audience: {metadata['target_audience']}")
                     if 'subject_matter_areas' in metadata:
                         document.subject_matter_areas = metadata['subject_matter_areas']
+                        print(f"Updated subject areas: {len(metadata['subject_matter_areas'])} items")
                     if 'actionable_items' in metadata:
                         document.actionable_items = metadata['actionable_items']
+                        print(f"Updated actionable items: {len(metadata['actionable_items'])} items")
                     if 'assessment_opportunities' in metadata:
                         document.assessment_opportunities = metadata['assessment_opportunities']
+                        print(f"Updated assessment opportunities: {len(metadata['assessment_opportunities'])} items")
                     if 'content_gaps' in metadata:
                         document.content_gaps = metadata['content_gaps']
+                        print(f"Updated content gaps: {len(metadata['content_gaps'])} items")
                     
                     document.updated_at = datetime.now(timezone.utc)
                     await self.db.commit()
-                    print("Comprehensive metadata saved to database")
+                    print("Comprehensive metadata saved to database successfully")
                     
                     return metadata.get('summary', 'Metadata generated successfully')
                     
                 except json.JSONDecodeError as e:
                     print(f"Failed to parse JSON response: {e}")
-                    print(f"Raw response: {response}")
-                    # Fallback: save the response as summary if it looks like text
+                    print(f"Raw response (first 500 chars): {response[:500]}")
+                    print(f"Response type: {type(response)}")
+                    
+                    # Try to extract JSON from markdown if prefilling didn't work as expected
+                    import re
+                    json_match = re.search(r'```json\s*(.*?)\s*```', response, re.DOTALL)
+                    if json_match:
+                        try:
+                            json_content = json_match.group(1)
+                            print(f"Found JSON in markdown block, attempting to parse...")
+                            metadata = json.loads(json_content)
+                            
+                            # Apply the same metadata updates as above
+                            if 'summary' in metadata:
+                                document.summary = metadata['summary']
+                            if 'keywords' in metadata:
+                                document.keywords = metadata['keywords']
+                            if 'learning_objectives' in metadata:
+                                document.learning_objectives = metadata['learning_objectives']
+                            if 'content_type_classification' in metadata:
+                                document.content_type_classification = metadata['content_type_classification']
+                            if 'difficulty_level' in metadata:
+                                document.difficulty_level = metadata['difficulty_level']
+                            if 'estimated_reading_time' in metadata:
+                                document.estimated_reading_time = metadata['estimated_reading_time']
+                            if 'key_concepts' in metadata:
+                                document.key_concepts = metadata['key_concepts']
+                            if 'target_audience' in metadata:
+                                document.target_audience = metadata['target_audience']
+                            if 'subject_matter_areas' in metadata:
+                                document.subject_matter_areas = metadata['subject_matter_areas']
+                            if 'actionable_items' in metadata:
+                                document.actionable_items = metadata['actionable_items']
+                            if 'assessment_opportunities' in metadata:
+                                document.assessment_opportunities = metadata['assessment_opportunities']
+                            if 'content_gaps' in metadata:
+                                document.content_gaps = metadata['content_gaps']
+                            
+                            document.updated_at = datetime.now(timezone.utc)
+                            await self.db.commit()
+                            print("Metadata extracted from markdown and saved successfully")
+                            
+                            return metadata.get('summary', 'Metadata generated successfully')
+                            
+                        except json.JSONDecodeError as markdown_error:
+                            print(f"Failed to parse JSON from markdown: {markdown_error}")
+                    
+                    # Final fallback: save the response as summary if it looks like meaningful text
                     if len(response) > 50:  # Reasonable summary length
                         document.summary = response
                         document.updated_at = datetime.now(timezone.utc)

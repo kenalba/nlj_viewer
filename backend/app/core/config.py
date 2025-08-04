@@ -64,6 +64,12 @@ class Settings(BaseSettings):
         description="Anthropic Claude API key for content generation"
     )
     
+    # ElevenLabs API settings
+    ELEVENLABS_API_KEY: str = Field(
+        default="",
+        description="ElevenLabs API key for text-to-speech generation"
+    )
+    
     # Feature flags
     ENABLE_REGISTRATION: bool = Field(
         default=True,

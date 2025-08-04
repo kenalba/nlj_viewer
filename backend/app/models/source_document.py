@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from app.models.user import User
     from app.models.generation_session import GenerationSession
     from app.models.content import ContentItem
+    from app.models.media import MediaItem
 
 
 class FileType(str, Enum):
@@ -214,6 +215,12 @@ class SourceDocument(Base):
     generation_sessions: Mapped[List["GenerationSession"]] = relationship(
         secondary="generation_session_sources",
         back_populates="source_documents",
+        lazy="selectin"
+    )
+    
+    generated_media: Mapped[List["MediaItem"]] = relationship(
+        back_populates="source_document",
+        cascade="all, delete-orphan",
         lazy="selectin"
     )
     

@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from app.models.content import ContentItem
     from app.models.source_document import SourceDocument
     from app.models.generation_session import GenerationSession
+    from app.models.media import MediaItem
     # TODO: Uncomment when ApprovalStep model is implemented
     # from app.models.workflow import ApprovalStep
 
@@ -103,6 +104,10 @@ class User(Base):
         lazy="selectin"
     )
     generation_sessions: Mapped[list["GenerationSession"]] = relationship(
+        back_populates="creator",
+        lazy="selectin"
+    )
+    created_media: Mapped[list["MediaItem"]] = relationship(
         back_populates="creator",
         lazy="selectin"
     )

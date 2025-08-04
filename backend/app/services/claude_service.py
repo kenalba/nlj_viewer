@@ -555,6 +555,99 @@ class ClaudeService:
             traceback.print_exc()
             return None
 
+    async def generate_content_with_file_and_prefill(
+        self,
+        file_id: str,
+        prompt: str,
+        prefill: str,
+        model: str = "claude-sonnet-4-20250514",
+        max_tokens: int = 4096,
+        temperature: float = 0.1
+    ) -> Optional[str]:
+        """
+        Generate content using Claude Messages API with a single file and prefilling.
+        Uses Anthropic's prefilling technique to force structured output.
+        
+        Args:
+            file_id: Claude file ID to analyze
+            prompt: The prompt text for generation
+            prefill: Text to prefill the assistant response with (e.g., "{" for JSON)
+            model: Claude model to use
+            max_tokens: Maximum tokens in response
+            temperature: Generation temperature
+            
+        Returns:
+            Generated content as string or None if failed
+        """
+        print(f"generate_content_with_file_and_prefill called with file_id: {file_id}, prefill: '{prefill}'")
+        print(f"Client available: {self.client is not None}")
+        
+        if not self.client or not file_id:
+            print(f"Missing client or file_id: client={self.client is not None}, file_id={file_id}")
+            return None
+            
+        try:
+            # Build content array with files and text
+            content = []
+            
+            # Add document reference
+            content.append({
+                "type": "document",
+                "source": {
+                    "type": "file",
+                    "file_id": file_id
+                }
+            })
+            
+            # Add the prompt text
+            content.append({
+                "type": "text",
+                "text": prompt
+            })
+            
+            # Build messages with prefilling
+            messages = [
+                {
+                    "role": "user",
+                    "content": content
+                },
+                {
+                    "role": "assistant",
+                    "content": prefill
+                }
+            ]
+            
+            print("Calling Messages API with prefilling...")
+            message = await self._call_messages_api_with_retry(
+                model=model,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                messages=messages
+            )
+            
+            if not message:
+                print("Failed to get response from Claude API")
+                return None
+            
+            # Extract content from response
+            response_content = self._extract_response_content(message)
+            if not response_content:
+                print("Empty response from Claude API")
+                return None
+            
+            # With prefilling, the response should be direct JSON (no markdown wrapping)
+            # Prepend the prefill text to complete the JSON
+            full_response = prefill + response_content
+            print(f"Full response with prefill: {full_response[:200]}...")
+            
+            return full_response
+            
+        except Exception as e:
+            print(f"Exception in generate_content_with_file_and_prefill: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+
 
 # Global instance
 claude_service = ClaudeService()

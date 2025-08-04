@@ -276,3 +276,53 @@ class SharedTokenService:
             await self.db.commit()
         
         return len(expired_tokens)
+    
+    async def create_media_share(
+        self,
+        db: AsyncSession,
+        media_id: uuid.UUID,
+        user_id: uuid.UUID,
+        expires_at: Optional[datetime] = None
+    ) -> dict:
+        """Create a new share token for media."""
+        
+        # Import here to avoid circular imports
+        from app.models.media import MediaItem
+        
+        # Verify media exists and can be shared
+        result = await db.execute(
+            select(MediaItem).where(MediaItem.id == media_id)
+        )
+        media = result.scalar_one_or_none()
+        
+        if not media:
+            raise ValueError("Media not found")
+        
+        if not media.can_be_shared():
+            raise ValueError("Media cannot be shared publicly")
+        
+        # Create share token
+        token = SharedToken(
+            content_id=None,  # No content for media shares
+            media_id=media_id,  # Use media_id instead
+            created_by=user_id,
+            expires_at=expires_at
+        )
+        
+        db.add(token)
+        await db.commit()
+        await db.refresh(token)
+        
+        # Generate share URL (simplified for now)
+        base_url = "https://callcoach.training"  # This should come from config
+        share_url = f"{base_url}/shared/{token.token}"
+        
+        return {
+            "share_token": str(token.token),
+            "share_url": share_url,
+            "expires_at": token.expires_at.isoformat() if token.expires_at else None
+        }
+
+
+# Global service instance
+shared_token_service = SharedTokenService(None)  # DB will be injected when used
