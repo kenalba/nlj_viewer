@@ -116,10 +116,13 @@ export const sharingApi = {
    * Get shared activity data via public token (no auth required)
    */
   async getSharedActivity(token: string): Promise<PublicActivity> {
-    // Use a direct fetch to avoid authentication headers
-    // For public sharing, we need to call the backend directly (not through frontend proxy)
-    const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-    const response = await fetch(`${backendUrl}/shared/${token}`, {
+    // Use nginx proxy for production, direct backend for development
+    const isProduction = window.location.hostname !== 'localhost';
+    const apiUrl = isProduction 
+      ? `/api/shared/${token}`  // Use nginx proxy in production
+      : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/shared/${token}`;
+      
+    const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -140,9 +143,13 @@ export const sharingApi = {
    * Record completion of a publicly accessed activity
    */
   async recordPublicCompletion(token: string): Promise<void> {
-    // Use a direct fetch to avoid authentication headers
-    const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-    const response = await fetch(`${backendUrl}/shared/${token}/complete`, {
+    // Use nginx proxy for production, direct backend for development
+    const isProduction = window.location.hostname !== 'localhost';
+    const apiUrl = isProduction 
+      ? `/api/shared/${token}/complete`  // Use nginx proxy in production
+      : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/shared/${token}/complete`;
+      
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -158,8 +165,13 @@ export const sharingApi = {
    * Check health of public sharing system
    */
   async checkPublicHealth(): Promise<{ status: string; service: string }> {
-    const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-    const response = await fetch(`${backendUrl}/shared/health`, {
+    // Use nginx proxy for production, direct backend for development
+    const isProduction = window.location.hostname !== 'localhost';
+    const apiUrl = isProduction 
+      ? `/api/shared/health`  // Use nginx proxy in production
+      : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/shared/health`;
+      
+    const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

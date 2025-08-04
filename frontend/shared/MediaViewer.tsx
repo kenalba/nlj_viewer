@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { CardMedia, Skeleton, Box, useMediaQuery, useTheme, Dialog, DialogContent, IconButton, Tooltip, Typography } from '@mui/material';
 import { ZoomIn as ZoomInIcon, Close as CloseIcon } from '@mui/icons-material';
 import type { Media } from '../types/nlj';
+import { getProxiedMediaUrl } from '../utils/mediaUtils';
 
 // HLS Video Player Component
 interface HLSVideoPlayerProps {
@@ -22,12 +23,15 @@ const HLSVideoPlayer: React.FC<HLSVideoPlayerProps> = ({ media, responsiveHeight
 
     const initializeVideo = async () => {
       try {
+        // Get the proxied URL to bypass CORS issues
+        const proxiedUrl = getProxiedMediaUrl(media.fullPath);
+        
         // Check if this is an HLS stream (.m3u8)
         if (media.fullPath.includes('.m3u8')) {
           // Try to use HLS.js for HLS streams
           if (video.canPlayType('application/vnd.apple.mpegurl')) {
             // Native HLS support (Safari)
-            video.src = media.fullPath;
+            video.src = proxiedUrl;
             
             // Handle CORS errors for native HLS
             video.onerror = () => {
@@ -48,7 +52,7 @@ const HLSVideoPlayer: React.FC<HLSVideoPlayerProps> = ({ media, responsiveHeight
                 }
               });
               
-              hls.loadSource(media.fullPath);
+              hls.loadSource(proxiedUrl);
               hls.attachMedia(video);
               
               hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -86,7 +90,7 @@ const HLSVideoPlayer: React.FC<HLSVideoPlayerProps> = ({ media, responsiveHeight
           }
         } else {
           // Regular video file
-          video.src = media.fullPath;
+          video.src = proxiedUrl;
           video.onerror = () => {
             setErrorMessage('Unable to load video file.');
             onError();
@@ -262,7 +266,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
             )}
             <CardMedia
               component="img"
-              image={error ? media.fullThumbnail || '/placeholder.svg' : media.fullPath}
+              image={error ? getProxiedMediaUrl(media.fullThumbnail || '/placeholder.svg') : getProxiedMediaUrl(media.fullPath)}
               alt={alt || media.title || 'Training content'}
               onLoad={handleLoad}
               onError={handleError}
@@ -331,7 +335,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
             </IconButton>
             <Box
               component="img"
-              src={media.fullPath}
+              src={getProxiedMediaUrl(media.fullPath)}
               alt={alt || media.title || 'Training content'}
               sx={{
                 width: '100%',

@@ -230,6 +230,19 @@ async def get_user_shares(
 
 
 # Public endpoints (no authentication required)
+# Note: More specific routes MUST come before catch-all routes in FastAPI
+
+# Health check endpoint for public access - MUST be before /{token}
+@public_router.get(
+    "/health",
+    summary="Health check",
+    description="Public health check endpoint"
+)
+async def public_health_check():
+    """Public health check for the sharing system."""
+    return {"status": "healthy", "service": "public_sharing"}
+
+
 @public_router.get(
     "/{token}",
     response_model=PublicActivityResponse,
@@ -276,14 +289,3 @@ async def record_public_completion(
         )
     
     return {"message": "Completion recorded successfully"}
-
-
-# Health check endpoint for public access
-@public_router.get(
-    "/health",
-    summary="Health check",
-    description="Public health check endpoint"
-)
-async def public_health_check():
-    """Public health check for the sharing system."""
-    return {"status": "healthy", "service": "public_sharing"}
