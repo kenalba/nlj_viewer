@@ -174,9 +174,26 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
     // Access node data directly - it might be at the root level  
     const data = node.data || node;
     
-    // For 'question' type nodes, find associated choice nodes
-    const choiceNodes = node.type === 'question' ? 
-      contentData?.nodes?.filter(n => n.type === 'choice' && (n as any).parentId === node.id) || [] : [];
+    // For 'question' type nodes, find associated choice nodes using the same logic as the game player
+    // Use parent-child links to connect question nodes to choice nodes (like scenarioUtils.getChoicesForQuestion)
+    const choiceNodes = node.type === 'question' && contentData?.links ? 
+      (() => {
+        const parentChildLinks = contentData.links.filter(
+          link => link.type === 'parent-child' && link.sourceNodeId === node.id
+        );
+        
+        // Use a Set to prevent duplicates based on node ID
+        const seenNodeIds = new Set<string>();
+        return parentChildLinks
+          .map(link => contentData.nodes?.find(n => n.id === link.targetNodeId))
+          .filter((n): n is any => {
+            if (!n || n.type !== 'choice' || seenNodeIds.has(n.id)) {
+              return false;
+            }
+            seenNodeIds.add(n.id);
+            return true;
+          });
+      })() : [];
     
     return (
       <Box>
@@ -264,6 +281,18 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
           </Box>
         )}
         
+        {/* Debug: Show what we're looking for */}
+        {node.type === 'question' && (
+          <Box sx={{ mb: 2, p: 1, bgcolor: 'info.50', borderRadius: 1 }}>
+            <Typography variant="caption" color="text.secondary">
+              Looking for choices for question {node.id}. Found {choiceNodes.length} choice nodes.
+              {choiceNodes.length === 0 && (
+                <><br />Links: {contentData?.links?.filter(l => l.type === 'parent-child' && l.sourceNodeId === node.id).map(l => `${l.sourceNodeId}->${l.targetNodeId}`).join(', ') || 'none'}</>
+              )}
+            </Typography>
+          </Box>
+        )}
+        
         {/* Answer Choices for 'question' type nodes with separate ChoiceNode children */}
         {node.type === 'question' && choiceNodes.length > 0 && (
           <Box sx={{ mb: 3 }}>
@@ -273,6 +302,7 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
             <Stack spacing={1}>
               {choiceNodes.map((choiceNode: any, index: number) => {
                 const isCorrect = choiceNode.isCorrect || choiceNode.choiceType === 'CORRECT';
+                const choiceData = choiceNode.data || choiceNode;
                 return (
                   <Box 
                     key={choiceNode.id || index} 
@@ -294,16 +324,16 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
                     )}
                     <Box sx={{ flex: 1 }}>
                       <MarkdownRenderer
-                        content={String(choiceNode.text || choiceNode.data?.text || '')}
+                        content={String(choiceData.text || choiceNode.text || '')}
                         sx={{ fontSize: '1rem' }}
                       />
-                      {choiceNode.feedback && (
+                      {(choiceData.feedback || choiceNode.feedback) && (
                         <Box sx={{ mt: 1, p: 1, bgcolor: 'grey.100', borderRadius: 1 }}>
                           <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                            Feedback:
+                            Choice Feedback:
                           </Typography>
                           <MarkdownRenderer
-                            content={String(choiceNode.feedback || '')}
+                            content={String(choiceData.feedback || choiceNode.feedback || '')}
                             sx={{ fontSize: '0.875rem', fontStyle: 'italic', color: 'text.secondary' }}
                           />
                         </Box>
@@ -318,6 +348,16 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
             </Stack>
           </Box>
         )}
+        
+        {/* Show message when question has no choices found */}
+        {node.type === 'question' && choiceNodes.length === 0 && (
+          <Box sx={{ mb: 2, p: 2, bgcolor: 'warning.50', borderRadius: 1 }}>
+            <Typography variant="body2" color="warning.main">
+              ⚠️ This question node has no associated choice nodes found. This may indicate a data structure issue.
+            </Typography>
+          </Box>
+        )}
+        
 
         {/* Checkbox Options */}
         {data.options && Array.isArray(data.options) && (
@@ -371,8 +411,53 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
           </Box>
         )}
 
-        {/* Items for ordering/matching */}
-        {data.items && Array.isArray(data.items) && (
+        {/* Ordering Question Items */}
+        {node.type === 'ordering' && data.items && Array.isArray(data.items) && (
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+              Ordering Question - Correct Sequence:
+            </Typography>
+            <Stack spacing={1}>
+              {data.items
+                .sort((a: any, b: any) => (a.correctOrder || 0) - (b.correctOrder || 0))
+                .map((item: any, index: number) => (
+                  <Box key={item.id || index} sx={{ 
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 1.5,
+                    bgcolor: 'info.50',
+                    border: '1px solid',
+                    borderColor: 'info.200',
+                    borderRadius: 1
+                  }}>
+                    <Typography variant="body2" sx={{ 
+                      minWidth: '30px',
+                      height: '30px',
+                      borderRadius: '50%',
+                      backgroundColor: 'info.main',
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.875rem',
+                      fontWeight: 'bold'
+                    }}>
+                      {item.correctOrder || index + 1}
+                    </Typography>
+                    <MarkdownRenderer
+                      content={String(item.text || item.content || '')}
+                      sx={{ fontSize: '1rem', flex: 1 }}
+                    />
+                  </Box>
+                ))
+              }
+            </Stack>
+          </Box>
+        )}
+        
+        {/* Generic Items (for other question types) */}
+        {node.type !== 'ordering' && data.items && Array.isArray(data.items) && (
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
               Items:
@@ -546,8 +631,68 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
           </Box>
         )}
 
-        {/* Correct Answer for short answer, etc. */}
-        {data.correctAnswer !== undefined && (
+        {/* True/False Questions */}
+        {(node.type === 'trueFalse' || node.type === 'true_false') && data.correctAnswer !== undefined && (
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+              Correct Answer:
+            </Typography>
+            <Box sx={{ 
+              p: 2,
+              bgcolor: 'success.50',
+              border: '1px solid',
+              borderColor: 'success.200',
+              borderRadius: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}>
+              <CorrectIcon color="success" />
+              <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
+                {data.correctAnswer === true || data.correctAnswer === 'true' ? 'TRUE' : 'FALSE'}
+              </Typography>
+            </Box>
+          </Box>
+        )}
+        
+        {/* Short Answer Questions - Correct Answers (plural) */}
+        {(node.type === 'shortAnswer' || node.type === 'short_answer') && data.correctAnswers && Array.isArray(data.correctAnswers) && (
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+              Accepted Answers:
+            </Typography>
+            {data.caseSensitive !== undefined && (
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Case sensitive: {data.caseSensitive ? 'Yes' : 'No'}
+              </Typography>
+            )}
+            <Stack spacing={1}>
+              {data.correctAnswers.map((answer: string, index: number) => (
+                <Box key={index} sx={{ 
+                  p: 1.5,
+                  bgcolor: 'success.50',
+                  border: '1px solid',
+                  borderColor: 'success.200',
+                  borderRadius: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}>
+                  <CorrectIcon color="success" />
+                  <Typography variant="body1" sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
+                    "{String(answer)}"
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
+          </Box>
+        )}
+        
+        {/* Generic Correct Answer for other question types (singular) */}
+        {data.correctAnswer !== undefined && 
+         !data.correctAnswers && 
+         node.type !== 'trueFalse' && 
+         node.type !== 'true_false' && (
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
               Expected Answer:
@@ -570,63 +715,95 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
           </Box>
         )}
 
-        {/* Feedback */}
-        {data.feedback && (
+        {/* Unified Question Feedback */}
+        {(data.feedback || node.feedback) && (
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
               Learner Feedback:
             </Typography>
-            {typeof data.feedback === 'object' ? (
-              <Stack spacing={1}>
-                {data.feedback.correct && (
+            {(() => {
+              // Use node-level feedback first, then data-level feedback
+              const feedbackContent = data.feedback || node.feedback;
+              
+              // Handle object-based feedback with correct/incorrect properties
+              if (typeof feedbackContent === 'object' && feedbackContent !== null) {
+                return (
+                  <Stack spacing={1}>
+                    {feedbackContent.correct && (
+                      <Box sx={{ 
+                        p: 2,
+                        bgcolor: 'success.50',
+                        border: '1px solid',
+                        borderColor: 'success.200',
+                        borderRadius: 1
+                      }}>
+                        <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'success.main' }}>
+                          Correct Feedback:
+                        </Typography>
+                        <MarkdownRenderer
+                          content={String(feedbackContent.correct)}
+                          sx={{ fontStyle: 'italic', color: 'text.secondary' }}
+                        />
+                      </Box>
+                    )}
+                    {feedbackContent.incorrect && (
+                      <Box sx={{ 
+                        p: 2,
+                        bgcolor: 'error.50',
+                        border: '1px solid',
+                        borderColor: 'error.200',
+                        borderRadius: 1
+                      }}>
+                        <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'error.main' }}>
+                          Incorrect Feedback:
+                        </Typography>
+                        <MarkdownRenderer
+                          content={String(feedbackContent.incorrect)}
+                          sx={{ fontStyle: 'italic', color: 'text.secondary' }}
+                        />
+                      </Box>
+                    )}
+                    {/* Handle general feedback property in object */}
+                    {feedbackContent.general && (
+                      <Box sx={{ 
+                        p: 2,
+                        bgcolor: 'info.50',
+                        border: '1px solid',
+                        borderColor: 'info.200',
+                        borderRadius: 1
+                      }}>
+                        <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'info.main' }}>
+                          General Feedback:
+                        </Typography>
+                        <MarkdownRenderer
+                          content={String(feedbackContent.general)}
+                          sx={{ fontStyle: 'italic', color: 'text.secondary' }}
+                        />
+                      </Box>
+                    )}
+                  </Stack>
+                );
+              } else {
+                // Handle string-based unified feedback
+                return (
                   <Box sx={{ 
                     p: 2,
-                    bgcolor: 'success.50',
+                    bgcolor: 'info.50',
                     border: '1px solid',
-                    borderColor: 'success.200',
+                    borderColor: 'info.200',
                     borderRadius: 1
                   }}>
-                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'success.main' }}>
-                      Correct Feedback:
+                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'info.main' }}>
+                      Unified Feedback:
                     </Typography>
                     <MarkdownRenderer
-                      content={String(data.feedback.correct)}
+                      content={String(feedbackContent || '')}
                       sx={{ fontStyle: 'italic', color: 'text.secondary' }}
                     />
                   </Box>
-                )}
-                {data.feedback.incorrect && (
-                  <Box sx={{ 
-                    p: 2,
-                    bgcolor: 'error.50',
-                    border: '1px solid',
-                    borderColor: 'error.200',
-                    borderRadius: 1
-                  }}>
-                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'error.main' }}>
-                      Incorrect Feedback:
-                    </Typography>
-                    <MarkdownRenderer
-                      content={String(data.feedback.incorrect)}
-                      sx={{ fontStyle: 'italic', color: 'text.secondary' }}
-                    />
-                  </Box>
-                )}
-              </Stack>
-            ) : (
-              <Box sx={{ 
-                p: 2,
-                bgcolor: 'info.50',
-                border: '1px solid',
-                borderColor: 'info.200',
-                borderRadius: 1
-              }}>
-                <MarkdownRenderer
-                  content={String(data.feedback || '')}
-                  sx={{ fontStyle: 'italic', color: 'text.secondary' }}
-                />
-              </Box>
-            )}
+                );
+              }
+            })()}
           </Box>
         )}
 
