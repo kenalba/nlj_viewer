@@ -20,7 +20,25 @@ import {
   TableHead,
   TableRow,
   Chip,
-  Divider
+  Divider,
+  TextField,
+  InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Stack,
+  Tabs,
+  Tab,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Card,
+  CardHeader,
+  CardContent,
+  Collapse,
+  IconButton
 } from '@mui/material';
 import {
   Print as PrintIcon,
@@ -28,7 +46,13 @@ import {
   ExpandMore as ExpandIcon,
   QuestionMark as QuestionIcon,
   AccountTree as FlowIcon,
-  Settings as VariableIcon
+  Settings as VariableIcon,
+  Search as SearchIcon,
+  FilterList as FilterIcon,
+  ViewList as ListIcon,
+  ViewModule as CardIcon,
+  KeyboardArrowDown as ArrowDownIcon,
+  KeyboardArrowUp as ArrowUpIcon
 } from '@mui/icons-material';
 import { contentApi } from '../../api/content';
 import type { PendingReview } from '../../types/workflow';
@@ -42,6 +66,11 @@ export const ReviewContentAuditTab: React.FC<ReviewContentAuditTabProps> = ({ re
   const [contentData, setContentData] = useState<NLJScenario | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [nodeTypeFilter, setNodeTypeFilter] = useState('all');
+  const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
+  const [currentAuditTab, setCurrentAuditTab] = useState(0);
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
   const { content_id } = review;
 
@@ -100,11 +129,41 @@ export const ReviewContentAuditTab: React.FC<ReviewContentAuditTabProps> = ({ re
     return <QuestionIcon fontSize="small" />;
   };
 
+  // Filtering and search logic
+  const filteredNodes = contentData?.nodes?.filter(node => {
+    const matchesSearch = !searchTerm || 
+      node.data?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      node.data?.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      node.data?.text?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      node.data?.question?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      node.id.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesType = nodeTypeFilter === 'all' || node.type === nodeTypeFilter;
+    
+    return matchesSearch && matchesType;
+  }) || [];
+
+  const questionNodes = filteredNodes.filter(node => 
+    !['start', 'end', 'panel'].includes(node.type)
+  );
+
+  const nodeTypes = [...new Set(contentData?.nodes?.map(node => node.type) || [])];
+
+  const toggleNodeExpansion = (nodeId: string) => {
+    const newExpanded = new Set(expandedNodes);
+    if (newExpanded.has(nodeId)) {
+      newExpanded.delete(nodeId);
+    } else {
+      newExpanded.add(nodeId);
+    }
+    setExpandedNodes(newExpanded);
+  };
+
   const renderNodeContent = (node: NLJNode) => {
     const data = node.data || {};
     
     return (
-      <Box sx={{ ml: 2 }}>
+      <Box sx={{ p: 2 }}>
         {/* Basic Content */}
         {data.title && (
           <Typography variant="subtitle2" gutterBottom>
@@ -135,14 +194,16 @@ export const ReviewContentAuditTab: React.FC<ReviewContentAuditTabProps> = ({ re
             <Typography variant="subtitle2" gutterBottom>
               <strong>Choices:</strong>
             </Typography>
-            <Box sx={{ ml: 2 }}>
+            <Stack spacing={0.5} sx={{ ml: 2 }}>
               {data.choices.map((choice: any, index: number) => (
-                <Typography key={index} variant="body2" sx={{ mb: 0.5 }}>
-                  • {typeof choice === 'string' ? choice : choice.text || choice.label}
-                  {choice.correct && <Chip label="Correct" size="small" color="success" sx={{ ml: 1 }} />}
-                </Typography>
+                <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2">
+                    • {typeof choice === 'string' ? choice : choice.text || choice.label}
+                  </Typography>
+                  {choice.correct && <Chip label="Correct" size="small" color="success" />}
+                </Box>
               ))}
-            </Box>
+            </Stack>
           </Box>
         )}
 
@@ -152,13 +213,13 @@ export const ReviewContentAuditTab: React.FC<ReviewContentAuditTabProps> = ({ re
             <Typography variant="subtitle2" gutterBottom>
               <strong>Items:</strong>
             </Typography>
-            <Box sx={{ ml: 2 }}>
+            <Stack spacing={0.5} sx={{ ml: 2 }}>
               {data.items.map((item: any, index: number) => (
-                <Typography key={index} variant="body2" sx={{ mb: 0.5 }}>
+                <Typography key={index} variant="body2">
                   • {typeof item === 'string' ? item : item.text || item.content}
                 </Typography>
               ))}
-            </Box>
+            </Stack>
           </Box>
         )}
 
@@ -168,22 +229,24 @@ export const ReviewContentAuditTab: React.FC<ReviewContentAuditTabProps> = ({ re
             <Typography variant="subtitle2" gutterBottom>
               <strong>Matching Pairs:</strong>
             </Typography>
-            <Box sx={{ ml: 2 }}>
+            <Stack spacing={0.5} sx={{ ml: 2 }}>
               {data.pairs.map((pair: any, index: number) => (
-                <Typography key={index} variant="body2" sx={{ mb: 0.5 }}>
+                <Typography key={index} variant="body2">
                   • {pair.left} ↔ {pair.right}
                 </Typography>
               ))}
-            </Box>
+            </Stack>
           </Box>
         )}
 
         {/* Correct answer */}
         {data.correctAnswer !== undefined && (
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            <strong>Correct Answer:</strong> {String(data.correctAnswer)}
-            <Chip label="Answer Key" size="small" color="info" sx={{ ml: 1 }} />
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <Typography variant="body2">
+              <strong>Correct Answer:</strong> {String(data.correctAnswer)}
+            </Typography>
+            <Chip label="Answer Key" size="small" color="info" />
+          </Box>
         )}
 
         {/* Feedback */}
@@ -201,6 +264,42 @@ export const ReviewContentAuditTab: React.FC<ReviewContentAuditTabProps> = ({ re
           </Typography>
         )}
       </Box>
+    );
+  };
+
+  const renderNodeCard = (node: NLJNode, index: number) => {
+    const isExpanded = expandedNodes.has(node.id);
+    
+    return (
+      <Card key={node.id} sx={{ mb: 2 }}>
+        <CardHeader
+          avatar={getNodeIcon(node.type)}
+          title={
+            <Box display="flex" alignItems="center" gap={2}>
+              <Typography variant="subtitle1" fontWeight={600}>
+                Node {index + 1}: {node.data?.title || node.id}
+              </Typography>
+              <Chip 
+                label={getNodeTypeLabel(node.type)}
+                size="small"
+                color="primary"
+                variant="outlined"
+              />
+            </Box>
+          }
+          action={
+            <IconButton onClick={() => toggleNodeExpansion(node.id)}>
+              {isExpanded ? <ArrowUpIcon /> : <ArrowDownIcon />}
+            </IconButton>
+          }
+          sx={{ pb: 1 }}
+        />
+        <Collapse in={isExpanded}>
+          <CardContent sx={{ pt: 0 }}>
+            {renderNodeContent(node)}
+          </CardContent>
+        </Collapse>
+      </Card>
     );
   };
 
@@ -223,10 +322,6 @@ export const ReviewContentAuditTab: React.FC<ReviewContentAuditTabProps> = ({ re
     );
   }
 
-  const questionNodes = contentData.nodes?.filter(node => 
-    !['start', 'end', 'panel'].includes(node.type)
-  ) || [];
-
   const totalNodes = contentData.nodes?.length || 0;
   const totalConnections = contentData.links?.length || 0;
 
@@ -234,7 +329,7 @@ export const ReviewContentAuditTab: React.FC<ReviewContentAuditTabProps> = ({ re
     <Box sx={{ '@media print': { '& .no-print': { display: 'none' } } }}>
       {/* Header - Hidden in print */}
       <Paper sx={{ p: 3, mb: 3, bgcolor: 'success.50' }} className="no-print">
-        <Box display="flex" alignItems="center" justifyContent="space-between">
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
           <Box>
             <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <AuditIcon color="primary" />
@@ -253,6 +348,65 @@ export const ReviewContentAuditTab: React.FC<ReviewContentAuditTabProps> = ({ re
             Print Audit
           </Button>
         </Box>
+
+        {/* Search and Filter Controls */}
+        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+          <TextField
+            size="small"
+            placeholder="Search content, titles, questions..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ minWidth: 300, flex: 1 }}
+          />
+          
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Node Type</InputLabel>
+            <Select
+              value={nodeTypeFilter}
+              onChange={(e) => setNodeTypeFilter(e.target.value)}
+              label="Node Type"
+              startAdornment={<FilterIcon fontSize="small" sx={{ mr: 1 }} />}
+            >
+              <MenuItem value="all">All Types</MenuItem>
+              {nodeTypes.map(type => (
+                <MenuItem key={type} value={type}>
+                  {getNodeTypeLabel(type)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Box display="flex" gap={0.5}>
+            <IconButton
+              onClick={() => setViewMode('cards')}
+              color={viewMode === 'cards' ? 'primary' : 'default'}
+              size="small"
+            >
+              <CardIcon />
+            </IconButton>
+            <IconButton
+              onClick={() => setViewMode('list')}
+              color={viewMode === 'list' ? 'primary' : 'default'}
+              size="small"
+            >
+              <ListIcon />
+            </IconButton>
+          </Box>
+        </Box>
+
+        {/* Results Summary */}
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          Showing {filteredNodes.length} of {contentData?.nodes?.length || 0} nodes
+          {searchTerm && ` matching "${searchTerm}"`}
+          {nodeTypeFilter !== 'all' && ` of type "${getNodeTypeLabel(nodeTypeFilter)}"`}
+        </Typography>
       </Paper>
 
       {/* Summary Statistics */}
@@ -288,82 +442,120 @@ export const ReviewContentAuditTab: React.FC<ReviewContentAuditTabProps> = ({ re
         </Box>
       </Paper>
 
-      {/* All Nodes */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Complete Node Structure
-        </Typography>
-        
-        {contentData.nodes?.map((node, index) => (
-          <Accordion key={node.id} sx={{ mb: 1 }}>
-            <AccordionSummary expandIcon={<ExpandIcon />}>
-              <Box display="flex" alignItems="center" gap={2} width="100%">
-                {getNodeIcon(node.type)}
-                <Typography variant="subtitle1" fontWeight={600}>
-                  Node {index + 1}: {node.data?.title || node.id}
-                </Typography>
-                <Chip 
-                  label={getNodeTypeLabel(node.type)}
-                  size="small"
-                  color="primary"
-                  variant="outlined"
-                />
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              {renderNodeContent(node)}
-            </AccordionDetails>
-          </Accordion>
-        ))}
+      {/* Tabbed Content View */}
+      <Paper sx={{ p: 0, mb: 3 }} className="no-print">
+        <Tabs 
+          value={currentAuditTab} 
+          onChange={(_, newValue) => setCurrentAuditTab(newValue)}
+          sx={{ borderBottom: 1, borderColor: 'divider', px: 3, pt: 2 }}
+        >
+          <Tab label={`All Nodes (${filteredNodes.length})`} />
+          <Tab label={`Questions Only (${questionNodes.length})`} />
+          <Tab label="Flow Structure" />
+        </Tabs>
+
+        <Box sx={{ p: 3 }}>
+          {/* Tab 0: All Nodes */}
+          {currentAuditTab === 0 && (
+            <Box>
+              {filteredNodes.length === 0 ? (
+                <Alert severity="info" sx={{ my: 2 }}>
+                  No nodes match your current search and filter criteria.
+                </Alert>
+              ) : viewMode === 'cards' ? (
+                <Box>
+                  {filteredNodes.map((node, index) => renderNodeCard(node, index))}
+                </Box>
+              ) : (
+                <Box>
+                  {filteredNodes.map((node, index) => (
+                    <Accordion key={node.id} sx={{ mb: 1 }}>
+                      <AccordionSummary expandIcon={<ExpandIcon />}>
+                        <Box display="flex" alignItems="center" gap={2} width="100%">
+                          {getNodeIcon(node.type)}
+                          <Typography variant="subtitle1" fontWeight={600}>
+                            Node {index + 1}: {node.data?.title || node.id}
+                          </Typography>
+                          <Chip 
+                            label={getNodeTypeLabel(node.type)}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                        </Box>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        {renderNodeContent(node)}
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
+                </Box>
+              )}
+            </Box>
+          )}
+
+          {/* Tab 1: Questions Only */}
+          {currentAuditTab === 1 && (
+            <Box>
+              {questionNodes.length === 0 ? (
+                <Alert severity="info" sx={{ my: 2 }}>
+                  No question nodes match your current search and filter criteria.
+                </Alert>
+              ) : (
+                <Box>
+                  {questionNodes.map((node, index) => renderNodeCard(node, index))}
+                </Box>
+              )}
+            </Box>
+          )}
+
+          {/* Tab 2: Flow Structure */}
+          {currentAuditTab === 2 && (
+            <Box>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell><strong>From Node</strong></TableCell>
+                      <TableCell><strong>To Node</strong></TableCell>
+                      <TableCell><strong>Connection Type</strong></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {contentData.links?.map((link, index) => {
+                      const sourceNode = contentData.nodes?.find(n => n.id === link.sourceNodeId);
+                      const targetNode = contentData.nodes?.find(n => n.id === link.targetNodeId);
+                      
+                      return (
+                        <TableRow key={link.id || index}>
+                          <TableCell>
+                            {sourceNode?.data?.title || link.sourceNodeId}
+                            <br />
+                            <Typography variant="caption" color="text.secondary">
+                              ({getNodeTypeLabel(sourceNode?.type || 'unknown')})
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            {targetNode?.data?.title || link.targetNodeId}
+                            <br />
+                            <Typography variant="caption" color="text.secondary">
+                              ({getNodeTypeLabel(targetNode?.type || 'unknown')})
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            {link.condition ? 'Conditional' : 'Direct'}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          )}
+        </Box>
       </Paper>
 
-      {/* Flow Connections */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <FlowIcon />
-          Flow Connections
-        </Typography>
-        
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell><strong>From Node</strong></TableCell>
-                <TableCell><strong>To Node</strong></TableCell>
-                <TableCell><strong>Connection Type</strong></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {contentData.links?.map((link, index) => {
-                const sourceNode = contentData.nodes?.find(n => n.id === link.sourceNodeId);
-                const targetNode = contentData.nodes?.find(n => n.id === link.targetNodeId);
-                
-                return (
-                  <TableRow key={link.id || index}>
-                    <TableCell>
-                      {sourceNode?.data?.title || link.sourceNodeId}
-                      <br />
-                      <Typography variant="caption" color="text.secondary">
-                        ({getNodeTypeLabel(sourceNode?.type || 'unknown')})
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      {targetNode?.data?.title || link.targetNodeId}
-                      <br />
-                      <Typography variant="caption" color="text.secondary">
-                        ({getNodeTypeLabel(targetNode?.type || 'unknown')})
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      {link.condition ? 'Conditional' : 'Direct'}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
 
       {/* Variables */}
       {contentData.variableDefinitions && contentData.variableDefinitions.length > 0 && (

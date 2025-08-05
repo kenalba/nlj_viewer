@@ -33,11 +33,10 @@ import { isMultiStageWorkflow } from '../types/workflow';
 import { useAuth } from '../contexts/AuthContext';
 
 // Import modular components
-import { ReviewOverviewTab } from '../components/review/ReviewOverviewTab';
-import { ReviewPlayTab } from '../components/review/ReviewPlayTab';
+import { ReviewOverviewAndPreviewTab } from '../components/review/ReviewOverviewAndPreviewTab';
 import { ReviewContentAuditTab } from '../components/review/ReviewContentAuditTab';
 import { ReviewHistoryTab } from '../components/review/ReviewHistoryTab';
-import { ReviewActionsPanel } from '../components/review/ReviewActionsPanel';
+import { EnhancedReviewActionsPanel } from '../components/review/EnhancedReviewActionsPanel';
 import { MultiStageWorkflowPanel } from '../components/review/MultiStageWorkflowPanel';
 import { MultiStageReviewActionsPanel } from '../components/review/MultiStageReviewActionsPanel';
 
@@ -164,14 +163,13 @@ export const DetailedReviewPage: React.FC = () => {
   const isMultiStage = isMultiStageWorkflow(review.workflow);
   
   const tabConfigs = [
-    { label: 'Overview', icon: <OverviewIcon fontSize="small" />, component: <ReviewOverviewTab review={review} /> },
-    { label: 'Interactive Preview', icon: <PlayIcon fontSize="small" />, component: <ReviewPlayTab review={review} /> },
+    { label: 'Overview & Preview', icon: <OverviewIcon fontSize="small" />, component: <ReviewOverviewAndPreviewTab review={review} /> },
     { label: 'Content Audit', icon: <AuditIcon fontSize="small" />, component: <ReviewContentAuditTab review={review} /> },
     { label: 'Review History', icon: <HistoryIcon fontSize="small" />, component: <ReviewHistoryTab review={review} /> },
     ...(isMultiStage ? [{ 
       label: 'Workflow Progress', 
       icon: <ReviewIcon fontSize="small" />, 
-      component: <MultiStageWorkflowPanel workflow={review.workflow} compact={false} /> 
+      component: <MultiStageWorkflowPanel workflow={review.workflow as any} compact={false} /> 
     }] : [])
   ];
 
@@ -241,30 +239,46 @@ export const DetailedReviewPage: React.FC = () => {
 
         {/* Right Sidebar - Review Actions */}
         <Box sx={{ 
-          width: 400, 
+          width: 420, 
           borderLeft: 1, 
           borderColor: 'divider', 
-          bgcolor: 'background.default',
+          bgcolor: 'grey.50',
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
+          maxHeight: '100%',
+          minHeight: 0
         }}>
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ 
+            p: 3, 
+            borderBottom: 1, 
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            flexShrink: 0
+          }}>
+            <Typography variant="h6" sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1,
+              fontWeight: 600 
+            }}>
               <ReviewIcon color="primary" />
               Review Actions
             </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              Evaluate and provide feedback
+            </Typography>
           </Box>
           
-          <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+          <Box sx={{ flex: 1, overflow: 'auto', p: 3, minHeight: 0 }}>
             {isMultiStage ? (
               <MultiStageReviewActionsPanel
-                workflow={review.workflow}
+                workflow={review.workflow as any}
                 currentUserId={user?.id || ''}
                 onReviewComplete={handleReviewComplete}
                 compact={false}
               />
             ) : (
-              <ReviewActionsPanel 
+              <EnhancedReviewActionsPanel 
                 review={review}
                 onReviewComplete={handleReviewComplete}
                 compact={false}
