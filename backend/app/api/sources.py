@@ -7,7 +7,7 @@ import uuid
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -202,6 +202,42 @@ async def get_source_document(
         )
     
     return SourceDocumentResponse.model_validate(document)
+
+
+@router.get(
+    "/{document_id}/download",
+    summary="Download source document",
+    description="Download the source document file."
+)
+async def download_source_document(
+    document_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Download source document file."""
+    
+    service = SourceDocumentService(db)
+    document = await service.get_document_by_id(document_id, current_user.id)
+    
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Source document not found"
+        )
+    
+    # Check if file exists
+    import os
+    if not os.path.exists(document.file_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Source file not found on disk"
+        )
+    
+    return FileResponse(
+        path=document.file_path,
+        filename=document.original_filename,
+        media_type='application/octet-stream'
+    )
 
 
 @router.put(
