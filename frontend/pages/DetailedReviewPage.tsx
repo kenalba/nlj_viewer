@@ -34,7 +34,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 // Import modular components
 import { ReviewOverviewAndPreviewTab } from '../components/review/ReviewOverviewAndPreviewTab';
-import { ReviewContentAuditTab } from '../components/review/ReviewContentAuditTab';
+import { RedesignedContentAuditTab } from '../components/review/RedesignedContentAuditTab';
 import { ReviewHistoryTab } from '../components/review/ReviewHistoryTab';
 import { EnhancedReviewActionsPanel } from '../components/review/EnhancedReviewActionsPanel';
 import { MultiStageWorkflowPanel } from '../components/review/MultiStageWorkflowPanel';
@@ -164,7 +164,7 @@ export const DetailedReviewPage: React.FC = () => {
   
   const tabConfigs = [
     { label: 'Overview & Preview', icon: <OverviewIcon fontSize="small" />, component: <ReviewOverviewAndPreviewTab review={review} /> },
-    { label: 'Content Audit', icon: <AuditIcon fontSize="small" />, component: <ReviewContentAuditTab review={review} /> },
+    { label: 'Content Audit', icon: <AuditIcon fontSize="small" />, component: <RedesignedContentAuditTab review={review} /> },
     { label: 'Review History', icon: <HistoryIcon fontSize="small" />, component: <ReviewHistoryTab review={review} /> },
     ...(isMultiStage ? [{ 
       label: 'Workflow Progress', 
