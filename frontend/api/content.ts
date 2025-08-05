@@ -119,7 +119,7 @@ export const contentApi = {
       // Get all published content for stats
       const response = await this.list({ 
         state: 'published', 
-        size: 1000 
+        size: 100 
       });
       
       const stats = {

@@ -35,6 +35,8 @@ sudo nginx -s reload
 - **PostgreSQL Database**: Robust data persistence with SQLAlchemy ORM
 - **JWT Authentication**: Secure user authentication and session management
 - **Role-Based Access Control**: Multi-tier permissions (Player/Creator/Reviewer/Approver/Admin)
+- **Event-Driven Architecture**: Apache Kafka for real-time integration and xAPI event streaming
+- **Cal.com Integration**: Self-hosted scheduling system for in-person training sessions
 - **Docker Deployment**: Containerized deployment with Docker Compose
 - **Content API**: Full CRUD operations with filtering, search, and pagination
 
@@ -56,10 +58,12 @@ sudo nginx -s reload
 
 ## 🏗️ Architecture
 
-The platform is built with modern web technologies:
+The platform is built with modern web technologies and event-driven architecture:
 
 - **Frontend**: TypeScript + React + Material-UI + Vite
 - **Backend**: Python + FastAPI + SQLAlchemy + PostgreSQL
+- **Event System**: Apache Kafka (KRaft mode) for real-time integration
+- **Scheduling**: Self-hosted Cal.com for in-person training management
 - **Deployment**: Docker + Docker Compose
 - **Testing**: Vitest + React Testing Library (326 tests passing)
 
@@ -81,11 +85,18 @@ npm run test -- --run # Run test suite (326 tests passing)
 npm run lint         # Run ESLint
 ```
 
+### Docker Commands
+```bash
+docker-compose up               # Start all services (NLJ + Cal.com + Kafka)
+docker-compose up nlj-api       # Start just NLJ backend for development
+docker-compose down             # Stop all services
+docker-compose logs cal-com     # View Cal.com logs
+```
+
 ### Backend Commands
 ```bash
 uvicorn app.main:app --reload    # Development server
 python -m pytest                # Run tests
-docker-compose up               # Run with Docker
 ```
 
 ### Pre-deployment Verification
@@ -100,6 +111,14 @@ docker-compose up               # Run with Docker
 - Automated deployment pipeline with `deploy-callcoach.sh`
 - SSL certificates and production-ready configuration
 - API documentation available at `/api/docs`
+
+✅ **Phase 1 Cal.com Integration Complete**: Event-Driven Scheduling Infrastructure
+- **Self-Hosted Cal.com**: Docker-based deployment with separate PostgreSQL database
+- **Apache Kafka Event Bus**: KRaft mode configuration for real-time event streaming
+- **Event-Driven Architecture**: Webhook-to-Kafka bridge for booking events and xAPI integration
+- **Database Schema Migration**: Prisma-based database initialization for Cal.com
+- **Multi-Service Orchestration**: Docker Compose configuration with all services (NLJ API, Cal.com, Kafka, PostgreSQL instances)
+- **Development Environment**: Complete local development setup with health checks and monitoring
 
 ✅ **Phase 6 Complete**: Advanced Variable Management & Permissions System
 - **Variable Interpolation Engine**: Comprehensive expression evaluation with mathematical operations, string manipulation, and conditional logic
@@ -116,6 +135,12 @@ docker-compose up               # Run with Docker
 - Seamless Flow Editor integration with database persistence
 
 ## 🚀 Next Steps
+
+🔄 **Phase 2 Cal.com Integration**: Core Scheduling Features
+- Implement training session creation via Cal.com API
+- Build registration flow with event-driven updates
+- Create UI components for session browsing and booking
+- Establish xAPI event patterns for learning analytics
 
 🔄 **Content Creation Enhancements**
 - Extract LLM Prompt Construction as standalone feature

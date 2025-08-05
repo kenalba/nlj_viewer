@@ -14,6 +14,7 @@ from sqlalchemy import select
 from app.core.database import get_db
 from app.core.security import verify_token
 from app.models.user import User, UserRole
+from app.services.kafka_service import kafka_service, xapi_event_service
 
 # HTTP Bearer token scheme
 security = HTTPBearer()
@@ -153,3 +154,13 @@ RequireReviewerOrApprover = Annotated[
     User,
     Depends(require_roles([UserRole.REVIEWER, UserRole.APPROVER]))
 ]
+
+
+async def get_kafka_service():
+    """Get the global Kafka service instance."""
+    return kafka_service
+
+
+async def get_xapi_event_service():
+    """Get the global xAPI event service instance."""
+    return xapi_event_service

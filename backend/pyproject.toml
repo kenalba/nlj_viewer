@@ -23,6 +23,7 @@ dependencies = [
     "passlib[bcrypt]",
     # HTTP client for external integrations
     "httpx",
+    "aiohttp",
     # Excel file processing (for Trivie imports)
     "openpyxl",
     # Environment management
@@ -36,6 +37,9 @@ dependencies = [
     "python-magic",
     # File handling
     "aiofiles",
+    # Kafka integration
+    "aiokafka",
+    "kafka-python",
 ]
 
 [project.optional-dependencies]

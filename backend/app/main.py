@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.database import create_tables
+from app.services.kafka_service import kafka_service
 
 
 @asynccontextmanager
@@ -17,9 +18,21 @@ async def lifespan(app: FastAPI):
     """Application lifespan events."""
     # Startup
     await create_tables()
+    
+    # Initialize Kafka producer for event publishing
+    try:
+        await kafka_service.start_producer()
+    except Exception as e:
+        # Log error but don't fail startup - Kafka may not be available in all environments
+        print(f"Warning: Failed to initialize Kafka producer: {e}")
+    
     yield
+    
     # Shutdown
-    pass
+    try:
+        await kafka_service.stop()
+    except Exception as e:
+        print(f"Warning: Error shutting down Kafka connections: {e}")
 
 
 # Create FastAPI application with modern configuration
@@ -68,6 +81,7 @@ from app.api.sources import router as sources_router
 from app.api.generation import router as generation_router
 from app.api.media import router as media_router
 from app.api.shared_tokens import auth_router as sharing_router, public_router as public_sharing_router
+from app.api.calcom_integration import router as calcom_router
 
 app.include_router(auth_router, prefix="/api/auth", tags=["authentication"])
 app.include_router(users_router, prefix="/api/users", tags=["users"])
@@ -78,6 +92,7 @@ app.include_router(generation_router, prefix="/api", tags=["generation"])
 app.include_router(media_router, prefix="/api", tags=["media"])
 app.include_router(sharing_router, prefix="/api", tags=["sharing"])
 app.include_router(public_sharing_router, tags=["public"])
+app.include_router(calcom_router, prefix="/api", tags=["calcom-integration"])
 
 
 if __name__ == "__main__":

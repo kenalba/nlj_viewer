@@ -20,8 +20,8 @@ RUN pip install uv
 # Set work directory
 WORKDIR /app
 
-# Copy dependency files
-COPY pyproject.toml ./
+# Copy dependency files and README for package build
+COPY pyproject.toml README.md ./
 
 # Create virtual environment and install dependencies
 RUN uv venv .venv && \

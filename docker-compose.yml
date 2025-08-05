@@ -1,0 +1,255 @@
+services:
+  # Existing NLJ Platform Database
+  nlj-db:
+    image: postgres:15-alpine
+    container_name: nlj_postgres
+    environment:
+      POSTGRES_DB: nlj_platform
+      POSTGRES_USER: nlj_user
+      POSTGRES_PASSWORD: nlj_pass
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - nlj_db_data:/var/lib/postgresql/data
+      - ./backend/init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nlj_user -d nlj_platform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nlj_network
+
+  # Event Infrastructure - Kafka (KRaft Mode)
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: nlj_kafka
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      # KRaft Configuration
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:9093'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:9093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      
+      # Cluster Configuration
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+      
+      # Replication and ISR Settings (for single node)
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      
+      # Log Configuration
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      
+      # Logging
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=WARN,kafka.producer.async.DefaultEventHandler=WARN,state.change.logger=WARN,kafka.authorizer.logger=WARN"
+      KAFKA_LOG4J_ROOT_LOGLEVEL: "WARN"
+      
+      # Performance tuning for development
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+      
+    volumes:
+      - kafka_data:/tmp/kraft-combined-logs
+    networks:
+      - nlj_network
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # Cal.com Database
+  cal-db:
+    image: postgres:15-alpine
+    container_name: cal_postgres
+    environment:
+      POSTGRES_DB: cal_db
+      POSTGRES_USER: cal_user
+      POSTGRES_PASSWORD: cal_pass
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5433:5432"
+    volumes:
+      - cal_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cal_user -d cal_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nlj_network
+
+  # Cal.com Self-Hosted Instance
+  cal-com:
+    image: calcom/cal.com:latest
+    container_name: nlj_calcom
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      # Database Configuration
+      - DATABASE_URL=postgresql://cal_user:cal_pass@cal-db:5432/cal_db
+      - DATABASE_DIRECT_URL=postgresql://cal_user:cal_pass@cal-db:5432/cal_db
+      
+      # NextAuth Configuration
+      - NEXTAUTH_SECRET=${CAL_NEXTAUTH_SECRET:-your-secure-nextauth-secret-key-change-in-production}
+      - NEXTAUTH_URL=http://localhost:3000
+      
+      # Cal.com Configuration
+      - CALENDSO_ENCRYPTION_KEY=${CAL_ENCRYPTION_KEY:-your-secure-encryption-key-change-in-production}
+      - NEXT_PUBLIC_WEBAPP_URL=http://localhost:3000
+      - NEXT_PUBLIC_LICENSE_CONSENT=agree
+      
+      # Email Configuration (optional for development)
+      - EMAIL_FROM=${CAL_EMAIL_FROM:-noreply@localhost}
+      - EMAIL_SERVER_USER=${CAL_EMAIL_USER:-}
+      - EMAIL_SERVER_PASSWORD=${CAL_EMAIL_PASSWORD:-}
+      - EMAIL_SERVER_HOST=${CAL_EMAIL_HOST:-}
+      - EMAIL_SERVER_PORT=${CAL_EMAIL_PORT:-587}
+      
+      # Disable telemetry for development
+      - CALCOM_TELEMETRY_DISABLED=1
+      
+    depends_on:
+      cal-db:
+        condition: service_healthy
+    networks:
+      - nlj_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # NLJ FastAPI Backend
+  nlj-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nlj_api
+    ports:
+      - "8000:8000"
+    env_file:
+      - backend/.env
+    environment:
+      # Database Configuration
+      - DATABASE_URL=postgresql+asyncpg://nlj_user:nlj_pass@nlj-db:5432/nlj_platform
+      
+      # Kafka Configuration
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_CLIENT_ID=nlj-platform
+      
+      # Cal.com Integration
+      - CAL_COM_API_URL=http://cal-com:3000/api
+      - CAL_COM_API_KEY=${CAL_COM_API_KEY:-}
+      - CAL_COM_WEBHOOK_SECRET=${CAL_COM_WEBHOOK_SECRET:-}
+      
+      # Redis Configuration
+      - REDIS_URL=redis://redis:6379
+      
+      # Application Settings
+      - DEBUG=${DEBUG:-true}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - ENABLE_REGISTRATION=${ENABLE_REGISTRATION:-true}
+      
+      # Claude API
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY:-}
+      
+      # ElevenLabs API
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY:-}
+      
+      # File Upload
+      - MAX_FILE_SIZE=${MAX_FILE_SIZE:-524288000}
+      - UPLOAD_DIR=uploads
+      
+      # Frontend URL
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
+      
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/app:/app/app  # For development hot-reload
+    depends_on:
+      nlj-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - nlj_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Redis for caching (used by both NLJ and potentially Cal.com)
+  redis:
+    image: redis:7-alpine
+    container_name: nlj_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nlj_network
+
+  # Kafka UI for development (optional)
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: nlj_kafka_ui
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local-kraft
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      DYNAMIC_CONFIG_ENABLED: 'true'
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - nlj_network
+    profiles:
+      - dev-tools
+
+volumes:
+  nlj_db_data:
+    driver: local
+  cal_db_data:
+    driver: local
+  kafka_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  nlj_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

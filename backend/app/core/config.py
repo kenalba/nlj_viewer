@@ -93,6 +93,38 @@ class Settings(BaseSettings):
     EMAIL_PASSWORD: str | None = Field(default=None)
     EMAIL_USE_TLS: bool = Field(default=True)
 
+    # Kafka settings
+    KAFKA_BOOTSTRAP_SERVERS: str = Field(
+        default="localhost:9092",
+        description="Kafka bootstrap servers for event streaming"
+    )
+    KAFKA_CLIENT_ID: str = Field(
+        default="nlj-platform",
+        description="Kafka client ID for this application"
+    )
+    KAFKA_ENABLE_AUTO_COMMIT: bool = Field(
+        default=True,
+        description="Enable auto commit for Kafka consumers"
+    )
+    KAFKA_AUTO_COMMIT_INTERVAL_MS: int = Field(
+        default=1000,
+        description="Auto commit interval in milliseconds"
+    )
+    
+    # Cal.com integration settings
+    CAL_COM_API_URL: str = Field(
+        default="http://localhost:3000/api",
+        description="Cal.com API base URL"
+    )
+    CAL_COM_API_KEY: str = Field(
+        default="",
+        description="Cal.com API key for integration"
+    )
+    CAL_COM_WEBHOOK_SECRET: str = Field(
+        default="",
+        description="Cal.com webhook secret for verification"
+    )
+
     # Keycloak settings (for future integration)
     KEYCLOAK_URL: str | None = Field(
         default=None,

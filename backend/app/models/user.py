@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from app.models.source_document import SourceDocument
     from app.models.generation_session import GenerationSession
     from app.models.media import MediaItem
+    from app.models.training_session import TrainingSession, TrainingBooking, AttendanceRecord
     # TODO: Uncomment when ApprovalStep model is implemented
     # from app.models.workflow import ApprovalStep
 
@@ -111,6 +112,29 @@ class User(Base):
         back_populates="creator",
         lazy="selectin"
     )
+    
+    # Training session relationships
+    instructor_sessions: Mapped[list["TrainingSession"]] = relationship(
+        foreign_keys="TrainingSession.instructor_id",
+        back_populates="instructor",
+        lazy="selectin"
+    )
+    created_sessions: Mapped[list["TrainingSession"]] = relationship(
+        foreign_keys="TrainingSession.created_by_id",
+        back_populates="created_by",
+        lazy="selectin"
+    )
+    training_bookings: Mapped[list["TrainingBooking"]] = relationship(
+        foreign_keys="TrainingBooking.learner_id",
+        back_populates="learner",
+        lazy="selectin"
+    )
+    attendance_records: Mapped[list["AttendanceRecord"]] = relationship(
+        foreign_keys="AttendanceRecord.learner_id",
+        back_populates="learner",
+        lazy="selectin"
+    )
+    
     # TODO: Uncomment when ApprovalStep model is implemented
     # approval_steps: Mapped[list["ApprovalStep"]] = relationship(
     #     back_populates="approver",

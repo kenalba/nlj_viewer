@@ -26,3 +26,7 @@ coverage/
 *.sln
 *.sw?
 backend/.webui_secret_key
+
+# Environment variables
+.env
+backend/.env
