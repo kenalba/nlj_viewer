@@ -18,14 +18,11 @@ import {
   Typography
 } from '@mui/material';
 import type { ContentItem } from '../../api/content';
-import type { ContentVersion } from '../../types/workflow';
-import { workflowApi } from '../../api/workflow';
 import type { User } from '../../api/auth';
 import {
   TitleDescriptionCell,
   ContentTypeCell,
   LearningStyleCell,
-  CategoryCell,
   DateCell,
   WorkflowStatusCell,
   VersionInfoCell,
@@ -44,8 +41,6 @@ interface ContentTableRowProps {
   onDeleteContent?: (item: ContentItem) => void;
   onSubmitForReview?: (item: ContentItem) => void;
   onViewDetails?: (item: ContentItem) => void;
-  versions?: ContentVersion[];
-  versionsLoading?: boolean;
 }
 
 const ContentTableRow = React.memo(({ 
@@ -57,9 +52,7 @@ const ContentTableRow = React.memo(({
   onEditContent,
   onDeleteContent,
   onSubmitForReview,
-  onViewDetails,
-  versions,
-  versionsLoading
+  onViewDetails
 }: ContentTableRowProps) => {
   const handleCheckboxChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     onRowSelect(String(item.id), event.target.checked);
@@ -96,9 +89,6 @@ const ContentTableRow = React.memo(({
         <LearningStyleCell item={item} value={item.learning_style} />
       </TableCell>
       <TableCell align="center" sx={{ py: 2 }}>
-        <CategoryCell item={item} value={item.template_category} />
-      </TableCell>
-      <TableCell align="center" sx={{ py: 2 }}>
         <Typography variant="body2">
           {item.view_count}
         </Typography>
@@ -115,7 +105,7 @@ const ContentTableRow = React.memo(({
         <WorkflowStatusCell item={item} value={item.state} />
       </TableCell>
       <TableCell align="center" sx={{ py: 2 }}>
-        <VersionInfoCell item={item} versions={versions} versionsLoading={versionsLoading} />
+        <VersionInfoCell item={item} />
       </TableCell>
       <TableCell align="center" sx={{ py: 2 }}>
         <DateCell item={item} value={item.updated_at} />
@@ -143,8 +133,6 @@ const ContentTableRow = React.memo(({
     prevProps.item.state === nextProps.item.state &&
     prevProps.item.updated_at === nextProps.item.updated_at &&
     prevProps.user === nextProps.user &&
-    prevProps.versions === nextProps.versions &&
-    prevProps.versionsLoading === nextProps.versionsLoading &&
     prevProps.onViewDetails === nextProps.onViewDetails
   );
 });
@@ -173,52 +161,12 @@ export const ContentTable = React.memo(({
   const navigate = useNavigate();
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(15);
-  const [versionsMap, setVersionsMap] = useState<Map<string, ContentVersion[]>>(new Map());
-  const [versionsLoading, setVersionsLoading] = useState(false);
-  
   // Use ref to avoid re-creating callbacks on every selection change
   const selectedIdsRef = useRef(selectedIds);
   selectedIdsRef.current = selectedIds;
   
   const onSelectionChangeRef = useRef(onSelectionChange);
   onSelectionChangeRef.current = onSelectionChange;
-
-  // Batch fetch versions for all content items
-  useEffect(() => {
-    const fetchAllVersions = async () => {
-      if (content.length === 0) return;
-      
-      setVersionsLoading(true);
-      const newVersionsMap = new Map<string, ContentVersion[]>();
-      
-      try {
-        // Batch fetch versions for all content items
-        const versionPromises = content.map(async (item) => {
-          try {
-            const versions = await workflowApi.getContentVersions(String(item.id));
-            return { itemId: String(item.id), versions };
-          } catch (error) {
-            console.error(`Failed to fetch versions for item ${item.id}:`, error);
-            return { itemId: String(item.id), versions: [] };
-          }
-        });
-        
-        const results = await Promise.all(versionPromises);
-        
-        results.forEach(({ itemId, versions }) => {
-          newVersionsMap.set(itemId, versions);
-        });
-        
-        setVersionsMap(newVersionsMap);
-      } catch (error) {
-        console.error('Failed to batch fetch versions:', error);
-      } finally {
-        setVersionsLoading(false);
-      }
-    };
-
-    fetchAllVersions();
-  }, [content]);
 
   // Handle individual row selection - stable callback reference that won't cause re-renders
   const handleRowSelect = useCallback((id: string, isSelected: boolean) => {
@@ -303,11 +251,6 @@ export const ContentTable = React.memo(({
                   Learning Style
                 </Typography>
               </TableCell>
-              <TableCell align="center" sx={{ minWidth: 100 }}>
-                <Typography variant="subtitle2" fontWeight={600}>
-                  Category
-                </Typography>
-              </TableCell>
               <TableCell align="center" sx={{ minWidth: 80 }}>
                 <Typography variant="subtitle2" fontWeight={600}>
                   Views
@@ -358,8 +301,6 @@ export const ContentTable = React.memo(({
                 onDeleteContent={onDeleteContent}
                 onSubmitForReview={onSubmitForReview}
                 onViewDetails={handleViewDetails}
-                versions={versionsMap.get(String(item.id))}
-                versionsLoading={versionsLoading}
               />
             ))}
           </TableBody>

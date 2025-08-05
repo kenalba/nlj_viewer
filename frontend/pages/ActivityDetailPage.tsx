@@ -282,32 +282,6 @@ const ActivityDetailPage: React.FC = () => {
           </Typography>
         </Box>
         <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
-          <Button
-            variant="contained"
-            startIcon={<PlayIcon />}
-            onClick={handlePlay}
-            size="small"
-          >
-            Play
-          </Button>
-          {canEdit && (
-            <Button
-              variant="outlined"
-              startIcon={<EditIcon />}
-              onClick={handleEdit}
-              size="small"
-            >
-              Edit
-            </Button>
-          )}
-          <Button
-            variant="outlined"
-            startIcon={<ShareIcon />}
-            onClick={handleShare}
-            size="small"
-          >
-            Share
-          </Button>
           {canDelete && (
             <Button
               variant="outlined"
@@ -320,6 +294,32 @@ const ActivityDetailPage: React.FC = () => {
               {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           )}
+          <Button
+            variant="outlined"
+            startIcon={<ShareIcon />}
+            onClick={handleShare}
+            size="small"
+          >
+            Share
+          </Button>
+          {canEdit && (
+            <Button
+              variant="outlined"
+              startIcon={<EditIcon />}
+              onClick={handleEdit}
+              size="small"
+            >
+              Edit
+            </Button>
+          )}
+          <Button
+            variant="contained"
+            startIcon={<PlayIcon />}
+            onClick={handlePlay}
+            size="small"
+          >
+            Play
+          </Button>
         </Stack>
       </Box>
 

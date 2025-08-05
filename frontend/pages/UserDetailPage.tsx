@@ -44,7 +44,7 @@ import {
   Quiz as QuizIcon,
   ThumbUp as ThumbUpIcon
 } from '@mui/icons-material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usersAPI } from '../api/users';
 import type { User } from '../api/auth';
@@ -77,9 +77,18 @@ function TabPanel(props: TabPanelProps) {
 }
 
 export const UserDetailPage: React.FC = () => {
-  const { userId } = useParams<{ userId: string }>();
+  // Extract ID from URL path since we're not using proper route parameters
+  const pathSegments = window.location.pathname.split('/');
+  const peopleIndex = pathSegments.indexOf('people');
+  const userId = peopleIndex !== -1 ? pathSegments[peopleIndex + 1] : null;
+  
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
+  
+  // Debug logging
+  console.log('UserDetailPage rendered with ID:', userId);
+  console.log('Current pathname:', window.location.pathname);
+  console.log('Path segments:', pathSegments);
   
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -90,21 +99,35 @@ export const UserDetailPage: React.FC = () => {
 
   // Fetch user data
   const fetchUser = useCallback(async () => {
-    if (!userId) return;
+    if (!userId) {
+      setError('No user ID provided');
+      setLoading(false);
+      return;
+    }
+    
+    console.log('🔍 Fetching user with ID:', userId);
     
     try {
       setLoading(true);
       setError(null);
       const userData = await usersAPI.getUser(userId);
+      console.log('✅ User data loaded:', userData);
       setUser(userData);
     } catch (err: any) {
-      console.error('Failed to fetch user:', err);
+      console.error('❌ Failed to fetch user:', err);
+      console.error('Error details:', {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        message: err.message
+      });
+      
       if (err.response?.status === 404) {
         setError('User not found');
       } else if (err.response?.status === 403) {
         setError('You do not have permission to view this user');
       } else {
-        setError('Failed to load user data');
+        setError(`Failed to load user data: ${err.response?.data?.detail || err.message || 'Unknown error'}`);
       }
     } finally {
       setLoading(false);
@@ -215,22 +238,60 @@ export const UserDetailPage: React.FC = () => {
           </Avatar>
           
           <Box sx={{ flex: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-              <Typography variant="h4">
-                {user.full_name || user.username}
-              </Typography>
-              <Chip
-                label={user.is_active ? 'Active' : 'Inactive'}
-                color={user.is_active ? 'success' : 'default'}
-                variant={user.is_active ? 'filled' : 'outlined'}
-              />
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography variant="h4">
+                  {user.full_name || user.username}
+                </Typography>
+                <Chip
+                  label={user.is_active ? 'Active' : 'Inactive'}
+                  color={user.is_active ? 'success' : 'default'}
+                  variant={user.is_active ? 'filled' : 'outlined'}
+                />
+              </Box>
+              
+              {canEdit && (
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<BlockIcon />}
+                    onClick={() => {
+                      // TODO: Implement disable/enable user functionality
+                      console.log('Toggle user status:', user);
+                    }}
+                    size="small"
+                  >
+                    {user.is_active ? 'Disable' : 'Enable'}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<SettingsIcon />}
+                    onClick={() => {
+                      // TODO: Open user settings/permissions modal
+                      console.log('Manage permissions:', user);
+                    }}
+                    size="small"
+                  >
+                    Permissions
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={<EditIcon />}
+                    onClick={handleEdit}
+                    size="small"
+                  >
+                    Edit User
+                  </Button>
+                </Stack>
+              )}
             </Box>
             
             <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
               @{user.username} • {user.email}
             </Typography>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Chip
                 label={user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                 color={getRoleColor(user.role)}
@@ -242,18 +303,6 @@ export const UserDetailPage: React.FC = () => {
                 Joined {new Date(user.created_at).toLocaleDateString()}
               </Typography>
             </Box>
-
-            {canEdit && (
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<EditIcon />}
-                  onClick={handleEdit}
-                >
-                  Edit User
-                </Button>
-              </Box>
-            )}
           </Box>
         </Box>
       </Paper>

@@ -47,6 +47,7 @@ import {
   deleteSourceDocument,
   type SourceDocument 
 } from '../api/sources';
+import { apiClient } from '../api/client';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 
 // PDF Preview Component
@@ -243,42 +244,77 @@ const SourceDetailPage: React.FC = () => {
         </Box>
         <Stack direction="row" spacing={1}>
           <Button
-            variant="contained"
-            startIcon={<GenerateIcon />}
-            onClick={() => console.log('Generate activity')}
-          >
-            Generate Activity
-          </Button>
-          <Button
-            variant="contained"
-            color="secondary"
-            startIcon={<AudioFileIcon />}
-            onClick={() => navigate(`/app/generate-podcast?source=${document.id}`)}
-          >
-            Generate Podcast
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<EditIcon />}
-            onClick={() => console.log('Edit document')}
-          >
-            Edit
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            onClick={() => console.log('Download document')}
-          >
-            Download
-          </Button>
-          <Button
             variant="outlined"
             color="error"
             startIcon={<DeleteIcon />}
             onClick={handleDelete}
             disabled={deleteMutation.isPending}
+            size="small"
           >
             {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={async () => {
+              try {
+                // Use the API client to download the file with proper authentication
+                const response = await apiClient.get(`/api/sources/${document.id}/download`, {
+                  responseType: 'blob'
+                });
+                
+                // Create blob URL and trigger download
+                const blob = new Blob([response.data]);
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = document.original_filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+              } catch (error) {
+                console.error('Failed to download file:', error);
+                alert('Failed to download file. Please try again.');
+              }
+            }}
+            size="small"
+          >
+            Download
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<PreviewIcon />}
+            onClick={async () => {
+              try {
+                // Use the API client to get the file with proper authentication
+                const response = await apiClient.get(`/api/sources/${document.id}/download`, {
+                  responseType: 'blob'
+                });
+                
+                // Create blob URL and open in new tab for preview
+                const blob = new Blob([response.data], { type: 'application/pdf' });
+                const url = window.URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                
+                // Clean up the blob URL after a delay
+                setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+              } catch (error) {
+                console.error('Failed to preview file:', error);
+                alert('Failed to preview file. Please try again.');
+              }
+            }}
+            size="small"
+          >
+            Preview
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<GenerateIcon />}
+            onClick={() => navigate(`/app/generate?source=${document.id}`)}
+            size="small"
+          >
+            Generate
           </Button>
         </Stack>
       </Box>

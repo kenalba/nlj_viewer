@@ -358,34 +358,53 @@ const MediaDetailPage: React.FC = () => {
           </Typography>
         </Box>
         <Stack direction="row" spacing={1}>
-          {media.media_state === 'completed' && (
-            <>
-              <Button
-                variant="contained"
-                startIcon={<ShareIcon />}
-                onClick={handleShare}
-                disabled={shareMutation.isPending}
-              >
-                {shareMutation.isPending ? 'Sharing...' : 'Share'}
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<DownloadIcon />}
-                onClick={handleDownload}
-              >
-                Download
-              </Button>
-            </>
-          )}
           <Button
             variant="outlined"
             color="error"
             startIcon={<DeleteIcon />}
             onClick={handleDelete}
             disabled={deleteMutation.isPending}
+            size="small"
           >
             {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
           </Button>
+          {media.media_state === 'completed' && (
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={handleDownload}
+              size="small"
+            >
+              Download
+            </Button>
+          )}
+          <Button
+            variant="outlined"
+            startIcon={<PlayIcon />}
+            onClick={() => {
+              // Scroll to player tab and switch to it
+              setCurrentTab(0);
+              const playerElement = document.querySelector('[role="tabpanel"]');
+              if (playerElement) {
+                playerElement.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+            size="small"
+            disabled={media.media_state !== 'completed'}
+          >
+            Preview
+          </Button>
+          {media.media_state === 'completed' && (
+            <Button
+              variant="contained"
+              startIcon={<ShareIcon />}
+              onClick={handleShare}
+              disabled={shareMutation.isPending}
+              size="small"
+            >
+              {shareMutation.isPending ? 'Sharing...' : 'Share'}
+            </Button>
+          )}
         </Stack>
       </Box>
 

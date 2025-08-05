@@ -24,22 +24,21 @@ import {
 } from '@mui/icons-material';
 import type { ContentItem } from '../../api/content';
 import { workflowApi } from '../../api/workflow';
-import type { ContentVersion } from '../../types/workflow';
 import { ItemActionsMenu } from './ItemActionsMenu';
 import { canEditContent } from '../../utils/permissions';
 import type { User } from '../../api/auth';
 
 // Content type utilities
-const getContentIcon = (type: string) => {
+const getContentIcon = (type: string, fontSize: 'small' | 'medium' | 'large' = 'medium') => {
   switch (type) {
     case 'training':
-      return <PlayIcon />;
+      return <PlayIcon fontSize={fontSize} />;
     case 'survey':
-      return <AssessmentIcon />;
+      return <AssessmentIcon fontSize={fontSize} />;
     case 'game':
-      return <GamesIcon />;
+      return <GamesIcon fontSize={fontSize} />;
     default:
-      return <QuizIcon />;
+      return <QuizIcon fontSize={fontSize} />;
   }
 };
 
@@ -111,20 +110,20 @@ export const TitleDescriptionCell = React.memo(({ item }: CellProps) => {
 });
 
 export const ContentTypeCell = React.memo(({ item, value }: CellProps) => (
-  <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-    <Box sx={{ color: getContentTypeColor(value || item.content_type), fontSize: '1.1rem' }}>
-      {getContentIcon(value || item.content_type)}
-    </Box>
+  <Box display="flex" alignItems="center" justifyContent="center">
     <Chip 
+      icon={getContentIcon(value || item.content_type, 'small')}
       label={value || item.content_type} 
       size="small" 
       sx={{
         backgroundColor: getContentTypeColor(value || item.content_type),
         color: 'white',
         fontWeight: 600,
-        fontSize: '0.75rem',
         '& .MuiChip-label': {
           textTransform: 'capitalize'
+        },
+        '& .MuiChip-icon': {
+          color: 'white'
         }
       }}
     />
@@ -178,49 +177,23 @@ export const WorkflowStatusCell = React.memo(({ item, value }: CellProps) => {
   );
 });
 
-interface VersionInfoCellProps extends CellProps {
-  versions?: ContentVersion[];
-  versionsLoading?: boolean;
-}
-
-export const VersionInfoCell = React.memo(({ item, versions, versionsLoading }: VersionInfoCellProps) => {
-  if (versionsLoading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight={32}>
-        <CircularProgress size={16} />
-      </Box>
-    );
-  }
-
-  if (!versions || versions.length === 0) {
-    return (
-      <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-        v1
-      </Typography>
-    );
-  }
-
-  // Sort versions by version number (descending) to get the latest
-  const sortedVersions = [...versions].sort((a, b) => b.version_number - a.version_number);
-  const latestVersion = sortedVersions[0];
-  const totalVersions = versions.length;
-
+export const VersionInfoCell = React.memo(({ item }: CellProps) => {
+  // Simplified version display - shows v1 for all items for now
+  // This eliminates the expensive version API calls
   return (
     <Box display="flex" justifyContent="center" alignItems="center">
-      <Tooltip title={`Version ${latestVersion.version_number} (${totalVersions} total versions)`}>
-        <Chip
-          label={`v${latestVersion.version_number}`}
-          size="small"
-          variant="outlined"
-          color={latestVersion.version_status === 'published' ? 'success' : 'default'}
-          sx={{
-            minWidth: 50,
-            height: 24,
-            fontSize: '0.75rem',
-            fontWeight: 500
-          }}
-        />
-      </Tooltip>
+      <Chip
+        label="v1"
+        size="small"
+        variant="outlined"
+        color={item.state === 'published' ? 'success' : 'default'}
+        sx={{
+          minWidth: 50,
+          height: 24,
+          fontSize: '0.75rem',
+          fontWeight: 500
+        }}
+      />
     </Box>
   );
 });
