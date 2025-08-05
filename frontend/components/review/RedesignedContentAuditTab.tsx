@@ -197,19 +197,19 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
     
     return (
       <Box>
-        {/* Main Question Content */}
-        <Box sx={{ mb: 3 }}>
+        {/* Compact Main Question Content */}
+        <Box sx={{ mb: 2 }}>
           {data.title && (
-            <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 600 }}>
+            <Typography variant="subtitle2" sx={{ color: 'primary.main', fontWeight: 600, mb: 1 }}>
               {data.title}
             </Typography>
           )}
           
-          {/* Combined Content - Text and Content together like players see */}
+          {/* Compact Combined Content */}
           {(data.text || data.question || data.content) && (
             <Box sx={{ 
-              mb: 2,
-              p: 2,
+              mb: 1.5,
+              p: 1.5,
               bgcolor: 'grey.50',
               borderRadius: 1,
               border: '1px solid',
@@ -220,19 +220,19 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
                   data.text || data.question || '',
                   data.content || ''
                 ].filter(Boolean).join('\n\n'))}
-                sx={{ color: 'text.primary' }}
+                sx={{ color: 'text.primary', fontSize: '0.875rem' }}
               />
             </Box>
           )}
         </Box>
 
-        {/* Answer Choices (Multiple Choice, True/False, etc.) - embedded choices */}
+        {/* Compact Answer Choices (Multiple Choice, True/False, etc.) - embedded choices */}
         {data.choices && Array.isArray(data.choices) && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 1 }}>
               Answer Choices:
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing={0.5}>
               {data.choices.map((choice: any, index: number) => {
                 const isCorrect = choice.isCorrect || choice.correct;
                 return (
@@ -241,38 +241,39 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
                     sx={{ 
                       display: 'flex', 
                       alignItems: 'center', 
-                      gap: 2,
-                      p: 1.5,
+                      gap: 1,
+                      p: 0.75,
                       bgcolor: isCorrect ? 'success.50' : 'background.paper',
                       border: '1px solid',
                       borderColor: isCorrect ? 'success.200' : 'grey.200',
-                      borderRadius: 1
+                      borderRadius: 0.5
                     }}
                   >
-                    {isCorrect ? (
-                      <CorrectIcon color="success" />
-                    ) : (
-                      <IncorrectIcon color="disabled" />
-                    )}
-                    <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', minHeight: '20px' }}>
+                      {React.cloneElement(
+                        isCorrect ? <CorrectIcon color="success" /> : <IncorrectIcon color="disabled" />,
+                        { fontSize: 'small' }
+                      )}
+                    </Box>
+                    <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', minHeight: '20px' }}>
                       <MarkdownRenderer
                         content={String(typeof choice === 'string' ? choice : choice.text || choice.label || '')}
-                        sx={{ fontSize: '1rem' }}
+                        sx={{ fontSize: '0.8rem', flex: 1 }}
                       />
                       {choice.feedback && (
-                        <Box sx={{ mt: 1, p: 1, bgcolor: 'grey.100', borderRadius: 1 }}>
-                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                        <Box sx={{ mt: 0.5, p: 0.5, bgcolor: 'grey.100', borderRadius: 0.5 }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, fontSize: '0.65rem' }}>
                             Feedback:
                           </Typography>
                           <MarkdownRenderer
                             content={String(choice.feedback || '')}
-                            sx={{ fontSize: '0.875rem', fontStyle: 'italic', color: 'text.secondary' }}
+                            sx={{ fontSize: '0.7rem', fontStyle: 'italic', color: 'text.secondary' }}
                           />
                         </Box>
                       )}
                     </Box>
                     {isCorrect && (
-                      <Chip label="Correct Answer" size="small" color="success" />
+                      <Chip label="Correct" size="small" color="success" sx={{ height: 18, fontSize: '0.65rem' }} />
                     )}
                   </Box>
                 );
@@ -281,25 +282,13 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
           </Box>
         )}
         
-        {/* Debug: Show what we're looking for */}
-        {node.type === 'question' && (
-          <Box sx={{ mb: 2, p: 1, bgcolor: 'info.50', borderRadius: 1 }}>
-            <Typography variant="caption" color="text.secondary">
-              Looking for choices for question {node.id}. Found {choiceNodes.length} choice nodes.
-              {choiceNodes.length === 0 && (
-                <><br />Links: {contentData?.links?.filter(l => l.type === 'parent-child' && l.sourceNodeId === node.id).map(l => `${l.sourceNodeId}->${l.targetNodeId}`).join(', ') || 'none'}</>
-              )}
-            </Typography>
-          </Box>
-        )}
-        
-        {/* Answer Choices for 'question' type nodes with separate ChoiceNode children */}
+        {/* Compact Answer Choices for 'question' type nodes with separate ChoiceNode children */}
         {node.type === 'question' && choiceNodes.length > 0 && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+          <Box sx={{ mb: 1.5 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.5 }}>
               Answer Choices:
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing={0.5}>
               {choiceNodes.map((choiceNode: any, index: number) => {
                 const isCorrect = choiceNode.isCorrect || choiceNode.choiceType === 'CORRECT';
                 const choiceData = choiceNode.data || choiceNode;
@@ -308,39 +297,81 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
                     key={choiceNode.id || index} 
                     sx={{ 
                       display: 'flex', 
-                      alignItems: 'center', 
-                      gap: 2,
-                      p: 1.5,
+                      alignItems: 'flex-start', 
+                      gap: 1,
+                      p: 0.75,
                       bgcolor: isCorrect ? 'success.50' : 'background.paper',
                       border: '1px solid',
                       borderColor: isCorrect ? 'success.200' : 'grey.200',
-                      borderRadius: 1
+                      borderRadius: 0.5,
+                      width: '100%',
+                      minWidth: 0
                     }}
                   >
-                    {isCorrect ? (
-                      <CorrectIcon color="success" />
-                    ) : (
-                      <IncorrectIcon color="disabled" />
-                    )}
-                    <Box sx={{ flex: 1 }}>
-                      <MarkdownRenderer
-                        content={String(choiceData.text || choiceNode.text || '')}
-                        sx={{ fontSize: '1rem' }}
-                      />
-                      {(choiceData.feedback || choiceNode.feedback) && (
-                        <Box sx={{ mt: 1, p: 1, bgcolor: 'grey.100', borderRadius: 1 }}>
-                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                            Choice Feedback:
-                          </Typography>
-                          <MarkdownRenderer
-                            content={String(choiceData.feedback || choiceNode.feedback || '')}
-                            sx={{ fontSize: '0.875rem', fontStyle: 'italic', color: 'text.secondary' }}
-                          />
-                        </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', minHeight: '20px', flexShrink: 0 }}>
+                      {React.cloneElement(
+                        isCorrect ? <CorrectIcon color="success" /> : <IncorrectIcon color="disabled" />,
+                        { fontSize: 'small' }
                       )}
                     </Box>
+                    <Box sx={{ 
+                      width: '50%', 
+                      minWidth: 0,
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      minHeight: '20px', 
+                      pr: 1 
+                    }}>
+                      <MarkdownRenderer
+                        content={String(choiceData.text || choiceNode.text || '')}
+                        sx={{ 
+                          fontSize: '0.8rem', 
+                          width: '100%',
+                          '& *': {
+                            wordWrap: 'break-word',
+                            overflowWrap: 'break-word'
+                          }
+                        }}
+                      />
+                    </Box>
+                    {(choiceData.feedback || choiceNode.feedback) && (
+                      <Box sx={{ 
+                        width: '50%',
+                        minWidth: 0,
+                        p: 0.5, 
+                        bgcolor: 'grey.100', 
+                        borderRadius: 0.5
+                      }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ 
+                          fontWeight: 600, 
+                          fontSize: '0.65rem', 
+                          display: 'block', 
+                          mb: 0.25,
+                          wordWrap: 'break-word',
+                          overflowWrap: 'break-word'
+                        }}>
+                          Choice Feedback:
+                        </Typography>
+                        <MarkdownRenderer
+                          content={String(choiceData.feedback || choiceNode.feedback || '')}
+                          sx={{ 
+                            fontSize: '0.7rem', 
+                            fontStyle: 'italic', 
+                            color: 'text.secondary',
+                            width: '100%',
+                            '& p, & *': {
+                              wordWrap: 'break-word !important',
+                              overflowWrap: 'break-word !important',
+                              margin: '0 !important',
+                              width: '100% !important',
+                              maxWidth: '100% !important'
+                            }
+                          }}
+                        />
+                      </Box>
+                    )}
                     {isCorrect && (
-                      <Chip label="Correct Answer" size="small" color="success" />
+                      <Chip label="Correct" size="small" color="success" sx={{ height: 18, fontSize: '0.65rem' }} />
                     )}
                   </Box>
                 );
@@ -349,31 +380,31 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
           </Box>
         )}
         
-        {/* Show message when question has no choices found */}
+        {/* Compact message when question has no choices found */}
         {node.type === 'question' && choiceNodes.length === 0 && (
-          <Box sx={{ mb: 2, p: 2, bgcolor: 'warning.50', borderRadius: 1 }}>
-            <Typography variant="body2" color="warning.main">
-              ⚠️ This question node has no associated choice nodes found. This may indicate a data structure issue.
+          <Box sx={{ mb: 1.5, p: 1, bgcolor: 'warning.50', borderRadius: 1 }}>
+            <Typography variant="caption" color="warning.main">
+              ⚠️ No associated choice nodes found
             </Typography>
           </Box>
         )}
         
 
-        {/* Checkbox Options */}
+        {/* Compact Checkbox Options */}
         {data.options && Array.isArray(data.options) && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.5 }}>
               Checkbox Options:
             </Typography>
             {(data.minSelections || data.maxSelections) && (
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
                 Selection requirements: 
                 {data.minSelections && ` minimum ${data.minSelections}`}
                 {data.minSelections && data.maxSelections && ','}
                 {data.maxSelections && ` maximum ${data.maxSelections}`}
               </Typography>
             )}
-            <Stack spacing={1}>
+            <Stack spacing={0.5}>
               {data.options.map((option: any, index: number) => {
                 const isCorrect = option.isCorrect;
                 return (
@@ -382,27 +413,28 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
                     sx={{ 
                       display: 'flex', 
                       alignItems: 'center', 
-                      gap: 2,
-                      p: 1.5,
+                      gap: 1,
+                      p: 0.75,
                       bgcolor: isCorrect ? 'success.50' : 'background.paper',
                       border: '1px solid',
                       borderColor: isCorrect ? 'success.200' : 'grey.200',
-                      borderRadius: 1
+                      borderRadius: 0.5
                     }}
                   >
-                    {isCorrect ? (
-                      <CorrectIcon color="success" />
-                    ) : (
-                      <IncorrectIcon color="disabled" />
-                    )}
-                    <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', minHeight: '20px' }}>
+                      {React.cloneElement(
+                        isCorrect ? <CorrectIcon color="success" /> : <IncorrectIcon color="disabled" />,
+                        { fontSize: 'small' }
+                      )}
+                    </Box>
+                    <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', minHeight: '20px' }}>
                       <MarkdownRenderer
                         content={String(option.text || '')}
-                        sx={{ fontSize: '1rem' }}
+                        sx={{ fontSize: '0.8rem', flex: 1 }}
                       />
                     </Box>
                     {isCorrect && (
-                      <Chip label="Correct" size="small" color="success" />
+                      <Chip label="Correct" size="small" color="success" sx={{ height: 18, fontSize: '0.65rem' }} />
                     )}
                   </Box>
                 );
@@ -413,11 +445,11 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
 
         {/* Ordering Question Items */}
         {node.type === 'ordering' && data.items && Array.isArray(data.items) && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.5 }}>
               Ordering Question - Correct Sequence:
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing={0.5}>
               {data.items
                 .sort((a: any, b: any) => (a.correctOrder || 0) - (b.correctOrder || 0))
                 .map((item: any, index: number) => (
@@ -432,8 +464,8 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
                     borderRadius: 1
                   }}>
                     <Typography variant="body2" sx={{ 
-                      minWidth: '30px',
-                      height: '30px',
+                      minWidth: '24px',
+                      height: '24px',
                       borderRadius: '50%',
                       backgroundColor: 'info.main',
                       color: 'white',
@@ -458,11 +490,11 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
         
         {/* Generic Items (for other question types) */}
         {node.type !== 'ordering' && data.items && Array.isArray(data.items) && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.5 }}>
               Items:
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing={0.5}>
               {data.items.map((item: any, index: number) => (
                 <Typography key={index} variant="body1" sx={{ 
                   p: 1,
@@ -478,25 +510,27 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
 
         {/* Matching Question - Left Items, Right Items, and Correct Matches */}
         {(data.leftItems || data.rightItems || data.correctMatches) && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.5 }}>
               Matching Question:
             </Typography>
             
-            {/* Left Column Items */}
-            {data.leftItems && Array.isArray(data.leftItems) && (
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
-                  Left Column:
-                </Typography>
-                <Stack spacing={1}>
+            {/* Left and Right Columns Side by Side */}
+            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+              {/* Left Column */}
+              {data.leftItems && Array.isArray(data.leftItems) && (
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: 'primary.main', display: 'block', mb: 0.5 }}>
+                    Column 1:
+                  </Typography>
+                <Stack spacing={0.5}>
                   {data.leftItems.map((item: any, index: number) => (
                     <Box key={item.id || index} sx={{ 
-                      p: 1.5,
+                      p: 0.75,
                       bgcolor: 'primary.50',
                       border: '1px solid',
                       borderColor: 'primary.200',
-                      borderRadius: 1,
+                      borderRadius: 0.5,
                       display: 'flex',
                       alignItems: 'center',
                       gap: 1
@@ -517,28 +551,28 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
                       </Typography>
                       <MarkdownRenderer
                         content={String(item.text || '')}
-                        sx={{ fontSize: '1rem' }}
+                        sx={{ fontSize: '0.8rem', flex: 1 }}
                       />
                     </Box>
                   ))}
                 </Stack>
-              </Box>
-            )}
-            
-            {/* Right Column Items */}
-            {data.rightItems && Array.isArray(data.rightItems) && (
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'secondary.main' }}>
-                  Right Column:
-                </Typography>
-                <Stack spacing={1}>
+                </Box>
+              )}
+              
+              {/* Right Column */}
+              {data.rightItems && Array.isArray(data.rightItems) && (
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: 'secondary.main', display: 'block', mb: 0.5 }}>
+                    Column 2:
+                  </Typography>
+                <Stack spacing={0.5}>
                   {data.rightItems.map((item: any, index: number) => (
                     <Box key={item.id || index} sx={{ 
-                      p: 1.5,
+                      p: 0.75,
                       bgcolor: 'secondary.50',
                       border: '1px solid',
                       borderColor: 'secondary.200',
-                      borderRadius: 1,
+                      borderRadius: 0.5,
                       display: 'flex',
                       alignItems: 'center',
                       gap: 1
@@ -559,13 +593,14 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
                       </Typography>
                       <MarkdownRenderer
                         content={String(item.text || '')}
-                        sx={{ fontSize: '1rem' }}
+                        sx={{ fontSize: '0.8rem', flex: 1 }}
                       />
                     </Box>
                   ))}
                 </Stack>
-              </Box>
-            )}
+                </Box>
+              )}
+            </Box>
             
             {/* Correct Matches */}
             {data.correctMatches && Array.isArray(data.correctMatches) && (
@@ -573,7 +608,7 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
                 <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'success.main' }}>
                   Correct Matches:
                 </Typography>
-                <Stack spacing={1}>
+                <Stack spacing={0.5}>
                   {data.correctMatches.map((match: any, index: number) => {
                     // Find the corresponding left and right items
                     const leftItem = data.leftItems?.find((item: any) => item.id === match.leftId);
@@ -581,11 +616,11 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
                     
                     return (
                       <Box key={index} sx={{ 
-                        p: 1.5,
+                        p: 0.75,
                         bgcolor: 'success.50',
                         border: '1px solid',
                         borderColor: 'success.200',
-                        borderRadius: 1,
+                        borderRadius: 0.5,
                         display: 'flex',
                         alignItems: 'center',
                         gap: 2
@@ -613,11 +648,11 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
         
         {/* Legacy Matching Pairs (for backward compatibility) */}
         {data.pairs && Array.isArray(data.pairs) && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.5 }}>
               Matching Pairs:
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing={0.5}>
               {data.pairs.map((pair: any, index: number) => (
                 <Typography key={index} variant="body1" sx={{ 
                   p: 1,
@@ -631,14 +666,14 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
           </Box>
         )}
 
-        {/* True/False Questions */}
+        {/* Compact True/False Questions */}
         {(node.type === 'trueFalse' || node.type === 'true_false') && data.correctAnswer !== undefined && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+          <Box sx={{ mb: 1.5 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.5 }}>
               Correct Answer:
             </Typography>
             <Box sx={{ 
-              p: 2,
+              p: 1,
               bgcolor: 'success.50',
               border: '1px solid',
               borderColor: 'success.200',
@@ -647,8 +682,8 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
               alignItems: 'center',
               gap: 1
             }}>
-              <CorrectIcon color="success" />
-              <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
+              {React.cloneElement(<CorrectIcon color="success" />, { fontSize: 'small' })}
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
                 {data.correctAnswer === true || data.correctAnswer === 'true' ? 'TRUE' : 'FALSE'}
               </Typography>
             </Box>
@@ -657,8 +692,8 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
         
         {/* Short Answer Questions - Correct Answers (plural) */}
         {(node.type === 'shortAnswer' || node.type === 'short_answer') && data.correctAnswers && Array.isArray(data.correctAnswers) && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.5 }}>
               Accepted Answers:
             </Typography>
             {data.caseSensitive !== undefined && (
@@ -666,7 +701,7 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
                 Case sensitive: {data.caseSensitive ? 'Yes' : 'No'}
               </Typography>
             )}
-            <Stack spacing={1}>
+            <Stack spacing={0.5}>
               {data.correctAnswers.map((answer: string, index: number) => (
                 <Box key={index} sx={{ 
                   p: 1.5,
@@ -693,8 +728,8 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
          !data.correctAnswers && 
          node.type !== 'trueFalse' && 
          node.type !== 'true_false' && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.5 }}>
               Expected Answer:
             </Typography>
             <Box sx={{ 
@@ -717,8 +752,8 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
 
         {/* Unified Question Feedback */}
         {(data.feedback || node.feedback) && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.5 }}>
               Learner Feedback:
             </Typography>
             {(() => {
@@ -728,14 +763,14 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
               // Handle object-based feedback with correct/incorrect properties
               if (typeof feedbackContent === 'object' && feedbackContent !== null) {
                 return (
-                  <Stack spacing={1}>
+                  <Stack spacing={0.5}>
                     {feedbackContent.correct && (
                       <Box sx={{ 
                         p: 2,
                         bgcolor: 'success.50',
                         border: '1px solid',
                         borderColor: 'success.200',
-                        borderRadius: 1
+                        borderRadius: 0.5
                       }}>
                         <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'success.main' }}>
                           Correct Feedback:
@@ -752,7 +787,7 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
                         bgcolor: 'error.50',
                         border: '1px solid',
                         borderColor: 'error.200',
-                        borderRadius: 1
+                        borderRadius: 0.5
                       }}>
                         <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'error.main' }}>
                           Incorrect Feedback:
@@ -770,7 +805,7 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
                         bgcolor: 'info.50',
                         border: '1px solid',
                         borderColor: 'info.200',
-                        borderRadius: 1
+                        borderRadius: 0.5
                       }}>
                         <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'info.main' }}>
                           General Feedback:
@@ -809,8 +844,8 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
 
         {/* Scale information */}
         {data.scale && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.5 }}>
               Scale Information:
             </Typography>
             <Typography variant="body2" sx={{ 
@@ -826,11 +861,11 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
 
         {/* Variable Changes */}
         {data.variableChanges && Array.isArray(data.variableChanges) && data.variableChanges.length > 0 && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.5 }}>
               Variable Changes:
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing={0.5}>
               {data.variableChanges.map((change: any, index: number) => (
                 <Box key={index} sx={{ 
                   p: 1,
@@ -864,48 +899,52 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
     const nodeData = node.data || node;
 
     return (
-      <Card key={node.id} sx={{ mb: 3, border: '1px solid', borderColor: 'divider' }}>
-        <CardContent>
-          {/* Node Header */}
-          <Box display="flex" alignItems="flex-start" justifyContent="space-between" mb={2}>
-            <Box display="flex" alignItems="center" gap={2}>
+      <Card key={node.id} sx={{ mb: 2, border: '1px solid', borderColor: 'divider' }}>
+        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+          {/* Compact Node Header */}
+          <Box display="flex" alignItems="flex-start" justifyContent="space-between" mb={1.5}>
+            <Box display="flex" alignItems="center" gap={1.5}>
               <Box sx={{ 
                 bgcolor: isQuestion ? 'primary.main' : 'grey.400',
                 color: 'white',
-                width: 40,
-                height: 40,
+                width: 32,
+                height: 32,
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                {getNodeIcon(node.type)}
+                {React.cloneElement(getNodeIcon(node.type), { fontSize: 'small' })}
               </Box>
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
                   {nodeNumber}. {nodeData.title || `Node ${nodeNumber}`}
                 </Typography>
-                <Box display="flex" alignItems="center" gap={1}>
+                <Box display="flex" alignItems="center" gap={1} sx={{ mt: 0.5 }}>
                   <Chip 
                     label={getNodeTypeLabel(node.type)}
                     size="small"
                     color={isQuestion ? 'primary' : 'default'}
                     variant="outlined"
+                    sx={{ height: 20, fontSize: '0.75rem' }}
                   />
-                  <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace', fontSize: '0.7rem' }}>
                     ID: {node.id}
                   </Typography>
                 </Box>
               </Box>
             </Box>
 
-            {/* Quality Indicators */}
+            {/* Compact Quality Indicators */}
             {indicators.length > 0 && (
-              <Box display="flex" gap={0.5}>
+              <Box display="flex" gap={0.25}>
                 {indicators.map((indicator, idx) => (
                   <Tooltip key={idx} title={indicator.message}>
-                    <IconButton size="small" color={indicator.type as any}>
-                      {indicator.type === 'error' ? <WarningIcon /> : <InfoIcon />}
+                    <IconButton size="small" color={indicator.type as any} sx={{ p: 0.5 }}>
+                      {React.cloneElement(
+                        indicator.type === 'error' ? <WarningIcon /> : <InfoIcon />,
+                        { fontSize: 'small' }
+                      )}
                     </IconButton>
                   </Tooltip>
                 ))}
@@ -913,13 +952,13 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
             )}
           </Box>
 
-          {/* Content */}
+          {/* Compact Content */}
           {isQuestion ? renderQuestionContent(node) : (
             <Box>
-              {/* Panel/Info Content - Combined text and content like players see it */}
+              {/* Compact Panel/Info Content */}
               {(nodeData.text || nodeData.content) && (
                 <Box sx={{ 
-                  p: 2,
+                  p: 1.5,
                   bgcolor: 'grey.50',
                   borderRadius: 1,
                   border: '1px solid',
@@ -930,7 +969,7 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
                       nodeData.text || '',
                       nodeData.content || ''
                     ].filter(Boolean).join('\n\n'))}
-                    sx={{ color: 'text.primary' }}
+                    sx={{ color: 'text.primary', fontSize: '0.875rem' }}
                   />
                 </Box>
               )}
@@ -979,15 +1018,15 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
 
   return (
     <Box sx={{ '@media print': { '& .no-print': { display: 'none' } } }}>
-      {/* Header */}
-      <Paper sx={{ p: 3, mb: 3, bgcolor: 'success.50' }} className="no-print">
-        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+      {/* Compact Header */}
+      <Paper sx={{ p: 2, mb: 2, bgcolor: 'success.50' }} className="no-print">
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
           <Box>
-            <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <AuditIcon color="primary" />
+            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              <AuditIcon color="primary" fontSize="small" />
               Content Audit Report
             </Typography>
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="body2" color="text.secondary">
               Linear review of all content for quality assurance and validation.
             </Typography>
           </Box>
@@ -995,36 +1034,37 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
             variant="outlined"
             startIcon={<PrintIcon />}
             onClick={handlePrint}
-            sx={{ minWidth: 120 }}
+            size="small"
+            sx={{ minWidth: 100 }}
           >
-            Print Report
+            Print
           </Button>
         </Box>
 
-        {/* Quick Stats */}
-        <Box display="flex" gap={4} alignItems="center">
-          <Box display="flex" alignItems="center" gap={1}>
-            <Typography variant="h4" color="primary.main" fontWeight="bold">
+        {/* Compact Stats */}
+        <Box display="flex" gap={3} alignItems="center">
+          <Box display="flex" alignItems="center" gap={0.5}>
+            <Typography variant="h6" color="primary.main" fontWeight="bold">
               {totalNodes}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="caption" color="text.secondary">
               Total Nodes
             </Typography>
           </Box>
-          <Box display="flex" alignItems="center" gap={1}>
-            <Typography variant="h4" color="secondary.main" fontWeight="bold">
+          <Box display="flex" alignItems="center" gap={0.5}>
+            <Typography variant="h6" color="secondary.main" fontWeight="bold">
               {questionNodes.length}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="caption" color="text.secondary">
               Questions
             </Typography>
           </Box>
           {qualityIssues > 0 && (
-            <Box display="flex" alignItems="center" gap={1}>
+            <Box display="flex" alignItems="center" gap={0.5}>
               <Badge badgeContent={qualityIssues} color="warning">
-                <WarningIcon color="warning" />
+                <WarningIcon color="warning" fontSize="small" />
               </Badge>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="caption" color="text.secondary">
                 Quality Issues
               </Typography>
             </Box>
@@ -1032,31 +1072,32 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
         </Box>
       </Paper>
 
-      {/* Content Summary */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
+      {/* Compact Content Summary */}
+      <Paper sx={{ p: 2, mb: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
           Activity: {contentData.name}
         </Typography>
         {contentData.description && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
             {contentData.description}
           </Typography>
         )}
         
-        {/* Variable Definitions */}
+        {/* Compact Variable Definitions */}
         {contentData.variableDefinitions && contentData.variableDefinitions.length > 0 && (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+          <Box>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
               Variables Used:
             </Typography>
-            <Box display="flex" flexWrap="wrap" gap={1}>
+            <Box display="flex" flexWrap="wrap" gap={0.5}>
               {contentData.variableDefinitions.map((variable, index) => (
                 <Chip 
                   key={index}
                   label={`${variable.name} (${variable.type})`}
                   size="small"
-                  icon={<VariableIcon />}
+                  icon={<VariableIcon fontSize="small" />}
                   variant="outlined"
+                  sx={{ height: 24, fontSize: '0.75rem' }}
                 />
               ))}
             </Box>
@@ -1064,9 +1105,9 @@ export const RedesignedContentAuditTab: React.FC<RedesignedContentAuditTabProps>
         )}
       </Paper>
 
-      {/* Linear Content Review */}
+      {/* Compact Linear Content Review */}
       <Box>
-        <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
           Content Review ({totalNodes} nodes)
         </Typography>
         
