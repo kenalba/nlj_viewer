@@ -55,6 +55,9 @@ const getActivityIcon = (type: string) => {
     case 'assessment': return <AssessmentIcon />;
     case 'game': return <GamesIcon />;
     case 'survey': return <QuizIcon />;
+    case 'review': return <AssessmentIcon />;
+    case 'analytics': return <TrendingIcon />;
+    case 'admin': return <PersonIcon />;
     default: return <PlayIcon />;
   }
 };
@@ -65,6 +68,9 @@ const getActivityColor = (type: string) => {
     case 'assessment': return '#388e3c';
     case 'game': return '#f57c00';
     case 'survey': return '#7b1fa2';
+    case 'review': return '#f57c00';
+    case 'analytics': return '#1976d2';
+    case 'admin': return '#7b1fa2';
     default: return '#1976d2';
   }
 };
@@ -147,9 +153,36 @@ const HomePageContent: React.FC = () => {
       return `${days}d ago`;
     }
   };
+  
+  const getAdminTaskPath = (activity: any) => {
+    switch (activity.type) {
+      case 'review': return '/app/activities?status=IN_REVIEW';
+      case 'analytics': return '/app/analytics';
+      case 'admin': return '/app/people';
+      default: return '/app/activities';
+    }
+  };
+  
+  const getAdminTaskIcon = (type: string) => {
+    switch (type) {
+      case 'review': return <AssessmentIcon />;
+      case 'analytics': return <TrendingIcon />;
+      case 'admin': return <PersonIcon />;
+      default: return <PlayIcon />;
+    }
+  };
+  
+  const getAdminTaskButtonText = (type: string) => {
+    switch (type) {
+      case 'review': return 'Review Now';
+      case 'analytics': return 'View Analytics';
+      case 'admin': return 'Manage';
+      default: return 'View';
+    }
+  };
 
   return (
-    <Box sx={{ p: 3, maxWidth: 1400 }}>
+    <Box sx={{ p: 3, maxWidth: '100vw', overflow: 'hidden' }}>
       {/* Header */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
@@ -168,9 +201,15 @@ const HomePageContent: React.FC = () => {
       </Box>
 
       {/* Main Grid Layout */}
-      <Grid container spacing={3}>
+      <Box 
+        sx={{ 
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: 3
+        }}
+      >
         {/* Left Column - Today & What's Next */}
-        <Grid item xs={12} md={8}>
+        <Box sx={{ flex: { xs: '1 1 100%', md: '2 1 66.666%' }, minWidth: 0 }}>
           {/* Today Section */}
           <Paper sx={{ mb: 3, p: 3, backgroundColor: theme.palette.background.paper }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
@@ -186,12 +225,27 @@ const HomePageContent: React.FC = () => {
             </Box>
             
             {todayActivities.length > 0 ? (
-              <Grid container spacing={2}>
-                {todayActivities.map((activity) => (
-                  <Grid item xs={12} sm={6} md={4} key={activity.id}>
+              <Box 
+                sx={{ 
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 2,
+                  '& > *': {
+                    flex: '1 1 250px', // Narrower flex basis for tighter layout
+                    minWidth: '240px',
+                    maxWidth: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' }
+                  }
+                }}
+              >
+                {todayActivities.map((activity) => {
+                  const isAdminTask = dashboardType === 'admin';
+                  const actionPath = isAdminTask ? getAdminTaskPath(activity) : `/app/play/${activity.id}`;
+                  
+                  return (
                     <Card 
+                      key={activity.id}
                       sx={{ 
-                        height: '100%',
+                        height: 200, // Fixed height for consistency
                         display: 'flex',
                         flexDirection: 'column',
                         transition: 'all 0.2s ease-in-out',
@@ -220,27 +274,37 @@ const HomePageContent: React.FC = () => {
                             variant="outlined"
                             sx={{ textTransform: 'capitalize' }}
                           />
+                          {activity.pendingCount && (
+                            <Chip 
+                              label={activity.pendingCount}
+                              size="small"
+                              color="warning"
+                              sx={{ ml: 1 }}
+                            />
+                          )}
                         </Box>
                         
-                        <Typography variant="h6" sx={{ mb: 1, fontSize: '1rem', lineHeight: 1.3 }}>
+                        <Typography variant="h6" sx={{ mb: 1, fontSize: '0.95rem', lineHeight: 1.3, height: '2.6em', overflow: 'hidden' }}>
                           {activity.title}
                         </Typography>
                         
-                        <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
-                          <TimeIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                          <Typography variant="body2">
-                            {activity.completionTime} min
-                          </Typography>
-                        </Box>
+                        {activity.completionTime > 0 && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+                            <TimeIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                            <Typography variant="body2">
+                              {activity.completionTime} min
+                            </Typography>
+                          </Box>
+                        )}
                       </CardContent>
                       
                       <CardActions sx={{ pt: 0 }}>
                         <Button 
-                          startIcon={<PlayIcon />}
+                          startIcon={isAdminTask ? getAdminTaskIcon(activity.type) : <PlayIcon />}
                           variant="contained"
                           size="small"
                           fullWidth
-                          onClick={() => navigate(`/app/play/${activity.id}`)}
+                          onClick={() => navigate(actionPath)}
                           sx={{ 
                             backgroundColor: getActivityColor(activity.type),
                             '&:hover': {
@@ -248,13 +312,13 @@ const HomePageContent: React.FC = () => {
                             }
                           }}
                         >
-                          Start Now
+                          {isAdminTask ? getAdminTaskButtonText(activity.type) : 'Start Now'}
                         </Button>
                       </CardActions>
                     </Card>
-                  </Grid>
-                ))}
-              </Grid>
+                  );
+                })}
+              </Box>
             ) : (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Typography variant="body2" color="text.secondary">
@@ -341,10 +405,10 @@ const HomePageContent: React.FC = () => {
               </Box>
             )}
           </Paper>
-        </Grid>
+        </Box>
 
         {/* Right Column - Newsfeed & Events */}
-        <Grid item xs={12} md={4}>
+        <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 33.333%' }, minWidth: 0 }}>
           {/* Quick Stats */}
           <Paper sx={{ mb: 3, p: 2 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
@@ -472,8 +536,8 @@ const HomePageContent: React.FC = () => {
               ))}
             </List>
           </Paper>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Box>
   );
 };

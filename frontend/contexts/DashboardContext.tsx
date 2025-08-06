@@ -268,10 +268,22 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
       }
     };
 
-    // Comprehensive job code-based activity recommendations
+    // Role and job code-based activity recommendations
     const getRecommendedActivities = () => {
       // Use effective job codes (including overrides from role switcher)
       let jobCodes = effectiveJobCodes;
+      
+      // For admins, return content review tasks instead of learning activities
+      if (dashboardType === 'admin') {
+        return [
+          { id: 'admin-1', title: 'Review Content Awaiting Approval', type: 'review', completionTime: 0, priority: 'high', dueDate: 'Today', pendingCount: 7 },
+          { id: 'admin-2', title: 'Analytics Dashboard Review', type: 'analytics', completionTime: 15, priority: 'medium', dueDate: 'Today' },
+          { id: 'admin-3', title: 'User Management Tasks', type: 'admin', completionTime: 10, priority: 'medium', dueDate: 'This Week' },
+          { id: 'admin-4', title: 'System Performance Review', type: 'analytics', completionTime: 20, priority: 'low', dueDate: 'This Week' },
+          { id: 'admin-5', title: 'Training Program Oversight', type: 'review', completionTime: 25, priority: 'low', dueDate: 'Next Week' },
+          { id: 'admin-6', title: 'Content Quality Assurance', type: 'review', completionTime: 30, priority: 'low', dueDate: 'Next Week' }
+        ];
+      }
       
       // Comprehensive activity library based on HPI learning structure
       const mockActivities = [
@@ -326,6 +338,15 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
 
     // Role-specific upcoming events
     const getUpcomingEvents = () => {
+      // For admins, show administrative events
+      if (dashboardType === 'admin') {
+        return [
+          { id: 'admin-event-1', title: 'Content Review Meeting', date: new Date(Date.now() + 86400000 * 1), type: 'meeting' },
+          { id: 'admin-event-2', title: 'Platform Analytics Review', date: new Date(Date.now() + 86400000 * 3), type: 'review' },
+          { id: 'admin-event-3', title: 'Quarterly Training Strategy', date: new Date(Date.now() + 86400000 * 7), type: 'planning' }
+        ];
+      }
+      
       const baseEvents = [
         { id: '1', title: 'Monthly STAR Qualification Deadline', date: new Date(Date.now() + 86400000 * 3), type: 'deadline', jobCodes: ['SM', 'SP'] },
         { id: '2', title: 'New Hire Orientation', date: new Date(Date.now() + 86400000 * 5), type: 'workshop', jobCodes: ['ALL'] },

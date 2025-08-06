@@ -29,7 +29,11 @@ import PodcastGenerationPage from './pages/PodcastGenerationPage';
 import { PeopleTab } from './components/people/PeopleTab';
 import { useAuth } from './contexts/AuthContext';
 import { contentApi, type ContentItem } from './api/content';
+// import { HomePage } from './components/HomePage';
+
+// Import the full HomePage component
 import { HomePage } from './components/HomePage';
+// import { ErrorBoundary } from './components/ErrorBoundary';
 import { PublicActivityPlayer } from './components/PublicActivityPlayer';
 import TrainingSessionsPage from './pages/TrainingSessionsPage';
 import CreateProgramPage from './pages/CreateProgramPage';
@@ -114,8 +118,8 @@ const AppContent: React.FC = () => {
   const handleHome = () => {
     reset();
     setCurrentScenario(null);
-    // Navigate back to Activities page instead of showing scenario loader
-    navigate('/app/activities');
+    // Navigate back to home page
+    navigate('/app/home');
   };
 
   const canEdit = canEditContent(user);
@@ -216,6 +220,17 @@ const AppContent: React.FC = () => {
 
   // Super simple path matching
   const path = location.pathname;
+  
+  // Handle home route explicitly
+  if (path === '/app/home') {
+    return state.scenarioId && state.currentNodeId && currentScenario ? (
+      <GameView scenario={currentScenario} onHome={handleHome} />
+    ) : (
+      <HomePage />
+    );
+  }
+  
+  // Note: /app route should be handled by AppRouter redirect, not here
   
   if (path.includes('/activities')) {
     // Activity detail page: /app/activities/[id]
@@ -552,12 +567,9 @@ const AppContent: React.FC = () => {
     return <XAPIResultsScreen />;
   }
   
-  // Default: Home page
-  return state.scenarioId && state.currentNodeId && currentScenario ? (
-    <GameView scenario={currentScenario} onHome={handleHome} />
-  ) : (
-    <HomePage />
-  );
+  // Catch-all: redirect to home
+  navigate('/app/home', { replace: true });
+  return <Box sx={{ p: 3, textAlign: 'center' }}><Typography>Redirecting to home...</Typography></Box>;
 };
 
 export const App: React.FC = () => {

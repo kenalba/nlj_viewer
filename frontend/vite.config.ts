@@ -34,6 +34,11 @@ export default defineConfig({
       usePolling: true,
       interval: 1000,
     },
+    historyApiFallback: {
+      rewrites: [
+        { from: /^\/app/, to: '/index.html' },
+      ],
+    },
   },
   esbuild: {
     target: 'esnext',
