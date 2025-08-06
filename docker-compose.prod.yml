@@ -1,0 +1,27 @@
+# Docker Compose configuration for production deployment
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+services:
+  # Production frontend with nginx
+  nlj-frontend:
+    profiles: []  # Remove production profile to always start
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=${FRONTEND_API_URL:-http://localhost:8000}
+    restart: unless-stopped
+
+  # Production API configuration
+  nlj-api:
+    environment:
+      # Production settings
+      - DEBUG=false
+      - SECRET_KEY=${SECRET_KEY:-}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost}
+      # Disable CORS in production (handled by nginx)
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
+    restart: unless-stopped
+
+  # Disable development services
+  kafka-ui:
+    profiles:
+      - dev-tools  # Only start with explicit profile

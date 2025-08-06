@@ -71,28 +71,39 @@ A full-stack TypeScript application for creating, managing, and delivering inter
 
 ## Quick Start
 
-### Development (Frontend Only)
+### Development (Frontend Only - Legacy)
 ```bash
+cd frontend
 npm install
 npm run dev
 ```
 
 Visit `http://localhost:5173` to load scenarios.
 
-### Full System Development (with Internal Scheduling & Kafka)
+### Full System Development (Recommended)
 ```bash
-# Start all services including internal scheduling and Kafka event bus
-docker-compose up
+# Start all services with frontend hot reload
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
 
 # Visit these URLs:
-# - NLJ Frontend: http://localhost:5173
+# - NLJ Frontend: http://localhost:5173 (with hot reload)
 # - NLJ API: http://localhost:8000/docs
-# - Kafka UI: http://localhost:8080 (optional dev tool)
+# - Kafka UI: http://localhost:8080
 ```
 
-### Production Deployment
+### Production Deployment (Docker)
 ```bash
-# Build and deploy to production
+# Start production system with built frontend
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# Visit these URLs:
+# - NLJ Platform: http://localhost (nginx-served frontend + API proxy)
+# - NLJ API: http://localhost/api/docs
+```
+
+### Production Deployment (Legacy - Manual)
+```bash
+# Build and deploy to production server
 ./deploy-callcoach.sh
 
 # Or manual deployment:

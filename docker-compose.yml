@@ -135,6 +135,32 @@ services:
       retries: 3
     restart: unless-stopped
 
+  # NLJ Frontend (React/Vite)
+  nlj-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: nlj_frontend
+    ports:
+      - "8081:80"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - NODE_ENV=production
+    depends_on:
+      nlj-api:
+        condition: service_healthy
+    networks:
+      - nlj_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    profiles:
+      - production
+
   # Kafka UI for development (optional)
   kafka-ui:
     image: provectuslabs/kafka-ui:latest

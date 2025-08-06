@@ -1,0 +1,38 @@
+# Docker Compose override for development
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  # Development frontend with hot reload
+  nlj-frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: nlj_frontend_dev
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - NODE_ENV=development
+    volumes:
+      # Mount source code for hot reload
+      - ./frontend:/app
+      - /app/node_modules  # Anonymous volume to prevent overwriting node_modules
+    depends_on:
+      nlj-api:
+        condition: service_healthy
+    networks:
+      - nlj_network
+    restart: unless-stopped
+
+  # Override API service for development
+  nlj-api:
+    environment:
+      # Frontend URL for development
+      - FRONTEND_URL=http://localhost:5173
+      # Enable CORS for development
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+
+  # Enable Kafka UI and other dev tools by default
+  kafka-ui:
+    profiles: []  # Remove dev-tools profile to always start in dev mode
