@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from app.models.source_document import SourceDocument
     from app.models.generation_session import GenerationSession
     from app.models.media import MediaItem
-    from app.models.training_session import TrainingSession, TrainingBooking, AttendanceRecord
+    from app.models.training_program import TrainingProgram, TrainingSession, TrainingBooking, AttendanceRecord
     # TODO: Uncomment when ApprovalStep model is implemented
     # from app.models.workflow import ApprovalStep
 
@@ -113,15 +113,15 @@ class User(Base):
         lazy="selectin"
     )
     
-    # Training session relationships
+    # Training relationships (updated for new structure)
+    created_programs: Mapped[list["TrainingProgram"]] = relationship(
+        foreign_keys="TrainingProgram.created_by_id",
+        back_populates="created_by",
+        lazy="selectin"
+    )
     instructor_sessions: Mapped[list["TrainingSession"]] = relationship(
         foreign_keys="TrainingSession.instructor_id",
         back_populates="instructor",
-        lazy="selectin"
-    )
-    created_sessions: Mapped[list["TrainingSession"]] = relationship(
-        foreign_keys="TrainingSession.created_by_id",
-        back_populates="created_by",
         lazy="selectin"
     )
     training_bookings: Mapped[list["TrainingBooking"]] = relationship(

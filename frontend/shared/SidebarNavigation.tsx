@@ -35,6 +35,7 @@ import {
   LibraryBooks as SourcesIcon,
   AudioFile as MediaIcon,
   People as PeopleIcon,
+  School as TrainingIcon,
   ExpandLess,
   ExpandMore,
   ChevronLeft as ChevronLeftIcon,
@@ -143,6 +144,12 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
         label: 'Media',
         icon: <MediaIcon />,
         path: '/app/media'
+      },
+      {
+        id: 'training',
+        label: 'Training',
+        icon: <TrainingIcon />,
+        path: '/app/training'
       }
     ];
 

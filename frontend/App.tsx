@@ -31,6 +31,8 @@ import { useAuth } from './contexts/AuthContext';
 import { contentApi, type ContentItem } from './api/content';
 import { HomePage } from './components/HomePage';
 import { PublicActivityPlayer } from './components/PublicActivityPlayer';
+import TrainingSessionsPage from './pages/TrainingSessionsPage';
+import CreateProgramPage from './pages/CreateProgramPage';
 import type { NLJScenario } from './types/nlj';
 import { canEditContent, canReviewContent, canManageUsers, getAppMode } from './utils/permissions';
 
@@ -275,6 +277,15 @@ const AppContent: React.FC = () => {
     }
     // Main media page: /app/media
     return <MediaLibraryPage />;
+  }
+
+  if (path.includes('/training')) {
+    // Create new session page: /app/training/create
+    if (path.includes('/training/create') && canEdit) {
+      return <CreateProgramPage />;
+    }
+    // Main training sessions page: /app/training
+    return <TrainingSessionsPage />;
   }
   
   if (path.includes('/app/submit-review') && canEdit) {

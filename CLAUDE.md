@@ -10,7 +10,7 @@ A full-stack TypeScript application for creating, managing, and delivering inter
 - **JWT Authentication**: Secure user authentication and session management
 - **Role-Based Access Control**: Multi-tier permissions (Player/Creator/Reviewer/Approver/Admin)
 - **Event-Driven Architecture**: Apache Kafka (KRaft mode) for real-time integration and xAPI event streaming
-- **Cal.com Integration**: Self-hosted scheduling system for in-person training sessions
+- **Internal Scheduling System**: Native training session scheduling and booking management
 - **Docker Deployment**: Containerized deployment with Docker Compose
 - **OpenAPI Documentation**: Auto-generated API documentation
 - **Content API**: Full CRUD operations with filtering, search, and pagination
@@ -79,15 +79,14 @@ npm run dev
 
 Visit `http://localhost:5173` to load scenarios.
 
-### Full System Development (with Cal.com & Kafka)
+### Full System Development (with Internal Scheduling & Kafka)
 ```bash
-# Start all services including Cal.com scheduling and Kafka event bus
+# Start all services including internal scheduling and Kafka event bus
 docker-compose up
 
 # Visit these URLs:
 # - NLJ Frontend: http://localhost:5173
 # - NLJ API: http://localhost:8000/docs
-# - Cal.com: http://localhost:3000
 # - Kafka UI: http://localhost:8080 (optional dev tool)
 ```
 
@@ -377,24 +376,25 @@ Supports comprehensive activity schema including:
 - **Unified Modal Integration**: Consistent "New Activity" experience across ContentDashboard, HomePage, and ContentLibrary
 - **Responsive Design**: Compact 2-row layout that fits without scrolling, with proper spacing and visual hierarchy
 
-## Latest Completion: Cal.com Integration Phase 1 ✅
+## Latest Completion: Internal Scheduling System ✅
 
-✅ **Phase 1 Complete**: Event-Driven Scheduling Infrastructure
-- **Self-Hosted Cal.com**: Docker-based deployment with separate PostgreSQL database
-- **Apache Kafka Event Bus**: KRaft mode configuration for real-time event streaming
-- **Event-Driven Architecture**: Webhook-to-Kafka bridge for booking events and xAPI integration
-- **Database Schema Migration**: Prisma-based database initialization for Cal.com
-- **Multi-Service Orchestration**: Docker Compose configuration with all services (NLJ API, Cal.com, Kafka, PostgreSQL instances)
-- **Development Environment**: Complete local development setup with health checks and monitoring
-- **Backend Integration**: Kafka client services and training session models ready for Phase 2
+✅ **Complete**: Native Training Session Scheduling Infrastructure
+- **Internal Scheduling Service**: Comprehensive scheduling system replacing external dependencies
+- **Session Management**: Full CRUD operations for training sessions and instances
+- **Booking System**: Native registration, cancellation, and waitlist management  
+- **Conflict Detection**: Intelligent scheduling conflict resolution
+- **Capacity Management**: Automated capacity validation and overbooking prevention
+- **Event-Driven Architecture**: Kafka integration for xAPI event streaming
+- **Database Schema**: Complete training session, instance, and booking models
+- **API Endpoints**: RESTful API for session management and learner registration
 
-## Next Priority: Cal.com Integration Phase 2
+## Next Priority: Enhanced Training System Features
 
-🔄 **UPCOMING**: Core Scheduling Features
-- Implement training session creation via Cal.com API
-- Build registration flow with event-driven updates
-- Create UI components for session browsing and booking
-- Establish xAPI event patterns for learning analytics
+🔄 **UPCOMING**: Advanced Scheduling Features
+- Calendar UI for visual session scheduling and booking
+- Recurring session templates and automated scheduling
+- Instructor management and assignment workflows  
+- Enhanced analytics and reporting dashboard
 
 🔄 **Content Studio UX Improvements**
 - Fix Question Types and Interactions field being empty on Content Generation flow

@@ -33,7 +33,7 @@ class Settings(BaseSettings):
         description="Secret key for JWT token generation"
     )
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 24
     
     # CORS settings
@@ -80,10 +80,32 @@ class Settings(BaseSettings):
         description="Enable email notifications for workflows"
     )
     
-    # Redis settings (for future caching)
-    REDIS_URL: str | None = Field(
-        default=None,
-        description="Redis URL for caching"
+    # Calendar integration settings
+    GOOGLE_CALENDAR_CLIENT_ID: str = Field(
+        default="",
+        description="Google Calendar OAuth client ID"
+    )
+    GOOGLE_CALENDAR_CLIENT_SECRET: str = Field(
+        default="",
+        description="Google Calendar OAuth client secret"
+    )
+    GOOGLE_CALENDAR_REDIRECT_URI: str = Field(
+        default="http://localhost:8000/auth/google/callback",
+        description="Google Calendar OAuth redirect URI"
+    )
+    
+    # Microsoft Calendar integration settings
+    MICROSOFT_CLIENT_ID: str = Field(
+        default="",
+        description="Microsoft Graph API client ID"
+    )
+    MICROSOFT_CLIENT_SECRET: str = Field(
+        default="",
+        description="Microsoft Graph API client secret"
+    )
+    MICROSOFT_REDIRECT_URI: str = Field(
+        default="http://localhost:8000/auth/microsoft/callback",
+        description="Microsoft OAuth redirect URI"
     )
     
     # Email settings (for future notifications)
@@ -111,19 +133,7 @@ class Settings(BaseSettings):
         description="Auto commit interval in milliseconds"
     )
     
-    # Cal.com integration settings
-    CAL_COM_API_URL: str = Field(
-        default="http://localhost:3000/api",
-        description="Cal.com API base URL"
-    )
-    CAL_COM_API_KEY: str = Field(
-        default="",
-        description="Cal.com API key for integration"
-    )
-    CAL_COM_WEBHOOK_SECRET: str = Field(
-        default="",
-        description="Cal.com webhook secret for verification"
-    )
+    # Cal.com integration settings removed - migrating to our own system
 
     # Keycloak settings (for future integration)
     KEYCLOAK_URL: str | None = Field(

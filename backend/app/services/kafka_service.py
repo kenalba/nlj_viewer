@@ -164,45 +164,51 @@ class XAPIEventService:
     
     async def publish_training_session_scheduled(
         self,
+        session_id: str,
+        session_title: str,
         instructor_email: str,
         instructor_name: str,
-        session_id: str,
-        session_name: str,
-        session_description: str,
-        cal_event_id: str,
+        cal_event_id: str,  
         capacity: int,
-        location: str,
-        prerequisites: List[str]
+        location: Optional[str] = None,
+        prerequisites: Optional[List[str]] = None
     ) -> None:
-        """Publish a training session scheduled event."""
+        """Publish a training session scheduled event using xAPI standards."""
         
+        # Use a custom verb for scheduling since it's not in standard xAPI verbs
         event = {
+            "id": str(uuid4()),
+            "version": "1.0.3",
             "actor": {
+                "objectType": "Agent",
                 "name": instructor_name,
                 "mbox": f"mailto:{instructor_email}"
             },
             "verb": {
-                "id": "http://adlnet.gov/expapi/verbs/scheduled",
-                "display": {"en": "scheduled"}
+                "id": "http://activitystrea.ms/schema/1.0/schedule",
+                "display": {"en-US": "scheduled"}
             },
             "object": {
-                "id": session_id,
+                "objectType": "Activity", 
+                "id": f"http://nlj.platform/training-sessions/{session_id}",
                 "definition": {
-                    "name": {"en": session_name},
-                    "description": {"en": session_description},
-                    "type": "http://id.tincanapi.com/activitytype/meeting"
+                    "name": {"en-US": session_title},
+                    "description": {"en-US": f"Training session: {session_title}"},
+                    "type": "http://adlnet.gov/expapi/activities/meeting"
                 }
             },
             "context": {
                 "instructor": {
+                    "objectType": "Agent",
                     "name": instructor_name,
                     "mbox": f"mailto:{instructor_email}"
                 },
+                "platform": "NLJ Platform",
                 "extensions": {
                     "http://nlj.platform/extensions/cal_event_id": cal_event_id,
                     "http://nlj.platform/extensions/capacity": capacity,
-                    "http://nlj.platform/extensions/location": location,
-                    "http://nlj.platform/extensions/prerequisites": prerequisites
+                    "http://nlj.platform/extensions/location": location or "",
+                    "http://nlj.platform/extensions/prerequisites": prerequisites or []
                 }
             },
             "timestamp": datetime.now(timezone.utc).isoformat()
@@ -216,33 +222,38 @@ class XAPIEventService:
     
     async def publish_learner_registration(
         self,
+        session_id: str,
+        session_title: str,
         learner_email: str,
         learner_name: str,
-        session_id: str,
-        session_name: str,
         cal_booking_id: str,
         scheduled_time: datetime,
         registration_method: str = "online"
     ) -> None:
-        """Publish a learner registration event."""
+        """Publish a learner registration event using xAPI standards."""
         
         event = {
+            "id": str(uuid4()),
+            "version": "1.0.3", 
             "actor": {
+                "objectType": "Agent",
                 "name": learner_name,
                 "mbox": f"mailto:{learner_email}"
             },
             "verb": {
                 "id": "http://adlnet.gov/expapi/verbs/registered",
-                "display": {"en": "registered"}
+                "display": {"en-US": "registered"}
             },
             "object": {
-                "id": session_id,
+                "objectType": "Activity",
+                "id": f"http://nlj.platform/training-sessions/{session_id}",
                 "definition": {
-                    "name": {"en": session_name},
-                    "type": "http://id.tincanapi.com/activitytype/meeting"
+                    "name": {"en-US": session_title},
+                    "type": "http://adlnet.gov/expapi/activities/meeting"
                 }
             },
             "context": {
+                "platform": "NLJ Platform",
                 "extensions": {
                     "http://nlj.platform/extensions/cal_booking_id": cal_booking_id,
                     "http://nlj.platform/extensions/scheduled_time": scheduled_time.isoformat(),
@@ -323,3 +334,14 @@ class XAPIEventService:
 # Global Kafka service instance
 kafka_service = KafkaService()
 xapi_event_service = XAPIEventService(kafka_service)
+
+
+# Dependency injection functions for FastAPI
+async def get_kafka_service() -> KafkaService:
+    """Get Kafka service instance for dependency injection."""
+    return kafka_service
+
+
+async def get_xapi_event_service() -> XAPIEventService:
+    """Get xAPI event service instance for dependency injection."""
+    return xapi_event_service

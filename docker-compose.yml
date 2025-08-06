@@ -12,7 +12,6 @@ services:
       - "5432:5432"
     volumes:
       - nlj_db_data:/var/lib/postgresql/data
-      - ./backend/init-db:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U nlj_user -d nlj_platform"]
       interval: 10s
@@ -74,70 +73,6 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  # Cal.com Database
-  cal-db:
-    image: postgres:15-alpine
-    container_name: cal_postgres
-    environment:
-      POSTGRES_DB: cal_db
-      POSTGRES_USER: cal_user
-      POSTGRES_PASSWORD: cal_pass
-      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
-    ports:
-      - "5433:5432"
-    volumes:
-      - cal_db_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cal_user -d cal_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - nlj_network
-
-  # Cal.com Self-Hosted Instance
-  cal-com:
-    image: calcom/cal.com:latest
-    container_name: nlj_calcom
-    ports:
-      - "3000:3000"
-    env_file:
-      - .env
-    environment:
-      # Database Configuration
-      - DATABASE_URL=postgresql://cal_user:cal_pass@cal-db:5432/cal_db
-      - DATABASE_DIRECT_URL=postgresql://cal_user:cal_pass@cal-db:5432/cal_db
-      
-      # NextAuth Configuration
-      - NEXTAUTH_SECRET=${CAL_NEXTAUTH_SECRET:-your-secure-nextauth-secret-key-change-in-production}
-      - NEXTAUTH_URL=http://localhost:3000
-      
-      # Cal.com Configuration
-      - CALENDSO_ENCRYPTION_KEY=${CAL_ENCRYPTION_KEY:-your-secure-encryption-key-change-in-production}
-      - NEXT_PUBLIC_WEBAPP_URL=http://localhost:3000
-      - NEXT_PUBLIC_LICENSE_CONSENT=agree
-      
-      # Email Configuration (optional for development)
-      - EMAIL_FROM=${CAL_EMAIL_FROM:-noreply@localhost}
-      - EMAIL_SERVER_USER=${CAL_EMAIL_USER:-}
-      - EMAIL_SERVER_PASSWORD=${CAL_EMAIL_PASSWORD:-}
-      - EMAIL_SERVER_HOST=${CAL_EMAIL_HOST:-}
-      - EMAIL_SERVER_PORT=${CAL_EMAIL_PORT:-587}
-      
-      # Disable telemetry for development
-      - CALCOM_TELEMETRY_DISABLED=1
-      
-    depends_on:
-      cal-db:
-        condition: service_healthy
-    networks:
-      - nlj_network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    restart: unless-stopped
 
   # NLJ FastAPI Backend
   nlj-api:
@@ -157,13 +92,12 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - KAFKA_CLIENT_ID=nlj-platform
       
-      # Cal.com Integration
-      - CAL_COM_API_URL=http://cal-com:3000/api
-      - CAL_COM_API_KEY=${CAL_COM_API_KEY:-}
-      - CAL_COM_WEBHOOK_SECRET=${CAL_COM_WEBHOOK_SECRET:-}
+      # Calendar Integration
+      - GOOGLE_CALENDAR_CLIENT_ID=${GOOGLE_CALENDAR_CLIENT_ID:-}
+      - GOOGLE_CALENDAR_CLIENT_SECRET=${GOOGLE_CALENDAR_CLIENT_SECRET:-}
+      - MICROSOFT_CLIENT_ID=${MICROSOFT_CLIENT_ID:-}
+      - MICROSOFT_CLIENT_SECRET=${MICROSOFT_CLIENT_SECRET:-}
       
-      # Redis Configuration
-      - REDIS_URL=redis://redis:6379
       
       # Application Settings
       - DEBUG=${DEBUG:-true}
@@ -189,10 +123,8 @@ services:
     depends_on:
       nlj-db:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      # kafka:
+      #   condition: service_healthy
     networks:
       - nlj_network
     healthcheck:
@@ -201,23 +133,6 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
-
-  # Redis for caching (used by both NLJ and potentially Cal.com)
-  redis:
-    image: redis:7-alpine
-    container_name: nlj_redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - nlj_network
 
   # Kafka UI for development (optional)
   kafka-ui:
@@ -240,11 +155,7 @@ services:
 volumes:
   nlj_db_data:
     driver: local
-  cal_db_data:
-    driver: local
   kafka_data:
-    driver: local
-  redis_data:
     driver: local
 
 networks:
