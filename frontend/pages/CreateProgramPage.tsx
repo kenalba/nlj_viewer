@@ -64,6 +64,7 @@ const CreateProgramPage: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [eventResponse, setEventResponse] = useState<EventResponse | null>(null);
   const [currentProgramId, setCurrentProgramId] = useState<string | null>(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
 
   // Real-time status polling
   const statusPolling = useProgramStatusPolling(currentProgramId, {

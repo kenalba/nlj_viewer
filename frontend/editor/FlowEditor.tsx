@@ -186,8 +186,9 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } else {
-      // For image formats, this would be handled by the FlowViewer component
-      console.log('Image export not implemented yet');
+      // For image formats, show user feedback that feature isn't available yet
+      // TODO: Implement image export functionality using FlowViewer component
+      alert(`${format.toUpperCase()} export is not yet available. Use JSON export for now.`);
     }
     
     if (onExport) {

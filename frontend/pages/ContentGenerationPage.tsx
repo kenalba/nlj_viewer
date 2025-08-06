@@ -30,7 +30,6 @@ import {
   Settings as ConfigIcon,
   PlayArrow as PlayIcon,
   AudioFile as PodcastIcon,
-  VideoFile as VideoIcon,
   Assignment as ActivityIcon,
   Mic as MediaIcon,
   RecordVoiceOver as InterviewIcon,
@@ -544,14 +543,7 @@ export const ContentGenerationPage: React.FC = () => {
               >
                 Podcast
               </Button>
-              <Button
-                variant={state.mediaType === 'video' ? 'contained' : 'outlined'}
-                startIcon={<VideoIcon />}
-                disabled
-                onClick={() => setState(prev => ({ ...prev, mediaType: 'video' }))}
-              >
-                Video (Coming Soon)
-              </Button>
+              {/* Video generation will be added in a future release */}
             </Stack>
           </Box>
         )}

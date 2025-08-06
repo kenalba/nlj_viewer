@@ -95,16 +95,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({ compact = false }) =
 
         <Divider />
 
-        {/* Future settings can go here */}
-        <MenuItem disabled>
-          <ListItemIcon>
-            <PersonIcon />
-          </ListItemIcon>
-          <ListItemText 
-            primary="Profile Settings"
-            secondary="Coming soon"
-          />
-        </MenuItem>
+        {/* Additional settings can be added here as they are implemented */}
       </Menu>
     </>
   );
