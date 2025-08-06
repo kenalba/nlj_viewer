@@ -1,0 +1,932 @@
+/**
+ * HomePage Component
+ * Modern dashboard with Today's activities, What's Next, and newsfeed
+ * Inspired by Figma design with card-based layout
+ */
+
+import React, { useState } from 'react';
+import {
+  Box,
+  Typography,
+  Paper,
+  Card,
+  CardContent,
+  CardActions,
+  Button,
+  Chip,
+  Avatar,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  ListItemButton,
+  IconButton,
+  Divider,
+  LinearProgress,
+  Grid,
+  useTheme,
+  alpha,
+  Menu,
+  MenuItem,
+  ListItemIcon
+} from '@mui/material';
+import {
+  PlayArrow as PlayIcon,
+  Schedule as ScheduleIcon,
+  TrendingUp as TrendingIcon,
+  Notifications as NotificationIcon,
+  Event as EventIcon,
+  Person as PersonIcon,
+  Quiz as QuizIcon,
+  School as TrainingIcon,
+  Games as GamesIcon,
+  Assessment as AssessmentIcon,
+  Announcement as AnnouncementIcon,
+  Celebration as CelebrationIcon,
+  Update as UpdateIcon,
+  AccessTime as TimeIcon,
+  ChevronRight as ChevronRightIcon,
+  Person as PlayerIcon,
+  School as LearnerIcon,
+  Create as CreatorIcon,
+  RateReview as ReviewerIcon,
+  CheckCircle as ApproverIcon,
+  AdminPanelSettings as AdminIcon,
+  SwapHoriz as SwapIcon
+} from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import { DashboardProvider, useDashboard } from '../contexts/DashboardContext';
+import { useAuth } from '../contexts/AuthContext';
+
+type UserRole = 'PLAYER' | 'LEARNER' | 'CREATOR' | 'REVIEWER' | 'APPROVER' | 'ADMIN';
+type JobCode = 'DP' | 'GM' | 'SM' | 'SP' | 'FM' | 'FI' | 'BM' | 'BD' | 'IM';
+
+interface RoleOption {
+  role: UserRole;
+  label: string;
+  icon: React.ReactElement;
+  color: string;
+  description: string;
+}
+
+interface JobCodeOption {
+  code: JobCode;
+  label: string;
+  description: string;
+  color: string;
+}
+
+const roleOptions: RoleOption[] = [
+  {
+    role: 'PLAYER',
+    label: 'Player',
+    icon: <PlayerIcon />,
+    color: '#64748b',
+    description: 'Basic content access'
+  },
+  {
+    role: 'LEARNER',
+    label: 'Learner',
+    icon: <LearnerIcon />,
+    color: '#059669',
+    description: 'Learning-focused dashboard'
+  },
+  {
+    role: 'CREATOR',
+    label: 'Creator',
+    icon: <CreatorIcon />,
+    color: '#dc2626',
+    description: 'Content creation tools'
+  },
+  {
+    role: 'REVIEWER',
+    label: 'Reviewer',
+    icon: <ReviewerIcon />,
+    color: '#d97706',
+    description: 'Content review and approval'
+  },
+  {
+    role: 'APPROVER',
+    label: 'Approver',
+    icon: <ApproverIcon />,
+    color: '#7c3aed',
+    description: 'Final approval authority'
+  },
+  {
+    role: 'ADMIN',
+    label: 'Administrator',
+    icon: <AdminIcon />,
+    color: '#1e40af',
+    description: 'Full system access'
+  }
+];
+
+const jobCodeOptions: JobCodeOption[] = [
+  { code: 'DP', label: 'Dealer Principal', description: 'Operations leadership', color: '#1e40af' },
+  { code: 'GM', label: 'General Manager', description: 'Day-to-day operations', color: '#7c3aed' },
+  { code: 'SM', label: 'Sales Manager', description: 'Sales team leadership', color: '#dc2626' },
+  { code: 'SP', label: 'Sales Person', description: 'Frontline sales', color: '#059669' },
+  { code: 'FM', label: 'Finance Manager', description: 'F&I department management', color: '#d97706' },
+  { code: 'FI', label: 'Finance Advisor', description: 'Customer financing', color: '#ca8a04' },
+  { code: 'BM', label: 'BDC Manager', description: 'Lead management', color: '#0891b2' },
+  { code: 'BD', label: 'BDC Representative', description: 'Lead response', color: '#0284c7' },
+  { code: 'IM', label: 'Internet Sales Manager', description: 'Online sales', color: '#7c2d12' }
+];
+
+const getActivityIcon = (type: string) => {
+  switch (type) {
+    case 'training': return <TrainingIcon />;
+    case 'assessment': return <AssessmentIcon />;
+    case 'game': return <GamesIcon />;
+    case 'survey': return <QuizIcon />;
+    case 'review': return <AssessmentIcon />;
+    case 'analytics': return <TrendingIcon />;
+    case 'admin': return <PersonIcon />;
+    default: return <PlayIcon />;
+  }
+};
+
+const getActivityColor = (type: string) => {
+  switch (type) {
+    case 'training': return '#1976d2';
+    case 'assessment': return '#388e3c';
+    case 'game': return '#f57c00';
+    case 'survey': return '#7b1fa2';
+    case 'review': return '#f57c00';
+    case 'analytics': return '#1976d2';
+    case 'admin': return '#7b1fa2';
+    default: return '#1976d2';
+  }
+};
+
+const getEventIcon = (type: string) => {
+  switch (type) {
+    case 'webinar': return <EventIcon />;
+    case 'workshop': return <TrainingIcon />;
+    case 'meeting': return <PersonIcon />;
+    default: return <EventIcon />;
+  }
+};
+
+const HomePageContent: React.FC = () => {
+  const theme = useTheme();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const {
+    dashboardType,
+    effectiveRole,
+    effectiveJobCodes,
+    metrics,
+    quickActions,
+    recommendedActivities,
+    upcomingEvents,
+    recentActivity,
+    showRoleSwitcher
+  } = useDashboard();
+
+  // Role/Job Code selection state
+  const [roleAnchorEl, setRoleAnchorEl] = useState<null | HTMLElement>(null);
+  const [jobCodeAnchorEl, setJobCodeAnchorEl] = useState<null | HTMLElement>(null);
+  const roleMenuOpen = Boolean(roleAnchorEl);
+  const jobCodeMenuOpen = Boolean(jobCodeAnchorEl);
+
+  // Only show role switching for admins or in development mode
+  const canSwitchRoles = user && (user.role === 'ADMIN' || process.env.NODE_ENV === 'development');
+
+  const handleRoleChipClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (canSwitchRoles) {
+      setRoleAnchorEl(event.currentTarget);
+    }
+  };
+
+  const handleJobCodeChipClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (canSwitchRoles) {
+      setJobCodeAnchorEl(event.currentTarget);
+    }
+  };
+
+  const handleRoleMenuClose = () => {
+    setRoleAnchorEl(null);
+  };
+
+  const handleJobCodeMenuClose = () => {
+    setJobCodeAnchorEl(null);
+  };
+
+  const handleRoleSelect = (role: UserRole) => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('viewAsRole', role);
+        
+        // Set default job code based on app role
+        const defaultJobCodes = {
+          'LEARNER': 'SP',
+          'CREATOR': 'SM',
+          'REVIEWER': 'GM',
+          'ADMIN': 'DP'
+        };
+        if (defaultJobCodes[role]) {
+          localStorage.setItem('viewAsJobCode', defaultJobCodes[role]);
+        }
+      }
+      
+      handleRoleMenuClose();
+      window.location.reload();
+    } catch (error) {
+      console.error('Error in handleRoleSelect:', error);
+      handleRoleMenuClose();
+    }
+  };
+
+  const handleJobCodeSelect = (jobCode: JobCode) => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('viewAsJobCode', jobCode);
+      }
+      
+      handleJobCodeMenuClose();
+      window.location.reload();
+    } catch (error) {
+      console.error('Error in handleJobCodeSelect:', error);
+      handleJobCodeMenuClose();
+    }
+  };
+
+  const handleResetOverrides = () => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('viewAsRole');
+        localStorage.removeItem('viewAsJobCode');
+      }
+      window.location.reload();
+    } catch (error) {
+      console.error('Error in handleResetOverrides:', error);
+    }
+  };
+
+  // Split recommended activities into Today (first 2-3) and What's Next (rest)
+  const todayActivities = recommendedActivities.slice(0, 3);
+  const nextActivities = recommendedActivities.slice(3, 6);
+
+  // Mock news feed data
+  const newsItems = [
+    {
+      id: '1',
+      type: 'announcement',
+      title: 'New Product Training Available',
+      content: 'Learn about our latest electric vehicle lineup with interactive scenarios.',
+      timestamp: new Date(Date.now() - 3600000 * 2), // 2 hours ago
+      author: 'Training Team'
+    },
+    {
+      id: '2',
+      type: 'achievement',
+      title: 'Monthly Learning Champions',
+      content: 'Congratulations to this month\'s top performers in completing training modules.',
+      timestamp: new Date(Date.now() - 86400000), // 1 day ago
+      author: 'Learning & Development'
+    },
+    {
+      id: '3',
+      type: 'update',
+      title: 'Platform Update v2.1',
+      content: 'New features include improved mobile experience and enhanced analytics.',
+      timestamp: new Date(Date.now() - 86400000 * 2), // 2 days ago
+      author: 'System Admin'
+    }
+  ];
+
+  const getNewsIcon = (type: string) => {
+    switch (type) {
+      case 'announcement': return <AnnouncementIcon />;
+      case 'achievement': return <CelebrationIcon />;
+      case 'update': return <UpdateIcon />;
+      default: return <NotificationIcon />;
+    }
+  };
+
+  const formatTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes}m ago`;
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours}h ago`;
+    } else {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `${days}d ago`;
+    }
+  };
+  
+  const getAdminTaskPath = (activity: any) => {
+    switch (activity.type) {
+      case 'review': return '/app/activities?status=IN_REVIEW';
+      case 'analytics': return '/app/analytics';
+      case 'admin': return '/app/people';
+      default: return '/app/activities';
+    }
+  };
+  
+  const getAdminTaskIcon = (type: string) => {
+    switch (type) {
+      case 'review': return <AssessmentIcon />;
+      case 'analytics': return <TrendingIcon />;
+      case 'admin': return <PersonIcon />;
+      default: return <PlayIcon />;
+    }
+  };
+  
+  const getAdminTaskButtonText = (type: string) => {
+    switch (type) {
+      case 'review': return 'Review Now';
+      case 'analytics': return 'View Analytics';
+      case 'admin': return 'Manage';
+      default: return 'View';
+    }
+  };
+
+  return (
+    <Box sx={{ p: 3, maxWidth: '100vw', overflow: 'hidden' }}>
+      {/* Header */}
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 600, mb: 1 }}>
+            Welcome back, {user?.full_name || user?.username}!
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            {dashboardType === 'learner' && 'Continue your learning journey'}
+            {dashboardType === 'creator' && 'Ready to create amazing content'}
+            {dashboardType === 'reviewer' && 'Review queue needs your attention'}
+            {dashboardType === 'admin' && 'Platform overview and management'}
+            {dashboardType === 'player' && 'Explore and learn'}
+          </Typography>
+        </Box>
+        
+        {/* Role and Job Code Selector */}
+        {(effectiveRole !== user?.role || effectiveJobCodes.length > 0 || canSwitchRoles) && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {(effectiveRole !== user?.role || canSwitchRoles) && (
+              <Chip
+                label={`Role: ${effectiveRole.toUpperCase()}`}
+                size="small"
+                color="secondary"
+                variant="outlined"
+                clickable={canSwitchRoles}
+                onClick={handleRoleChipClick}
+                sx={{ 
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  borderColor: 'secondary.main',
+                  color: 'secondary.main',
+                  cursor: canSwitchRoles ? 'pointer' : 'default',
+                  '&:hover': canSwitchRoles ? {
+                    backgroundColor: alpha(theme.palette.secondary.main, 0.08)
+                  } : {}
+                }}
+              />
+            )}
+            {(effectiveJobCodes.length > 0 || canSwitchRoles) && (
+              <Chip
+                label={`Job Code: ${effectiveJobCodes.join(', ') || 'None'}`}
+                size="small"
+                color="primary"
+                variant="outlined"
+                clickable={canSwitchRoles}
+                onClick={handleJobCodeChipClick}
+                sx={{ 
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  borderColor: 'primary.main',
+                  color: 'primary.main',
+                  cursor: canSwitchRoles ? 'pointer' : 'default',
+                  '&:hover': canSwitchRoles ? {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08)
+                  } : {}
+                }}
+              />
+            )}
+            {canSwitchRoles && (effectiveRole !== user?.role || effectiveJobCodes.length > 0) && (
+              <Chip
+                label="Reset"
+                size="small"
+                variant="outlined"
+                clickable
+                onClick={handleResetOverrides}
+                sx={{ 
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  borderColor: 'grey.400',
+                  color: 'grey.600',
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.grey[500], 0.08)
+                  }
+                }}
+              />
+            )}
+          </Box>
+        )}
+        
+      </Box>
+
+      {/* Main Grid Layout */}
+      <Box 
+        sx={{ 
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: 3
+        }}
+      >
+        {/* Left Column - Today & What's Next */}
+        <Box sx={{ flex: { xs: '1 1 100%', md: '2 1 66.666%' }, minWidth: 0 }}>
+          {/* Today Section */}
+          <Paper sx={{ mb: 3, p: 3, backgroundColor: theme.palette.background.paper }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <ScheduleIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Today
+              </Typography>
+              <Chip 
+                label={`${todayActivities.length} activities`} 
+                size="small" 
+                sx={{ ml: 2, backgroundColor: alpha(theme.palette.primary.main, 0.1) }}
+              />
+            </Box>
+            
+            {todayActivities.length > 0 ? (
+              <Box 
+                sx={{ 
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 2,
+                  '& > *': {
+                    flex: '1 1 250px', // Narrower flex basis for tighter layout
+                    minWidth: '240px',
+                    maxWidth: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' }
+                  }
+                }}
+              >
+                {todayActivities.map((activity) => {
+                  const isAdminTask = dashboardType === 'admin';
+                  const actionPath = isAdminTask ? getAdminTaskPath(activity) : `/app/play/${activity.id}`;
+                  
+                  return (
+                    <Card 
+                      key={activity.id}
+                      sx={{ 
+                        height: 200, // Fixed height for consistency
+                        display: 'flex',
+                        flexDirection: 'column',
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: theme.shadows[4]
+                        }
+                      }}
+                    >
+                      <CardContent sx={{ flex: 1, pb: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <Avatar 
+                            sx={{ 
+                              width: 32, 
+                              height: 32, 
+                              mr: 1.5,
+                              backgroundColor: alpha(getActivityColor(activity.type), 0.1),
+                              color: getActivityColor(activity.type)
+                            }}
+                          >
+                            {getActivityIcon(activity.type)}
+                          </Avatar>
+                          <Chip 
+                            label={activity.type} 
+                            size="small" 
+                            variant="outlined"
+                            sx={{ textTransform: 'capitalize' }}
+                          />
+                          {activity.pendingCount && (
+                            <Chip 
+                              label={activity.pendingCount}
+                              size="small"
+                              color="warning"
+                              sx={{ ml: 1 }}
+                            />
+                          )}
+                        </Box>
+                        
+                        <Typography variant="h6" sx={{ mb: 1, fontSize: '0.95rem', lineHeight: 1.3, height: '2.6em', overflow: 'hidden' }}>
+                          {activity.title}
+                        </Typography>
+                        
+                        {activity.completionTime > 0 && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+                            <TimeIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                            <Typography variant="body2">
+                              {activity.completionTime} min
+                            </Typography>
+                          </Box>
+                        )}
+                      </CardContent>
+                      
+                      <CardActions sx={{ pt: 0 }}>
+                        <Button 
+                          startIcon={isAdminTask ? getAdminTaskIcon(activity.type) : <PlayIcon />}
+                          variant="contained"
+                          size="small"
+                          fullWidth
+                          onClick={() => navigate(actionPath)}
+                          sx={{ 
+                            backgroundColor: getActivityColor(activity.type),
+                            '&:hover': {
+                              backgroundColor: alpha(getActivityColor(activity.type), 0.8)
+                            }
+                          }}
+                        >
+                          {isAdminTask ? getAdminTaskButtonText(activity.type) : 'Start Now'}
+                        </Button>
+                      </CardActions>
+                    </Card>
+                  );
+                })}
+              </Box>
+            ) : (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant="body2" color="text.secondary">
+                  No activities scheduled for today. Great work staying on track!
+                </Typography>
+              </Box>
+            )}
+          </Paper>
+
+          {/* Quick Actions Section */}
+          <Paper sx={{ mb: 3, p: 3, backgroundColor: theme.palette.background.paper }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                ⚡ Quick Actions
+              </Typography>
+            </Box>
+            
+            <Box 
+              sx={{ 
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: 2,
+                '& > *': {
+                  minHeight: 80
+                }
+              }}
+            >
+              {quickActions.map((action) => (
+                <Card 
+                  key={action.id}
+                  sx={{ 
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: theme.shadows[4]
+                    }
+                  }}
+                  onClick={() => navigate(action.path)}
+                >
+                  <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Typography 
+                        sx={{ 
+                          fontSize: '1.5rem',
+                          minWidth: 32,
+                          textAlign: 'center'
+                        }}
+                      >
+                        {action.icon}
+                      </Typography>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography 
+                          variant="subtitle2" 
+                          sx={{ 
+                            fontWeight: 600,
+                            mb: 0.5,
+                            color: `${action.color}.main`,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {action.title}
+                        </Typography>
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary"
+                          sx={{ 
+                            fontSize: '0.75rem',
+                            lineHeight: 1.2,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical'
+                          }}
+                        >
+                          {action.description}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
+          </Paper>
+
+          {/* What's Next Section */}
+          <Paper sx={{ p: 3, backgroundColor: theme.palette.background.paper }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <TrendingIcon sx={{ mr: 1, color: theme.palette.secondary.main }} />
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  What's Next
+                </Typography>
+              </Box>
+              <Button 
+                endIcon={<ChevronRightIcon />}
+                onClick={() => navigate('/app/activities')}
+                sx={{ textTransform: 'none' }}
+              >
+                View All
+              </Button>
+            </Box>
+            
+            {nextActivities.length > 0 ? (
+              <List disablePadding>
+                {nextActivities.map((activity, index) => (
+                  <React.Fragment key={activity.id}>
+                    <ListItemButton
+                      onClick={() => navigate(`/app/play/${activity.id}`)}
+                      sx={{ 
+                        borderRadius: 1,
+                        mb: 1,
+                        '&:hover': {
+                          backgroundColor: alpha(theme.palette.primary.main, 0.04)
+                        }
+                      }}
+                    >
+                      <ListItemAvatar>
+                        <Avatar 
+                          sx={{ 
+                            width: 36, 
+                            height: 36,
+                            backgroundColor: alpha(getActivityColor(activity.type), 0.1),
+                            color: getActivityColor(activity.type)
+                          }}
+                        >
+                          {getActivityIcon(activity.type)}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={activity.title}
+                        secondary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                            <Chip 
+                              label={activity.type} 
+                              size="small" 
+                              variant="outlined"
+                              sx={{ height: 20, fontSize: '0.75rem', textTransform: 'capitalize' }}
+                            />
+                            <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center' }}>
+                              <TimeIcon sx={{ fontSize: 14, mr: 0.25 }} />
+                              {activity.completionTime}m
+                            </Typography>
+                          </Box>
+                        }
+                        secondaryTypographyProps={{ component: 'div' }}
+                      />
+                      <IconButton size="small">
+                        <PlayIcon />
+                      </IconButton>
+                    </ListItemButton>
+                    {index < nextActivities.length - 1 && <Divider />}
+                  </React.Fragment>
+                ))}
+              </List>
+            ) : (
+              <Box sx={{ textAlign: 'center', py: 3 }}>
+                <Typography variant="body2" color="text.secondary">
+                  All caught up! Check back later for new content.
+                </Typography>
+              </Box>
+            )}
+          </Paper>
+        </Box>
+
+        {/* Right Column - Newsfeed & Events */}
+        <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 33.333%' }, minWidth: 0 }}>
+          {/* Quick Stats */}
+          <Paper sx={{ mb: 3, p: 2 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+              Quick Stats
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h4" color="primary" sx={{ fontWeight: 600 }}>
+                    {metrics.completedActivities}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Completed
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={6}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h4" color="secondary" sx={{ fontWeight: 600 }}>
+                    {metrics.learningHours}h
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Learning Time
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+            <Box sx={{ mt: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="body2">Progress</Typography>
+                <Typography variant="body2">
+                  {Math.round((metrics.completedActivities / metrics.totalActivities) * 100)}%
+                </Typography>
+              </Box>
+              <LinearProgress 
+                variant="determinate" 
+                value={(metrics.completedActivities / metrics.totalActivities) * 100}
+                sx={{ height: 6, borderRadius: 3 }}
+              />
+            </Box>
+          </Paper>
+
+          {/* Upcoming Events */}
+          <Paper sx={{ mb: 3, p: 3 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+              <EventIcon sx={{ mr: 1 }} />
+              Upcoming Events
+            </Typography>
+            
+            <List disablePadding>
+              {upcomingEvents.map((event, index) => (
+                <React.Fragment key={event.id}>
+                  <ListItem disablePadding>
+                    <ListItemAvatar>
+                      <Avatar sx={{ width: 32, height: 32, backgroundColor: alpha(theme.palette.info.main, 0.1), color: theme.palette.info.main }}>
+                        {getEventIcon(event.type)}
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={event.title}
+                      secondary={event.date.toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                      primaryTypographyProps={{ fontSize: '0.875rem' }}
+                      secondaryTypographyProps={{ fontSize: '0.75rem' }}
+                    />
+                  </ListItem>
+                  {index < upcomingEvents.length - 1 && <Divider />}
+                </React.Fragment>
+              ))}
+            </List>
+          </Paper>
+
+          {/* Newsfeed */}
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+                <NotificationIcon sx={{ mr: 1 }} />
+                News & Updates
+              </Typography>
+            </Box>
+            
+            <List disablePadding>
+              {newsItems.map((item, index) => (
+                <React.Fragment key={item.id}>
+                  <ListItem disablePadding sx={{ mb: 2 }}>
+                    <Box sx={{ width: '100%' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
+                        <Avatar 
+                          sx={{ 
+                            width: 28, 
+                            height: 28, 
+                            mr: 1.5, 
+                            mt: 0.5,
+                            backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                            color: theme.palette.primary.main
+                          }}
+                        >
+                          {getNewsIcon(item.type)}
+                        </Avatar>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                            {item.title}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1, lineHeight: 1.4 }}>
+                            {item.content}
+                          </Typography>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="caption" color="text.secondary">
+                              by {item.author}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {formatTimeAgo(item.timestamp)}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </ListItem>
+                  {index < newsItems.length - 1 && <Divider />}
+                </React.Fragment>
+              ))}
+            </List>
+          </Paper>
+        </Box>
+      </Box>
+
+      {/* Role Selection Menu */}
+      <Menu
+        anchorEl={roleAnchorEl}
+        open={roleMenuOpen}
+        onClose={handleRoleMenuClose}
+        PaperProps={{
+          sx: { minWidth: 250 }
+        }}
+      >
+        <Typography variant="caption" sx={{ px: 2, py: 1, color: 'text.secondary', display: 'block' }}>
+          Switch Role Perspective
+        </Typography>
+        {roleOptions.map((option) => (
+          <MenuItem
+            key={option.role}
+            onClick={() => handleRoleSelect(option.role)}
+            selected={effectiveRole === option.role}
+          >
+            <ListItemIcon sx={{ color: option.color }}>
+              {option.icon}
+            </ListItemIcon>
+            <ListItemText 
+              primary={option.label}
+              secondary={option.description}
+            />
+          </MenuItem>
+        ))}
+      </Menu>
+
+      {/* Job Code Selection Menu */}
+      <Menu
+        anchorEl={jobCodeAnchorEl}
+        open={jobCodeMenuOpen}
+        onClose={handleJobCodeMenuClose}
+        PaperProps={{
+          sx: { minWidth: 280 }
+        }}
+      >
+        <Typography variant="caption" sx={{ px: 2, py: 1, color: 'text.secondary', display: 'block' }}>
+          Select Job Code
+        </Typography>
+        {jobCodeOptions.map((option) => (
+          <MenuItem
+            key={option.code}
+            onClick={() => handleJobCodeSelect(option.code)}
+            selected={effectiveJobCodes.includes(option.code)}
+          >
+            <ListItemText 
+              primary={`${option.code} - ${option.label}`}
+              secondary={option.description}
+              primaryTypographyProps={{ fontSize: '0.875rem' }}
+              secondaryTypographyProps={{ fontSize: '0.75rem' }}
+            />
+          </MenuItem>
+        ))}
+        <Divider sx={{ my: 1 }} />
+        <MenuItem onClick={() => {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('viewAsJobCode');
+          }
+          handleJobCodeMenuClose();
+          window.location.reload();
+        }}>
+          <ListItemIcon>
+            <SwapIcon />
+          </ListItemIcon>
+          <ListItemText primary="Clear Job Code" />
+        </MenuItem>
+      </Menu>
+    </Box>
+  );
+};
+
+export const HomePage: React.FC = () => {
+  return (
+    <DashboardProvider>
+      <HomePageContent />
+    </DashboardProvider>
+  );
+};

@@ -1,0 +1,3 @@
+"""
+NLJ Platform Backend Package
+"""

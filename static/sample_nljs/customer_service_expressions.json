@@ -1,0 +1,634 @@
+{
+  "id": "customer-service-expressions",
+  "name": "Customer Service: Variable-Driven Scenarios",
+  "description": "Customer service training scenario demonstrating variable interpolation, conditional responses, and dynamic feedback based on performance tracking",
+  "orientation": "horizontal",
+  "activityType": "training",
+  "variableDefinitions": [
+    {
+      "id": "customer_satisfaction",
+      "name": "Customer Satisfaction",
+      "type": "number",
+      "initialValue": 50,
+      "description": "Customer satisfaction level (0-100 scale)"
+    },
+    {
+      "id": "service_approach",
+      "name": "Service Approach",
+      "type": "string",
+      "initialValue": "professional",
+      "description": "Current service approach: professional, empathetic, or solution-focused"
+    },
+    {
+      "id": "issue_complexity",
+      "name": "Issue Complexity",
+      "type": "string",
+      "initialValue": "medium",
+      "description": "Complexity of current issue: simple, medium, or complex"
+    },
+    {
+      "id": "resolution_attempts",
+      "name": "Resolution Attempts",
+      "type": "number",
+      "initialValue": 0,
+      "description": "Number of resolution attempts made"
+    },
+    {
+      "id": "customer_mood",
+      "name": "Customer Mood",
+      "type": "string",
+      "initialValue": "neutral",
+      "description": "Customer's emotional state: frustrated, neutral, or satisfied"
+    },
+    {
+      "id": "agent_name",
+      "name": "Agent Name",
+      "type": "string",
+      "initialValue": "Alex",
+      "description": "Customer service agent's name"
+    },
+    {
+      "id": "call_duration",
+      "name": "Call Duration",
+      "type": "number",
+      "initialValue": 0,
+      "description": "Duration of customer interaction in minutes"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "title": "Customer Service Training: Dynamic Interactions",
+      "text": "Welcome to the customer service training system! This scenario will adapt based on customer satisfaction levels and your service approach.\n\n**Training Overview:**\n- Customer satisfaction tracking: **{customer_satisfaction}%**\n- Your service approach: **{service_approach}**\n- Agent name: **{agent_name}**",
+      "position": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "initial-call",
+      "type": "panel",
+      "title": "Incoming Customer Call",
+      "text": "**RING RING** 📞\n\nYou receive an incoming call. The customer seems {customer_mood} based on their initial tone.\n\n**Call Information:**\n- Current satisfaction level: **{customer_satisfaction}%**\n- Issue complexity: **{issue_complexity}**\n- Call duration: **{call_duration}** minutes\n\nHow you handle this interaction will impact the customer's satisfaction and determine the flow of the conversation.",
+      "position": {
+        "x": 300,
+        "y": 0
+      }
+    },
+    {
+      "id": "greeting-choice",
+      "type": "multipleChoice",
+      "title": "Opening Greeting",
+      "text": "Choose your opening greeting approach:\n\nCustomer mood: **{customer_mood}**\nSatisfaction level: **{customer_satisfaction}%**",
+      "choices": [
+        {
+          "id": "professional",
+          "text": "\"Good morning, this is {agent_name}. How may I assist you today?\"",
+          "variableChanges": [
+            {
+              "variableId": "service_approach",
+              "operation": "set",
+              "value": "professional"
+            },
+            {
+              "variableId": "customer_satisfaction",
+              "operation": "add",
+              "value": 5
+            },
+            {
+              "variableId": "call_duration",
+              "operation": "add",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "id": "empathetic",
+          "text": "\"Hi there! I'm {agent_name}, and I'm here to help solve whatever's on your mind today.\"",
+          "variableChanges": [
+            {
+              "variableId": "service_approach",
+              "operation": "set",
+              "value": "empathetic"
+            },
+            {
+              "variableId": "customer_satisfaction",
+              "operation": "add",
+              "value": 10
+            },
+            {
+              "variableId": "customer_mood",
+              "operation": "set",
+              "value": "neutral"
+            },
+            {
+              "variableId": "call_duration",
+              "operation": "add",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "id": "rushed",
+          "text": "\"Customer service, what's the problem?\"",
+          "variableChanges": [
+            {
+              "variableId": "service_approach",
+              "operation": "set",
+              "value": "rushed"
+            },
+            {
+              "variableId": "customer_satisfaction",
+              "operation": "subtract",
+              "value": 10
+            },
+            {
+              "variableId": "customer_mood",
+              "operation": "set",
+              "value": "frustrated"
+            },
+            {
+              "variableId": "call_duration",
+              "operation": "add",
+              "value": 1
+            }
+          ]
+        }
+      ],
+      "position": {
+        "x": 600,
+        "y": 0
+      }
+    },
+    {
+      "id": "customer-issue",
+      "type": "panel",
+      "title": "Customer Explains Issue",
+      "text": "The customer explains their problem:\n\n*\"I've been trying to resolve this billing issue for weeks! My account shows charges I never authorized, and nobody seems to be able to help me.\"*\n\n**Current Status:**\n- Customer satisfaction: **{customer_satisfaction}%**\n- Your approach: **{service_approach}**\n- Customer mood: **{customer_mood}**\n- Call duration: **{call_duration}** minutes\n\nThe customer's frustration level is clearly elevated.",
+      "variableChanges": [
+        {
+          "variableId": "issue_complexity",
+          "operation": "set",
+          "value": "complex"
+        },
+        {
+          "variableId": "customer_mood",
+          "operation": "set",
+          "value": "frustrated"
+        },
+        {
+          "variableId": "call_duration",
+          "operation": "add",
+          "value": 2
+        }
+      ],
+      "position": {
+        "x": 900,
+        "y": 0
+      }
+    },
+    {
+      "id": "response-strategy",
+      "type": "multipleChoice",
+      "title": "Your Response Strategy",
+      "text": "The customer is clearly {customer_mood} about their {issue_complexity} billing issue.\n\nSatisfaction level: **{customer_satisfaction}%**\nYour current approach: **{service_approach}**\n\nHow do you respond?",
+      "choices": [
+        {
+          "id": "acknowledge-empathy",
+          "text": "\"I completely understand your frustration, and I sincerely apologize for the inconvenience. Let me personally ensure we resolve this today.\"",
+          "variableChanges": [
+            {
+              "variableId": "customer_satisfaction",
+              "operation": "add",
+              "value": 15
+            },
+            {
+              "variableId": "customer_mood",
+              "operation": "set",
+              "value": "neutral"
+            },
+            {
+              "variableId": "service_approach",
+              "operation": "set",
+              "value": "empathetic"
+            },
+            {
+              "variableId": "call_duration",
+              "operation": "add",
+              "value": 2
+            }
+          ]
+        },
+        {
+          "id": "gather-info",
+          "text": "\"I need to gather some information to help resolve this. Can you provide your account number?\"",
+          "variableChanges": [
+            {
+              "variableId": "customer_satisfaction",
+              "operation": "add",
+              "value": 5
+            },
+            {
+              "variableId": "service_approach",
+              "operation": "set",
+              "value": "solution-focused"
+            },
+            {
+              "variableId": "call_duration",
+              "operation": "add",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "id": "defensive",
+          "text": "\"Well, these charges might be legitimate. Let me check your account to see what services you're using.\"",
+          "variableChanges": [
+            {
+              "variableId": "customer_satisfaction",
+              "operation": "subtract",
+              "value": 15
+            },
+            {
+              "variableId": "customer_mood",
+              "operation": "set",
+              "value": "frustrated"
+            },
+            {
+              "variableId": "call_duration",
+              "operation": "add",
+              "value": 1
+            }
+          ]
+        }
+      ],
+      "position": {
+        "x": 1200,
+        "y": 0
+      }
+    },
+    {
+      "id": "mood-based-branch",
+      "type": "branch",
+      "title": "Customer Mood Assessment",
+      "text": "Based on the customer's current mood and satisfaction level, we'll take the most appropriate approach.",
+      "conditions": [
+        {
+          "expression": "customer_mood === 'frustrated' && customer_satisfaction < 40",
+          "targetNodeId": "escalation-path",
+          "label": "Escalation Required"
+        },
+        {
+          "expression": "customer_mood === 'neutral' && customer_satisfaction >= 60",
+          "targetNodeId": "standard-resolution",
+          "label": "Standard Resolution"
+        },
+        {
+          "expression": "customer_satisfaction >= 70",
+          "targetNodeId": "positive-path",
+          "label": "Positive Interaction"
+        }
+      ],
+      "defaultTargetNodeId": "standard-resolution",
+      "position": {
+        "x": 1500,
+        "y": 0
+      }
+    },
+    {
+      "id": "escalation-path",
+      "type": "panel",
+      "title": "Escalation Protocol Activated",
+      "text": "**⚠️ ESCALATION REQUIRED**\n\nCustomer Status:\n- Satisfaction: **{customer_satisfaction}%** (Below threshold)\n- Mood: **{customer_mood}**\n- Service approach used: **{service_approach}**\n- Call duration: **{call_duration}** minutes\n- Resolution attempts: **{resolution_attempts}**\n\nThe customer's satisfaction is critically low. Following protocol, this case needs immediate supervisor attention.",
+      "variableChanges": [
+        {
+          "variableId": "resolution_attempts",
+          "operation": "add",
+          "value": 1
+        },
+        {
+          "variableId": "call_duration",
+          "operation": "add",
+          "value": 3
+        }
+      ],
+      "position": {
+        "x": 1800,
+        "y": -200
+      }
+    },
+    {
+      "id": "standard-resolution",
+      "type": "panel",
+      "title": "Working Toward Resolution",
+      "text": "Great progress! The customer seems more receptive now.\n\n**Current Status:**\n- Customer satisfaction: **{customer_satisfaction}%**\n- Mood: **{customer_mood}**\n- Your approach: **{service_approach}**\n- Call duration: **{call_duration}** minutes\n\nYou're successfully managing this {issue_complexity} issue. Let's continue with the resolution process.",
+      "variableChanges": [
+        {
+          "variableId": "resolution_attempts",
+          "operation": "add",
+          "value": 1
+        },
+        {
+          "variableId": "call_duration",
+          "operation": "add",
+          "value": 5
+        }
+      ],
+      "position": {
+        "x": 1800,
+        "y": 0
+      }
+    },
+    {
+      "id": "positive-path",
+      "type": "panel",
+      "title": "Excellent Customer Interaction",
+      "text": "Outstanding work! The customer is responding very positively.\n\n**Impressive Results:**\n- Customer satisfaction: **{customer_satisfaction}%** (Excellent!)\n- Customer mood: **{customer_mood}**\n- Your {service_approach} approach is working perfectly\n- Efficient call duration: **{call_duration}** minutes\n\nThis {issue_complexity} issue is being handled expertly. The customer appreciates your professionalism.",
+      "variableChanges": [
+        {
+          "variableId": "resolution_attempts",
+          "operation": "add",
+          "value": 1
+        },
+        {
+          "variableId": "customer_satisfaction",
+          "operation": "add",
+          "value": 10
+        },
+        {
+          "variableId": "call_duration",
+          "operation": "add",
+          "value": 4
+        }
+      ],
+      "position": {
+        "x": 1800,
+        "y": 200
+      }
+    },
+    {
+      "id": "resolution-attempt",
+      "type": "multipleChoice",
+      "title": "Resolution Implementation",
+      "text": "Time to implement a solution for this {issue_complexity} billing issue.\n\n**Customer Status:**\n- Satisfaction: **{customer_satisfaction}%**\n- Mood: **{customer_mood}**\n- Attempts so far: **{resolution_attempts}**\n- Call duration: **{call_duration}** minutes\n\nWhat's your next step?",
+      "choices": [
+        {
+          "id": "thorough-investigation",
+          "text": "\"Let me do a thorough review of your account history to identify exactly where these charges originated.\"",
+          "variableChanges": [
+            {
+              "variableId": "customer_satisfaction",
+              "operation": "add",
+              "value": 10
+            },
+            {
+              "variableId": "resolution_attempts",
+              "operation": "add",
+              "value": 1
+            },
+            {
+              "variableId": "call_duration",
+              "operation": "add",
+              "value": 8
+            }
+          ]
+        },
+        {
+          "id": "quick-credit",
+          "text": "\"I'll process an immediate credit for these charges while we investigate.\"",
+          "variableChanges": [
+            {
+              "variableId": "customer_satisfaction",
+              "operation": "add",
+              "value": 20
+            },
+            {
+              "variableId": "customer_mood",
+              "operation": "set",
+              "value": "satisfied"
+            },
+            {
+              "variableId": "resolution_attempts",
+              "operation": "add",
+              "value": 1
+            },
+            {
+              "variableId": "call_duration",
+              "operation": "add",
+              "value": 3
+            }
+          ]
+        },
+        {
+          "id": "transfer-billing",
+          "text": "\"I need to transfer you to our billing department for this type of issue.\"",
+          "variableChanges": [
+            {
+              "variableId": "customer_satisfaction",
+              "operation": "subtract",
+              "value": 10
+            },
+            {
+              "variableId": "customer_mood",
+              "operation": "set",
+              "value": "frustrated"
+            },
+            {
+              "variableId": "resolution_attempts",
+              "operation": "add",
+              "value": 1
+            },
+            {
+              "variableId": "call_duration",
+              "operation": "add",
+              "value": 2
+            }
+          ]
+        }
+      ],
+      "position": {
+        "x": 2100,
+        "y": 0
+      }
+    },
+    {
+      "id": "satisfaction-check",
+      "type": "branch",
+      "title": "Final Satisfaction Assessment",
+      "text": "Let's evaluate the final customer satisfaction based on our service interaction.",
+      "conditions": [
+        {
+          "expression": "customer_satisfaction >= 80 && customer_mood === 'satisfied'",
+          "targetNodeId": "excellent-outcome",
+          "label": "Excellent Service"
+        },
+        {
+          "expression": "customer_satisfaction >= 60 && customer_satisfaction < 80",
+          "targetNodeId": "good-outcome",
+          "label": "Good Service"
+        },
+        {
+          "expression": "customer_satisfaction < 60",
+          "targetNodeId": "needs-improvement",
+          "label": "Needs Improvement"
+        }
+      ],
+      "defaultTargetNodeId": "good-outcome",
+      "position": {
+        "x": 2400,
+        "y": 0
+      }
+    },
+    {
+      "id": "excellent-outcome",
+      "type": "panel",
+      "title": "🌟 Exceptional Customer Service!",
+      "text": "**OUTSTANDING PERFORMANCE!**\n\n**Final Results:**\n- Customer satisfaction: **{customer_satisfaction}%** (Exceptional!)\n- Customer mood: **{customer_mood}**\n- Service approach: **{service_approach}**\n- Total call duration: **{call_duration}** minutes\n- Resolution attempts: **{resolution_attempts}**\n- Issue complexity handled: **{issue_complexity}**\n\nYou, {agent_name}, have delivered exceptional customer service! The customer is highly satisfied and the issue was resolved efficiently. This is exactly the kind of service that builds customer loyalty.",
+      "position": {
+        "x": 2700,
+        "y": -200
+      }
+    },
+    {
+      "id": "good-outcome",
+      "type": "panel",
+      "title": "✅ Good Customer Service",
+      "text": "**SOLID PERFORMANCE**\n\n**Final Results:**\n- Customer satisfaction: **{customer_satisfaction}%** (Good)\n- Customer mood: **{customer_mood}**\n- Service approach: **{service_approach}**\n- Total call duration: **{call_duration}** minutes\n- Resolution attempts: **{resolution_attempts}**\n- Issue complexity: **{issue_complexity}**\n\nWell done, {agent_name}! You handled this situation professionally and achieved a positive outcome. The customer's issue was addressed and their satisfaction improved from the initial interaction.",
+      "position": {
+        "x": 2700,
+        "y": 0
+      }
+    },
+    {
+      "id": "needs-improvement",
+      "type": "panel",
+      "title": "📚 Learning Opportunity",
+      "text": "**AREAS FOR DEVELOPMENT**\n\n**Final Results:**\n- Customer satisfaction: **{customer_satisfaction}%** (Needs attention)\n- Customer mood: **{customer_mood}**\n- Service approach: **{service_approach}**\n- Total call duration: **{call_duration}** minutes\n- Resolution attempts: **{resolution_attempts}**\n- Issue complexity: **{issue_complexity}**\n\n{agent_name}, this interaction shows areas for improvement. The customer's satisfaction level indicates we need to focus on:\n- Better empathy and active listening\n- More proactive problem-solving\n- Improved communication techniques\n\nEvery challenging interaction is a learning opportunity!",
+      "position": {
+        "x": 2700,
+        "y": 200
+      }
+    },
+    {
+      "id": "training-summary",
+      "type": "panel",
+      "title": "Training Session Complete",
+      "text": "**TRAINING SESSION SUMMARY**\n\nThank you for completing the customer service training simulation!\n\n**Your Performance Variables:**\n- Final customer satisfaction: **{customer_satisfaction}%**\n- Service approach used: **{service_approach}**\n- Customer's final mood: **{customer_mood}**\n- Total call duration: **{call_duration}** minutes\n- Resolution attempts made: **{resolution_attempts}**\n- Issue complexity handled: **{issue_complexity}**\n\n**Key Learning Points:**\n- Variable interpolation showed real-time feedback\n- Branch conditions adapted the scenario based on performance\n- Variable changes tracked the impact of your decisions\n- Dynamic content personalized the experience with your name: {agent_name}\n\nThis scenario demonstrated how expressions and variables can create adaptive, personalized training experiences!",
+      "position": {
+        "x": 3000,
+        "y": 0
+      }
+    }
+  ],
+  "links": [
+    {
+      "id": "start-to-call",
+      "source": "start",
+      "target": "initial-call",
+      "type": "navigation"
+    },
+    {
+      "id": "call-to-greeting",
+      "source": "initial-call",
+      "target": "greeting-choice",
+      "type": "navigation"
+    },
+    {
+      "id": "greeting-to-issue",
+      "source": "greeting-choice",
+      "target": "customer-issue",
+      "type": "navigation"
+    },
+    {
+      "id": "issue-to-response",
+      "source": "customer-issue",
+      "target": "response-strategy",
+      "type": "navigation"
+    },
+    {
+      "id": "response-to-branch",
+      "source": "response-strategy",
+      "target": "mood-based-branch",
+      "type": "navigation"
+    },
+    {
+      "id": "branch-to-escalation",
+      "source": "mood-based-branch",
+      "target": "escalation-path",
+      "type": "navigation"
+    },
+    {
+      "id": "branch-to-standard",
+      "source": "mood-based-branch",
+      "target": "standard-resolution",
+      "type": "navigation"
+    },
+    {
+      "id": "branch-to-positive",
+      "source": "mood-based-branch",
+      "target": "positive-path",
+      "type": "navigation"
+    },
+    {
+      "id": "escalation-to-resolution",
+      "source": "escalation-path",
+      "target": "resolution-attempt",
+      "type": "navigation"
+    },
+    {
+      "id": "standard-to-resolution",
+      "source": "standard-resolution",
+      "target": "resolution-attempt",
+      "type": "navigation"
+    },
+    {
+      "id": "positive-to-resolution",
+      "source": "positive-path",
+      "target": "resolution-attempt",
+      "type": "navigation"
+    },
+    {
+      "id": "resolution-to-satisfaction",
+      "source": "resolution-attempt",
+      "target": "satisfaction-check",
+      "type": "navigation"
+    },
+    {
+      "id": "satisfaction-to-excellent",
+      "source": "satisfaction-check",
+      "target": "excellent-outcome",
+      "type": "navigation"
+    },
+    {
+      "id": "satisfaction-to-good",
+      "source": "satisfaction-check",
+      "target": "good-outcome",
+      "type": "navigation"
+    },
+    {
+      "id": "satisfaction-to-needs-improvement",
+      "source": "satisfaction-check",
+      "target": "needs-improvement",
+      "type": "navigation"
+    },
+    {
+      "id": "excellent-to-summary",
+      "source": "excellent-outcome",
+      "target": "training-summary",
+      "type": "navigation"
+    },
+    {
+      "id": "good-to-summary",
+      "source": "good-outcome",
+      "target": "training-summary",
+      "type": "navigation"
+    },
+    {
+      "id": "needs-improvement-to-summary",
+      "source": "needs-improvement",
+      "target": "training-summary",
+      "type": "navigation"
+    }
+  ]
+}

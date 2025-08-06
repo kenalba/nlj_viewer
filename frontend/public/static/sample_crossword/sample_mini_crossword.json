@@ -1,0 +1,116 @@
+{
+  "id": "sample-crossword-1",
+  "name": "Sample Mini Crossword",
+  "description": "A simple 5x5 crossword puzzle for testing",
+  "nodes": [
+    {
+      "id": "start-1",
+      "type": "start",
+      "title": "Mini Crossword Challenge",
+      "text": "Welcome to the Mini Crossword Challenge!",
+      "content": "Test your knowledge with this quick crossword puzzle.",
+      "x": 100,
+      "y": 100
+    },
+    {
+      "id": "crossword-1",
+      "type": "crossword",
+      "title": "Programming Crossword",
+      "text": "Programming Crossword",
+      "content": "Complete this crossword puzzle with programming-related terms.",
+      "gameSettings": {
+        "gridSize": { "width": 4, "height": 4 },
+        "showErrors": true,
+        "allowPartialSubmit": false,
+        "difficultyLevel": "easy",
+        "grid": [
+          [
+            { "letter": "C", "number": 1, "isBlocked": false },
+            { "letter": "O", "isBlocked": false },
+            { "letter": "D", "isBlocked": false },
+            { "letter": "E", "isBlocked": false }
+          ],
+          [
+            { "letter": "A", "isBlocked": false },
+            { "letter": "", "isBlocked": true },
+            { "letter": "", "isBlocked": true },
+            { "letter": "", "isBlocked": true }
+          ],
+          [
+            { "letter": "T", "isBlocked": false },
+            { "letter": "", "isBlocked": true },
+            { "letter": "", "isBlocked": true },
+            { "letter": "", "isBlocked": true }
+          ],
+          [
+            { "letter": "S", "number": 2, "isBlocked": false },
+            { "letter": "U", "isBlocked": false },
+            { "letter": "N", "isBlocked": false },
+            { "letter": "", "isBlocked": true }
+          ]
+        ],
+        "clues": [
+          {
+            "number": 1,
+            "clue": "Programming instructions",
+            "answer": "CODE",
+            "startRow": 0,
+            "startCol": 0,
+            "direction": "across",
+            "length": 4
+          },
+          {
+            "number": 2,
+            "clue": "Java runtime environment (abbr.)",
+            "answer": "SUN",
+            "startRow": 3,
+            "startCol": 0,
+            "direction": "across",
+            "length": 3
+          },
+          {
+            "number": 1,
+            "clue": "Felines",
+            "answer": "CATS",
+            "startRow": 0,
+            "startCol": 0,
+            "direction": "down",
+            "length": 4
+          }
+        ]
+      },
+      "allowHints": true,
+      "scoring": {
+        "basePoints": 100,
+        "bonusPerCorrectWord": 20,
+        "hintPenalty": 5
+      },
+      "x": 300,
+      "y": 200
+    },
+    {
+      "id": "end-1",
+      "type": "end",
+      "title": "Crossword Complete!",
+      "text": "Great job completing the crossword!",
+      "content": "You've successfully completed the programming crossword puzzle.",
+      "x": 500,
+      "y": 300
+    }
+  ],
+  "links": [
+    {
+      "id": "link-1",
+      "sourceNodeId": "start-1",
+      "targetNodeId": "crossword-1",
+      "condition": null
+    },
+    {
+      "id": "link-2",
+      "sourceNodeId": "crossword-1",
+      "targetNodeId": "end-1",
+      "condition": null
+    }
+  ],
+  "variableDefinitions": []
+}

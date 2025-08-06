@@ -1,0 +1,452 @@
+{
+  "id": "customer-service-variables", 
+  "name": "Customer Service: Variable Expressions Demo",
+  "description": "Customer service training scenario demonstrating variable interpolation and simple conditional branching",
+  "orientation": "horizontal",
+  "activityType": "training",
+  "variableDefinitions": [
+    {
+      "id": "satisfaction",
+      "name": "Customer Satisfaction",
+      "type": "number",
+      "initialValue": 50,
+      "description": "Customer satisfaction level (0-100 scale)"
+    },
+    {
+      "id": "agent_name",
+      "name": "Agent Name", 
+      "type": "string",
+      "initialValue": "Alex",
+      "description": "Customer service agent's name"
+    },
+    {
+      "id": "call_count",
+      "name": "Call Count",
+      "type": "number", 
+      "initialValue": 1,
+      "description": "Number of calls handled"
+    },
+    {
+      "id": "approach",
+      "name": "Service Approach",
+      "type": "string",
+      "initialValue": "professional",
+      "description": "Current service approach"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "title": "Customer Service Training",
+      "text": "Welcome {agent_name}! This is call #{call_count}.\n\nCurrent customer satisfaction: {satisfaction}%\nYour approach: {approach}",
+      "x": 0,
+      "y": 0,
+      "width": 300,
+      "height": 150
+    },
+    {
+      "id": "greeting_question",
+      "type": "question",
+      "text": "A customer calls with a billing question. How do you greet them?\n\nAgent: {agent_name}\nSatisfaction: {satisfaction}%",
+      "title": "Choose Your Greeting",
+      "x": 350,
+      "y": 0,
+      "width": 400,
+      "height": 200
+    },
+    {
+      "id": "greeting_choice_1",
+      "type": "choice",
+      "parentId": "greeting_question",
+      "text": "Good morning, this is {agent_name}. How may I help you?",
+      "feedback": "Professional and helpful approach!",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "satisfaction",
+          "operation": "add", 
+          "value": 10
+        },
+        {
+          "variableId": "approach",
+          "operation": "set",
+          "value": "professional"
+        }
+      ],
+      "x": 200,
+      "y": 250,
+      "width": 300,
+      "height": 120
+    },
+    {
+      "id": "greeting_choice_2", 
+      "type": "choice",
+      "parentId": "greeting_question",
+      "text": "Hi there! I'm {agent_name} and I'm here to help!",
+      "feedback": "Friendly and welcoming - customers love this!",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "satisfaction", 
+          "operation": "add",
+          "value": 15
+        },
+        {
+          "variableId": "approach",
+          "operation": "set", 
+          "value": "friendly"
+        }
+      ],
+      "x": 550,
+      "y": 250,
+      "width": 300,
+      "height": 120
+    },
+    {
+      "id": "greeting_choice_3",
+      "type": "choice", 
+      "parentId": "greeting_question",
+      "text": "Customer service, what do you need?",
+      "feedback": "Too rushed - this makes customers feel unwelcome.",
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "variableChanges": [
+        {
+          "variableId": "satisfaction",
+          "operation": "subtract",
+          "value": 5
+        },
+        {
+          "variableId": "approach", 
+          "operation": "set",
+          "value": "rushed"
+        }
+      ],
+      "x": 900,
+      "y": 250,
+      "width": 300,
+      "height": 120
+    },
+    {
+      "id": "problem_panel",
+      "type": "interstitial_panel",
+      "title": "Customer Explains Problem", 
+      "content": "The customer says: \"I've been charged twice for the same service!\"\n\nYour {approach} approach has brought satisfaction to {satisfaction}%.\nThis is call #{call_count} for agent {agent_name}.",
+      "x": 550,
+      "y": 420,
+      "width": 400,
+      "height": 150,
+      "variableChanges": [
+        {
+          "variableId": "call_count",
+          "operation": "add",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "response_question",
+      "type": "question",
+      "text": "Current satisfaction: {satisfaction}%\nYour approach: {approach}\n\nHow do you handle the billing issue?",
+      "title": "How Do You Respond?",
+      "x": 550,
+      "y": 620,
+      "width": 400,
+      "height": 200
+    },
+    {
+      "id": "response_choice_1",
+      "type": "choice",
+      "parentId": "response_question", 
+      "text": "I sincerely apologize for this error. Let me fix this immediately.",
+      "feedback": "Excellent! Taking responsibility builds trust.",
+      "isCorrect": true,
+      "choiceType": "CORRECT",
+      "variableChanges": [
+        {
+          "variableId": "satisfaction",
+          "operation": "add",
+          "value": 20
+        }
+      ],
+      "x": 200,
+      "y": 870,
+      "width": 300,
+      "height": 120
+    },
+    {
+      "id": "response_choice_2",
+      "type": "choice",
+      "parentId": "response_question",
+      "text": "Let me look into your account to see what happened.",
+      "feedback": "Good approach - investigating shows you care.",
+      "isCorrect": true,
+      "choiceType": "CORRECT", 
+      "variableChanges": [
+        {
+          "variableId": "satisfaction",
+          "operation": "add", 
+          "value": 10
+        }
+      ],
+      "x": 550,
+      "y": 870,
+      "width": 300,
+      "height": 120
+    },
+    {
+      "id": "response_choice_3",
+      "type": "choice",
+      "parentId": "response_question",
+      "text": "Are you sure? Let me check if you really were charged twice.",
+      "feedback": "Too defensive - this questions the customer's honesty.",
+      "isCorrect": false,
+      "choiceType": "INCORRECT",
+      "variableChanges": [
+        {
+          "variableId": "satisfaction",
+          "operation": "subtract",
+          "value": 10
+        }
+      ],
+      "x": 900,
+      "y": 870,
+      "width": 300,
+      "height": 120
+    },
+    {
+      "id": "satisfaction_check",
+      "type": "branch",
+      "title": "Check Satisfaction Level",
+      "text": "Based on satisfaction level, determine next step.",
+      "conditions": [
+        {
+          "expression": "satisfaction >= 75",
+          "targetNodeId": "excellent_service",
+          "label": "High Satisfaction"
+        },
+        {
+          "expression": "satisfaction >= 50",
+          "targetNodeId": "good_service", 
+          "label": "Moderate Satisfaction"
+        }
+      ],
+      "defaultTargetNodeId": "needs_improvement",
+      "x": 550,
+      "y": 1050,
+      "width": 400,
+      "height": 150
+    },
+    {
+      "id": "excellent_service",
+      "type": "interstitial_panel",
+      "title": "Excellent Service!",
+      "content": "Outstanding work, {agent_name}!\n\nFinal satisfaction: {satisfaction}%\nYour {approach} approach worked perfectly!\nCalls handled: {call_count}",
+      "x": 200, 
+      "y": 1300,
+      "width": 300,
+      "height": 200
+    },
+    {
+      "id": "good_service",
+      "type": "interstitial_panel", 
+      "title": "Good Service",
+      "content": "Well done, {agent_name}.\n\nFinal satisfaction: {satisfaction}%\nYour {approach} approach was effective.\nCalls handled: {call_count}",
+      "x": 550,
+      "y": 1300,
+      "width": 300,
+      "height": 200
+    },
+    {
+      "id": "needs_improvement",
+      "type": "interstitial_panel",
+      "title": "Needs Improvement",
+      "content": "Keep working on it, {agent_name}.\n\nFinal satisfaction: {satisfaction}%\nYour {approach} approach needs refinement.\nCalls handled: {call_count}\n\nTip: Try being more empathetic next time!",
+      "x": 900,
+      "y": 1300,
+      "width": 300,
+      "height": 200
+    },
+    {
+      "id": "completion",
+      "type": "end",
+      "title": "Training Complete",
+      "text": "Thank you for completing the customer service training scenario!",
+      "x": 550,
+      "y": 1550,
+      "width": 300,
+      "height": 150
+    }
+  ],
+  "links": [
+    {
+      "id": "start-greeting",
+      "type": "link", 
+      "sourceNodeId": "start", 
+      "targetNodeId": "greeting_question",
+      "startPoint": { "x": 300, "y": 75 },
+      "endPoint": { "x": 350, "y": 100 }
+    },
+    {
+      "id": "greeting-choice1",
+      "type": "parent-child",
+      "sourceNodeId": "greeting_question",
+      "targetNodeId": "greeting_choice_1",
+      "startPoint": { "x": 550, "y": 200 },
+      "endPoint": { "x": 350, "y": 250 }
+    },
+    {
+      "id": "greeting-choice2",
+      "type": "parent-child",
+      "sourceNodeId": "greeting_question",
+      "targetNodeId": "greeting_choice_2",
+      "startPoint": { "x": 550, "y": 200 },
+      "endPoint": { "x": 700, "y": 250 }
+    },
+    {
+      "id": "greeting-choice3",
+      "type": "parent-child",
+      "sourceNodeId": "greeting_question",
+      "targetNodeId": "greeting_choice_3",
+      "startPoint": { "x": 550, "y": 200 },
+      "endPoint": { "x": 1050, "y": 250 }
+    },
+    {
+      "id": "choice1-problem",
+      "type": "link",
+      "sourceNodeId": "greeting_choice_1",
+      "targetNodeId": "problem_panel",
+      "startPoint": { "x": 350, "y": 370 },
+      "endPoint": { "x": 750, "y": 420 }
+    },
+    {
+      "id": "choice2-problem",
+      "type": "link",
+      "sourceNodeId": "greeting_choice_2",
+      "targetNodeId": "problem_panel",
+      "startPoint": { "x": 700, "y": 370 },
+      "endPoint": { "x": 750, "y": 420 }
+    },
+    {
+      "id": "choice3-problem",
+      "type": "link",
+      "sourceNodeId": "greeting_choice_3",
+      "targetNodeId": "problem_panel",
+      "startPoint": { "x": 1050, "y": 370 },
+      "endPoint": { "x": 750, "y": 420 }
+    },
+    {
+      "id": "problem-response",
+      "type": "link",
+      "sourceNodeId": "problem_panel",
+      "targetNodeId": "response_question",
+      "startPoint": { "x": 750, "y": 570 },
+      "endPoint": { "x": 750, "y": 620 }
+    },
+    {
+      "id": "response-choice1",
+      "type": "parent-child",
+      "sourceNodeId": "response_question",
+      "targetNodeId": "response_choice_1",
+      "startPoint": { "x": 750, "y": 820 },
+      "endPoint": { "x": 350, "y": 870 }
+    },
+    {
+      "id": "response-choice2",
+      "type": "parent-child",
+      "sourceNodeId": "response_question",
+      "targetNodeId": "response_choice_2",
+      "startPoint": { "x": 750, "y": 820 },
+      "endPoint": { "x": 700, "y": 870 }
+    },
+    {
+      "id": "response-choice3",
+      "type": "parent-child",
+      "sourceNodeId": "response_question",
+      "targetNodeId": "response_choice_3",
+      "startPoint": { "x": 750, "y": 820 },
+      "endPoint": { "x": 1050, "y": 870 }
+    },
+    {
+      "id": "response1-check",
+      "type": "link",
+      "sourceNodeId": "response_choice_1",
+      "targetNodeId": "satisfaction_check",
+      "startPoint": { "x": 350, "y": 990 },
+      "endPoint": { "x": 750, "y": 1050 }
+    },
+    {
+      "id": "response2-check",
+      "type": "link",
+      "sourceNodeId": "response_choice_2",
+      "targetNodeId": "satisfaction_check",
+      "startPoint": { "x": 700, "y": 990 },
+      "endPoint": { "x": 750, "y": 1050 }
+    },
+    {
+      "id": "response3-check",
+      "type": "link",
+      "sourceNodeId": "response_choice_3",
+      "targetNodeId": "satisfaction_check",
+      "startPoint": { "x": 1050, "y": 990 },
+      "endPoint": { "x": 750, "y": 1050 }
+    },
+    {
+      "id": "check-excellent",
+      "type": "link",
+      "sourceNodeId": "satisfaction_check",
+      "targetNodeId": "excellent_service",
+      "condition": "satisfaction >= 75",
+      "label": "satisfaction >= 75",
+      "startPoint": { "x": 550, "y": 1125 },
+      "endPoint": { "x": 350, "y": 1300 }
+    },
+    {
+      "id": "check-good",
+      "type": "link",
+      "sourceNodeId": "satisfaction_check",
+      "targetNodeId": "good_service",
+      "condition": "satisfaction >= 50", 
+      "label": "satisfaction >= 50",
+      "startPoint": { "x": 750, "y": 1200 },
+      "endPoint": { "x": 700, "y": 1300 }
+    },
+    {
+      "id": "check-needs",
+      "type": "link",
+      "sourceNodeId": "satisfaction_check",
+      "targetNodeId": "needs_improvement",
+      "condition": "default",
+      "label": "default",
+      "startPoint": { "x": 950, "y": 1125 },
+      "endPoint": { "x": 1050, "y": 1300 }
+    },
+    {
+      "id": "excellent-completion",
+      "type": "link",
+      "sourceNodeId": "excellent_service",
+      "targetNodeId": "completion",
+      "startPoint": { "x": 350, "y": 1500 },
+      "endPoint": { "x": 550, "y": 1550 }
+    },
+    {
+      "id": "good-completion",
+      "type": "link",
+      "sourceNodeId": "good_service",
+      "targetNodeId": "completion",
+      "startPoint": { "x": 700, "y": 1500 },
+      "endPoint": { "x": 700, "y": 1550 }
+    },
+    {
+      "id": "needs-completion",
+      "type": "link",
+      "sourceNodeId": "needs_improvement",
+      "targetNodeId": "completion",
+      "startPoint": { "x": 1050, "y": 1500 },
+      "endPoint": { "x": 850, "y": 1550 }
+    }
+  ]
+}
