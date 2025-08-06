@@ -19,7 +19,9 @@ import {
   Box,
   Alert,
   InputAdornment,
-  IconButton
+  IconButton,
+  Chip,
+  Autocomplete
 } from '@mui/material';
 import {
   PersonAdd as PersonAddIcon,
@@ -27,7 +29,11 @@ import {
   Person as PersonIcon,
   Badge as BadgeIcon,
   Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon
+  VisibilityOff as VisibilityOffIcon,
+  Work as WorkIcon,
+  LocationOn as LocationIcon,
+  Business as BusinessIcon,
+  Home as HomeIcon
 } from '@mui/icons-material';
 import type { User } from '../../api/auth';
 import { usersAPI } from '../../api/users';
@@ -45,6 +51,11 @@ interface FormData {
   password: string;
   confirmPassword: string;
   role: 'PLAYER' | 'LEARNER' | 'CREATOR' | 'REVIEWER' | 'APPROVER' | 'ADMIN';
+  job_codes: string[];
+  region: string;
+  district: string;
+  dealership: string;
+  address: string;
 }
 
 interface FormErrors {
@@ -63,7 +74,12 @@ const INITIAL_FORM_DATA: FormData = {
   full_name: '',
   password: '',
   confirmPassword: '',
-  role: 'PLAYER'
+  role: 'PLAYER',
+  job_codes: [],
+  region: '',
+  district: '',
+  dealership: '',
+  address: ''
 };
 
 export const CreateUserModal: React.FC<CreateUserModalProps> = ({
@@ -99,6 +115,11 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   }, [errors]);
+
+  // Job codes handler
+  const handleJobCodesChange = useCallback((event: any, newValue: string[]) => {
+    setFormData(prev => ({ ...prev, job_codes: newValue }));
+  }, []);
 
   // Form validation
   const validateForm = useCallback((): boolean => {
@@ -156,7 +177,12 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
         email: formData.email.trim(),
         full_name: formData.full_name.trim(),
         password: formData.password,
-        role: formData.role
+        role: formData.role,
+        ...(formData.job_codes.length > 0 && { job_codes: formData.job_codes }),
+        ...(formData.region.trim() && { region: formData.region.trim() }),
+        ...(formData.district.trim() && { district: formData.district.trim() }),
+        ...(formData.dealership.trim() && { dealership: formData.dealership.trim() }),
+        ...(formData.address.trim() && { address: formData.address.trim() })
       };
 
       const newUser = await usersAPI.createUser(userData);
@@ -189,7 +215,12 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
     }
   }, [handleSubmit, loading]);
 
-  const canSubmit = Object.values(formData).every(value => value.trim() !== '') && !loading;
+  const canSubmit = formData.username.trim() !== '' && 
+                    formData.email.trim() !== '' && 
+                    formData.full_name.trim() !== '' && 
+                    formData.password !== '' && 
+                    formData.confirmPassword !== '' && 
+                    !loading;
 
   return (
     <Dialog 
@@ -289,6 +320,105 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
               <MenuItem value="ADMIN">Administrator</MenuItem>
             </Select>
           </FormControl>
+
+          {/* Job Codes */}
+          <Autocomplete
+            multiple
+            freeSolo
+            value={formData.job_codes}
+            onChange={handleJobCodesChange}
+            renderTags={(value: readonly string[], getTagProps) =>
+              value.map((option: string, index: number) => (
+                <Chip variant="outlined" label={option} {...getTagProps({ index })} />
+              ))
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Job Codes"
+                placeholder="Add job codes..."
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: (
+                    <>
+                      <InputAdornment position="start">
+                        <WorkIcon />
+                      </InputAdornment>
+                      {params.InputProps.startAdornment}
+                    </>
+                  ),
+                }}
+                helperText="Enter job codes and press Enter to add"
+              />
+            )}
+            options={[]}
+          />
+
+          {/* Region */}
+          <TextField
+            label="Region"
+            value={formData.region}
+            onChange={handleFieldChange('region')}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LocationIcon />
+                </InputAdornment>
+              ),
+            }}
+            placeholder="e.g., Northeast, West Coast"
+          />
+
+          {/* District */}
+          <TextField
+            label="District"
+            value={formData.district}
+            onChange={handleFieldChange('district')}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <BusinessIcon />
+                </InputAdornment>
+              ),
+            }}
+            placeholder="e.g., Metro District"
+          />
+
+          {/* Dealership */}
+          <TextField
+            label="Dealership"
+            value={formData.dealership}
+            onChange={handleFieldChange('dealership')}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <BusinessIcon />
+                </InputAdornment>
+              ),
+            }}
+            placeholder="e.g., Downtown Toyota"
+          />
+
+          {/* Address */}
+          <TextField
+            label="Address"
+            value={formData.address}
+            onChange={handleFieldChange('address')}
+            fullWidth
+            multiline
+            rows={2}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1 }}>
+                  <HomeIcon />
+                </InputAdornment>
+              ),
+            }}
+            placeholder="Full address"
+          />
 
           {/* Password */}
           <TextField

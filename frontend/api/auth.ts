@@ -15,6 +15,11 @@ export interface RegisterRequest {
   full_name: string;
   password: string;
   role?: 'PLAYER' | 'LEARNER' | 'CREATOR' | 'REVIEWER' | 'APPROVER' | 'ADMIN';
+  job_codes?: string[];
+  region?: string;
+  district?: string;
+  dealership?: string;
+  address?: string;
 }
 
 export interface User {
@@ -26,6 +31,11 @@ export interface User {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  job_codes?: string[];
+  region?: string;
+  district?: string;
+  dealership?: string;
+  address?: string;
 }
 
 export interface TokenResponse {

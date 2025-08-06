@@ -62,7 +62,7 @@ export const AppRouter: React.FC = () => {
         <Route 
           path="/login" 
           element={
-            isAuthenticated ? <Navigate to="/app" replace /> : <LoginPage />
+            isAuthenticated ? <Navigate to="/app/home" replace /> : <LoginPage />
           } 
         />
 
@@ -77,15 +77,15 @@ export const AppRouter: React.FC = () => {
         />
 
         {/* Legacy redirects for existing bookmarks */}
-        <Route path="/player/*" element={<Navigate to="/app" replace />} />
-        <Route path="/editor/*" element={<Navigate to="/app" replace />} />
+        <Route path="/player/*" element={<Navigate to="/app/home" replace />} />
+        <Route path="/editor/*" element={<Navigate to="/app/home" replace />} />
 
         {/* Default redirects */}
         <Route
           path="/"
           element={
             isAuthenticated ? (
-              <Navigate to="/app" replace />
+              <Navigate to="/app/home" replace />
             ) : (
               <Navigate to="/login" replace />
             )

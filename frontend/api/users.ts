@@ -27,6 +27,11 @@ export interface UserUpdate {
   full_name?: string;
   role?: 'PLAYER' | 'LEARNER' | 'CREATOR' | 'REVIEWER' | 'APPROVER' | 'ADMIN';
   is_active?: boolean;
+  job_codes?: string[];
+  region?: string;
+  district?: string;
+  dealership?: string;
+  address?: string;
 }
 
 // User management API functions

@@ -19,8 +19,17 @@ import {
   Alert,
   FormControlLabel,
   Switch,
-  Typography
+  Typography,
+  Chip,
+  Autocomplete,
+  InputAdornment
 } from '@mui/material';
+import {
+  Work as WorkIcon,
+  LocationOn as LocationIcon,
+  Business as BusinessIcon,
+  Home as HomeIcon
+} from '@mui/icons-material';
 import { usersAPI } from '../../api/users';
 import type { User } from '../../api/auth';
 
@@ -42,7 +51,12 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     email: '',
     full_name: '',
     role: 'PLAYER' as const,
-    is_active: true
+    is_active: true,
+    job_codes: [] as string[],
+    region: '',
+    district: '',
+    dealership: '',
+    address: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +72,12 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         email: user.email,
         full_name: user.full_name || '',
         role: normalizedRole,
-        is_active: user.is_active
+        is_active: user.is_active,
+        job_codes: user.job_codes || [],
+        region: user.region || '',
+        district: user.district || '',
+        dealership: user.dealership || '',
+        address: user.address || ''
       });
       setError(null);
     } else if (!open) {
@@ -68,7 +87,12 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         email: '',
         full_name: '',
         role: 'PLAYER',
-        is_active: true
+        is_active: true,
+        job_codes: [],
+        region: '',
+        district: '',
+        dealership: '',
+        address: ''
       });
       setError(null);
     }
@@ -82,6 +106,10 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     }));
   };
 
+  const handleJobCodesChange = (event: any, newValue: string[]) => {
+    setFormData(prev => ({ ...prev, job_codes: newValue }));
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!user) return;
@@ -93,9 +121,14 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       const updatedUser = await usersAPI.updateUser(user.id, {
         username: formData.username,
         email: formData.email,
-        full_name: formData.full_name || null,
+        full_name: formData.full_name || undefined,
         role: formData.role,
-        is_active: formData.is_active
+        is_active: formData.is_active,
+        job_codes: formData.job_codes.length > 0 ? formData.job_codes : undefined,
+        region: formData.region.trim() || undefined,
+        district: formData.district.trim() || undefined,
+        dealership: formData.dealership.trim() || undefined,
+        address: formData.address.trim() || undefined
       });
 
       onSuccess(updatedUser);
@@ -199,6 +232,110 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
               <MenuItem value="ADMIN">Admin</MenuItem>
             </Select>
           </FormControl>
+
+          {/* Job Codes */}
+          <Autocomplete
+            multiple
+            freeSolo
+            value={formData.job_codes}
+            onChange={handleJobCodesChange}
+            disabled={loading}
+            renderTags={(value: readonly string[], getTagProps) =>
+              value.map((option: string, index: number) => (
+                <Chip variant="outlined" label={option} {...getTagProps({ index })} />
+              ))
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Job Codes"
+                placeholder="Add job codes..."
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: (
+                    <>
+                      <InputAdornment position="start">
+                        <WorkIcon />
+                      </InputAdornment>
+                      {params.InputProps.startAdornment}
+                    </>
+                  ),
+                }}
+                helperText="Enter job codes and press Enter to add"
+              />
+            )}
+            options={[]}
+          />
+
+          {/* Region */}
+          <TextField
+            label="Region"
+            value={formData.region}
+            onChange={handleChange('region')}
+            disabled={loading}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LocationIcon />
+                </InputAdornment>
+              ),
+            }}
+            placeholder="e.g., Northeast, West Coast"
+          />
+
+          {/* District */}
+          <TextField
+            label="District"
+            value={formData.district}
+            onChange={handleChange('district')}
+            disabled={loading}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <BusinessIcon />
+                </InputAdornment>
+              ),
+            }}
+            placeholder="e.g., Metro District"
+          />
+
+          {/* Dealership */}
+          <TextField
+            label="Dealership"
+            value={formData.dealership}
+            onChange={handleChange('dealership')}
+            disabled={loading}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <BusinessIcon />
+                </InputAdornment>
+              ),
+            }}
+            placeholder="e.g., Downtown Toyota"
+          />
+
+          {/* Address */}
+          <TextField
+            label="Address"
+            value={formData.address}
+            onChange={handleChange('address')}
+            disabled={loading}
+            fullWidth
+            multiline
+            rows={2}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1 }}>
+                  <HomeIcon />
+                </InputAdornment>
+              ),
+            }}
+            placeholder="Full address"
+          />
 
           <FormControlLabel
             control={

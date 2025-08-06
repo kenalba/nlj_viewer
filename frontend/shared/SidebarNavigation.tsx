@@ -41,14 +41,13 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   Person as PersonIcon,
-  Settings as SettingsIcon,
   Logout as LogoutIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { canEditContent, canReviewContent, canManageUsers } from '../utils/permissions';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ThemeToggle } from './ThemeToggle';
 import { HyundaiLogo } from '../components/HyundaiLogo';
+import { SettingsMenu } from '../components/SettingsMenu';
 
 export interface SidebarItem {
   id: string;
@@ -119,7 +118,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
         id: 'home',
         label: 'Home',
         icon: <HomeIcon />,
-        path: '/app'
+        path: '/app/home'
       },
       {
         id: 'divider-content',
@@ -351,13 +350,6 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
 
       <Divider />
 
-      {/* Theme Controls Section */}
-      <Box sx={{ p: open ? 2 : 1, display: 'flex', justifyContent: 'center' }}>
-        <ThemeToggle />
-      </Box>
-
-      <Divider />
-
       {/* User Profile Section */}
       <Box sx={{ p: open ? 2 : 1 }}>
         {user && (
@@ -375,9 +367,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
                     {user.role}
                   </Typography>
                 </Box>
-                <IconButton size="small" onClick={handleProfile} sx={{ p: 0.5 }}>
-                  <SettingsIcon sx={{ fontSize: '1rem' }} />
-                </IconButton>
+                <SettingsMenu compact />
                 <IconButton size="small" onClick={handleLogout} sx={{ p: 0.5 }}>
                   <LogoutIcon sx={{ fontSize: '1rem' }} />
                 </IconButton>
