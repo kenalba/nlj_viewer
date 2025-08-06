@@ -348,7 +348,6 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 </CardContent>
               </Card>
             )}
-            )}
           </>
         )}
       </DialogContent>

@@ -48,6 +48,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { canEditContent, canReviewContent, canManageUsers } from '../utils/permissions';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
+import { HyundaiLogo } from '../components/HyundaiLogo';
 
 export interface SidebarItem {
   id: string;
@@ -327,9 +328,13 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
         }}
       >
         {open && (
-          <Typography variant="h6" noWrap component="div">
-            {mode === 'player' ? 'NLJ Player' : 'NLJ Editor'}
-          </Typography>
+          <HyundaiLogo 
+            variant="wordmark" 
+            height={24}
+            sx={{ 
+              color: theme.palette.primary.main,
+            }} 
+          />
         )}
         
         <IconButton onClick={onToggle}>
