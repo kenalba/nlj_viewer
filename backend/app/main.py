@@ -84,7 +84,7 @@ from app.api.shared_tokens import auth_router as sharing_router, public_router a
 # Cal.com integration removed - migrating to our own system
 from app.api.training_programs import router as training_programs_router
 from app.api.training_sessions import router as training_sessions_router
-# from app.api.training_registrations import router as training_registrations_router
+from app.api.training_registrations import router as training_registrations_router
 
 app.include_router(auth_router, prefix="/api/auth", tags=["authentication"])
 app.include_router(users_router, prefix="/api/users", tags=["users"])
@@ -97,7 +97,7 @@ app.include_router(sharing_router, prefix="/api", tags=["sharing"])
 app.include_router(public_sharing_router, tags=["public"])
 # Cal.com router removed - migrating to our own training session system
 app.include_router(training_programs_router, prefix="/api/training-programs", tags=["training-programs"])
-# app.include_router(training_registrations_router, prefix="/api", tags=["training-registrations"])
+app.include_router(training_registrations_router, prefix="/api/training-registrations", tags=["training-registrations"])
 
 
 if __name__ == "__main__":

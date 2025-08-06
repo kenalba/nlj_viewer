@@ -5,6 +5,29 @@
 
 import { apiClient } from './client';
 
+// Event-driven operation response types
+export interface EventResponse {
+  message: string;
+  event_id: string;
+  resource_id: string;
+  status_endpoint?: string;
+}
+
+export interface BookingResponse {
+  message: string;
+  event_id: string;
+  booking_id: string;
+  session_id: string;
+  status_endpoint: string;
+}
+
+export interface BookingStatusResponse {
+  booking_id: string;
+  status: 'processing' | 'confirmed' | 'waitlisted' | 'failed';
+  message: string;
+  waitlist_position?: number;
+}
+
 // Training Program Types (templates)
 export interface TrainingProgram {
   id: string;
@@ -75,11 +98,10 @@ export interface AvailabilityInfo {
 }
 
 export interface RegistrationRequest {
-  program_id: string;
-  session_id?: string;
-  preferred_times?: string[];
-  special_requirements?: string;
-  emergency_contact?: string;
+  session_id: string;
+  registration_method?: string;
+  special_requirements?: Record<string, any>;
+  registration_notes?: string;
 }
 
 export interface Registration {
@@ -114,9 +136,15 @@ export const trainingProgramsAPI = {
     return response.data;
   },
 
-  // Create training program
-  async create(programData: TrainingProgramCreate): Promise<TrainingProgram> {
+  // Create training program (event-driven)
+  async create(programData: TrainingProgramCreate): Promise<EventResponse> {
     const response = await apiClient.post('/api/training-programs/', programData);
+    return response.data;
+  },
+
+  // Poll for creation status
+  async getStatus(programId: string): Promise<TrainingProgram> {
+    const response = await apiClient.get(`/api/training-programs/${programId}`);
     return response.data;
   },
 
@@ -139,7 +167,7 @@ export const trainingProgramsAPI = {
     return response.data;
   },
 
-  // Create session for a program
+  // Create session for a program (event-driven)
   async createSession(programId: string, sessionData: {
     start_time: string;
     end_time: string;
@@ -149,7 +177,7 @@ export const trainingProgramsAPI = {
     capacity?: number;
     instructor_id?: string;
     session_notes?: string;
-  }): Promise<TrainingSession> {
+  }): Promise<EventResponse> {
     const response = await apiClient.post(`/api/training-programs/${programId}/sessions`, {
       program_id: programId,
       ...sessionData
@@ -160,16 +188,30 @@ export const trainingProgramsAPI = {
 
 // Registration API
 export const registrationAPI = {
-  // Check availability for a session
-  async checkAvailability(sessionId: string): Promise<AvailabilityInfo> {
-    const response = await apiClient.get(`/api/availability/${sessionId}`);
+  // Register for a session (event-driven)
+  async register(registrationData: RegistrationRequest): Promise<BookingResponse> {
+    const response = await apiClient.post('/api/training-registrations/register', registrationData);
     return response.data;
   },
 
-  // Register for a session
-  async register(registrationData: RegistrationRequest): Promise<Registration> {
-    const response = await apiClient.post('/api/register', registrationData);
+  // Check booking status
+  async getBookingStatus(bookingId: string): Promise<BookingStatusResponse> {
+    const response = await apiClient.get(`/api/training-registrations/${bookingId}/status`);
     return response.data;
+  },
+
+  // Poll for registration confirmation (utility function)
+  async pollBookingStatus(bookingId: string, maxAttempts: number = 20, intervalMs: number = 1000): Promise<BookingStatusResponse> {
+    let attempts = 0;
+    while (attempts < maxAttempts) {
+      const status = await this.getBookingStatus(bookingId);
+      if (status.status !== 'processing') {
+        return status;
+      }
+      await new Promise(resolve => setTimeout(resolve, intervalMs));
+      attempts++;
+    }
+    throw new Error('Registration status polling timeout');
   },
 
   // Get user's registrations

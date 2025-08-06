@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Annotated, Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +20,7 @@ from app.models.training_program import TrainingProgram, TrainingSession, Traini
 from app.models.user import User, UserRole
 from app.services.scheduling_service import SchedulingService, SchedulingError, get_scheduling_service
 from app.services.kafka_service import get_xapi_event_service, XAPIEventService
+from app.services.event_consumers import consume_program_created_event, consume_program_published_event, consume_session_scheduled_event
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +127,14 @@ class TrainingSessionResponse(BaseModel):
         from_attributes = True
 
 
+class EventResponse(BaseModel):
+    """Schema for event-driven operation responses."""
+    message: str = Field(..., description="Operation status message")
+    event_id: str = Field(..., description="Event ID for tracking")
+    resource_id: str = Field(..., description="ID of created/updated resource")
+    status_endpoint: Optional[str] = Field(None, description="Endpoint to check operation status")
+
+
 def check_program_permissions(user: User, action: str = "read") -> bool:
     """Check if user has permissions for training program operations."""
     if user.role in [UserRole.ADMIN, UserRole.APPROVER]:
@@ -142,14 +151,14 @@ def check_program_permissions(user: User, action: str = "read") -> bool:
 
 # Training Programs Endpoints
 
-@router.post("/", response_model=TrainingProgramResponse)
+@router.post("/", response_model=EventResponse)
 async def create_training_program(
     program_data: TrainingProgramCreate,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    background_tasks: BackgroundTasks,
     current_user: Annotated[User, Depends(get_current_user)],
     xapi_service: Annotated[XAPIEventService, Depends(get_xapi_event_service)]
-) -> TrainingProgramResponse:
-    """Create a new training program template."""
+) -> EventResponse:
+    """Create a new training program template via event-driven architecture."""
     
     if not check_program_permissions(current_user, "create"):
         raise HTTPException(
@@ -158,35 +167,86 @@ async def create_training_program(
         )
     
     try:
-        # Create training program in database
-        program = TrainingProgram(
-            title=program_data.title,
-            description=program_data.description,
-            duration_minutes=program_data.duration_minutes,
-            prerequisites=program_data.prerequisites,
-            content_items=program_data.content_items,
+        # Generate program ID
+        from uuid import uuid4
+        program_id = str(uuid4())
+        
+        # Publish program.created event
+        await xapi_service.publish_program_created(
+            program_id=program_id,
+            program_title=program_data.title,
+            program_description=program_data.description or "",
+            creator_id=str(current_user.id),
+            creator_email=current_user.email,
+            creator_name=current_user.full_name or current_user.email,
             learning_objectives=program_data.learning_objectives,
-            instructor_requirements=program_data.instructor_requirements,
-            requires_approval=program_data.requires_approval,
-            auto_approve=program_data.auto_approve,
-            is_published=program_data.is_published,
-            created_by_id=current_user.id
+            prerequisites=[str(p) for p in program_data.prerequisites] if program_data.prerequisites else None
         )
         
-        db.add(program)
-        await db.commit()
-        await db.refresh(program)
+        # Trigger event consumer via BackgroundTask
+        event_data = {
+            "id": str(uuid4()),
+            "object": {
+                "id": f"http://nlj.platform/training-programs/{program_id}",
+                "definition": {
+                    "name": {"en-US": program_data.title},
+                    "description": {"en-US": program_data.description or ""}
+                }
+            },
+            "actor": {
+                "account": {"name": str(current_user.id)}
+            },
+            "context": {
+                "extensions": {
+                    "http://nlj.platform/extensions/learning_objectives": program_data.learning_objectives or [],
+                    "http://nlj.platform/extensions/prerequisites": [str(p) for p in program_data.prerequisites] if program_data.prerequisites else []
+                }
+            }
+        }
+        await consume_program_created_event(event_data, background_tasks)
         
-        logger.info(f"Created training program {program.id}")
+        # Generate event ID for tracking
+        event_id = str(uuid4())
         
-        return TrainingProgramResponse.model_validate(program)
+        logger.info(f"Published program.created event for program {program_id}")
+        
+        # If program should be published immediately, publish that event too
+        if program_data.is_published:
+            await xapi_service.publish_program_published(
+                program_id=program_id,
+                program_title=program_data.title,
+                publisher_id=str(current_user.id),
+                publisher_email=current_user.email,
+                publisher_name=current_user.full_name or current_user.email
+            )
+            logger.info(f"Published program.published event for program {program_id}")
+            
+            # Trigger publish event consumer
+            publish_event_data = {
+                "id": str(uuid4()),
+                "object": {
+                    "id": f"http://nlj.platform/training-programs/{program_id}",
+                    "definition": {"name": {"en-US": program_data.title}}
+                },
+                "actor": {
+                    "account": {"name": str(current_user.id)}
+                },
+                "context": {"extensions": {}}
+            }
+            await consume_program_published_event(publish_event_data, background_tasks)
+        
+        return EventResponse(
+            message="Program creation initiated",
+            event_id=event_id,
+            resource_id=program_id,
+            status_endpoint=f"/api/training-programs/{program_id}"
+        )
         
     except Exception as e:
-        logger.error(f"Error creating training program: {e}")
-        await db.rollback()
+        logger.error(f"Error publishing program.created event: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create training program"
+            detail="Failed to initiate program creation"
         )
 
 
@@ -430,14 +490,16 @@ async def delete_training_program(
 
 # Training Sessions Endpoints (for scheduled instances)
 
-@router.post("/{program_id}/sessions", response_model=TrainingSessionResponse)
+@router.post("/{program_id}/sessions", response_model=EventResponse)
 async def create_training_session(
     program_id: UUID,
     session_data: TrainingSessionCreate,
+    background_tasks: BackgroundTasks,
     db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)]
-) -> TrainingSessionResponse:
-    """Create a new training session for a program."""
+    current_user: Annotated[User, Depends(get_current_user)],
+    xapi_service: Annotated[XAPIEventService, Depends(get_xapi_event_service)]
+) -> EventResponse:
+    """Create a new training session for a program via event-driven architecture."""
     
     if not check_program_permissions(current_user, "create"):
         raise HTTPException(
@@ -465,40 +527,65 @@ async def create_training_session(
         )
     
     try:
-        # Create session using new model structure
-        session = TrainingSession(
-            program_id=program_id,
+        # Generate session ID
+        from uuid import uuid4
+        session_id = str(uuid4())
+        
+        # Publish session.scheduled event
+        await xapi_service.publish_session_scheduled(
+            session_id=session_id,
+            program_id=str(program_id),
+            session_title=program.title,
             start_time=session_data.start_time,
             end_time=session_data.end_time,
-            timezone=session_data.timezone,
             location=session_data.location,
-            location_details=session_data.location_details,
             capacity=session_data.capacity,
-            instructor_id=session_data.instructor_id,
-            session_notes=session_data.session_notes
+            scheduler_id=str(current_user.id),
+            scheduler_email=current_user.email,
+            scheduler_name=current_user.full_name or current_user.email,
+            instructor_id=str(session_data.instructor_id) if session_data.instructor_id else None
         )
         
-        db.add(session)
-        await db.commit()
-        await db.refresh(session)
+        # Trigger session event consumer
+        session_event_data = {
+            "id": str(uuid4()),
+            "object": {
+                "id": f"http://nlj.platform/training-sessions/{session_id}",
+                "definition": {"name": {"en-US": program.title}}
+            },
+            "actor": {
+                "account": {"name": str(current_user.id)}
+            },
+            "context": {
+                "extensions": {
+                    "http://nlj.platform/extensions/program_id": str(program_id),
+                    "http://nlj.platform/extensions/start_time": session_data.start_time.isoformat(),
+                    "http://nlj.platform/extensions/end_time": session_data.end_time.isoformat(),
+                    "http://nlj.platform/extensions/location": session_data.location or "",
+                    "http://nlj.platform/extensions/capacity": session_data.capacity,
+                    "http://nlj.platform/extensions/instructor_id": str(session_data.instructor_id) if session_data.instructor_id else None
+                }
+            }
+        }
+        await consume_session_scheduled_event(session_event_data, background_tasks)
         
-        logger.info(f"Created training session {session.id} for program {program_id}")
+        # Generate event ID for tracking
+        event_id = str(uuid4())
         
-        # Calculate computed fields
-        session_response = TrainingSessionResponse.model_validate(session)
-        session_response.available_spots = session.capacity
-        session_response.total_bookings = 0
-        session_response.confirmed_bookings = 0
-        session_response.waitlist_count = 0
+        logger.info(f"Published session.scheduled event for session {session_id}")
         
-        return session_response
+        return EventResponse(
+            message="Session scheduling initiated",
+            event_id=event_id,
+            resource_id=session_id,
+            status_endpoint=f"/api/training-sessions/{session_id}"
+        )
         
     except Exception as e:
-        logger.error(f"Error creating training session: {e}")
-        await db.rollback()
+        logger.error(f"Error publishing session.scheduled event: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create training session"
+            detail="Failed to initiate session scheduling"
         )
 
 

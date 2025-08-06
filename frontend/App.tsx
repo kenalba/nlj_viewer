@@ -33,6 +33,8 @@ import { HomePage } from './components/HomePage';
 import { PublicActivityPlayer } from './components/PublicActivityPlayer';
 import TrainingSessionsPage from './pages/TrainingSessionsPage';
 import CreateProgramPage from './pages/CreateProgramPage';
+import ProgramDetailPage from './pages/ProgramDetailPage';
+import CreateSessionPage from './pages/CreateSessionPage';
 import type { NLJScenario } from './types/nlj';
 import { canEditContent, canReviewContent, canManageUsers, getAppMode } from './utils/permissions';
 
@@ -280,9 +282,28 @@ const AppContent: React.FC = () => {
   }
 
   if (path.includes('/training')) {
-    // Create new session page: /app/training/create
+    // Create new program page: /app/training/create
     if (path.includes('/training/create') && canEdit) {
       return <CreateProgramPage />;
+    }
+    // Program detail page: /app/training/programs/[id]
+    if (path.includes('/training/programs/') && path.split('/').length > 4) {
+      const pathSegments = path.split('/');
+      const programsIndex = pathSegments.indexOf('programs');
+      const programId = pathSegments[programsIndex + 1];
+      const action = pathSegments[programsIndex + 2];
+      
+      // Create session page: /app/training/programs/[id]/create-session
+      if (action === 'create-session' && canEdit) {
+        return <CreateSessionPage />;
+      }
+      // Edit program page: /app/training/programs/[id]/edit
+      if (action === 'edit' && canEdit) {
+        // For now, redirect to program detail page - could implement edit page later
+        return <ProgramDetailPage />;
+      }
+      // Program detail page: /app/training/programs/[id]
+      return <ProgramDetailPage />;
     }
     // Main training sessions page: /app/training
     return <TrainingSessionsPage />;

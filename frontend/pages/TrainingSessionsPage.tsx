@@ -481,6 +481,91 @@ const TrainingSessionsPage: React.FC = () => {
         )}
       </TabPanel>
 
+      {/* Available Sessions Tab */}
+      <TabPanel value={tabValue} index={2}>
+        {/* Sessions List */}
+        <Grid container spacing={3}>
+          {filteredSessions.map((session) => {
+            const program = programs.find(p => p.id === session.program_id);
+            const existingRegistration = getRegistrationStatus(session.id);
+            return (
+              <Grid item xs={12} md={6} lg={4} key={session.id}>
+                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    <Typography variant="h6" component="h2" gutterBottom>
+                      {program?.title || 'Unknown Program'}
+                    </Typography>
+                    
+                    <Typography variant="body2" color="primary" gutterBottom>
+                      {formatDateTime(session.start_time)}
+                    </Typography>
+
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                      <Chip
+                        icon={<GroupIcon />}
+                        label={`${session.available_spots}/${session.capacity} available`}
+                        size="small"
+                        color={session.available_spots > 0 ? 'success' : 'warning'}
+                      />
+                      {session.location && (
+                        <Chip
+                          icon={<LocationIcon />}
+                          label={session.location}
+                          size="small"
+                        />
+                      )}
+                      <Chip
+                        label={session.status}
+                        size="small"
+                        color={session.status === 'scheduled' ? 'success' : 'default'}
+                        variant="outlined"
+                      />
+                    </Box>
+
+                    {session.session_notes && (
+                      <Typography variant="body2" color="text.secondary" paragraph>
+                        {session.session_notes}
+                      </Typography>
+                    )}
+                  </CardContent>
+
+                  <CardActions sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Box>
+                      {existingRegistration ? (
+                        <Chip
+                          label={`Registered (${existingRegistration.booking_status})`}
+                          color={getStatusColor(existingRegistration.booking_status) as any}
+                          variant="filled"
+                        />
+                      ) : (
+                        <Button
+                          variant="contained"
+                          onClick={() => handleRegisterClick(session)}
+                          disabled={session.status !== 'scheduled'}
+                        >
+                          {session.available_spots > 0 ? 'Register' : 'Join Waitlist'}
+                        </Button>
+                      )}
+                    </Box>
+                  </CardActions>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
+
+        {filteredSessions.length === 0 && !loading && (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography variant="h6" color="text.secondary">
+              No training sessions found
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Check back later for scheduled sessions
+            </Typography>
+          </Box>
+        )}
+      </TabPanel>
+
       {/* Registration Modal */}
       {selectedSession && (
         <RegistrationModal

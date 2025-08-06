@@ -34,7 +34,9 @@ import {
   MyLocation as MyLocationIcon,
 } from '@mui/icons-material';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
-import { trainingProgramsAPI, type TrainingProgramCreate, type TrainingProgram } from '../api/training';
+import { trainingProgramsAPI, type TrainingProgramCreate, type EventResponse } from '../api/training';
+import { useProgramStatusPolling } from '../hooks/useStatusPolling';
+import { StatusIndicator } from '../components/training';
 
 // Common training locations for autocomplete
 const COMMON_LOCATIONS = [
@@ -60,7 +62,23 @@ const CreateProgramPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [gettingLocation, setGettingLocation] = useState(false);
+  const [eventResponse, setEventResponse] = useState<EventResponse | null>(null);
+  const [currentProgramId, setCurrentProgramId] = useState<string | null>(null);
+
+  // Real-time status polling
+  const statusPolling = useProgramStatusPolling(currentProgramId, {
+    intervalMs: 1000,
+    maxAttempts: 20,
+    onComplete: (program) => {
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/app/training');
+      }, 2000);
+    },
+    onError: (err) => {
+      setError('Program creation submitted but status check failed. Please check the training programs list.');
+    },
+  });
   const [formData, setFormData] = useState<TrainingProgramCreate>({
     title: '',
     description: '',
@@ -110,13 +128,13 @@ const CreateProgramPage: React.FC = () => {
     setError(null);
 
     try {
-      const program = await trainingProgramsAPI.create(formData);
-      setSuccess(true);
+      // Step 1: Submit program creation request (event-driven)
+      const response: EventResponse = await trainingProgramsAPI.create(formData);
+      setEventResponse(response);
+      setCurrentProgramId(response.resource_id);
       
-      // Navigate back to training programs after a brief delay
-      setTimeout(() => {
-        navigate('/app/training');
-      }, 2000);
+      // Step 2: Start real-time status polling
+      statusPolling.startPolling();
     } catch (err: any) {
       console.error('Failed to create training program:', err);
       setError(err.response?.data?.detail || 'Failed to create training program. Please try again.');
@@ -191,11 +209,17 @@ const CreateProgramPage: React.FC = () => {
         <Box sx={{ p: 4 }}>
           <SchoolIcon sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
           <Typography variant="h4" gutterBottom color="success.main">
-            Training Session Created!
+            Training Program Created!
           </Typography>
           <Typography variant="body1" color="text.secondary" paragraph>
-            Your training session has been successfully created.
+            Your training program has been successfully created.
           </Typography>
+          {eventResponse && (
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Event ID: {eventResponse.event_id}<br />
+              Program ID: {eventResponse.resource_id}
+            </Typography>
+          )}
           <Typography variant="body2" color="text.secondary">
             Redirecting to training sessions...
           </Typography>
@@ -220,7 +244,7 @@ const CreateProgramPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
             <SchoolIcon color="inherit" />
             <Typography variant="h6" color="inherit">
-              Create Training Session
+              Create Training Program
             </Typography>
           </Box>
         </Toolbar>
@@ -244,7 +268,7 @@ const CreateProgramPage: React.FC = () => {
             <Stack spacing={3}>
               <TextField
                 fullWidth
-                label="Session Title"
+                label="Program Title"
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
                 required
@@ -264,24 +288,14 @@ const CreateProgramPage: React.FC = () => {
             </Stack>
           </Paper>
 
-          {/* Session Configuration */}
+          {/* Program Configuration */}
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <LocationIcon color="primary" />
-              Session Configuration
+              Program Configuration
             </Typography>
             <Stack spacing={3}>
               <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-                <TextField
-                  label="Capacity"
-                  type="number"
-                  value={formData.capacity}
-                  onChange={(e) => handleInputChange('capacity', parseInt(e.target.value) || 20)}
-                  InputProps={{ inputProps: { min: 1, max: 1000 } }}
-                  disabled={loading}
-                  sx={{ minWidth: 150 }}
-                  helperText="Maximum attendees"
-                />
                 <TextField
                   label="Duration (minutes)"
                   type="number"
@@ -289,65 +303,13 @@ const CreateProgramPage: React.FC = () => {
                   onChange={(e) => handleInputChange('duration_minutes', parseInt(e.target.value) || 120)}
                   InputProps={{ inputProps: { min: 15, max: 480 } }}
                   disabled={loading}
-                  sx={{ minWidth: 150 }}
-                  helperText="Session length"
-                />
-                <TextField
-                  label="Buffer Time (minutes)"
-                  type="number"
-                  value={formData.buffer_time_minutes}
-                  onChange={(e) => handleInputChange('buffer_time_minutes', parseInt(e.target.value) || 15)}
-                  InputProps={{ inputProps: { min: 0, max: 60 } }}
-                  disabled={loading}
-                  sx={{ minWidth: 150 }}
-                  helperText="Time between sessions"
+                  sx={{ minWidth: 200 }}
+                  helperText="Standard session length for this program"
                 />
               </Box>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Autocomplete
-                  fullWidth
-                  freeSolo
-                  options={COMMON_LOCATIONS}
-                  value={formData.location}
-                  onChange={(event, newValue) => {
-                    handleInputChange('location', newValue || '');
-                  }}
-                  onInputChange={(event, newInputValue) => {
-                    handleInputChange('location', newInputValue);
-                  }}
-                  disabled={loading}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Location"
-                      placeholder="e.g., Training Center A, Room 101"
-                      helperText="Physical location where the training will take place"
-                      InputProps={{
-                        ...params.InputProps,
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <LocationIcon sx={{ color: 'text.secondary' }} />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  )}
-                />
-                <Button
-                  variant="outlined"
-                  onClick={handleGetCurrentLocation}
-                  disabled={loading || gettingLocation}
-                  sx={{ 
-                    minWidth: 120, 
-                    whiteSpace: 'nowrap',
-                    height: '56px', // Match TextField height
-                    alignSelf: 'flex-start' // Align to top to match input
-                  }}
-                  startIcon={gettingLocation ? <LoadingSpinner size={16} /> : <MyLocationIcon />}
-                >
-                  {gettingLocation ? 'Getting...' : 'Use Current'}
-                </Button>
-              </Box>
+              <Typography variant="body2" color="text.secondary">
+                Location will be specified when creating individual training sessions for this program.
+              </Typography>
             </Stack>
           </Paper>
 
@@ -407,21 +369,11 @@ const CreateProgramPage: React.FC = () => {
           {/* Settings */}
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
-              Registration Settings
+              Program Settings
             </Typography>
             <Stack spacing={2}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.allow_waitlist}
-                        onChange={(e) => handleInputChange('allow_waitlist', e.target.checked)}
-                        disabled={loading}
-                      />
-                    }
-                    label="Allow Waitlist"
-                  />
                   <FormControlLabel
                     control={
                       <Switch
@@ -432,8 +384,6 @@ const CreateProgramPage: React.FC = () => {
                     }
                     label="Requires Approval"
                   />
-                </Box>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -444,12 +394,14 @@ const CreateProgramPage: React.FC = () => {
                     }
                     label="Auto Approve"
                   />
+                </Box>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                   <FormControlLabel
                     control={
                       <Switch
                         checked={formData.is_published}
                         onChange={(e) => handleInputChange('is_published', e.target.checked)}
-                        disabled={loading}
+                        disabled={loading || pollingStatus}
                       />
                     }
                     label="Publish Immediately"
@@ -459,7 +411,6 @@ const CreateProgramPage: React.FC = () => {
               <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                 <Typography variant="body2" color="text.secondary">
                   <strong>Settings Guide:</strong><br />
-                  • <strong>Allow Waitlist:</strong> Enable when session is full<br />
                   • <strong>Requires Approval:</strong> Manager must approve registrations<br />
                   • <strong>Auto Approve:</strong> Automatically confirm eligible learners<br />
                   • <strong>Publish Immediately:</strong> Make visible to learners right away
@@ -468,17 +419,36 @@ const CreateProgramPage: React.FC = () => {
             </Stack>
           </Paper>
 
+          {/* Real-time Creation Status */}
+          {(statusPolling.isPolling || statusPolling.data || statusPolling.error) && eventResponse && (
+            <Box sx={{ mb: 3 }}>
+              <StatusIndicator
+                status={statusPolling.data ? 'confirmed' : (statusPolling.isPolling ? 'processing' : null)}
+                message={eventResponse.message}
+                attempts={statusPolling.attempts}
+                maxAttempts={20}
+                error={statusPolling.error}
+                data={{
+                  ...statusPolling.data,
+                  event_id: eventResponse.event_id,
+                  program_id: eventResponse.resource_id,
+                }}
+                showProgress={true}
+              />
+            </Box>
+          )}
+
           {/* Submit Button */}
           <Box sx={{ display: 'flex', justifyContent: 'center', pt: 2 }}>
             <Button
               variant="contained"
               size="large"
               onClick={handleSubmit}
-              disabled={loading || !formData.title.trim()}
-              startIcon={loading ? <LoadingSpinner size={20} /> : <SaveIcon />}
+              disabled={loading || statusPolling.isPolling || !formData.title.trim()}
+              startIcon={(loading || statusPolling.isPolling) ? <LoadingSpinner size={20} /> : <SaveIcon />}
               sx={{ minWidth: 200, py: 1.5 }}
             >
-              {loading ? 'Creating Program...' : 'Create Training Program'}
+              {loading ? 'Submitting...' : statusPolling.isPolling ? 'Confirming Creation...' : 'Create Training Program'}
             </Button>
           </Box>
         </Stack>

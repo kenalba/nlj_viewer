@@ -37,7 +37,9 @@ import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
 } from '@mui/icons-material';
-import { registrationAPI, type TrainingSession, type AvailabilityInfo, type RegistrationRequest } from '../../api/training';
+import { registrationAPI, type TrainingSession, type RegistrationRequest, type BookingResponse, type BookingStatusResponse } from '../../api/training';
+import { useBookingStatusPolling } from '../../hooks/useStatusPolling';
+import StatusIndicator from './StatusIndicator';
 
 interface RegistrationModalProps {
   open: boolean;
@@ -52,56 +54,69 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
   session,
   onSuccess,
 }) => {
-  const [availability, setAvailability] = useState<AvailabilityInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedInstanceId, setSelectedInstanceId] = useState<string>('');
-  const [specialRequirements, setSpecialRequirements] = useState('');
-  const [emergencyContact, setEmergencyContact] = useState('');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [registrationMethod, setRegistrationMethod] = useState('online');
+  const [specialRequirements, setSpecialRequirements] = useState<Record<string, any>>({});
+  const [registrationNotes, setRegistrationNotes] = useState('');
+  const [currentBookingId, setCurrentBookingId] = useState<string | null>(null);
+  const [bookingResponse, setBookingResponse] = useState<BookingResponse | null>(null);
 
-  // Load availability when modal opens
+  // Real-time status polling
+  const statusPolling = useBookingStatusPolling(currentBookingId, {
+    intervalMs: 1000,
+    maxAttempts: 20,
+    onBookingConfirmed: (status) => {
+      setTimeout(() => {
+        onSuccess();
+      }, 2000);
+    },
+    onBookingWaitlisted: (status) => {
+      setTimeout(() => {
+        onSuccess();
+      }, 2000);
+    },
+    onBookingFailed: (status) => {
+      setError(status.message || 'Registration failed');
+    },
+  });
+
+  // Reset form when modal opens
   useEffect(() => {
-    if (open && session) {
-      loadAvailability();
-    }
-  }, [open, session]);
-
-  const loadAvailability = async () => {
-    try {
-      setLoading(true);
+    if (open) {
       setError(null);
-      const data = await registrationAPI.checkAvailability(session.id);
-      setAvailability(data);
-      
-      // Auto-select first available instance if only one
-      if (data.available_instances.length === 1) {
-        setSelectedInstanceId(data.available_instances[0].id);
-      }
-    } catch (err) {
-      console.error('Failed to load availability:', err);
-      setError('Failed to check availability. Please try again.');
-    } finally {
-      setLoading(false);
+      setSuccessMessage(null);
+      setCurrentBookingId(null);
+      setBookingResponse(null);
+      setRegistrationNotes('');
+      setSpecialRequirements({});
+      statusPolling.resetPolling();
     }
-  };
+  }, [open, statusPolling.resetPolling]);
 
   const handleRegister = async () => {
-    if (!availability) return;
-
     try {
       setSubmitting(true);
       setError(null);
+      setSuccessMessage(null);
 
       const registrationRequest: RegistrationRequest = {
         session_id: session.id,
-        instance_id: selectedInstanceId || undefined,
-        special_requirements: specialRequirements || undefined,
-        emergency_contact: emergencyContact || undefined,
+        registration_method: registrationMethod,
+        special_requirements: Object.keys(specialRequirements).length > 0 ? specialRequirements : undefined,
+        registration_notes: registrationNotes || undefined,
       };
 
-      await registrationAPI.register(registrationRequest);
-      onSuccess();
+      // Step 1: Submit registration request (event-driven)
+      const response: BookingResponse = await registrationAPI.register(registrationRequest);
+      setCurrentBookingId(response.booking_id);
+      setBookingResponse(response);
+      setSuccessMessage(response.message);
+
+      // Step 2: Start real-time status polling
+      statusPolling.startPolling();
     } catch (err: any) {
       console.error('Registration failed:', err);
       setError(
@@ -126,12 +141,13 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'available':
+      case 'confirmed':
         return <CheckCircleIcon color="success" />;
-      case 'waitlist':
+      case 'waitlisted':
         return <WarningIcon color="warning" />;
-      case 'full':
-      case 'not_eligible':
+      case 'processing':
+        return <CircularProgress size={20} />;
+      case 'failed':
         return <ErrorIcon color="error" />;
       default:
         return <EventIcon />;
@@ -140,15 +156,15 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'available': return 'success';
-      case 'waitlist': return 'warning';
-      case 'full': return 'error';
-      case 'not_eligible': return 'error';
+      case 'confirmed': return 'success';
+      case 'waitlisted': return 'warning';
+      case 'processing': return 'info';
+      case 'failed': return 'error';
       default: return 'default';
     }
   };
 
-  const canRegister = availability && ['available', 'waitlist'].includes(availability.registration_status);
+  const canRegister = !statusPolling.data && !statusPolling.isPolling && session.status === 'scheduled' && session.available_spots >= 0;
 
   return (
     <Dialog
@@ -178,25 +194,20 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
             <Card sx={{ mb: 3 }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  {session.title}
+                  Training Session
                 </Typography>
                 
-                {session.description && (
-                  <Typography variant="body2" color="text.secondary" paragraph>
-                    {session.description}
-                  </Typography>
-                )}
-
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
                   <Chip
                     icon={<ScheduleIcon />}
-                    label={`${session.duration_minutes} minutes`}
+                    label={formatDateTime(session.start_time)}
                     size="small"
                   />
                   <Chip
                     icon={<GroupIcon />}
-                    label={`Max ${session.capacity} participants`}
+                    label={`${session.available_spots} of ${session.capacity} spots available`}
                     size="small"
+                    color={session.available_spots > 0 ? 'success' : 'warning'}
                   />
                   {session.location && (
                     <Chip
@@ -207,19 +218,10 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
                   )}
                 </Box>
 
-                {session.learning_objectives && session.learning_objectives.length > 0 && (
-                  <Box>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Learning Objectives:
-                    </Typography>
-                    <List dense>
-                      {session.learning_objectives.map((objective, index) => (
-                        <ListItem key={index} sx={{ py: 0 }}>
-                          <ListItemText primary={objective} />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Box>
+                {session.session_notes && (
+                  <Typography variant="body2" color="text.secondary" paragraph>
+                    {session.session_notes}
+                  </Typography>
                 )}
               </CardContent>
             </Card>
@@ -230,163 +232,150 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
               </Alert>
             )}
 
-            {availability && (
-              <>
-                {/* Registration Status */}
-                <Card sx={{ mb: 3 }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                      {getStatusIcon(availability.registration_status)}
-                      <Typography variant="h6">
-                        Registration Status
-                      </Typography>
-                      <Chip
-                        label={availability.registration_status.replace('_', ' ')}
-                        color={getStatusColor(availability.registration_status) as any}
-                        size="small"
-                      />
-                    </Box>
+            {/* Real-time Status Display */}
+            {(statusPolling.isPolling || statusPolling.data || statusPolling.error) && (
+              <Box sx={{ mb: 3 }}>
+                <StatusIndicator
+                  status={statusPolling.data?.status || (statusPolling.isPolling ? 'processing' : null)}
+                  message={successMessage || statusPolling.data?.message}
+                  attempts={statusPolling.attempts}
+                  maxAttempts={20}
+                  error={statusPolling.error}
+                  data={{
+                    ...statusPolling.data,
+                    booking_id: currentBookingId,
+                    event_id: bookingResponse?.event_id,
+                    session_id: bookingResponse?.session_id,
+                  }}
+                  showProgress={true}
+                />
+              </Box>
+            )}
 
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Total remaining spots: {availability.remaining_spots}
+            {/* Session Availability Status */}
+            {!statusPolling.data && !statusPolling.isPolling && (
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    {session.available_spots > 0 ? 
+                      <CheckCircleIcon color="success" /> : 
+                      <WarningIcon color="warning" />
+                    }
+                    <Typography variant="h6">
+                      Availability
                     </Typography>
+                    <Chip
+                      label={session.available_spots > 0 ? 'Available' : 'Waitlist Only'}
+                      color={session.available_spots > 0 ? 'success' : 'warning'}
+                      size="small"
+                    />
+                  </Box>
 
-                    {availability.registration_status === 'not_eligible' && (
-                      <Alert severity="warning" sx={{ mt: 2 }}>
-                        You do not meet the prerequisites for this training session.
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    {session.available_spots > 0 ? 
+                      `${session.available_spots} spots remaining out of ${session.capacity}` :
+                      'This session is full, but you can join the waitlist'
+                    }
+                  </Typography>
+
+                  {session.available_spots === 0 && (
+                    <Alert severity="info" sx={{ mt: 2 }}>
+                      This session is full, but you can join the waitlist. You'll be notified if a spot becomes available.
+                    </Alert>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+
+            {/* Registration Form */}
+            {canRegister && (
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Registration Details
+                  </Typography>
+
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Registration Method</InputLabel>
+                      <Select
+                        value={registrationMethod}
+                        onChange={(e) => setRegistrationMethod(e.target.value)}
+                        label="Registration Method"
+                      >
+                        <MenuItem value="online">Online</MenuItem>
+                        <MenuItem value="phone">Phone</MenuItem>
+                        <MenuItem value="in_person">In Person</MenuItem>
+                      </Select>
+                    </FormControl>
+
+                    <TextField
+                      fullWidth
+                      label="Registration Notes"
+                      multiline
+                      rows={2}
+                      value={registrationNotes}
+                      onChange={(e) => setRegistrationNotes(e.target.value)}
+                      placeholder="Any additional notes or comments..."
+                      variant="outlined"
+                    />
+
+                    <TextField
+                      fullWidth
+                      label="Dietary Restrictions"
+                      value={specialRequirements.dietary || ''}
+                      onChange={(e) => setSpecialRequirements({...specialRequirements, dietary: e.target.value})}
+                      placeholder="Any dietary restrictions or allergies"
+                      variant="outlined"
+                    />
+
+                    <TextField
+                      fullWidth
+                      label="Accessibility Needs"
+                      value={specialRequirements.accessibility || ''}
+                      onChange={(e) => setSpecialRequirements({...specialRequirements, accessibility: e.target.value})}
+                      placeholder="Any accessibility accommodations needed"
+                      variant="outlined"
+                    />
+
+                    {session.available_spots === 0 && (
+                      <Alert severity="info">
+                        By registering, you'll be added to the waitlist. We'll notify you if a spot becomes available.
                       </Alert>
                     )}
-
-                    {availability.registration_status === 'full' && !availability.waitlist_enabled && (
-                      <Alert severity="error" sx={{ mt: 2 }}>
-                        This training session is full and waitlist is not available.
-                      </Alert>
-                    )}
-
-                    {availability.registration_status === 'waitlist' && (
-                      <Alert severity="info" sx={{ mt: 2 }}>
-                        This session is full, but you can join the waitlist. You'll be notified if a spot becomes available.
-                      </Alert>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Available Instances */}
-                {availability.available_instances.length > 0 && (
-                  <Card sx={{ mb: 3 }}>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>
-                        Available Sessions
-                      </Typography>
-
-                      {availability.available_instances.length > 1 && (
-                        <FormControl fullWidth sx={{ mb: 2 }}>
-                          <InputLabel>Select a session time</InputLabel>
-                          <Select
-                            value={selectedInstanceId}
-                            onChange={(e) => setSelectedInstanceId(e.target.value)}
-                            label="Select a session time"
-                          >
-                            <MenuItem value="">Any available time</MenuItem>
-                            {availability.available_instances.map((instance) => (
-                              <MenuItem key={instance.id} value={instance.id}>
-                                {formatDateTime(instance.start_time)} - {instance.remaining_spots} spots left
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      )}
-
-                      <List>
-                        {availability.available_instances.map((instance) => (
-                          <ListItem key={instance.id} divider>
-                            <ListItemIcon>
-                              <ScheduleIcon />
-                            </ListItemIcon>
-                            <ListItemText
-                              primary={formatDateTime(instance.start_time)}
-                              secondary={
-                                <Box>
-                                  <Typography variant="body2" component="span">
-                                    {instance.remaining_spots} of {instance.capacity} spots available
-                                  </Typography>
-                                  {instance.location && instance.location !== session.location && (
-                                    <Typography variant="body2" component="span" sx={{ ml: 2 }}>
-                                      • {instance.location}
-                                    </Typography>
-                                  )}
-                                </Box>
-                              }
-                            />
-                            <Chip
-                              label={instance.status}
-                              color={instance.remaining_spots > 0 ? 'success' : 'warning'}
-                              size="small"
-                            />
-                          </ListItem>
-                        ))}
-                      </List>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Registration Form */}
-                {canRegister && (
-                  <Card>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>
-                        Registration Details
-                      </Typography>
-
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <TextField
-                          fullWidth
-                          label="Special Requirements"
-                          multiline
-                          rows={3}
-                          value={specialRequirements}
-                          onChange={(e) => setSpecialRequirements(e.target.value)}
-                          placeholder="Any special accommodations, dietary restrictions, or accessibility needs..."
-                          variant="outlined"
-                        />
-
-                        <TextField
-                          fullWidth
-                          label="Emergency Contact"
-                          value={emergencyContact}
-                          onChange={(e) => setEmergencyContact(e.target.value)}
-                          placeholder="Name and phone number of emergency contact"
-                          variant="outlined"
-                        />
-
-                        {availability.registration_status === 'waitlist' && (
-                          <Alert severity="info">
-                            By registering, you'll be added to the waitlist. We'll notify you if a spot becomes available.
-                          </Alert>
-                        )}
-                      </Box>
-                    </CardContent>
-                  </Card>
-                )}
-              </>
+                  </Box>
+                </CardContent>
+              </Card>
+            )}
             )}
           </>
         )}
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose} disabled={submitting}>
+        <Button onClick={onClose} disabled={submitting || statusPolling.isPolling}>
           Cancel
         </Button>
         {canRegister && (
           <Button
             variant="contained"
             onClick={handleRegister}
-            disabled={submitting || loading}
-            startIcon={submitting ? <CircularProgress size={20} /> : null}
+            disabled={submitting || loading || statusPolling.isPolling}
+            startIcon={(submitting || statusPolling.isPolling) ? <CircularProgress size={20} /> : null}
           >
-            {submitting ? 'Registering...' : 
-             availability?.registration_status === 'waitlist' ? 'Join Waitlist' : 'Register'}
+            {submitting ? 'Submitting...' : 
+             statusPolling.isPolling ? 'Processing...' :
+             session.available_spots === 0 ? 'Join Waitlist' : 'Register'}
+          </Button>
+        )}
+        {(statusPolling.data?.status === 'confirmed' || statusPolling.data?.status === 'waitlisted') && (
+          <Button
+            variant="contained"
+            color={statusPolling.data?.status === 'confirmed' ? 'success' : 'warning'}
+            onClick={onClose}
+          >
+            Done
           </Button>
         )}
       </DialogActions>

@@ -24,6 +24,7 @@ services:
   kafka:
     image: confluentinc/cp-kafka:latest
     container_name: nlj_kafka
+    user: root  # Fix permission issues
     ports:
       - "9092:9092"
       - "9093:9093"
@@ -47,10 +48,10 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       
-      # Log Configuration
-      KAFKA_LOG_RETENTION_HOURS: 168
+      # Log Configuration - 30 days retention for event sourcing
+      KAFKA_LOG_RETENTION_HOURS: 720  # 30 days
       KAFKA_LOG_SEGMENT_BYTES: 1073741824
-      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      KAFKA_LOG_DIRS: '/var/lib/kafka/data'
       
       # Logging
       KAFKA_LOG4J_LOGGERS: "kafka.controller=WARN,kafka.producer.async.DefaultEventHandler=WARN,state.change.logger=WARN,kafka.authorizer.logger=WARN"
@@ -62,7 +63,7 @@ services:
       KAFKA_MIN_INSYNC_REPLICAS: 1
       
     volumes:
-      - kafka_data:/tmp/kraft-combined-logs
+      - kafka_data:/var/lib/kafka/data
     networks:
       - nlj_network
     healthcheck:
@@ -123,8 +124,8 @@ services:
     depends_on:
       nlj-db:
         condition: service_healthy
-      # kafka:
-      #   condition: service_healthy
+      kafka:
+        condition: service_healthy
     networks:
       - nlj_network
     healthcheck:
