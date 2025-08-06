@@ -235,6 +235,9 @@ export const trainingSessionsAPI = {
   // List all training sessions
   async list(params?: {
     program_id?: string;
+    instructor_id?: string;
+    location?: string;
+    published_only?: boolean;
     include_past?: boolean;
     skip?: number;
     limit?: number;

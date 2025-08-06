@@ -4,7 +4,7 @@
  * Inspired by Figma design with card-based layout
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -25,7 +25,10 @@ import {
   LinearProgress,
   Grid,
   useTheme,
-  alpha
+  alpha,
+  Menu,
+  MenuItem,
+  ListItemIcon
 } from '@mui/material';
 import {
   PlayArrow as PlayIcon,
@@ -42,12 +45,93 @@ import {
   Celebration as CelebrationIcon,
   Update as UpdateIcon,
   AccessTime as TimeIcon,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  Person as PlayerIcon,
+  School as LearnerIcon,
+  Create as CreatorIcon,
+  RateReview as ReviewerIcon,
+  CheckCircle as ApproverIcon,
+  AdminPanelSettings as AdminIcon,
+  SwapHoriz as SwapIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { DashboardProvider, useDashboard } from '../contexts/DashboardContext';
-import { RoleSwitcher } from './RoleSwitcher';
 import { useAuth } from '../contexts/AuthContext';
+
+type UserRole = 'PLAYER' | 'LEARNER' | 'CREATOR' | 'REVIEWER' | 'APPROVER' | 'ADMIN';
+type JobCode = 'DP' | 'GM' | 'SM' | 'SP' | 'FM' | 'FI' | 'BM' | 'BD' | 'IM';
+
+interface RoleOption {
+  role: UserRole;
+  label: string;
+  icon: React.ReactElement;
+  color: string;
+  description: string;
+}
+
+interface JobCodeOption {
+  code: JobCode;
+  label: string;
+  description: string;
+  color: string;
+}
+
+const roleOptions: RoleOption[] = [
+  {
+    role: 'PLAYER',
+    label: 'Player',
+    icon: <PlayerIcon />,
+    color: '#64748b',
+    description: 'Basic content access'
+  },
+  {
+    role: 'LEARNER',
+    label: 'Learner',
+    icon: <LearnerIcon />,
+    color: '#059669',
+    description: 'Learning-focused dashboard'
+  },
+  {
+    role: 'CREATOR',
+    label: 'Creator',
+    icon: <CreatorIcon />,
+    color: '#dc2626',
+    description: 'Content creation tools'
+  },
+  {
+    role: 'REVIEWER',
+    label: 'Reviewer',
+    icon: <ReviewerIcon />,
+    color: '#d97706',
+    description: 'Content review and approval'
+  },
+  {
+    role: 'APPROVER',
+    label: 'Approver',
+    icon: <ApproverIcon />,
+    color: '#7c3aed',
+    description: 'Final approval authority'
+  },
+  {
+    role: 'ADMIN',
+    label: 'Administrator',
+    icon: <AdminIcon />,
+    color: '#1e40af',
+    description: 'Full system access'
+  }
+];
+
+const jobCodeOptions: JobCodeOption[] = [
+  { code: 'DP', label: 'Dealer Principal', description: 'Operations leadership', color: '#1e40af' },
+  { code: 'GM', label: 'General Manager', description: 'Day-to-day operations', color: '#7c3aed' },
+  { code: 'SM', label: 'Sales Manager', description: 'Sales team leadership', color: '#dc2626' },
+  { code: 'SP', label: 'Sales Person', description: 'Frontline sales', color: '#059669' },
+  { code: 'FM', label: 'Finance Manager', description: 'F&I department management', color: '#d97706' },
+  { code: 'FI', label: 'Finance Advisor', description: 'Customer financing', color: '#ca8a04' },
+  { code: 'BM', label: 'BDC Manager', description: 'Lead management', color: '#0891b2' },
+  { code: 'BD', label: 'BDC Representative', description: 'Lead response', color: '#0284c7' },
+  { code: 'IM', label: 'Internet Sales Manager', description: 'Online sales', color: '#7c2d12' }
+];
 
 const getActivityIcon = (type: string) => {
   switch (type) {
@@ -90,12 +174,95 @@ const HomePageContent: React.FC = () => {
   const { user } = useAuth();
   const {
     dashboardType,
+    effectiveRole,
+    effectiveJobCodes,
     metrics,
+    quickActions,
     recommendedActivities,
     upcomingEvents,
     recentActivity,
     showRoleSwitcher
   } = useDashboard();
+
+  // Role/Job Code selection state
+  const [roleAnchorEl, setRoleAnchorEl] = useState<null | HTMLElement>(null);
+  const [jobCodeAnchorEl, setJobCodeAnchorEl] = useState<null | HTMLElement>(null);
+  const roleMenuOpen = Boolean(roleAnchorEl);
+  const jobCodeMenuOpen = Boolean(jobCodeAnchorEl);
+
+  // Only show role switching for admins or in development mode
+  const canSwitchRoles = user && (user.role === 'ADMIN' || process.env.NODE_ENV === 'development');
+
+  const handleRoleChipClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (canSwitchRoles) {
+      setRoleAnchorEl(event.currentTarget);
+    }
+  };
+
+  const handleJobCodeChipClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (canSwitchRoles) {
+      setJobCodeAnchorEl(event.currentTarget);
+    }
+  };
+
+  const handleRoleMenuClose = () => {
+    setRoleAnchorEl(null);
+  };
+
+  const handleJobCodeMenuClose = () => {
+    setJobCodeAnchorEl(null);
+  };
+
+  const handleRoleSelect = (role: UserRole) => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('viewAsRole', role);
+        
+        // Set default job code based on app role
+        const defaultJobCodes = {
+          'LEARNER': 'SP',
+          'CREATOR': 'SM',
+          'REVIEWER': 'GM',
+          'ADMIN': 'DP'
+        };
+        if (defaultJobCodes[role]) {
+          localStorage.setItem('viewAsJobCode', defaultJobCodes[role]);
+        }
+      }
+      
+      handleRoleMenuClose();
+      window.location.reload();
+    } catch (error) {
+      console.error('Error in handleRoleSelect:', error);
+      handleRoleMenuClose();
+    }
+  };
+
+  const handleJobCodeSelect = (jobCode: JobCode) => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('viewAsJobCode', jobCode);
+      }
+      
+      handleJobCodeMenuClose();
+      window.location.reload();
+    } catch (error) {
+      console.error('Error in handleJobCodeSelect:', error);
+      handleJobCodeMenuClose();
+    }
+  };
+
+  const handleResetOverrides = () => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('viewAsRole');
+        localStorage.removeItem('viewAsJobCode');
+      }
+      window.location.reload();
+    } catch (error) {
+      console.error('Error in handleResetOverrides:', error);
+    }
+  };
 
   // Split recommended activities into Today (first 2-3) and What's Next (rest)
   const todayActivities = recommendedActivities.slice(0, 3);
@@ -197,6 +364,70 @@ const HomePageContent: React.FC = () => {
             {dashboardType === 'player' && 'Explore and learn'}
           </Typography>
         </Box>
+        
+        {/* Role and Job Code Selector */}
+        {(effectiveRole !== user?.role || effectiveJobCodes.length > 0 || canSwitchRoles) && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {(effectiveRole !== user?.role || canSwitchRoles) && (
+              <Chip
+                label={`Role: ${effectiveRole.toUpperCase()}`}
+                size="small"
+                color="secondary"
+                variant="outlined"
+                clickable={canSwitchRoles}
+                onClick={handleRoleChipClick}
+                sx={{ 
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  borderColor: 'secondary.main',
+                  color: 'secondary.main',
+                  cursor: canSwitchRoles ? 'pointer' : 'default',
+                  '&:hover': canSwitchRoles ? {
+                    backgroundColor: alpha(theme.palette.secondary.main, 0.08)
+                  } : {}
+                }}
+              />
+            )}
+            {(effectiveJobCodes.length > 0 || canSwitchRoles) && (
+              <Chip
+                label={`Job Code: ${effectiveJobCodes.join(', ') || 'None'}`}
+                size="small"
+                color="primary"
+                variant="outlined"
+                clickable={canSwitchRoles}
+                onClick={handleJobCodeChipClick}
+                sx={{ 
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  borderColor: 'primary.main',
+                  color: 'primary.main',
+                  cursor: canSwitchRoles ? 'pointer' : 'default',
+                  '&:hover': canSwitchRoles ? {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08)
+                  } : {}
+                }}
+              />
+            )}
+            {canSwitchRoles && (effectiveRole !== user?.role || effectiveJobCodes.length > 0) && (
+              <Chip
+                label="Reset"
+                size="small"
+                variant="outlined"
+                clickable
+                onClick={handleResetOverrides}
+                sx={{ 
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  borderColor: 'grey.400',
+                  color: 'grey.600',
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.grey[500], 0.08)
+                  }
+                }}
+              />
+            )}
+          </Box>
+        )}
         
       </Box>
 
@@ -328,6 +559,85 @@ const HomePageContent: React.FC = () => {
             )}
           </Paper>
 
+          {/* Quick Actions Section */}
+          <Paper sx={{ mb: 3, p: 3, backgroundColor: theme.palette.background.paper }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                ⚡ Quick Actions
+              </Typography>
+            </Box>
+            
+            <Box 
+              sx={{ 
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: 2,
+                '& > *': {
+                  minHeight: 80
+                }
+              }}
+            >
+              {quickActions.map((action) => (
+                <Card 
+                  key={action.id}
+                  sx={{ 
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: theme.shadows[4]
+                    }
+                  }}
+                  onClick={() => navigate(action.path)}
+                >
+                  <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Typography 
+                        sx={{ 
+                          fontSize: '1.5rem',
+                          minWidth: 32,
+                          textAlign: 'center'
+                        }}
+                      >
+                        {action.icon}
+                      </Typography>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography 
+                          variant="subtitle2" 
+                          sx={{ 
+                            fontWeight: 600,
+                            mb: 0.5,
+                            color: `${action.color}.main`,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {action.title}
+                        </Typography>
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary"
+                          sx={{ 
+                            fontSize: '0.75rem',
+                            lineHeight: 1.2,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical'
+                          }}
+                        >
+                          {action.description}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
+          </Paper>
+
           {/* What's Next Section */}
           <Paper sx={{ p: 3, backgroundColor: theme.palette.background.paper }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
@@ -388,6 +698,7 @@ const HomePageContent: React.FC = () => {
                             </Typography>
                           </Box>
                         }
+                        secondaryTypographyProps={{ component: 'div' }}
                       />
                       <IconButton size="small">
                         <PlayIcon />
@@ -538,6 +849,76 @@ const HomePageContent: React.FC = () => {
           </Paper>
         </Box>
       </Box>
+
+      {/* Role Selection Menu */}
+      <Menu
+        anchorEl={roleAnchorEl}
+        open={roleMenuOpen}
+        onClose={handleRoleMenuClose}
+        PaperProps={{
+          sx: { minWidth: 250 }
+        }}
+      >
+        <Typography variant="caption" sx={{ px: 2, py: 1, color: 'text.secondary', display: 'block' }}>
+          Switch Role Perspective
+        </Typography>
+        {roleOptions.map((option) => (
+          <MenuItem
+            key={option.role}
+            onClick={() => handleRoleSelect(option.role)}
+            selected={effectiveRole === option.role}
+          >
+            <ListItemIcon sx={{ color: option.color }}>
+              {option.icon}
+            </ListItemIcon>
+            <ListItemText 
+              primary={option.label}
+              secondary={option.description}
+            />
+          </MenuItem>
+        ))}
+      </Menu>
+
+      {/* Job Code Selection Menu */}
+      <Menu
+        anchorEl={jobCodeAnchorEl}
+        open={jobCodeMenuOpen}
+        onClose={handleJobCodeMenuClose}
+        PaperProps={{
+          sx: { minWidth: 280 }
+        }}
+      >
+        <Typography variant="caption" sx={{ px: 2, py: 1, color: 'text.secondary', display: 'block' }}>
+          Select Job Code
+        </Typography>
+        {jobCodeOptions.map((option) => (
+          <MenuItem
+            key={option.code}
+            onClick={() => handleJobCodeSelect(option.code)}
+            selected={effectiveJobCodes.includes(option.code)}
+          >
+            <ListItemText 
+              primary={`${option.code} - ${option.label}`}
+              secondary={option.description}
+              primaryTypographyProps={{ fontSize: '0.875rem' }}
+              secondaryTypographyProps={{ fontSize: '0.75rem' }}
+            />
+          </MenuItem>
+        ))}
+        <Divider sx={{ my: 1 }} />
+        <MenuItem onClick={() => {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('viewAsJobCode');
+          }
+          handleJobCodeMenuClose();
+          window.location.reload();
+        }}>
+          <ListItemIcon>
+            <SwapIcon />
+          </ListItemIcon>
+          <ListItemText primary="Clear Job Code" />
+        </MenuItem>
+      </Menu>
     </Box>
   );
 };

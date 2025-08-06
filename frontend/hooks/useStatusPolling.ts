@@ -55,6 +55,29 @@ export function useStatusPolling<T>(
   const timeoutRef = useRef<NodeJS.Timeout>();
   const attemptsRef = useRef(0);
   const isPollingRef = useRef(false);
+  
+  // Use refs for callbacks and core functions to avoid dependency issues
+  const callbackRefs = useRef({
+    onStatusChange,
+    onComplete,
+    onError,
+    onTimeout,
+  });
+  
+  const fetchFnRef = useRef(fetchFn);
+  const isCompleteRef = useRef(isComplete);
+  
+  // Update refs when they change
+  useEffect(() => {
+    callbackRefs.current = {
+      onStatusChange,
+      onComplete,
+      onError,
+      onTimeout,
+    };
+    fetchFnRef.current = fetchFn;
+    isCompleteRef.current = isComplete;
+  }, [onStatusChange, onComplete, onError, onTimeout, fetchFn, isComplete]);
 
   const clearPolling = useCallback(() => {
     if (timeoutRef.current) {
@@ -88,7 +111,7 @@ export function useStatusPolling<T>(
         attemptsRef.current++;
         setState(prev => ({ ...prev, attempts: attemptsRef.current }));
 
-        const data = await fetchFn();
+        const data = await fetchFnRef.current();
         
         setState(prev => ({ 
           ...prev, 
@@ -97,9 +120,9 @@ export function useStatusPolling<T>(
           attempts: attemptsRef.current,
         }));
 
-        onStatusChange?.(data);
+        callbackRefs.current.onStatusChange?.(data);
 
-        if (isComplete(data)) {
+        if (isCompleteRef.current(data)) {
           // Operation completed successfully
           setState(prev => ({ 
             ...prev, 
@@ -107,7 +130,7 @@ export function useStatusPolling<T>(
             isPolling: false 
           }));
           isPollingRef.current = false;
-          onComplete?.(data);
+          callbackRefs.current.onComplete?.(data);
           return;
         }
 
@@ -120,7 +143,7 @@ export function useStatusPolling<T>(
             error: 'Status polling timeout - maximum attempts reached'
           }));
           isPollingRef.current = false;
-          onTimeout?.();
+          callbackRefs.current.onTimeout?.();
           return;
         }
 
@@ -135,12 +158,12 @@ export function useStatusPolling<T>(
           error: errorMessage 
         }));
         isPollingRef.current = false;
-        onError?.(error instanceof Error ? error : new Error(errorMessage));
+        callbackRefs.current.onError?.(error instanceof Error ? error : new Error(errorMessage));
       }
     };
 
     await poll();
-  }, [fetchFn, isComplete, intervalMs, maxAttempts, onStatusChange, onComplete, onError, onTimeout]);
+  }, [intervalMs, maxAttempts]);
 
   const stopPolling = useCallback(() => {
     clearPolling();
@@ -158,7 +181,7 @@ export function useStatusPolling<T>(
     attemptsRef.current = 0;
   }, [clearPolling]);
 
-  // Start polling immediately if requested
+  // Start polling immediately if requested and cleanup on unmount
   useEffect(() => {
     if (immediate) {
       startPolling();

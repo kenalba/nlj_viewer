@@ -278,8 +278,8 @@ async def get_training_session(
         )
     
     # Check if user can see unpublished sessions
-    if not session.is_published and current_user.role == UserRole.PLAYER:
-        if session.created_by_id != current_user.id:
+    if not session.program.is_published and current_user.role == UserRole.PLAYER:
+        if session.program.created_by_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Training session not found"
@@ -321,27 +321,28 @@ async def list_training_sessions(
             detail="Insufficient permissions to view training sessions"
         )
     
-    # Build query
+    # Build query with join to TrainingProgram for published filter
     stmt = select(TrainingSession).options(
-        selectinload(TrainingSession.bookings)
-    )
+        selectinload(TrainingSession.bookings),
+        selectinload(TrainingSession.program)
+    ).join(TrainingProgram, TrainingSession.program_id == TrainingProgram.id)
     
     conditions = []
     
-    # Published filter
+    # Published filter - check program's is_published field
     if published_only and current_user.role == UserRole.PLAYER:
-        conditions.append(TrainingSession.is_published == True)
+        conditions.append(TrainingProgram.is_published == True)
     elif not published_only and current_user.role == UserRole.PLAYER:
         # Players can only see their own unpublished sessions
         conditions.append(
             or_(
-                TrainingSession.is_published == True,
-                TrainingSession.created_by_id == current_user.id
+                TrainingProgram.is_published == True,
+                TrainingProgram.created_by_id == current_user.id
             )
         )
     
-    # Active sessions only
-    conditions.append(TrainingSession.is_active == True)
+    # Active sessions only (not cancelled)
+    conditions.append(TrainingSession.status != "cancelled")
     
     # Optional filters
     if instructor_id:

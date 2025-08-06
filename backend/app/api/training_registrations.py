@@ -4,17 +4,18 @@ Handles learner registration for training sessions via event-driven architecture
 """
 
 import logging
-from typing import Annotated, Any, Dict, Optional
+from typing import Annotated, Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.models.training_program import TrainingProgram, TrainingSession
+from app.models.training_program import TrainingProgram, TrainingSession, TrainingBooking
 from app.models.user import User
 from app.services.kafka_service import get_xapi_event_service, XAPIEventService
 from app.services.event_consumers import consume_booking_requested_event
@@ -44,6 +45,24 @@ class BookingResponse(BaseModel):
     booking_id: str = Field(..., description="Booking ID")
     session_id: str = Field(..., description="Session ID")
     status_endpoint: str = Field(..., description="Endpoint to check booking status")
+
+
+class RegistrationResponse(BaseModel):
+    """Schema for user registration responses."""
+    id: str
+    program_id: str
+    session_id: str
+    learner_id: str
+    booking_status: str
+    registration_method: str
+    special_requirements: Optional[Dict[str, Any]]
+    waitlist_position: Optional[int]
+    confirmation_sent: bool
+    registered_at: str
+    updated_at: str
+
+    class Config:
+        from_attributes = True
 
 
 @router.post("/register", response_model=BookingResponse)
@@ -171,3 +190,5 @@ async def get_booking_status(
         "status": "processing",
         "message": "Registration is being processed"
     }
+
+

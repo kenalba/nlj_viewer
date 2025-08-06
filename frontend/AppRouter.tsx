@@ -81,6 +81,10 @@ export const AppRouter: React.FC = () => {
         <Route path="/editor/*" element={<Navigate to="/app/home" replace />} />
 
         {/* Default redirects */}
+        <Route 
+          path="/app" 
+          element={<Navigate to="/app/home" replace />} 
+        />
         <Route
           path="/"
           element={

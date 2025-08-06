@@ -28,6 +28,8 @@ interface DashboardQuickAction {
 interface DashboardContext {
   user: User | null;
   dashboardType: 'learner' | 'creator' | 'reviewer' | 'admin' | 'player';
+  effectiveRole: string;
+  effectiveJobCodes: string[];
   metrics: DashboardMetrics;
   quickActions: DashboardQuickAction[];
   recommendedActivities: any[];
@@ -143,21 +145,25 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
 
     // Role-specific quick actions
     const getQuickActions = (): DashboardQuickAction[] => {
-      const baseActions: DashboardQuickAction[] = [
-        {
-          id: 'browse-activities',
-          title: 'Browse Activities',
-          description: 'Explore learning content',
-          icon: '📚',
-          path: '/app/activities',
-          color: 'primary'
-        }
-      ];
-
       switch (dashboardType) {
         case 'learner':
           return [
-            ...baseActions,
+            {
+              id: 'browse-activities',
+              title: 'Browse Activities',
+              description: 'Explore learning content',
+              icon: '📚',
+              path: '/app/activities',
+              color: 'primary'
+            },
+            {
+              id: 'training-sessions',
+              title: 'Training Sessions',
+              description: 'View & register for sessions',
+              icon: '🎓',
+              path: '/app/training',
+              color: 'secondary'
+            },
             {
               id: 'my-progress',
               title: 'My Progress',
@@ -167,16 +173,8 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
               color: 'success'
             },
             {
-              id: 'upcoming-training',
-              title: 'Training Sessions',
-              description: 'View scheduled sessions',
-              icon: '📅',
-              path: '/app/training-sessions',
-              color: 'info'
-            },
-            {
-              id: 'certifications',
-              title: 'Certifications',
+              id: 'certificates',
+              title: 'Certificates',
               description: 'View achievements',
               icon: '🏆',
               path: '/app/certifications',
@@ -186,57 +184,70 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
         
         case 'creator':
           return [
-            ...baseActions,
             {
-              id: 'create-content',
+              id: 'create-activity',
               title: 'Create Activity',
               description: 'Build new content',
               icon: '✨',
-              path: '/app/create',
+              path: '/app/flow-editor',
               color: 'primary'
+            },
+            {
+              id: 'content-generation',
+              title: 'AI Content Studio',
+              description: 'Generate with AI',
+              icon: '🤖',
+              path: '/app/content-generation',
+              color: 'secondary'
             },
             {
               id: 'my-content',
               title: 'My Content',
-              description: 'Manage your activities',
+              description: 'Manage activities',
               icon: '📝',
-              path: '/app/my-content',
-              color: 'secondary'
+              path: '/app/activities?created_by=me',
+              color: 'info'
             },
             {
               id: 'analytics',
-              title: 'Analytics',
-              description: 'View performance data',
+              title: 'Content Analytics',
+              description: 'Performance insights',
               icon: '📊',
               path: '/app/analytics',
-              color: 'info'
+              color: 'success'
             }
           ];
         
         case 'reviewer':
           return [
-            ...baseActions,
             {
               id: 'review-queue',
               title: 'Review Queue',
-              description: 'Content pending review',
+              description: 'Content awaiting review',
               icon: '🔍',
-              path: '/app/review-queue',
+              path: '/app/activities?status=IN_REVIEW',
               color: 'warning'
             },
             {
+              id: 'browse-activities',
+              title: 'All Content',
+              description: 'Browse all activities',
+              icon: '📚',
+              path: '/app/activities',
+              color: 'primary'
+            },
+            {
               id: 'approved-content',
-              title: 'Approved Content',
-              description: 'Recently approved items',
+              title: 'Recently Approved',
+              description: 'View approved items',
               icon: '✅',
-              path: '/app/approved',
+              path: '/app/activities?status=PUBLISHED',
               color: 'success'
             }
           ];
         
         case 'admin':
           return [
-            ...baseActions,
             {
               id: 'user-management',
               title: 'Manage Users',
@@ -244,6 +255,14 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
               icon: '👥',
               path: '/app/people',
               color: 'primary'
+            },
+            {
+              id: 'training-management',
+              title: 'Training Programs',
+              description: 'Create & manage training',
+              icon: '🎓',
+              path: '/app/training',
+              color: 'secondary'
             },
             {
               id: 'system-analytics',
@@ -254,17 +273,35 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
               color: 'info'
             },
             {
-              id: 'training-programs',
-              title: 'Training Programs',
-              description: 'Manage training sessions',
-              icon: '🎓',
-              path: '/app/training-sessions',
-              color: 'secondary'
+              id: 'content-management',
+              title: 'Content Library',
+              description: 'Manage all content',
+              icon: '📚',
+              path: '/app/activities',
+              color: 'success'
             }
           ];
         
         default:
-          return baseActions;
+          // Player role - basic actions
+          return [
+            {
+              id: 'browse-activities',
+              title: 'Browse Activities',
+              description: 'Explore learning content',
+              icon: '📚',
+              path: '/app/activities',
+              color: 'primary'
+            },
+            {
+              id: 'training-sessions',
+              title: 'Training Sessions',
+              description: 'Available sessions',
+              icon: '🎓',
+              path: '/app/training',
+              color: 'secondary'
+            }
+          ];
       }
     };
 
@@ -416,6 +453,8 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
     return {
       user,
       dashboardType,
+      effectiveRole,
+      effectiveJobCodes,
       metrics: mockMetrics,
       quickActions: getQuickActions(),
       recommendedActivities: getRecommendedActivities(),

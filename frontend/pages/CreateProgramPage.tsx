@@ -401,7 +401,7 @@ const CreateProgramPage: React.FC = () => {
                       <Switch
                         checked={formData.is_published}
                         onChange={(e) => handleInputChange('is_published', e.target.checked)}
-                        disabled={loading || pollingStatus}
+                        disabled={loading || statusPolling.isPolling}
                       />
                     }
                     label="Publish Immediately"

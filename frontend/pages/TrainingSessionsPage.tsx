@@ -34,7 +34,7 @@ import {
   Share as ShareIcon,
 } from '@mui/icons-material';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
-import { trainingSessionsAPI, registrationAPI, type TrainingSession, type Registration } from '../api/training';
+import { trainingSessionsAPI, registrationAPI, trainingProgramsAPI, type TrainingSession, type Registration, type TrainingProgram } from '../api/training';
 import { useAuth } from '../contexts/AuthContext';
 import RegistrationModal from '../components/training/RegistrationModal';
 import ShareSessionModal from '../components/training/ShareSessionModal';
@@ -53,9 +53,10 @@ function TabPanel(props: TabPanelProps) {
       hidden={value !== index}
       id={`training-tabpanel-${index}`}
       aria-labelledby={`training-tab-${index}`}
+      style={{ width: '100%' }}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ width: '100%' }}>{children}</Box>}
     </div>
   );
 }
@@ -64,6 +65,7 @@ const TrainingSessionsPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
+  const [programs, setPrograms] = useState<TrainingProgram[]>([]);
   const [myRegistrations, setMyRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -76,15 +78,21 @@ const TrainingSessionsPage: React.FC = () => {
   const [shareSessionModalOpen, setShareSessionModalOpen] = useState(false);
   const [sessionToShare, setSessionToShare] = useState<TrainingSession | null>(null);
 
-  // Load training sessions
+  // Load training sessions and programs
   const loadSessions = async () => {
     try {
       setLoading(true);
-      const data = await trainingSessionsAPI.list({
-        published_only: true,
-        location: locationFilter || undefined,
-      });
-      setSessions(data);
+      const [sessionsData, programsData] = await Promise.all([
+        trainingSessionsAPI.list({
+          published_only: true,
+          location: locationFilter || undefined,
+        }),
+        trainingProgramsAPI.list({
+          published_only: true,
+        }),
+      ]);
+      setSessions(sessionsData);
+      setPrograms(programsData);
     } catch (err) {
       console.error('Failed to load training sessions:', err);
       setError('Failed to load training sessions. Please try again.');
@@ -162,11 +170,15 @@ const TrainingSessionsPage: React.FC = () => {
     }
   };
 
-  // Filter sessions based on search term
-  const filteredSessions = sessions.filter(session =>
-    session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (session.description && session.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Filter sessions based on search term (search in program title/description)
+  const filteredSessions = sessions.filter(session => {
+    const program = programs.find(p => p.id === session.program_id);
+    if (!program) return false;
+    
+    const searchLower = searchTerm.toLowerCase();
+    return program.title.toLowerCase().includes(searchLower) ||
+           (program.description && program.description.toLowerCase().includes(searchLower));
+  });
 
   // Get registration status for a session
   const getRegistrationStatus = (sessionId: string) => {
@@ -178,6 +190,25 @@ const TrainingSessionsPage: React.FC = () => {
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString();
+  };
+
+  const formatSessionDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const formatSessionTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -237,7 +268,7 @@ const TrainingSessionsPage: React.FC = () => {
         {/* Filters */}
         <Paper sx={{ p: 2, mb: 3 }}>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 label="Search sessions"
@@ -247,7 +278,7 @@ const TrainingSessionsPage: React.FC = () => {
                 size="small"
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 label="Filter by location"
@@ -257,7 +288,7 @@ const TrainingSessionsPage: React.FC = () => {
                 size="small"
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <FilterIcon />
                 <Typography variant="body2">
@@ -272,24 +303,40 @@ const TrainingSessionsPage: React.FC = () => {
         <Grid container spacing={3}>
           {filteredSessions.map((session) => {
             const existingRegistration = getRegistrationStatus(session.id);
+            const program = programs.find(p => p.id === session.program_id);
             return (
-              <Grid item xs={12} md={6} lg={4} key={session.id}>
+              <Grid size={{ xs: 12, md: 6, lg: 4 }} key={session.id}>
                 <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Typography variant="h6" component="h2" gutterBottom>
-                      {session.title}
+                      {program?.title || 'Unknown Program'}
                     </Typography>
                     
-                    {session.description && (
+                    {/* Session Date and Time */}
+                    <Box sx={{ mb: 2, p: 1.5, bgcolor: 'grey.100', borderRadius: 1, border: '1px solid', borderColor: 'grey.200' }}>
+                      <Typography variant="body2" fontWeight="medium" color="text.primary">
+                        📅 {formatSessionDate(session.start_time)}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        🕒 {formatSessionTime(session.start_time)} - {formatSessionTime(session.end_time)}
+                      </Typography>
+                      {session.timezone !== 'UTC' && (
+                        <Typography variant="caption" color="text.secondary">
+                          {session.timezone}
+                        </Typography>
+                      )}
+                    </Box>
+                    
+                    {program?.description && (
                       <Typography variant="body2" color="text.secondary" paragraph>
-                        {session.description}
+                        {program.description}
                       </Typography>
                     )}
 
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
                       <Chip
                         icon={<ScheduleIcon />}
-                        label={`${session.duration_minutes} min`}
+                        label={`${program?.duration_minutes || 0} min`}
                         size="small"
                       />
                       <Chip
@@ -308,20 +355,20 @@ const TrainingSessionsPage: React.FC = () => {
 
                     <Box sx={{ mb: 2 }}>
                       <Typography variant="body2" color="text.secondary">
-                        Upcoming sessions: {session.upcoming_instances}
+                        Available spots: {session.available_spots}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Current bookings: {session.total_bookings}
                       </Typography>
                     </Box>
 
-                    {session.learning_objectives && session.learning_objectives.length > 0 && (
+                    {program?.learning_objectives && program.learning_objectives.length > 0 && (
                       <Box>
                         <Typography variant="subtitle2" gutterBottom>
                           Learning Objectives:
                         </Typography>
                         <ul style={{ margin: 0, paddingLeft: 16 }}>
-                          {session.learning_objectives.slice(0, 3).map((objective, index) => (
+                          {program.learning_objectives.slice(0, 3).map((objective, index) => (
                             <li key={index}>
                               <Typography variant="body2" color="text.secondary">
                                 {objective}
@@ -345,9 +392,9 @@ const TrainingSessionsPage: React.FC = () => {
                         <Button
                           variant="contained"
                           onClick={() => handleRegisterClick(session)}
-                          disabled={!session.upcoming_instances}
+                          disabled={session.available_spots <= 0}
                         >
-                          {session.upcoming_instances > 0 ? 'Register' : 'No Sessions Available'}
+                          {session.available_spots > 0 ? 'Register' : 'Join Waitlist'}
                         </Button>
                       )}
                     </Box>
@@ -383,7 +430,7 @@ const TrainingSessionsPage: React.FC = () => {
         {/* Status Filter */}
         <Paper sx={{ p: 2, mb: 3 }}>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Filter by status</InputLabel>
                 <Select
@@ -399,7 +446,7 @@ const TrainingSessionsPage: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }}>
               <Typography variant="body2">
                 {myRegistrations.length} registration{myRegistrations.length !== 1 ? 's' : ''} found
               </Typography>
@@ -411,14 +458,15 @@ const TrainingSessionsPage: React.FC = () => {
         <Grid container spacing={3}>
           {myRegistrations.map((registration) => {
             const session = sessions.find(s => s.id === registration.session_id);
+            const program = session ? programs.find(p => p.id === session.program_id) : null;
             return (
-              <Grid item xs={12} key={registration.id}>
+              <Grid size={{ xs: 12 }} key={registration.id}>
                 <Card>
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <Box sx={{ flexGrow: 1 }}>
                         <Typography variant="h6" gutterBottom>
-                          {session?.title || 'Unknown Session'}
+                          {program?.title || 'Unknown Program'}
                         </Typography>
                         
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
@@ -436,7 +484,22 @@ const TrainingSessionsPage: React.FC = () => {
                           )}
                         </Box>
 
-                        {/* Scheduled time would need to be loaded from related instance */}
+                        {/* Session Date and Time */}
+                        {session && (
+                          <Box sx={{ mb: 2, p: 1, bgcolor: 'grey.100', borderRadius: 1 }}>
+                            <Typography variant="body2" fontWeight="medium">
+                              📅 {formatSessionDate(session.start_time)}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              🕒 {formatSessionTime(session.start_time)} - {formatSessionTime(session.end_time)}
+                            </Typography>
+                            {session.timezone !== 'UTC' && (
+                              <Typography variant="caption" color="text.secondary">
+                                {session.timezone}
+                              </Typography>
+                            )}
+                          </Box>
+                        )}
 
                         <Typography variant="body2" color="text.secondary">
                           Registered: {formatDateTime(registration.registered_at)}
@@ -481,90 +544,6 @@ const TrainingSessionsPage: React.FC = () => {
         )}
       </TabPanel>
 
-      {/* Available Sessions Tab */}
-      <TabPanel value={tabValue} index={2}>
-        {/* Sessions List */}
-        <Grid container spacing={3}>
-          {filteredSessions.map((session) => {
-            const program = programs.find(p => p.id === session.program_id);
-            const existingRegistration = getRegistrationStatus(session.id);
-            return (
-              <Grid item xs={12} md={6} lg={4} key={session.id}>
-                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6" component="h2" gutterBottom>
-                      {program?.title || 'Unknown Program'}
-                    </Typography>
-                    
-                    <Typography variant="body2" color="primary" gutterBottom>
-                      {formatDateTime(session.start_time)}
-                    </Typography>
-
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                      <Chip
-                        icon={<GroupIcon />}
-                        label={`${session.available_spots}/${session.capacity} available`}
-                        size="small"
-                        color={session.available_spots > 0 ? 'success' : 'warning'}
-                      />
-                      {session.location && (
-                        <Chip
-                          icon={<LocationIcon />}
-                          label={session.location}
-                          size="small"
-                        />
-                      )}
-                      <Chip
-                        label={session.status}
-                        size="small"
-                        color={session.status === 'scheduled' ? 'success' : 'default'}
-                        variant="outlined"
-                      />
-                    </Box>
-
-                    {session.session_notes && (
-                      <Typography variant="body2" color="text.secondary" paragraph>
-                        {session.session_notes}
-                      </Typography>
-                    )}
-                  </CardContent>
-
-                  <CardActions sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Box>
-                      {existingRegistration ? (
-                        <Chip
-                          label={`Registered (${existingRegistration.booking_status})`}
-                          color={getStatusColor(existingRegistration.booking_status) as any}
-                          variant="filled"
-                        />
-                      ) : (
-                        <Button
-                          variant="contained"
-                          onClick={() => handleRegisterClick(session)}
-                          disabled={session.status !== 'scheduled'}
-                        >
-                          {session.available_spots > 0 ? 'Register' : 'Join Waitlist'}
-                        </Button>
-                      )}
-                    </Box>
-                  </CardActions>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
-
-        {filteredSessions.length === 0 && !loading && (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="h6" color="text.secondary">
-              No training sessions found
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Check back later for scheduled sessions
-            </Typography>
-          </Box>
-        )}
-      </TabPanel>
 
       {/* Registration Modal */}
       {selectedSession && (
