@@ -3,4 +3,6 @@
  * Shared configuration constants for API clients
  */
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+// Dev container should use the nlj-api service directly
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+  (import.meta.env.NODE_ENV === 'development' ? 'http://nlj-api:8000' : '/api');

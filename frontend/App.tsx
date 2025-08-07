@@ -27,7 +27,7 @@ import MediaLibraryPage from './pages/MediaLibraryPage';
 import MediaDetailPage from './pages/MediaDetailPage';
 import PodcastGenerationPage from './pages/PodcastGenerationPage';
 import { PeopleTab } from './components/people/PeopleTab';
-import { AnalyticsDashboard } from './components/dashboards/AnalyticsDashboard';
+import AnalyticsPage from './pages/AnalyticsPage';
 import { useAuth } from './contexts/AuthContext';
 import { contentApi, type ContentItem } from './api/content';
 // import { HomePage } from './components/HomePage';
@@ -233,6 +233,11 @@ const AppContent: React.FC = () => {
   
   // Note: /app route should be handled by AppRouter redirect, not here
   
+  // Handle Analytics dashboard routes (admin only) - MUST come before /activities check
+  if (path.includes('/analytics') && isAdmin) {
+    return <AnalyticsPage />;
+  }
+  
   if (path.includes('/activities')) {
     // Activity detail page: /app/activities/[id]
     if (path.includes('/app/activities/') && path.split('/').length > 3) {
@@ -297,10 +302,6 @@ const AppContent: React.FC = () => {
     return <MediaLibraryPage />;
   }
 
-  // Handle Analytics dashboard routes (admin only)
-  if (path.includes('/analytics') && isAdmin) {
-    return <AnalyticsDashboard />;
-  }
 
   if (path.includes('/training')) {
     // Create new program page: /app/training/create

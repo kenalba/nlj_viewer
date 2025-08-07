@@ -27,30 +27,22 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
-    allowedHosts: [
-      'localhost',
-      '127.0.0.1',
-      'callcoach.training',
-      'www.callcoach.training'
-    ],
+    proxy: {
+      '^/api/(?!.*\\.(ts|tsx|js|jsx)$)': {
+        target: process.env.NODE_ENV === 'development' && process.env.DOCKER_ENV 
+          ? 'http://nlj-api:8000' 
+          : 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    },
     hmr: {
       overlay: true,
-      clientPort: 443,
-      host: 'callcoach.training',
-      protocol: 'wss'
-    },
-    watch: {
-      usePolling: true,
-      interval: 1000,
-    },
-    historyApiFallback: {
-      rewrites: [
-        { from: /^\/app/, to: '/index.html' },
-      ],
+      port: 5173
     },
   },
   optimizeDeps: {
-    force: process.env.NODE_ENV === 'development',
+    force: false,
     include: ['date-fns', 'date-fns/*', 'hls.js'], // Force include dependencies
   },
   esbuild: {
