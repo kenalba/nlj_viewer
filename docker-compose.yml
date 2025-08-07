@@ -123,9 +123,9 @@ services:
       - RALPH_LRS_USERNAME=nlj-platform
       - RALPH_LRS_SECRET=nlj-secure-secret-2024
       
-      # Elasticsearch Configuration
+      # Elasticsearch Configuration  
       - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - ELASTICSEARCH_INDEX=nlj-xapi-statements
+      - ELASTICSEARCH_INDEX=statements
       
     volumes:
       - ./backend/uploads:/app/uploads
@@ -209,8 +209,8 @@ services:
     environment:
       # Elasticsearch backend configuration
       - RALPH_BACKENDS__LRS__ES__HOSTS=http://elasticsearch:9200
-      - RALPH_BACKENDS__LRS__ES__INDEX=nlj-xapi-statements
-      - RALPH_BACKENDS__LRS__ES__TEST_INDEX=nlj-test-statements
+      - RALPH_BACKENDS__LRS__ES__INDEX=statements
+      - RALPH_BACKENDS__LRS__ES__TEST_INDEX=test-statements
       
       # LRS server configuration
       - RALPH_RUNSERVER_HOST=0.0.0.0
@@ -225,6 +225,9 @@ services:
       # Performance settings
       - RALPH_BACKENDS__LRS__ES__WRITE_CHUNK_SIZE=500
       - RALPH_BACKENDS__LRS__ES__READ_CHUNK_SIZE=500
+      
+      # Accept yellow cluster status for single-node setup
+      - RALPH_BACKENDS__LRS__ES__ALLOW_YELLOW_STATUS=true
       
     ports:
       - "8100:8100"

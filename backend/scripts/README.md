@@ -14,7 +14,8 @@ This directory contains utility scripts for database management and development 
 - `migrate_sample_content.py` - Migrates sample content from static files
 - `debug_content.py` - Debug script for testing content API
 
-### Migration & Testing
+### Analytics & Testing
+- `generate_fake_analytics_data.py` - Generate realistic xAPI events for analytics dashboard testing
 - `test_migration_simple.py` - Simple migration testing
 
 ## Usage
@@ -32,6 +33,12 @@ docker exec nlj_api python scripts/seed_database.py
 
 # Clean database
 docker exec nlj_api python scripts/clean_database.py
+
+# Generate fake analytics data (demo preset - 7 days, 10 users)
+docker exec nlj_api python scripts/generate_fake_analytics_data.py --preset demo
+
+# Generate comprehensive analytics data
+docker exec nlj_api python scripts/generate_fake_analytics_data.py --days 30 --users 50
 ```
 
 ### Run Locally (requires local Python environment)
@@ -53,7 +60,10 @@ The project includes VSCode tasks for easy access to these scripts:
    - 🌱 Seed Full Database
    - 🧹 Clean Database
    - 🔍 Test Database Connection
-   - 📊 Database Status
+   - 📊 Generate Demo Analytics Data
+   - 📈 Generate Development Analytics Data
+   - 🚀 Generate Full Analytics Data
+   - 🧪 Test Analytics Pipeline
    - 🎯 Quick Setup: Database + Users
 
 ## Development Workflow
@@ -84,6 +94,43 @@ All seeding scripts create these test accounts:
 | reviewer | reviewer123 | Content Reviewer | reviewer@nlj-platform.com |
 | player | player123 | Player/Learner | player@nlj-platform.com |
 | learner | learner123 | Training Learner | learner@nlj-platform.com |
+
+## Analytics Data Generation
+
+The `generate_fake_analytics_data.py` script creates realistic xAPI learning events to populate the analytics dashboard with meaningful data.
+
+### Presets Available
+
+| Preset | Days | Users | Use Case |
+|--------|------|-------|----------|
+| demo | 7 | 10 | Quick dashboard demo |
+| dev | 14 | 25 | Development testing |
+| full | 90 | 100 | Production-like data |
+
+### Custom Generation
+
+```bash
+# Custom parameters
+docker exec nlj_api python scripts/generate_fake_analytics_data.py \
+  --days 30 \
+  --users 50 \
+  --batch-size 100 \
+  --delay 50
+
+# Test pipeline only (no Kafka streaming)
+docker exec nlj_api python scripts/generate_fake_analytics_data.py \
+  --days 3 \
+  --users 5 \
+  --no-kafka
+```
+
+### Generated Data Features
+
+- **Realistic User Personas**: High performers, casual users, struggling learners
+- **Learning Patterns**: Business hours activity, weekend variations, retry behaviors  
+- **Complete xAPI Events**: Start, attempt, answer, complete, pass/fail sequences
+- **Activity Variety**: Uses all existing static activities from the platform
+- **Temporal Distribution**: Realistic daily and weekly activity patterns
 
 ## Environment Variables
 

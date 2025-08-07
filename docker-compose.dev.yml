@@ -12,13 +12,13 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_BASE_URL=https://callcoach.training/api
       - NODE_ENV=development
+      - VITE_API_BASE_URL=http://localhost:8000
+      - DOCKER_ENV=true
     volumes:
       # Mount source code for hot reload
       - ./frontend:/app
       - /app/node_modules  # Anonymous volume to prevent overwriting node_modules
-      - vite_cache:/app/node_modules/.vite  # Persistent Vite cache volume
     depends_on:
       nlj-api:
         condition: service_healthy
@@ -30,14 +30,29 @@ services:
   nlj-api:
     environment:
       # Frontend URL for development
-      - FRONTEND_URL=http://localhost:5173
+      - FRONTEND_URL=http://nlj-frontend-dev:5173
       # Enable CORS for development
-      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+      - CORS_ORIGINS=http://nlj-frontend-dev:5173,http://localhost:5173,http://localhost:5174
+    ports:
+      # Expose API port for external access
+      - "8000:8000"
 
   # Enable Kafka UI and other dev tools by default
   kafka-ui:
     profiles: []  # Remove dev-tools profile to always start in dev mode
 
-volumes:
-  vite_cache:
-    driver: local
+  # Expose PostgreSQL for development access
+  nlj-db:
+    ports:
+      - "5432:5432"
+
+  # Expose Kafka for development access
+  kafka:
+    ports:
+      - "9092:9092"
+
+  # Expose Elasticsearch for development access
+  elasticsearch:
+    ports:
+      - "9200:9200"
+

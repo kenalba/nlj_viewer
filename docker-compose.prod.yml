@@ -7,7 +7,7 @@ services:
     profiles: []  # Remove production profile to always start
     environment:
       - NODE_ENV=production
-      - VITE_API_URL=${FRONTEND_API_URL:-http://localhost:8000}
+      - VITE_API_BASE_URL=/api
     restart: unless-stopped
 
   # Production API configuration

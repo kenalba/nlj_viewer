@@ -105,7 +105,7 @@ class ElasticsearchService:
         if not client:
             raise Exception("Elasticsearch client not available")
         
-        # Optimized mapping for xAPI statement analytics
+        # Analytics-optimized mapping for xAPI statements (Ralph LRS compatible)
         mapping = {
             "mappings": {
                 "properties": {
@@ -114,8 +114,10 @@ class ElasticsearchService:
                     "stored": {"type": "date"},
                     "version": {"type": "keyword"},
                     
-                    # Actor mapping
+                    # Actor mapping - ENABLED for analytics
                     "actor": {
+                        "type": "object",
+                        "enabled": True,
                         "properties": {
                             "objectType": {"type": "keyword"},
                             "name": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
@@ -129,20 +131,25 @@ class ElasticsearchService:
                         }
                     },
                     
-                    # Verb mapping
+                    # Verb mapping - ENABLED for analytics
                     "verb": {
+                        "type": "object",
+                        "enabled": True,
                         "properties": {
                             "id": {"type": "keyword"},
                             "display": {"type": "object", "enabled": False}
                         }
                     },
                     
-                    # Object mapping
+                    # Object mapping - ENABLED for analytics
                     "object": {
+                        "type": "object",
+                        "enabled": True,
                         "properties": {
                             "objectType": {"type": "keyword"},
                             "id": {"type": "keyword"},
                             "definition": {
+                                "type": "object",
                                 "properties": {
                                     "name": {"type": "object", "enabled": False},
                                     "description": {"type": "object", "enabled": False},
@@ -153,12 +160,15 @@ class ElasticsearchService:
                         }
                     },
                     
-                    # Result mapping for analytics
+                    # Result mapping - ENABLED for analytics
                     "result": {
+                        "type": "object",
+                        "enabled": True,
                         "properties": {
                             "completion": {"type": "boolean"},
                             "success": {"type": "boolean"},
                             "score": {
+                                "type": "object",
                                 "properties": {
                                     "scaled": {"type": "float"},
                                     "raw": {"type": "float"},
@@ -171,8 +181,10 @@ class ElasticsearchService:
                         }
                     },
                     
-                    # Context mapping
+                    # Context mapping - ENABLED for analytics
                     "context": {
+                        "type": "object",
+                        "enabled": True,
                         "properties": {
                             "platform": {"type": "keyword"},
                             "language": {"type": "keyword"},
@@ -543,7 +555,7 @@ class ElasticsearchService:
             ),
             "aggs": {
                 "total_statements": {
-                    "value_count": {"field": "_id"}
+                    "value_count": {"field": "id"}
                 },
                 "unique_learners": {
                     "cardinality": {"field": "actor.mbox"}

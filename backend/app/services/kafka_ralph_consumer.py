@@ -35,6 +35,7 @@ class KafkaRalphConsumer:
         
         # Topics to consume from
         self.topics = [
+            "xapi-events",          # Direct xAPI events from analytics
             "nlj.training.programs",
             "nlj.training.sessions", 
             "nlj.training.bookings",
