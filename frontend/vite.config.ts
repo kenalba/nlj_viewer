@@ -27,8 +27,17 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    allowedHosts: [
+      'localhost',
+      '127.0.0.1',
+      'callcoach.training',
+      'www.callcoach.training'
+    ],
     hmr: {
       overlay: true,
+      clientPort: 443,
+      host: 'callcoach.training',
+      protocol: 'wss'
     },
     watch: {
       usePolling: true,
@@ -39,6 +48,10 @@ export default defineConfig({
         { from: /^\/app/, to: '/index.html' },
       ],
     },
+  },
+  optimizeDeps: {
+    force: process.env.NODE_ENV === 'development',
+    include: ['date-fns', 'date-fns/*', 'hls.js'], // Force include dependencies
   },
   esbuild: {
     target: 'esnext',

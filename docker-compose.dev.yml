@@ -12,12 +12,13 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_BASE_URL=https://callcoach.training/api
       - NODE_ENV=development
     volumes:
       # Mount source code for hot reload
       - ./frontend:/app
       - /app/node_modules  # Anonymous volume to prevent overwriting node_modules
+      - vite_cache:/app/node_modules/.vite  # Persistent Vite cache volume
     depends_on:
       nlj-api:
         condition: service_healthy
@@ -36,3 +37,7 @@ services:
   # Enable Kafka UI and other dev tools by default
   kafka-ui:
     profiles: []  # Remove dev-tools profile to always start in dev mode
+
+volumes:
+  vite_cache:
+    driver: local

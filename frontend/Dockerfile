@@ -12,11 +12,14 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Clear any cached dependencies to avoid optimization issues
+RUN rm -rf node_modules/.vite
+
 # Expose development port
 EXPOSE 5173
 
-# Start development server
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# Start development server with force dependency re-optimization
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--force"]
 
 # Build stage - for now, use pre-built files
 FROM node:20-alpine AS build
