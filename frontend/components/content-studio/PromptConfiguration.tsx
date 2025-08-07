@@ -25,7 +25,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tooltip
+  Tooltip,
+  useTheme
 } from '@mui/material';
 import {
   Preview as PreviewIcon,
@@ -87,6 +88,7 @@ export const PromptConfiguration: React.FC<PromptConfigurationProps> = ({
   selectedDocuments,
   onConfigurationChange
 }) => {
+  const theme = useTheme();
   const [config, setConfig] = useState<PromptConfiguration>(defaultConfig);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [generatedPrompt, setGeneratedPrompt] = useState('');
@@ -220,14 +222,14 @@ export const PromptConfiguration: React.FC<PromptConfigurationProps> = ({
   // Get color for Bloom's level
   const getBloomsLevelColor = (level: string): string => {
     const colorMap: Record<string, string> = {
-      'Remember': '#1976d2',
-      'Understand': '#388e3c',
-      'Apply': '#f57c00',
-      'Analyze': '#c2185b',
-      'Evaluate': '#7b1fa2',
-      'Create': '#d32f2f'
+      'Remember': theme.palette.info.main,
+      'Understand': theme.palette.success.main,
+      'Apply': theme.palette.warning.main,
+      'Analyze': theme.palette.secondary.main,
+      'Evaluate': theme.palette.primary.main,
+      'Create': theme.palette.error.main
     };
-    return colorMap[level] || '#666';
+    return colorMap[level] || theme.palette.text.secondary;
   };
 
   const updateNodeTypes = (category: keyof PromptConfiguration['node_types_enabled'], nodeType: string, enabled: boolean) => {
@@ -533,12 +535,12 @@ Return the complete NLJ scenario as valid JSON following the schema documentatio
             
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 3 }}>
               {[
-                { level: 'Remember', description: 'Recall facts, terms, basic concepts', color: '#1976d2' },
-                { level: 'Understand', description: 'Explain ideas, summarize, classify', color: '#388e3c' },
-                { level: 'Apply', description: 'Use knowledge in new situations', color: '#f57c00' },
-                { level: 'Analyze', description: 'Break down, examine relationships', color: '#c2185b' },
-                { level: 'Evaluate', description: 'Judge, critique, assess value', color: '#7b1fa2' },
-                { level: 'Create', description: 'Build, design, compose new work', color: '#d32f2f' }
+                { level: 'Remember', description: 'Recall facts, terms, basic concepts' },
+                { level: 'Understand', description: 'Explain ideas, summarize, classify' },
+                { level: 'Apply', description: 'Use knowledge in new situations' },
+                { level: 'Analyze', description: 'Break down, examine relationships' },
+                { level: 'Evaluate', description: 'Judge, critique, assess value' },
+                { level: 'Create', description: 'Build, design, compose new work' }
               ].map((item) => {
                 const isSelected = config.blooms_levels.includes(item.level);
                 return (
@@ -549,11 +551,11 @@ Return the complete NLJ scenario as valid JSON following the schema documentatio
                       onClick={() => handleBloomsLevelToggle(item.level)}
                       variant={isSelected ? 'filled' : 'outlined'}
                       sx={{ 
-                        color: isSelected ? 'white' : item.color,
-                        backgroundColor: isSelected ? item.color : 'transparent',
-                        borderColor: item.color,
+                        color: isSelected ? theme.palette.getContrastText(getBloomsLevelColor(item.level)) : getBloomsLevelColor(item.level),
+                        backgroundColor: isSelected ? getBloomsLevelColor(item.level) : 'transparent',
+                        borderColor: getBloomsLevelColor(item.level),
                         '&:hover': { 
-                          backgroundColor: isSelected ? item.color : 'rgba(0,0,0,0.04)',
+                          backgroundColor: isSelected ? getBloomsLevelColor(item.level) : theme.palette.action.hover,
                           opacity: 0.8
                         }
                       }}

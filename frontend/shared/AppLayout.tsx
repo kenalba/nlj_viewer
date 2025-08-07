@@ -12,6 +12,7 @@ import {
   IconButton,
   Button,
   useTheme,
+  useMediaQuery,
   alpha
 } from '@mui/material';
 import {
@@ -52,7 +53,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile); // Start closed on mobile
 
   // Calculate whether to hide sidebar based on current location
   const shouldHideSidebar = useMemo(() => {
@@ -89,6 +91,31 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           onToggle={handleSidebarToggle}
           contentLibrary={contentLibrary}
         />
+      )}
+
+      {/* Mobile Menu Button - when sidebar is hidden or on mobile */}
+      {(shouldHideSidebar || (isMobile && !sidebarOpen)) && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 16,
+            left: 16,
+            zIndex: theme.zIndex.appBar + 1,
+            backgroundColor: theme.palette.background.paper,
+            borderRadius: '50%',
+            boxShadow: theme.shadows[4],
+          }}
+        >
+          <IconButton
+            onClick={handleSidebarToggle}
+            sx={{
+              color: theme.palette.primary.main,
+              p: 1.5
+            }}
+          >
+            <MenuIcon />
+          </IconButton>
+        </Box>
       )}
 
       {/* Main Content Area */}

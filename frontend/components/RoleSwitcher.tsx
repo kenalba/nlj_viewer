@@ -13,7 +13,8 @@ import {
   Chip,
   Box,
   Typography,
-  Divider
+  Divider,
+  useTheme
 } from '@mui/material';
 import {
   SwapHoriz as SwapIcon,
@@ -109,12 +110,39 @@ interface RoleSwitcherProps {
 
 export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ compact = false }) => {
   const { user } = useAuth();
+  const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [currentViewRole, setCurrentViewRole] = useState<UserRole | null>(null);
   const [currentJobCode, setCurrentJobCode] = useState<JobCode | null>(null);
   const [activeTab, setActiveTab] = useState<'app-role' | 'job-code'>('app-role');
   
   const open = Boolean(anchorEl);
+  
+  // Get theme-aware colors for roles
+  const getRoleColor = (role: UserRole) => {
+    switch (role) {
+      case 'PLAYER': return theme.palette.text.secondary;
+      case 'LEARNER': return theme.palette.success.main;
+      case 'CREATOR': return theme.palette.error.main;
+      case 'REVIEWER': return theme.palette.warning.main;
+      case 'APPROVER': return theme.palette.info.main;
+      case 'ADMIN': return theme.palette.primary.main;
+      default: return theme.palette.text.primary;
+    }
+  };
+  
+  // Get theme-aware colors for job codes
+  const getJobCodeColor = (index: number) => {
+    const colors = [
+      theme.palette.primary.main,
+      theme.palette.secondary.main,
+      theme.palette.error.main,
+      theme.palette.success.main,
+      theme.palette.warning.main,
+      theme.palette.info.main,
+    ];
+    return colors[index % colors.length];
+  };
   
   // Initialize state from localStorage on component mount
   useEffect(() => {
@@ -259,7 +287,7 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ compact = false }) =
               onClick={() => handleRoleSelect(option.role)}
               selected={effectiveRole === option.role}
             >
-              <ListItemIcon sx={{ color: option.color }}>
+              <ListItemIcon sx={{ color: getRoleColor(option.role) }}>
                 {option.icon}
               </ListItemIcon>
               <ListItemText 
@@ -345,7 +373,7 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ compact = false }) =
             selected={effectiveRole === option.role}
             sx={{ py: 1.5 }}
           >
-            <ListItemIcon sx={{ color: option.color }}>
+            <ListItemIcon sx={{ color: getRoleColor(option.role) }}>
               {option.icon}
             </ListItemIcon>
             <ListItemText 

@@ -19,6 +19,7 @@ import {
   Collapse,
   Chip,
   useTheme,
+  useMediaQuery,
   alpha
 } from '@mui/material';
 import {
@@ -41,13 +42,14 @@ import {
   ExpandMore,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  Menu as MenuIcon,
   Person as PersonIcon,
   Logout as LogoutIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { canEditContent, canReviewContent, canManageUsers } from '../utils/permissions';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { HyundaiLogo } from '../components/HyundaiLogo';
+import { Logo } from '../components/Logo';
 import { SettingsMenu } from '../components/SettingsMenu';
 
 export interface SidebarItem {
@@ -85,7 +87,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
   const [expandedItems, setExpandedItems] = useState<string[]>(['content']);
 
@@ -229,7 +231,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
               if (hasChildren) {
                 handleExpand(item.id);
               } else if (item.path) {
-                navigate(item.path);
+                handleNavigation(item.path);
               } else if (item.onClick) {
                 item.onClick();
               }
@@ -303,9 +305,19 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
 
   const navigationItems = getNavigationItems();
 
+  // On mobile, close the drawer after navigation
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    if (isMobile && onToggle) {
+      onToggle();
+    }
+  };
+
   return (
     <Drawer
-      variant="permanent"
+      variant={isMobile ? "temporary" : "permanent"}
+      open={open}
+      onClose={isMobile ? onToggle : undefined}
       sx={{
         width: open ? SIDEBAR_WIDTH : SIDEBAR_COLLAPSED_WIDTH,
         flexShrink: 0,
@@ -318,7 +330,10 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
           }),
           overflowX: 'hidden',
           backgroundColor: theme.palette.background.paper,
-          borderRight: `1px solid ${theme.palette.divider}`
+          borderRight: `1px solid ${theme.palette.divider}`,
+          ...(isMobile && {
+            width: SIDEBAR_WIDTH, // Always full width on mobile
+          })
         },
       }}
     >
@@ -333,10 +348,10 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
           minHeight: 64
         }}
       >
-        {open && (
-          <HyundaiLogo 
+        {(open || isMobile) && (
+          <Logo 
             variant="wordmark" 
-            height={24}
+            height={40}
             sx={{ 
               color: theme.palette.primary.main,
             }} 
@@ -344,7 +359,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
         )}
         
         <IconButton onClick={onToggle}>
-          {open ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+          {isMobile ? <MenuIcon /> : (open ? <ChevronLeftIcon /> : <ChevronRightIcon />)}
         </IconButton>
       </Box>
 

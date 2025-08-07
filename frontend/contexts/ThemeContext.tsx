@@ -3,9 +3,9 @@ import type { ReactNode } from 'react';
 import type { Theme } from '@mui/material/styles';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { hyundaiTheme } from '../theme/hyundaiTheme';
-import { unfilteredTheme } from '../theme/unfilteredTheme';
+import { genesisTheme } from '../theme/genesisTheme';
 
-export type ThemeMode = 'unfiltered' | 'hyundai';
+export type ThemeMode = 'genesis' | 'hyundai';
 
 interface ThemeContextType {
   currentTheme: Theme;
@@ -28,10 +28,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode; initialTheme?: Theme
     return (savedTheme as ThemeMode) || 'hyundai'; // Default to hyundai
   });
 
-  const currentTheme = themeMode === 'hyundai' ? hyundaiTheme : unfilteredTheme;
+  const currentTheme = themeMode === 'hyundai' ? hyundaiTheme : genesisTheme;
 
   const toggleTheme = () => {
-    const newMode = themeMode === 'hyundai' ? 'unfiltered' : 'hyundai';
+    const newMode = themeMode === 'hyundai' ? 'genesis' : 'hyundai';
     setThemeMode(newMode);
   };
 

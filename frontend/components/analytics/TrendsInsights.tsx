@@ -10,6 +10,7 @@ import {
   Card,
   CardContent,
   Paper,
+  useTheme,
 } from '@mui/material';
 import {
   BarChart as BarChartIcon,
@@ -23,6 +24,7 @@ interface TrendsInsightsProps {
 }
 
 export const TrendsInsights: React.FC<TrendsInsightsProps> = ({ data }) => {
+  const theme = useTheme();
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
@@ -47,7 +49,7 @@ export const TrendsInsights: React.FC<TrendsInsightsProps> = ({ data }) => {
                 series={[{
                   dataKey: 'count',
                   label: 'Daily Events',
-                  color: '#059669',
+                  color: theme.palette.success.main,
                 }]}
                 height={400}
               />
