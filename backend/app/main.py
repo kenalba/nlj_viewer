@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import create_tables
 from app.services.kafka_service import kafka_service
+from app.services.kafka_ralph_consumer import start_kafka_ralph_consumer, stop_kafka_ralph_consumer
 
 
 @asynccontextmanager
@@ -25,9 +26,21 @@ async def lifespan(app: FastAPI):
         # Log error but don't fail startup - Kafka may not be available in all environments
         print(f"Warning: Failed to initialize Kafka producer: {e}")
     
+    # Start Kafka Ralph LRS consumer for analytics
+    try:
+        await start_kafka_ralph_consumer()
+    except Exception as e:
+        # Log error but don't fail startup - Ralph LRS may not be available in all environments
+        print(f"Warning: Failed to start Kafka Ralph consumer: {e}")
+    
     yield
     
     # Shutdown
+    try:
+        await stop_kafka_ralph_consumer()
+    except Exception as e:
+        print(f"Warning: Error shutting down Kafka Ralph consumer: {e}")
+    
     try:
         await kafka_service.stop()
     except Exception as e:
@@ -85,6 +98,7 @@ from app.api.training_programs import router as training_programs_router
 from app.api.training_sessions import router as training_sessions_router
 from app.api.training_registrations import router as training_registrations_router
 from app.api.registrations import router as registrations_router
+from app.api.analytics import router as analytics_router
 
 app.include_router(auth_router, prefix="/api/auth", tags=["authentication"])
 app.include_router(users_router, prefix="/api/users", tags=["users"])
@@ -100,6 +114,7 @@ app.include_router(training_programs_router, prefix="/api/training-programs", ta
 app.include_router(training_sessions_router, prefix="/api/training-sessions", tags=["training-sessions"])
 app.include_router(training_registrations_router, prefix="/api/training-registrations", tags=["training-registrations"])
 app.include_router(registrations_router, prefix="/api/my-registrations", tags=["registrations"])
+app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"])
 
 
 

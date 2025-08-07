@@ -36,6 +36,7 @@ import {
   AudioFile as MediaIcon,
   People as PeopleIcon,
   School as TrainingIcon,
+  Analytics as AnalyticsIcon,
   ExpandLess,
   ExpandMore,
   ChevronLeft as ChevronLeftIcon,
@@ -197,6 +198,12 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
           label: 'People',
           icon: <PeopleIcon />,
           path: '/app/people'
+        },
+        {
+          id: 'analytics',
+          label: 'Analytics',
+          icon: <AnalyticsIcon />,
+          path: '/app/analytics'
         }
       );
     }

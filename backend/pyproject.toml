@@ -40,6 +40,8 @@ dependencies = [
     # Kafka integration
     "aiokafka",
     "kafka-python",
+    # Elasticsearch for analytics
+    "elasticsearch[async]",
 ]
 
 [project.optional-dependencies]

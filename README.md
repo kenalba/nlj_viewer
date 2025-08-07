@@ -75,33 +75,121 @@ For detailed documentation, development setup, and architectural information, se
 - **[Backend Setup](./backend/README.md)** - Backend-specific setup and API documentation
 - **[Backend Architecture](./backend/BACKEND_SETUP.md)** - Database schema and backend architecture details
 
-## 🔧 Development
+## 🔧 Development & Build Process
+
+### Understanding the Project Structure
+
+The project uses a **monorepo structure** with separate frontend and backend builds:
+
+```
+nlj_viewer/                    # Root directory
+├── package.json              # Root orchestration scripts
+├── frontend/                 # React + Vite application
+│   ├── package.json         # Frontend dependencies and build scripts
+│   └── dist/               # Frontend build output
+└── backend/                 # FastAPI application
+    ├── pyproject.toml      # Python dependencies
+    └── app/               # Backend source code
+```
+
+### Build Commands
+
+**From the root directory:**
+```bash
+npm run build                # Full platform build (schema + frontend)
+npm run build:frontend       # Frontend build only
+npm run generate:schema      # Generate schema documentation
+```
+
+**From the frontend directory:**
+```bash
+cd frontend
+npm run build               # Vite build → dist/ folder
+npm run dev                 # Development server
+npm run test -- --run      # Run test suite (326 tests passing)
+npm run lint                # Run ESLint
+```
+
+### 🚨 Build Troubleshooting
+
+**Issue: `npm run build` fails with working directory errors**
+```bash
+Error: ENOENT: no such file or directory, uv_cwd
+```
+
+**Solutions:**
+1. **Navigate to frontend directory first:**
+   ```bash
+   cd frontend
+   npm run build
+   ```
+
+2. **Use absolute paths (WSL environments):**
+   ```bash
+   cd /full/path/to/nlj_viewer/frontend
+   npm run build
+   ```
+
+3. **Reset working directory:**
+   ```bash
+   cd .
+   npm run build
+   ```
+
+**Issue: TypeScript compilation errors**
+```bash
+cd frontend
+npm run build  # Check specific TypeScript errors
+```
+
+**Issue: Dependency problems**
+```bash
+# Reinstall dependencies
+rm -rf node_modules package-lock.json
+npm install
+```
 
 ### Frontend Commands
 ```bash
 npm run dev          # Development server
 npm run build        # Production build
-npm run test -- --run # Run test suite (326 tests passing)
+npm run test -- --run # Run test suite (326 tests passing) - ALWAYS use --run flag
 npm run lint         # Run ESLint
 ```
 
 ### Docker Commands
+
+For containerized development, see **[Docker-README.md](./Docker-README.md)** for comprehensive Docker deployment guide.
+
 ```bash
-docker-compose up               # Start all services (NLJ + Cal.com + Kafka)
-docker-compose up nlj-api       # Start just NLJ backend for development
+# Development with hot reload
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+# Production deployment
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# Legacy commands
+docker-compose up               # Start all services
+docker-compose up nlj-api       # Start just NLJ backend
 docker-compose down             # Stop all services
-docker-compose logs cal-com     # View Cal.com logs
 ```
 
 ### Backend Commands
 ```bash
-uvicorn app.main:app --reload    # Development server
-python -m pytest                # Run tests
+cd backend
+uv sync                         # Install dependencies
+. .venv/bin/activate           # Activate virtual environment
+uvicorn app.main:app --reload   # Development server
+python -m pytest               # Run tests
 ```
 
 ### Pre-deployment Verification
 ```bash
-./scripts/pre-deploy.sh  # Verify build, tests, and deployment readiness
+./scripts/pre-deploy.sh  # Comprehensive verification:
+                        # ✅ TypeScript compilation
+                        # ✅ Test suite (326 tests)
+                        # ✅ Critical lint issues
+                        # ✅ Build success
 ```
 
 ## 🌟 Current Status

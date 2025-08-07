@@ -27,6 +27,7 @@ import MediaLibraryPage from './pages/MediaLibraryPage';
 import MediaDetailPage from './pages/MediaDetailPage';
 import PodcastGenerationPage from './pages/PodcastGenerationPage';
 import { PeopleTab } from './components/people/PeopleTab';
+import { AnalyticsDashboard } from './components/dashboards/AnalyticsDashboard';
 import { useAuth } from './contexts/AuthContext';
 import { contentApi, type ContentItem } from './api/content';
 // import { HomePage } from './components/HomePage';
@@ -294,6 +295,11 @@ const AppContent: React.FC = () => {
     }
     // Main media page: /app/media
     return <MediaLibraryPage />;
+  }
+
+  // Handle Analytics dashboard routes (admin only)
+  if (path.includes('/analytics') && isAdmin) {
+    return <AnalyticsDashboard />;
   }
 
   if (path.includes('/training')) {

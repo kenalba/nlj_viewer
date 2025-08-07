@@ -1,0 +1,62 @@
+# Ralph LRS Configuration for NLJ Platform
+# Standards-compliant xAPI 1.0.3 Learning Record Store
+
+# Server Configuration
+runserver:
+  host: "0.0.0.0"
+  port: 8100
+  backend: "es"
+
+# Elasticsearch Backend Configuration
+backends:
+  lrs:
+    es:
+      hosts:
+        - "http://elasticsearch:9200"
+      index: "nlj-xapi-statements"
+      test_index: "nlj-test-statements"
+      write_chunk_size: 500
+      read_chunk_size: 500
+      default_index_template: "nlj_xapi"
+      point_in_time_keep_alive: "5m"
+
+# Authentication Configuration
+auth:
+  backends: ["basic"]
+  basic:
+    username: "nlj-platform"
+    password: "nlj-secure-secret-2024"
+
+# Logging Configuration
+logging:
+  version: 1
+  disable_existing_loggers: false
+  formatters:
+    simple:
+      format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  handlers:
+    console:
+      class: "logging.StreamHandler"
+      level: "INFO"
+      formatter: "simple"
+      stream: "ext://sys.stdout"
+  root:
+    level: "INFO"
+    handlers: ["console"]
+  loggers:
+    ralph:
+      level: "INFO"
+      handlers: ["console"]
+      propagate: false
+
+# xAPI Validation Settings
+xapi:
+  version: "1.0.3"
+  strict_validation: true
+  allow_unknown_fields: false
+  
+# Performance Settings
+performance:
+  statement_cache_size: 1000
+  concurrent_requests: 100
+  request_timeout: 30

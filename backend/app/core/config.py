@@ -13,7 +13,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        case_sensitive=False
+        case_sensitive=False,
+        extra="ignore"  # Ignore extra environment variables
     )
     
     # Application settings
@@ -135,6 +136,30 @@ class Settings(BaseSettings):
     
     # Cal.com integration settings removed - migrating to our own system
 
+    # Ralph LRS settings
+    RALPH_LRS_URL: str = Field(
+        default="http://ralph-lrs:8100",
+        description="Ralph LRS endpoint URL for xAPI storage"
+    )
+    RALPH_LRS_USERNAME: str = Field(
+        default="nlj-platform",
+        description="Ralph LRS authentication username"
+    )
+    RALPH_LRS_SECRET: str = Field(
+        default="nlj-secure-secret-2024",
+        description="Ralph LRS authentication password"
+    )
+    
+    # Elasticsearch settings
+    ELASTICSEARCH_URL: str = Field(
+        default="http://elasticsearch:9200",
+        description="Elasticsearch cluster URL for analytics"
+    )
+    ELASTICSEARCH_INDEX: str = Field(
+        default="nlj-xapi-statements",
+        description="Elasticsearch index name for xAPI statements"
+    )
+    
     # Keycloak settings (for future integration)
     KEYCLOAK_URL: str | None = Field(
         default=None,

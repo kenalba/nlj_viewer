@@ -1,0 +1,31 @@
+# Docker Compose override for analytics services
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.analytics.yml up
+#
+# This file enables Ralph LRS + Elasticsearch for learning analytics
+
+services:
+  # Enable analytics services
+  elasticsearch:
+    profiles: [] # Remove analytics profile to always run
+    
+  ralph-lrs:
+    profiles: [] # Remove analytics profile to always run
+    
+  # Update backend to depend on analytics services
+  nlj-api:
+    depends_on:
+      nlj-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      ralph-lrs:
+        condition: service_healthy
+    environment:
+      # Override with analytics-specific config
+      - RALPH_LRS_URL=http://ralph-lrs:8100
+      - RALPH_LRS_USERNAME=nlj-platform
+      - RALPH_LRS_SECRET=nlj-secure-secret-2024
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ELASTICSEARCH_INDEX=nlj-xapi-statements
