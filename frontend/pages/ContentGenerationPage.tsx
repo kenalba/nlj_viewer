@@ -3,8 +3,8 @@
  * Single interface for generating Activities and Media content
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -22,7 +22,8 @@ import {
   Radio,
   TextField,
   Stack,
-  CircularProgress
+  CircularProgress,
+  Paper
 } from '@mui/material';
 import {
   AutoAwesome as GenerateIcon,
@@ -41,7 +42,7 @@ import { SourceLibrarySelection } from '../components/content-studio/SourceLibra
 import { PromptConfiguration } from '../components/content-studio/PromptConfiguration';
 import { GenerationProgress } from '../components/content-studio/GenerationProgress';
 import { GenerationResults } from '../components/content-studio/GenerationResults';
-import { type SourceDocument } from '../api/sources';
+import { type SourceDocument, getSourceDocument } from '../api/sources';
 import { generateContent, pollGenerationStatus, type PromptConfiguration as ApiPromptConfiguration } from '../api/generation';
 import { generatePodcastScript, generatePodcast, getGenerationStatus, type PodcastScriptRequest, type MediaGenerationRequest } from '../api/media';
 import { generateUnifiedPrompt, type ContentStudioConfig } from '../utils/promptGenerator';
@@ -51,7 +52,7 @@ interface ContentGenerationState {
   selectedDocuments: SourceDocument[];
   selectedKeywords: string[];
   selectedObjectives: string[];
-  contentType: 'activity' | 'media';
+  contentType: 'activity' | 'media' | null;
   mediaType: 'podcast' | 'video';
   podcastStyle: string;
   podcastLength: string;
@@ -110,13 +111,14 @@ const DEPTH_OPTIONS = [
 
 export const ContentGenerationPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   
   // Unified Content Studio state
   const [state, setState] = useState<ContentGenerationState>({
     selectedDocuments: [],
     selectedKeywords: [],
     selectedObjectives: [],
-    contentType: 'activity',
+    contentType: null,
     mediaType: 'podcast',
     podcastStyle: 'npr_interview',
     podcastLength: 'medium',
@@ -133,6 +135,28 @@ export const ContentGenerationPage: React.FC = () => {
     sessionId: null
   });
 
+  // Handle URL parameters for pre-selecting documents
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const sourceId = urlParams.get('source');
+    
+    if (sourceId && state.selectedDocuments.length === 0) {
+      console.log('Pre-selecting document from URL:', sourceId);
+      // Fetch the document by ID and add to selection
+      getSourceDocument(sourceId)
+        .then(document => {
+          setState(prev => ({
+            ...prev,
+            selectedDocuments: [document]
+          }));
+          console.log('Document pre-selected:', document.extracted_title || document.original_filename);
+        })
+        .catch(error => {
+          console.error('Failed to load document from URL parameter:', error);
+        });
+    }
+  }, [location.search, state.selectedDocuments.length]);
+
   // Extract all keywords and objectives from selected documents
   const availableKeywords = useMemo(() => {
     const allKeywords = state.selectedDocuments.flatMap(doc => doc.keywords || []);
@@ -148,12 +172,28 @@ export const ContentGenerationPage: React.FC = () => {
   const handleDocumentSelection = (documents: SourceDocument[]) => {
     setState(prev => ({ 
       ...prev, 
-      selectedDocuments: documents,
-      // Auto-select some keywords/objectives when documents change
-      selectedKeywords: availableKeywords.slice(0, 5),
-      selectedObjectives: availableObjectives.slice(0, 3)
+      selectedDocuments: documents
     }));
   };
+  
+  // Auto-select keywords and objectives when available keywords/objectives change
+  useEffect(() => {
+    if (availableKeywords.length > 0 && state.selectedKeywords.length === 0) {
+      setState(prev => ({
+        ...prev,
+        selectedKeywords: availableKeywords.slice(0, 5)
+      }));
+    }
+  }, [availableKeywords]);
+  
+  useEffect(() => {
+    if (availableObjectives.length > 0 && state.selectedObjectives.length === 0) {
+      setState(prev => ({
+        ...prev,
+        selectedObjectives: availableObjectives.slice(0, 3)
+      }));
+    }
+  }, [availableObjectives]);
 
   const handlePromptConfiguration = useCallback((config: any) => {
     console.log('🔧 Prompt configuration updated:', {
@@ -404,86 +444,124 @@ export const ContentGenerationPage: React.FC = () => {
 
   const canProceedToGeneration = () => {
     if (state.selectedDocuments.length === 0) return false;
+    // Content type must be selected first
+    if (state.contentType === null) return false;
+    
     // For activity generation, require prompt config
     if (state.contentType === 'activity') {
       return state.promptConfig !== null;
     }
     // For media generation, just need documents
-    return true;
+    if (state.contentType === 'media') {
+      return true;
+    }
+    return false;
   };
+
 
   // Render Focus section (keywords and objectives)
   const renderFocusSection = () => (
     <Card>
       <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ mb: 1 }}>
           <Typography variant="h6">
             2. Focus & Objectives
           </Typography>
         </Box>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          Choose keywords and learning objectives to focus your content generation. These will guide the AI to create more targeted and relevant content.
+        </Typography>
         
-        {state.selectedDocuments.length === 0 ? (
+        {availableKeywords.length === 0 && availableObjectives.length === 0 ? (
           <Alert severity="info">
-            Select source documents to see available keywords and learning objectives.
+            No keywords or learning objectives found in selected documents. You can proceed to the next step.
           </Alert>
         ) : (
-          <Grid container spacing={3}>
+          <Stack spacing={3}>
             {availableKeywords.length > 0 && (
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" gutterBottom>
+              <Box>
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
                   Focus Keywords ({state.selectedKeywords.length} selected)
                 </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {availableKeywords.map((keyword) => (
-                    <Chip
-                      key={keyword}
-                      label={keyword}
-                      size="small"
-                      variant={state.selectedKeywords.includes(keyword) ? 'filled' : 'outlined'}
+                    <Paper 
+                      key={keyword} 
+                      variant="outlined" 
+                      sx={{ 
+                        py: 0.75,
+                        px: 1.5,
+                        cursor: 'pointer',
+                        bgcolor: state.selectedKeywords.includes(keyword) ? 'primary.light' : 'background.paper',
+                        borderColor: state.selectedKeywords.includes(keyword) ? 'primary.main' : 'divider',
+                        '&:hover': { 
+                          bgcolor: state.selectedKeywords.includes(keyword) ? 'primary.light' : 'action.hover'
+                        }
+                      }}
                       onClick={() => setState(prev => ({
                         ...prev,
                         selectedKeywords: prev.selectedKeywords.includes(keyword)
                           ? prev.selectedKeywords.filter(k => k !== keyword)
                           : [...prev.selectedKeywords, keyword]
                       }))}
-                    />
+                    >
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          color: state.selectedKeywords.includes(keyword) ? 'primary.contrastText' : 'text.primary',
+                          fontWeight: state.selectedKeywords.includes(keyword) ? 600 : 400,
+                          fontSize: '0.875rem'
+                        }}
+                      >
+                        {keyword}
+                      </Typography>
+                    </Paper>
                   ))}
                 </Box>
-              </Grid>
+              </Box>
             )}
 
             {availableObjectives.length > 0 && (
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" gutterBottom>
+              <Box>
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
                   Learning Objectives ({state.selectedObjectives.length} selected)
                 </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                <Stack spacing={1}>
                   {availableObjectives.map((objective, index) => (
-                    <Chip
-                      key={index}
-                      label={objective}
-                      size="small"
-                      variant={state.selectedObjectives.includes(objective) ? 'filled' : 'outlined'}
+                    <Paper 
+                      key={index} 
+                      variant="outlined" 
+                      sx={{ 
+                        p: 1.5, 
+                        cursor: 'pointer',
+                        bgcolor: state.selectedObjectives.includes(objective) ? 'primary.light' : 'background.paper',
+                        borderColor: state.selectedObjectives.includes(objective) ? 'primary.main' : 'divider',
+                        '&:hover': { 
+                          bgcolor: state.selectedObjectives.includes(objective) ? 'primary.light' : 'action.hover'
+                        }
+                      }}
                       onClick={() => setState(prev => ({
                         ...prev,
                         selectedObjectives: prev.selectedObjectives.includes(objective)
                           ? prev.selectedObjectives.filter(o => o !== objective)
                           : [...prev.selectedObjectives, objective]
                       }))}
-                      sx={{ 
-                        height: 'auto',
-                        '& .MuiChip-label': {
-                          display: 'block',
-                          whiteSpace: 'normal',
-                          textAlign: 'left'
-                        }
-                      }}
-                    />
+                    >
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          color: state.selectedObjectives.includes(objective) ? 'primary.contrastText' : 'text.primary',
+                          fontWeight: state.selectedObjectives.includes(objective) ? 600 : 400
+                        }}
+                      >
+                        {objective}
+                      </Typography>
+                    </Paper>
                   ))}
-                </Box>
-              </Grid>
+                </Stack>
+              </Box>
             )}
-          </Grid>
+          </Stack>
         )}
       </CardContent>
     </Card>
@@ -503,7 +581,7 @@ export const ContentGenerationPage: React.FC = () => {
           <FormLabel component="legend">What would you like to generate?</FormLabel>
           <RadioGroup
             row
-            value={state.contentType}
+            value={state.contentType || ''}
             onChange={(e) => setState(prev => ({ ...prev, contentType: e.target.value as 'activity' | 'media' }))}
             sx={{ mt: 1 }}
           >
@@ -859,12 +937,15 @@ export const ContentGenerationPage: React.FC = () => {
         {/* Step 1: Source Selection */}
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
               <SourceIcon color="primary" sx={{ mr: 1.5 }} />
               <Typography variant="h6">
                 1. Select Source Documents
               </Typography>
             </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Choose one or more documents from your library to use as source material for content generation. Selected documents will be analyzed for keywords and learning objectives.
+            </Typography>
             <SourceLibrarySelection
               selectedDocuments={state.selectedDocuments}
               onSelectionChange={handleDocumentSelection}
@@ -872,16 +953,19 @@ export const ContentGenerationPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Step 2: Focus & Objectives */}
-        {renderFocusSection()}
+        {/* Step 2: Focus & Objectives - Only show when documents are selected */}
+        {state.selectedDocuments.length > 0 && renderFocusSection()}
 
-        {/* Step 3: Content Type */}
-        {renderContentTypeSection()}
+        {/* Step 3: Content Type - Only show when documents are selected */}
+        {state.selectedDocuments.length > 0 && renderContentTypeSection()}
 
-        {/* Step 4: Configuration */}
-        {renderConfigurationSection()}
+        {/* Step 4: Configuration - Only show when content type is selected and documents are selected */}
+        {state.selectedDocuments.length > 0 && state.contentType !== null && renderConfigurationSection()}
 
-        {/* Step 5: Generate */}
+        {/* Step 5: Generate - Only show when ready to generate */}
+        {state.selectedDocuments.length > 0 && state.contentType !== null && (
+          (state.contentType === 'activity' ? state.promptConfig !== null : true)
+        ) && (
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -895,9 +979,11 @@ export const ContentGenerationPage: React.FC = () => {
               <Alert severity="warning" sx={{ mb: 2 }}>
                 {state.selectedDocuments.length === 0 
                   ? 'Please select source documents to continue'
-                  : state.contentType === 'activity' 
-                    ? 'Please configure generation settings for activities'
-                    : 'Ready to generate media content'
+                  : state.contentType === null
+                    ? 'Please select a content type to continue'
+                    : state.contentType === 'activity' 
+                      ? 'Please configure generation settings for activities'
+                      : 'Ready to generate media content'
                 }
               </Alert>
             )}
@@ -954,6 +1040,7 @@ export const ContentGenerationPage: React.FC = () => {
             </Box>
           </CardContent>
         </Card>
+        )}
       </Stack>
     );
   };

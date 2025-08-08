@@ -47,7 +47,8 @@ import {
   Sort as SortIcon,
   Add as AddIcon,
   CheckCircle as ReadyIcon,
-  Schedule as ProcessingIcon
+  Schedule as ProcessingIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { getSourceDocuments, uploadSourceDocument, type SourceDocument } from '../../api/sources';
@@ -361,7 +362,7 @@ export const SourceLibrarySelection: React.FC<SourceLibrarySelectionProps> = ({
   return (
     <Box>
       {/* Search and Filter Controls */}
-      <Box mb={3}>
+      <Box mb={2}>
         <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" sx={{ gap: 2 }}>
           <TextField
             placeholder="Search documents..."
@@ -431,31 +432,10 @@ export const SourceLibrarySelection: React.FC<SourceLibrarySelectionProps> = ({
         </Stack>
       </Box>
 
-      {/* Status Bar */}
-      <Box display="flex" justifyContent="flex-end" alignItems="center" mb={3}>
-        <Box display="flex" alignItems="center" gap={2}>
-          {selectedDocuments.length > 0 && (
-            <Chip 
-              label={`${selectedDocuments.length} selected`} 
-              color="primary" 
-              size="small" 
-            />
-          )}
-          
-          {filters.fileType !== 'all' && (
-            <Chip 
-              label={`Filtered: ${filters.fileType.toUpperCase()}`} 
-              color="secondary" 
-              size="small" 
-              variant="outlined"
-            />
-          )}
-        </Box>
-      </Box>
 
       {/* Document Table */}
       <TableContainer component={Paper}>
-        <Table>
+        <Table size="small" sx={{ '& .MuiTableCell-root': { py: 1 } }}>
           <TableHead>
             <TableRow>
               <TableCell padding="checkbox">
@@ -489,28 +469,36 @@ export const SourceLibrarySelection: React.FC<SourceLibrarySelectionProps> = ({
                       onClick={(e) => e.stopPropagation()}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ maxWidth: 300 }}>
                     <Box display="flex" alignItems="center">
                       {getFileIcon(document.file_type)}
-                      <Box sx={{ ml: 1 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      <Box sx={{ ml: 1, minWidth: 0, flex: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.875rem' }}>
                           {document.original_filename}
                         </Typography>
                         {document.summary && (
-                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                            {document.summary.length > 80 
-                              ? `${document.summary.substring(0, 80)}...`
-                              : document.summary
-                            }
+                          <Typography 
+                            variant="caption" 
+                            color="text.secondary" 
+                            sx={{ 
+                              display: 'block',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              mt: 0.25, 
+                              fontSize: '0.75rem'
+                            }}
+                          >
+                            {document.summary}
                           </Typography>
                         )}
                       </Box>
                     </Box>
                   </TableCell>
                   <TableCell align="center">
-                    <Chip label={document.file_type.toUpperCase()} size="small" />
+                    <Chip label={document.file_type.toUpperCase()} size="small" sx={{ fontSize: '0.75rem', height: 20 }} />
                   </TableCell>
-                  <TableCell align="center">
+                  <TableCell align="center" sx={{ fontSize: '0.875rem' }}>
                     {formatBytes(document.file_size)}
                   </TableCell>
                   <TableCell align="center">
@@ -519,18 +507,20 @@ export const SourceLibrarySelection: React.FC<SourceLibrarySelectionProps> = ({
                         icon={<ReadyIcon />} 
                         label="Ready" 
                         size="small" 
-                        color="success" 
+                        color="success"
+                        sx={{ fontSize: '0.75rem', height: 20 }}
                       />
                     ) : (
                       <Chip 
                         icon={<ProcessingIcon />} 
                         label="Processing" 
                         size="small" 
-                        color="warning" 
+                        color="warning"
+                        sx={{ fontSize: '0.75rem', height: 20 }}
                       />
                     )}
                   </TableCell>
-                  <TableCell align="center">
+                  <TableCell align="center" sx={{ fontSize: '0.875rem' }}>
                     {formatDistanceToNow(new Date(document.created_at))}
                   </TableCell>
                 </TableRow>
@@ -539,6 +529,54 @@ export const SourceLibrarySelection: React.FC<SourceLibrarySelectionProps> = ({
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Active Filters */}
+      {filters.fileType !== 'all' && (
+        <Box mt={2}>
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+            Active Filters
+          </Typography>
+          <Chip 
+            label={`File Type: ${filters.fileType.toUpperCase()}`} 
+            onDelete={() => handleFilterChange('fileType', 'all')}
+            color="secondary" 
+            size="small" 
+            variant="outlined"
+          />
+        </Box>
+      )}
+
+      {/* Selected Documents */}
+      {selectedDocuments.length > 0 && (
+        <Box mt={3}>
+          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+            Selected Documents ({selectedDocuments.length})
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {selectedDocuments.map((document) => (
+              <Chip
+                key={document.id}
+                label={document.original_filename}
+                onDelete={() => {
+                  onSelectionChange(selectedDocuments.filter(d => d.id !== document.id));
+                }}
+                deleteIcon={<CloseIcon />}
+                variant="filled"
+                color="primary"
+                size="small"
+                sx={{
+                  maxWidth: 200,
+                  '& .MuiChip-label': {
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (
