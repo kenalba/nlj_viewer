@@ -53,8 +53,10 @@ export interface SourceDocumentListResponse {
 
 export interface CreateSourceRequest {
   file: File;
+  title?: string;
   description?: string;
   tags?: string;
+  analyze?: boolean;
 }
 
 export interface UpdateSourceRequest {
@@ -69,12 +71,20 @@ export const uploadSourceDocument = async (request: CreateSourceRequest): Promis
   const formData = new FormData();
   formData.append('file', request.file);
   
+  if (request.title) {
+    formData.append('title', request.title);
+  }
+  
   if (request.description) {
     formData.append('description', request.description);
   }
   
   if (request.tags) {
     formData.append('tags', request.tags);
+  }
+  
+  if (request.analyze !== undefined) {
+    formData.append('analyze', request.analyze.toString());
   }
 
   const response = await apiClient.post('/api/sources/upload', formData, {

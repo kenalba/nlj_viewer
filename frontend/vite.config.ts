@@ -27,6 +27,10 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    watch: {
+      usePolling: true,
+      interval: 1000,
+    },
     proxy: {
       '^/api/(?!.*\\.(ts|tsx|js|jsx)$)': {
         target: process.env.NODE_ENV === 'development' && process.env.DOCKER_ENV 

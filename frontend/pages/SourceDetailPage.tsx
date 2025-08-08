@@ -18,8 +18,6 @@ import {
   Stack,
   Paper,
   Grid,
-  Tabs,
-  Tab,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -34,7 +32,6 @@ import {
   Folder as FolderIcon,
   Tag as TagIcon,
   Preview as PreviewIcon,
-  Description as DescriptionIcon,
   AudioFile as AudioFileIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -89,7 +86,7 @@ const SourceDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
-  const [currentTab, setCurrentTab] = useState(0);
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
   // Extract ID from URL path since we're not using proper route parameters
   const pathSegments = window.location.pathname.split('/');
@@ -118,6 +115,38 @@ const SourceDetailPage: React.FC = () => {
     }
   }, [error]);
 
+  // Cleanup polling interval on unmount
+  React.useEffect(() => {
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [pollingInterval]);
+
+  // Monitor document changes to detect summary completion during polling
+  React.useEffect(() => {
+    if (document && document.summary && isGeneratingSummary && pollingInterval) {
+      console.log('Summary detected during polling, stopping...');
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+      setIsGeneratingSummary(false);
+    }
+  }, [document, isGeneratingSummary, pollingInterval]);
+
+  // Auto-analyze documents when analyze=true parameter is in URL
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const shouldAnalyze = urlParams.get('analyze') === 'true';
+    
+    if (document && shouldAnalyze && !document.summary && !isGeneratingSummary) {
+      console.log('Auto-analyzing document based on URL parameter');
+      // Clear the URL parameter to prevent re-analyzing
+      window.history.replaceState({}, '', window.location.pathname);
+      handleGenerateSummary();
+    }
+  }, [document]);
+
   // Upload to Claude mutation
   const uploadMutation = useMutation({
     mutationFn: uploadToClaudeAPI,
@@ -144,23 +173,48 @@ const SourceDetailPage: React.FC = () => {
     },
     onSuccess: (data) => {
       console.log('Generate summary completed successfully:', data);
+      // Stop polling if it was active
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        setPollingInterval(null);
+      }
       queryClient.invalidateQueries({ queryKey: ['source', id] });
-      // Force a refetch to immediately update the UI
-      queryClient.refetchQueries({ queryKey: ['source', id] });
+      setIsGeneratingSummary(false);
     },
     onError: (error) => {
       console.error('Generate summary failed:', error);
+      // Stop polling if it was active
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        setPollingInterval(null);
+      }
       setIsGeneratingSummary(false);
-    },
-    onSettled: () => {
-      // Only stop loading after we've confirmed the data is updated
-      setTimeout(() => setIsGeneratingSummary(false), 1000);
     },
   });
 
   const handleGenerateSummary = async () => {
     if (!document) return;
+    
+    // Start the generation process
     generateSummaryMutation.mutate(document.id);
+    
+    // Set up polling to check for completion every 5 seconds
+    const interval = setInterval(() => {
+      console.log('Polling for summary completion...');
+      queryClient.invalidateQueries({ queryKey: ['source', id] });
+    }, 5000);
+    
+    setPollingInterval(interval);
+    
+    // Clear polling after 2 minutes (timeout safety)
+    setTimeout(() => {
+      if (interval) {
+        clearInterval(interval);
+        setPollingInterval(null);
+        setIsGeneratingSummary(false);
+        console.log('Summary generation timeout reached');
+      }
+    }, 120000);
   };
 
   // Delete document mutation
@@ -184,9 +238,6 @@ const SourceDetailPage: React.FC = () => {
     }
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setCurrentTab(newValue);
-  };
 
   const formatFileSize = (bytes: number): string => {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -229,17 +280,14 @@ const SourceDetailPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+      {/* App Header */}
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
         <IconButton onClick={handleBack} sx={{ mr: 2 }}>
           <BackIcon />
         </IconButton>
         <Box sx={{ flexGrow: 1 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            {document.extracted_title || document.original_filename}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Source Document Details
+          <Typography variant="h4" component="h1">
+            SOURCE DETAILS
           </Typography>
         </Box>
         <Stack direction="row" spacing={1}>
@@ -319,19 +367,44 @@ const SourceDetailPage: React.FC = () => {
         </Stack>
       </Box>
 
-      {/* Document Info Card */}
-      <Card sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
+      {/* Document Info Card with Source Header */}
+      <Card sx={{ p: 3, mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+          <Avatar sx={{ bgcolor: 'primary.main', mr: 2, mt: 0.5 }}>
             <DocumentIcon />
           </Avatar>
-          <Box>
-            <Typography variant="h6">
-              {document.original_filename}
+          <Box sx={{ flexGrow: 1 }}>
+            {/* Source Header - Line 1: Title */}
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+              {document.extracted_title || document.original_filename}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {document.file_type.toUpperCase()} • {formatFileSize(document.file_size)}
-            </Typography>
+            {/* Source Header - Line 2: Details */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <Typography variant="body2" color="text.secondary">
+                {document.original_filename}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">•</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {document.file_type.toUpperCase()}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">•</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {formatFileSize(document.file_size)}
+              </Typography>
+              {document.tags && document.tags.length > 0 && (
+                <>
+                  <Typography variant="body2" color="text.secondary">•</Typography>
+                  <Box sx={{ display: 'flex', gap: 0.5 }}>
+                    {document.tags.slice(0, 3).map((tag) => (
+                      <Chip key={tag} label={tag} size="small" variant="outlined" />
+                    ))}
+                    {document.tags.length > 3 && (
+                      <Chip label={`+${document.tags.length - 3} more`} size="small" variant="outlined" />
+                    )}
+                  </Box>
+                </>
+              )}
+            </Box>
           </Box>
         </Box>
 
@@ -383,40 +456,19 @@ const SourceDetailPage: React.FC = () => {
       <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', lg: 'row' } }}>
         {/* Left Column - Main Content */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          {/* Tabs */}
+          {/* Content Analysis Card */}
           <Card sx={{ mb: 3 }}>
-            <Tabs 
-              value={currentTab} 
-              onChange={handleTabChange}
-              sx={{ borderBottom: 1, borderColor: 'divider', px: 3, pt: 2 }}
-            >
-              <Tab 
-                icon={<DescriptionIcon />} 
-                label="Content Analysis" 
-                iconPosition="start"
-                sx={{ minHeight: 48 }}
-              />
-              <Tab 
-                icon={<PreviewIcon />} 
-                label="Preview" 
-                iconPosition="start"
-                sx={{ minHeight: 48 }}
-              />
-            </Tabs>
-            
             <Box sx={{ p: 3 }}>
-              {/* Content Analysis Tab */}
-              {currentTab === 0 && (
-                <Box>
+              <Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6">AI-Generated Content Analysis</Typography>
+                    <Typography variant="h6">Content Analysis</Typography>
                     <Button
                       variant="outlined"
                       startIcon={isGeneratingSummary ? <CircularProgress size={16} /> : <GenerateIcon />}
                       onClick={handleGenerateSummary}
                       disabled={isGeneratingSummary}
                     >
-                      {isGeneratingSummary ? 'Generating...' : 'Generate Analysis'}
+                      {isGeneratingSummary ? 'Analyzing...' : (document.summary ? 'Reanalyze' : 'Analyze')}
                     </Button>
                   </Box>
                   
@@ -559,19 +611,13 @@ const SourceDetailPage: React.FC = () => {
                       </Box>
                     </Box>
                   ) : (
-                    <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
+                    <Paper sx={{ p: 2, bgcolor: 'action.hover' }}>
                       <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                        No content analysis available yet. Click "Generate Analysis" to create an AI-powered analysis of this document using Claude.
+                        No content analysis available yet. Click "Generate Analysis" to create a comprehensive analysis of this document.
                       </Typography>
                     </Paper>
                   )}
-                </Box>
-              )}
-
-              {/* Preview Tab */}
-              {currentTab === 1 && (
-                <PDFPreview document={document} />
-              )}
+              </Box>
             </Box>
           </Card>
         </Box>
@@ -628,7 +674,7 @@ const SourceDetailPage: React.FC = () => {
                 <Box>
                   <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <GenerateIcon fontSize="small" />
-                    AI Analysis
+                    Content Analysis
                   </Typography>
                   <Stack spacing={1}>
                     {document.content_type_classification && (
@@ -728,15 +774,15 @@ const SourceDetailPage: React.FC = () => {
               {/* Claude Integration */}
               <Box>
                 <Typography variant="subtitle2" gutterBottom>
-                  Claude Integration
+                  Analysis Integration
                 </Typography>
                 {document.claude_file_id ? (
                   <Alert severity="success" sx={{ mb: 1 }}>
-                    Document is uploaded to Claude API
+                    Document is available for analysis
                   </Alert>
                 ) : (
                   <Alert severity="info" sx={{ mb: 1 }}>
-                    Document not yet uploaded to Claude API
+                    Document not yet available for analysis
                   </Alert>
                 )}
                 
@@ -748,7 +794,7 @@ const SourceDetailPage: React.FC = () => {
                     onClick={handleUploadToClaudeAPI}
                     disabled={uploadMutation.isPending}
                   >
-                    {uploadMutation.isPending ? 'Uploading...' : 'Upload to Claude'}
+                    {uploadMutation.isPending ? 'Processing...' : 'Enable Analysis'}
                   </Button>
                 )}
               </Box>

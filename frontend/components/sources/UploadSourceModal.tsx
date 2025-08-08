@@ -12,6 +12,8 @@ import {
   LinearProgress,
   Alert,
   Chip,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import {
   CloudUpload as UploadIcon,
@@ -22,7 +24,7 @@ import { useDropzone } from 'react-dropzone';
 interface UploadSourceModalProps {
   open: boolean;
   onClose: () => void;
-  onUpload: (file: File, description?: string, tags?: string) => void;
+  onUpload: (file: File, title?: string, description?: string, tags?: string, analyze?: boolean) => void;
   isUploading: boolean;
 }
 
@@ -33,8 +35,10 @@ const UploadSourceModal: React.FC<UploadSourceModalProps> = ({
   isUploading,
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
+  const [analyze, setAnalyze] = useState(true);
   const [error, setError] = useState('');
 
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -53,7 +57,11 @@ const UploadSourceModal: React.FC<UploadSourceModalProps> = ({
     }
 
     if (acceptedFiles.length > 0) {
-      setSelectedFile(acceptedFiles[0]);
+      const file = acceptedFiles[0];
+      setSelectedFile(file);
+      // Set title to filename without extension
+      const nameWithoutExtension = file.name.replace(/\.[^/.]+$/, '');
+      setTitle(nameWithoutExtension);
     }
   }, []);
 
@@ -73,15 +81,17 @@ const UploadSourceModal: React.FC<UploadSourceModalProps> = ({
 
   const handleUpload = () => {
     if (selectedFile) {
-      onUpload(selectedFile, description || undefined, tags || undefined);
+      onUpload(selectedFile, title || undefined, description || undefined, tags || undefined, analyze);
     }
   };
 
   const handleClose = () => {
     if (!isUploading) {
       setSelectedFile(null);
+      setTitle('');
       setDescription('');
       setTags('');
+      setAnalyze(true);
       setError('');
       onClose();
     }
@@ -117,15 +127,15 @@ const UploadSourceModal: React.FC<UploadSourceModalProps> = ({
             sx={{
               p: 4,
               border: '2px dashed',
-              borderColor: isDragActive ? 'primary.main' : 'grey.300',
-              bgcolor: isDragActive ? 'primary.50' : 'grey.50',
+              borderColor: isDragActive ? 'primary.main' : 'divider',
+              bgcolor: isDragActive ? 'action.hover' : 'background.default',
               textAlign: 'center',
               cursor: 'pointer',
               transition: 'all 0.2s ease-in-out',
               mb: 3,
               '&:hover': {
                 borderColor: 'primary.main',
-                bgcolor: 'primary.50',
+                bgcolor: 'action.hover',
               },
             }}
           >
@@ -140,7 +150,7 @@ const UploadSourceModal: React.FC<UploadSourceModalProps> = ({
           </Paper>
         ) : (
           /* Selected File Display */
-          <Paper sx={{ p: 2, mb: 3, bgcolor: 'primary.50' }}>
+          <Paper sx={{ p: 2, mb: 3, bgcolor: 'action.selected' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               {getFileIcon(selectedFile.name)}
               <Box sx={{ flexGrow: 1 }}>
@@ -154,7 +164,10 @@ const UploadSourceModal: React.FC<UploadSourceModalProps> = ({
               <Button
                 variant="outlined"
                 size="small"
-                onClick={() => setSelectedFile(null)}
+                onClick={() => {
+                  setSelectedFile(null);
+                  setTitle('');
+                }}
                 disabled={isUploading}
               >
                 Change
@@ -179,6 +192,17 @@ const UploadSourceModal: React.FC<UploadSourceModalProps> = ({
           </Box>
         )}
 
+        {/* Title Field */}
+        <TextField
+          fullWidth
+          label="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Enter a title for this document..."
+          disabled={isUploading}
+          sx={{ mb: 2 }}
+        />
+
         {/* Description Field */}
         <TextField
           fullWidth
@@ -201,23 +225,31 @@ const UploadSourceModal: React.FC<UploadSourceModalProps> = ({
           placeholder="training, product-info, FAQ (comma-separated)"
           disabled={isUploading}
           helperText="Add tags to help organize and find your documents"
+          sx={{ mb: 2 }}
         />
 
-        {/* File Type Info */}
-        <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            <strong>Supported formats:</strong>
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            <Chip label="PDF" size="small" />
-            <Chip label="DOCX" size="small" />
-            <Chip label="PPTX" size="small" />
-            <Chip label="TXT" size="small" />
-          </Box>
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            Documents will be automatically converted to PDF for optimal Claude analysis
-          </Typography>
-        </Box>
+        {/* Analyze Checkbox */}
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={analyze}
+              onChange={(e) => setAnalyze(e.target.checked)}
+              disabled={isUploading}
+            />
+          }
+          label={
+            <Box>
+              <Typography variant="body2">
+                Analyze document
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Extract keywords, learning objectives, and generate metadata
+              </Typography>
+            </Box>
+          }
+          sx={{ alignItems: 'flex-start', mb: 1 }}
+        />
+
       </DialogContent>
 
       <DialogActions>

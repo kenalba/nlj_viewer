@@ -573,7 +573,7 @@ const HomePageContent: React.FC = () => {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                 gap: 2,
                 '& > *': {
-                  minHeight: 80
+                  minHeight: 64
                 }
               }}
             >
@@ -606,7 +606,6 @@ const HomePageContent: React.FC = () => {
                           variant="subtitle2" 
                           sx={{ 
                             fontWeight: 600,
-                            mb: 0.5,
                             color: `${action.color}.main`,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -614,21 +613,6 @@ const HomePageContent: React.FC = () => {
                           }}
                         >
                           {action.title}
-                        </Typography>
-                        <Typography 
-                          variant="body2" 
-                          color="text.secondary"
-                          sx={{ 
-                            fontSize: '0.75rem',
-                            lineHeight: 1.2,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical'
-                          }}
-                        >
-                          {action.description}
                         </Typography>
                       </Box>
                     </Box>
@@ -808,7 +792,7 @@ const HomePageContent: React.FC = () => {
             <List disablePadding>
               {newsItems.map((item, index) => (
                 <React.Fragment key={item.id}>
-                  <ListItem disablePadding sx={{ mb: 2 }}>
+                  <ListItem disablePadding sx={{ mt: 2, mb: 1 }}>
                     <Box sx={{ width: '100%' }}>
                       <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
                         <Avatar 
@@ -824,10 +808,10 @@ const HomePageContent: React.FC = () => {
                           {getNewsIcon(item.type)}
                         </Avatar>
                         <Box sx={{ flex: 1 }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
                             {item.title}
                           </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1, lineHeight: 1.4 }}>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1, lineHeight: 1.5 }}>
                             {item.content}
                           </Typography>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

@@ -16,7 +16,7 @@ import {
   alpha
 } from '@mui/material';
 import {
-  Menu as MenuIcon,
+  Home as HomeIcon,
   Brightness4 as DarkModeIcon,
   Brightness7 as LightModeIcon
 } from '@mui/icons-material';
@@ -93,7 +93,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         />
       )}
 
-      {/* Mobile Menu Button - when sidebar is hidden or on mobile */}
+      {/* Home Button - when sidebar is hidden or on mobile */}
       {(shouldHideSidebar || (isMobile && !sidebarOpen)) && (
         <Box
           sx={{
@@ -107,13 +107,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           }}
         >
           <IconButton
-            onClick={handleSidebarToggle}
+            onClick={() => navigate('/app/home')}
             sx={{
               color: theme.palette.primary.main,
               p: 1.5
             }}
           >
-            <MenuIcon />
+            <HomeIcon />
           </IconButton>
         </Box>
       )}

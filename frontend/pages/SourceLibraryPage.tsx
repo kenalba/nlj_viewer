@@ -68,6 +68,7 @@ const SourceLibraryPage: React.FC = () => {
   });
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedDocument, setSelectedDocument] = useState<SourceDocument | null>(null);
+  const [lastUploadRequest, setLastUploadRequest] = useState<{analyze?: boolean} | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -87,6 +88,9 @@ const SourceLibraryPage: React.FC = () => {
       setSuccessMessage(`Document "${data.original_filename}" uploaded successfully!`);
       setUploadModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ['sources'] });
+      // Navigate to the source detail page with analyze parameter if needed
+      const analyzeParam = lastUploadRequest?.analyze ? '?analyze=true' : '';
+      navigate(`/app/sources/${data.id}${analyzeParam}`);
     },
     onError: (error: any) => {
       setErrorMessage(error.response?.data?.detail || 'Failed to upload document');
@@ -112,8 +116,9 @@ const SourceLibraryPage: React.FC = () => {
     navigate(`/app/sources/${document.id}`);
   };
 
-  const handleUpload = async (file: File, description?: string, tags?: string) => {
-    uploadMutation.mutate({ file, description, tags });
+  const handleUpload = async (file: File, title?: string, description?: string, tags?: string, analyze?: boolean) => {
+    setLastUploadRequest({ analyze });
+    uploadMutation.mutate({ file, title, description, tags, analyze });
   };
 
   const handleViewModeChange = (event: React.MouseEvent<HTMLElement>, newView: 'card' | 'table' | null) => {
