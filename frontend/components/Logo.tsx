@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { Box, BoxProps } from '@mui/material';
+import { Box, type BoxProps } from '@mui/material';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface LogoProps extends Omit<BoxProps, 'component'> {
@@ -33,7 +33,7 @@ export const Logo: React.FC<LogoProps> = ({
     return (
       <Box
         component="img"
-        src={isGenesis ? "/assets/genesis-logo.svg" : "/static/hyundai-symbol.svg"}
+        src={isGenesis ? "/static/genesis-logo.svg" : "/static/hyundai-symbol.svg"}
         alt={isGenesis ? "Genesis" : "Hyundai"}
         sx={{
           height: height,
@@ -56,7 +56,7 @@ export const Logo: React.FC<LogoProps> = ({
     return (
       <Box
         component="img"
-        src={isGenesis ? "/assets/genesis-logo.svg" : "/static/hyundai-logo.svg"}
+        src={isGenesis ? "/static/genesis-logo.svg" : "/static/hyundai-logo.svg"}
         alt={isGenesis ? "Genesis" : "Hyundai"}
         sx={{
           height: height,

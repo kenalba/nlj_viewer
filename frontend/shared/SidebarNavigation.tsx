@@ -116,7 +116,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
     const isAdmin = canManageUsers(user);
     
     const items: SidebarItem[] = [
-      // Home
+      // Section 1: HOME, Dashboard (Analytics)
       {
         id: 'home',
         label: 'Home',
@@ -124,12 +124,18 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
         path: '/app/home'
       },
       {
+        id: 'dashboard',
+        label: 'Dashboard',
+        icon: <AnalyticsIcon />,
+        path: '/app/analytics'
+      },
+      {
         id: 'divider-content',
         label: '',
         icon: <></>,
         path: undefined
       },
-      // Content section
+      // Section 2: ACTIVITIES, SOURCES, MEDIA, GENERATION
       {
         id: 'activities',
         label: 'Activities',
@@ -147,50 +153,49 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
         label: 'Media',
         icon: <MediaIcon />,
         path: '/app/media'
-      },
-      {
-        id: 'training',
-        label: 'Training',
-        icon: <TrainingIcon />,
-        path: '/app/training'
       }
     ];
 
-    // Add creation/workflow section for users with appropriate roles
-    if (canEdit || canReview) {
+    // Add Generation for content creators
+    if (canEdit) {
       items.push({
-        id: 'divider-workflow',
-        label: '',
-        icon: <></>,
-        path: undefined
+        id: 'generation',
+        label: 'Generation',
+        icon: <GenerateIcon />,
+        path: '/app/generate'
       });
-      
-      // Add approvals for reviewers and approvers
-      if (canReview) {
-        items.push({
-          id: 'approvals',
-          label: 'Approvals',
-          icon: <ReviewIcon />,
-          path: '/app/approvals'
-        });
-      }
-      
-      // Add generation for content creators
-      if (canEdit) {
-        items.push({
-          id: 'generation',
-          label: 'Generation',
-          icon: <GenerateIcon />,
-          path: '/app/generate'
-        });
-      }
     }
 
-    // Add admin section for admin users
+    // Section 3: Approvals, Events (Training)
+    items.push({
+      id: 'divider-workflow',
+      label: '',
+      icon: <></>,
+      path: undefined
+    });
+
+    // Add approvals for reviewers and approvers
+    if (canReview) {
+      items.push({
+        id: 'approvals',
+        label: 'Approvals',
+        icon: <ReviewIcon />,
+        path: '/app/approvals'
+      });
+    }
+
+    items.push({
+      id: 'events',
+      label: 'Events',
+      icon: <TrainingIcon />,
+      path: '/app/training'
+    });
+
+    // Section 4: PEOPLE
     if (isAdmin) {
       items.push(
         {
-          id: 'divider-admin',
+          id: 'divider-people',
           label: '',
           icon: <></>,
           path: undefined
@@ -200,12 +205,6 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
           label: 'People',
           icon: <PeopleIcon />,
           path: '/app/people'
-        },
-        {
-          id: 'analytics',
-          label: 'Analytics',
-          icon: <AnalyticsIcon />,
-          path: '/app/analytics'
         }
       );
     }

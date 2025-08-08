@@ -145,24 +145,48 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ data }) =>
                 
                 if (dailyActivity && Array.isArray(dailyActivity) && dailyActivity.length > 0) {
                   // Ensure data has proper structure for the chart
-                  const chartData = dailyActivity.map(item => ({
-                    date: item.date,
-                    count: typeof item.count === 'number' ? item.count : 0
-                  }));
+                  const chartData = dailyActivity.map((item, index) => ({
+                    x: new Date(item.date).getTime(), // Convert to timestamp for proper rendering
+                    y: typeof item.count === 'number' && !isNaN(item.count) ? item.count : 0,
+                    label: new Date(item.date).toLocaleDateString()
+                  })).filter(item => !isNaN(item.x) && !isNaN(item.y));
                   
                   console.log('Chart data processed:', chartData);
+                  
+                  if (chartData.length === 0) {
+                    return (
+                      <Box sx={{ 
+                        height: 300, 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        bgcolor: 'grey.50',
+                        borderRadius: 1,
+                        border: '1px dashed',
+                        borderColor: 'grey.300'
+                      }}>
+                        <Typography variant="h6" color="grey.600" gutterBottom>
+                          Invalid Chart Data
+                        </Typography>
+                        <Typography color="text.secondary" textAlign="center">
+                          Unable to render chart due to invalid date/count values.
+                        </Typography>
+                      </Box>
+                    );
+                  }
                   
                   return (
                     <Box sx={{ height: 300, mt: 2 }}>
                       <LineChart
                         dataset={chartData}
                         xAxis={[{
-                          dataKey: 'date',
+                          dataKey: 'x',
                           scaleType: 'time',
                           valueFormatter: (value) => new Date(value).toLocaleDateString(),
                         }]}
                         series={[{
-                          dataKey: 'count',
+                          dataKey: 'y',
                           label: 'Daily Events',
                           color: '#2563eb',
                         }]}

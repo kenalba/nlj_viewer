@@ -29,26 +29,31 @@ import {
   Assessment as AssessmentIcon,
   TrendingUp as TrendingUpIcon,
   Timeline as TimelineIcon,
+  Star as StarIcon,
+  AutoAwesome as AIIcon,
+  Security as SecurityIcon,
 } from '@mui/icons-material';
 
 import { AnalyticsOverview } from '../components/analytics/AnalyticsOverview';
-import { LearnerAnalytics } from '../components/analytics/LearnerAnalytics';
-import { ActivityAnalytics } from '../components/analytics/ActivityAnalytics';
-import { TrendsInsights } from '../components/analytics/TrendsInsights';
+import { PeopleAnalytics } from '../components/analytics/PeopleAnalytics';
+import { ContentPerformance } from '../components/analytics/ContentPerformance';
+import { ComplianceDashboard } from '../components/analytics/ComplianceDashboard';
 import { AuditTrail } from '../components/analytics/AuditTrail';
 import { useAnalyticsData } from '../hooks/useAnalyticsData';
+import { useAuth } from '../contexts/AuthContext';
 
 const tabs = [
   { id: 'overview', label: 'Overview', icon: <BarChartIcon />, path: '/app/analytics/overview' },
-  { id: 'learners', label: 'Learner Analytics', icon: <PeopleIcon />, path: '/app/analytics/learners' },
-  { id: 'content', label: 'Content Analytics', icon: <AssessmentIcon />, path: '/app/analytics/content' },
-  { id: 'trends', label: 'Trends & Insights', icon: <TrendingUpIcon />, path: '/app/analytics/trends' },
+  { id: 'people', label: 'People Analytics', icon: <PeopleIcon />, path: '/app/analytics/people' },
+  { id: 'content', label: 'Content & Performance', icon: <AssessmentIcon />, path: '/app/analytics/content' },
+  { id: 'compliance', label: 'Compliance', icon: <SecurityIcon />, path: '/app/analytics/compliance' },
   { id: 'audit', label: 'Audit Trail', icon: <TimelineIcon />, path: '/app/analytics/audit' },
 ];
 
 const AnalyticsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const [timePeriod, setTimePeriod] = useState('7d');
 
   // Determine current tab based on URL
@@ -197,9 +202,9 @@ const AnalyticsPage: React.FC = () => {
       ) : (
         <Box>
           {currentTab.id === 'overview' && <AnalyticsOverview data={analyticsData} />}
-          {currentTab.id === 'learners' && <LearnerAnalytics />}
-          {currentTab.id === 'content' && <ActivityAnalytics />}
-          {currentTab.id === 'trends' && <TrendsInsights data={analyticsData} />}
+          {currentTab.id === 'people' && <PeopleAnalytics userId={user?.id} showAllUsers={user?.role === 'admin'} />}
+          {currentTab.id === 'content' && <ContentPerformance data={analyticsData} />}
+          {currentTab.id === 'compliance' && <ComplianceDashboard userId={user?.id} showAllUsers={user?.role === 'admin'} />}
           {currentTab.id === 'audit' && <AuditTrail />}
         </Box>
       )}
