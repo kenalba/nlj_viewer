@@ -8,13 +8,9 @@ import {
   Box,
   Typography,
   TextField,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
   Slider,
   FormGroup,
+  FormControlLabel,
   Checkbox,
   Card,
   CardContent,
@@ -26,21 +22,22 @@ import {
   DialogContent,
   DialogActions,
   Tooltip,
-  useTheme
+  useTheme,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails
 } from '@mui/material';
 import {
   Preview as PreviewIcon,
   FlashOn as PresetIcon,
-  Person as AudienceIcon,
-  Flag as ObjectiveIcon,
   Palette as StyleIcon,
   Speed as ComplexityIcon,
   Timeline as LengthIcon,
   Extension as AdvancedIcon,
-  Quiz as QuestionIcon,
   Edit as CustomIcon,
   School as BloomsIcon,
-  Help as HelpIcon
+  Help as HelpIcon,
+  ExpandMore as ExpandMoreIcon
 } from '@mui/icons-material';
 import type { SourceDocument } from '../../api/sources';
 import { 
@@ -53,7 +50,7 @@ interface PromptConfiguration {
   learning_objective: string;
   content_style: 'conversational' | 'formal' | 'gamified' | 'scenario_based';
   complexity_level: number;
-  scenario_length: number;
+  estimated_duration: number; // in minutes instead of node count
   include_variables: boolean;
   include_branching: boolean;
   node_types_enabled: Record<string, string[]>;
@@ -71,7 +68,7 @@ const defaultConfig: PromptConfiguration = {
   learning_objective: '',  
   content_style: 'conversational',
   complexity_level: 3,
-  scenario_length: 5,
+  estimated_duration: 5, // 5 minutes default
   include_variables: true,
   include_branching: false,
   node_types_enabled: {
@@ -151,32 +148,49 @@ export const PromptConfiguration: React.FC<PromptConfigurationProps> = ({
       game: [] as string[]
     };
     
-    // Remember/Understand: Basic question types
-    if (levels.some(l => ['Remember', 'Understand'].includes(l))) {
-      result.question.push('question', 'true_false'); // 'question' represents multiple choice
+    // Remember: Basic recall (fewest types)
+    if (levels.includes('Remember')) {
+      result.question.push('question', 'true_false');
     }
     
-    // Apply: Interactive and practical question types
-    if (levels.some(l => ['Apply'].includes(l))) {
-      result.question.push('ordering', 'checkbox');
+    // Understand: Comprehension (add more types)
+    if (levels.includes('Understand')) {
+      result.question.push('question', 'true_false', 'matching');
+      result.survey.push('multi_select');
     }
     
-    // Analyze: Complex interactions and matching
-    if (levels.some(l => ['Analyze'].includes(l))) {
-      result.question.push('matching');
+    // Apply: Practical application (build on understand)
+    if (levels.includes('Apply')) {
+      result.question.push('question', 'true_false', 'matching', 'ordering', 'checkbox');
+      result.survey.push('multi_select');
+      result.game.push('wordle');
+    }
+    
+    // Analyze: Complex analysis (specialized types)
+    if (levels.includes('Analyze')) {
+      result.question.push('matching', 'ordering');
+      result.survey.push('matrix');
       result.game.push('connections');
     }
     
-    // Evaluate: Assessment and judgment tasks
-    if (levels.some(l => ['Evaluate'].includes(l))) {
+    // Evaluate: Assessment and judgment (survey-focused)
+    if (levels.includes('Evaluate')) {
       result.question.push('short_answer');
+      result.survey.push('likert_scale', 'rating', 'slider', 'text_area');
     }
     
-    // Create: Complex games and open-ended tasks
-    if (levels.some(l => ['Create'].includes(l))) {
-      result.question.push('short_answer');
-      result.game.push('wordle'); // Word creation/building
+    // Create: Creative synthesis (most types, open-ended)
+    if (levels.includes('Create')) {
+      result.question.push('short_answer', 'ordering');
+      result.survey.push('text_area');
+      result.game.push('wordle');
     }
+    
+    // Remove duplicates from all arrays
+    result.structural = [...new Set(result.structural)];
+    result.question = [...new Set(result.question)];
+    result.survey = [...new Set(result.survey)];
+    result.game = [...new Set(result.game)];
     
     return result;
   };
@@ -185,34 +199,57 @@ export const PromptConfiguration: React.FC<PromptConfigurationProps> = ({
   const getBloomsLevelForNodeType = (nodeType: string): string | null => {
     if (config.blooms_levels.length === 0) return null;
     
-    // Remember/Understand
-    if (['question', 'true_false'].includes(nodeType) && 
-        config.blooms_levels.some(l => ['Remember', 'Understand'].includes(l))) {
-      return config.blooms_levels.find(l => ['Remember', 'Understand'].includes(l)) || null;
+    // Remember: Basic recall (fewest types)
+    if (['question', 'true_false'].includes(nodeType) && config.blooms_levels.includes('Remember')) {
+      return 'Remember';
     }
     
-    // Apply
-    if (['short_answer', 'ordering', 'likert_scale', 'rating'].includes(nodeType) && 
-        config.blooms_levels.includes('Apply')) {
+    // Understand: Comprehension (add more types)  
+    if (['question', 'true_false', 'matching'].includes(nodeType) && config.blooms_levels.includes('Understand')) {
+      return 'Understand';
+    }
+    if (['multi_select'].includes(nodeType) && config.blooms_levels.includes('Understand')) {
+      return 'Understand';
+    }
+    
+    // Apply: Practical application (build on understand)
+    if (['question', 'true_false', 'matching', 'ordering', 'checkbox'].includes(nodeType) && config.blooms_levels.includes('Apply')) {
+      return 'Apply';
+    }
+    if (['multi_select'].includes(nodeType) && config.blooms_levels.includes('Apply')) {
+      return 'Apply';
+    }
+    if (['wordle'].includes(nodeType) && config.blooms_levels.includes('Apply')) {
       return 'Apply';
     }
     
-    // Analyze
-    if (['matching', 'matrix', 'slider', 'connections'].includes(nodeType) && 
-        config.blooms_levels.includes('Analyze')) {
+    // Analyze: Complex analysis (specialized types)
+    if (['matching', 'ordering'].includes(nodeType) && config.blooms_levels.includes('Analyze')) {
+      return 'Analyze';
+    }
+    if (['matrix'].includes(nodeType) && config.blooms_levels.includes('Analyze')) {
+      return 'Analyze';
+    }
+    if (['connections'].includes(nodeType) && config.blooms_levels.includes('Analyze')) {
       return 'Analyze';
     }
     
-    // Evaluate
-    if (nodeType === 'text_area' && config.blooms_levels.includes('Evaluate')) {
+    // Evaluate: Assessment and judgment (survey-focused)
+    if (['short_answer'].includes(nodeType) && config.blooms_levels.includes('Evaluate')) {
+      return 'Evaluate';
+    }
+    if (['likert_scale', 'rating', 'slider', 'text_area'].includes(nodeType) && config.blooms_levels.includes('Evaluate')) {
       return 'Evaluate';
     }
     
-    // Create
-    if (['wordle'].includes(nodeType) && config.blooms_levels.includes('Create')) {
+    // Create: Creative synthesis (most types, open-ended)
+    if (['short_answer', 'ordering'].includes(nodeType) && config.blooms_levels.includes('Create')) {
       return 'Create';
     }
-    if (nodeType === 'text_area' && config.blooms_levels.includes('Create')) {
+    if (['text_area'].includes(nodeType) && config.blooms_levels.includes('Create')) {
+      return 'Create';
+    }
+    if (['wordle'].includes(nodeType) && config.blooms_levels.includes('Create')) {
       return 'Create';
     }
     
@@ -262,7 +299,7 @@ ${documents.map(doc => `- **${doc.original_filename}** (${doc.file_type.toUpperC
 - **Learning Objective**: ${config.learning_objective || 'To be determined based on source content'}
 - **Content Style**: ${config.content_style}
 - **Complexity Level**: ${config.complexity_level}/5
-- **Scenario Length**: ~${config.scenario_length} nodes
+- **Estimated Duration**: ${config.estimated_duration} minutes
 - **Include Variables**: ${config.include_variables ? 'Yes' : 'No'}
 - **Include Branching**: ${config.include_branching ? 'Yes' : 'No'}
 - **Target Bloom's Levels**: ${config.blooms_levels.length > 0 ? config.blooms_levels.join(', ') : 'All levels (no restriction)'}
@@ -295,6 +332,7 @@ Return the complete NLJ scenario as valid JSON following the schema documentatio
         audience_persona: 'Sales professionals and account managers',
         content_style: 'scenario_based' as const,
         complexity_level: 4,
+        estimated_duration: 10,
         include_branching: true,
         blooms_levels: ['Apply', 'Analyze', 'Evaluate']
       },
@@ -303,6 +341,7 @@ Return the complete NLJ scenario as valid JSON following the schema documentatio
         audience_persona: 'All employees requiring compliance certification',
         content_style: 'formal' as const,
         complexity_level: 2,
+        estimated_duration: 8,
         include_branching: false,
         blooms_levels: ['Remember', 'Understand']
       },
@@ -311,7 +350,7 @@ Return the complete NLJ scenario as valid JSON following the schema documentatio
         audience_persona: 'Learners seeking engaging knowledge assessment',
         content_style: 'gamified' as const,
         complexity_level: 3,
-        scenario_length: 8,
+        estimated_duration: 7,
         include_variables: true,
         blooms_levels: ['Apply', 'Analyze']
       }
@@ -329,368 +368,601 @@ Return the complete NLJ scenario as valid JSON following the schema documentatio
   };
 
   return (
-    <Box>
-      {/* Document context summary */}
-      <Alert severity="info" sx={{ mb: 3 }}>
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="body2">
-            Using {selectedDocuments.length} document{selectedDocuments.length !== 1 ? 's' : ''} as source material
+    <>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      {/* Quick Presets */}
+      <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+          <PresetIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary' }}>
+            Quick Presets
           </Typography>
-          <Box display="flex" gap={1}>
-            {selectedDocuments.slice(0, 3).map(doc => (
-              <Chip key={doc.id} label={doc.original_filename} size="small" />
-            ))}
-            {selectedDocuments.length > 3 && (
-              <Chip label={`+${selectedDocuments.length - 3} more`} size="small" />
-            )}
+        </Box>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Button
+              variant="outlined"
+              onClick={() => handlePresetSelect('sales_training')}
+              sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' } }}
+            >
+              Sales Training
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => handlePresetSelect('compliance_training')}
+              sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' } }}
+            >
+              Compliance Training
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => handlePresetSelect('interactive_quiz')}
+              sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' } }}
+            >
+              Interactive Quiz
+            </Button>
           </Box>
         </Box>
-      </Alert>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {/* Quick Presets */}
-        <Card>
-          <CardContent>
+        {/* Learning Design */}
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+            <StyleIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary' }}>
+              Learning Design
+            </Typography>
+          </Box>
+          
+          {/* Content Style - Full Row */}
+          <Box sx={{ mb: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <PresetIcon color="primary" sx={{ mr: 1.5 }} />
-              <Typography variant="h6">
-                Quick Presets
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                Content Style
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <Button
-                variant="outlined"
-                onClick={() => handlePresetSelect('sales_training')}
-                sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' } }}
-              >
-                Sales Training
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => handlePresetSelect('compliance_training')}
-                sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' } }}
-              >
-                Compliance Training
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => handlePresetSelect('interactive_quiz')}
-                sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' } }}
-              >
-                Interactive Quiz
-              </Button>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
+              {[
+                {
+                  value: 'conversational',
+                  title: 'Conversational',
+                  description: 'Natural, friendly tone with engaging dialogue'
+                },
+                {
+                  value: 'formal',
+                  title: 'Formal',
+                  description: 'Professional, structured presentation style'
+                },
+                {
+                  value: 'gamified',
+                  title: 'Gamified',
+                  description: 'Game-like elements with rewards and challenges'
+                },
+                {
+                  value: 'scenario_based',
+                  title: 'Scenario-Based',
+                  description: 'Real-world situations and case studies'
+                }
+              ].map((style) => {
+                const isSelected = config.content_style === style.value;
+                return (
+                  <Card
+                    key={style.value}
+                    variant="outlined"
+                    sx={{
+                      cursor: 'pointer',
+                      border: isSelected ? '2px solid' : '1px solid',
+                      borderColor: isSelected ? 'primary.main' : 'divider',
+                      backgroundColor: isSelected ? 'primary.50' : 'background.paper'
+                    }}
+                    onClick={() => updateConfig({ content_style: style.value as PromptConfiguration['content_style'] })}
+                  >
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                        {style.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                        {style.description}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </Box>
-          </CardContent>
-        </Card>
+          </Box>
 
-        {/* Configuration Row */}
-        <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', lg: 'row' } }}>
-          {/* Basic Configuration */}
-          <Card sx={{ flex: 2 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <AudienceIcon color="primary" sx={{ mr: 1.5 }} />
-                <Typography variant="h6">
-                  Basic Configuration
-                </Typography>
+          {/* Complexity & Duration Sliders Row */}
+          <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
+            {/* Complexity Level */}
+            <Box sx={{ flex: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <ComplexityIcon color="action" sx={{ mr: 1 }} />
+                <Typography gutterBottom>Complexity Level: {config.complexity_level || 3}/5</Typography>
               </Box>
-              
-              <Box mb={3}>
-                <TextField
-                  label="Target Audience"
-                  value={config.audience_persona || ''}
-                  onChange={(e) => updateConfig({ audience_persona: e.target.value })}
-                  placeholder="e.g., Sales professionals, New employees, Technical staff"
-                  fullWidth
-                  helperText="Describe who will be taking this learning activity"
-                  slotProps={{
-                    input: {
-                      startAdornment: <AudienceIcon color="action" sx={{ mr: 1 }} />
-                    }
-                  }}
-                />
+              <Slider
+                value={config.complexity_level || 3}
+                onChange={(_, value) => updateConfig({ complexity_level: value as number })}
+                step={1}
+                marks
+                min={1}
+                max={5}
+                valueLabelDisplay="auto"
+              />
+            </Box>
+            
+            {/* Estimated Duration */}
+            <Box sx={{ flex: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <LengthIcon color="action" sx={{ mr: 1 }} />
+                <Typography gutterBottom>Estimated Duration: {config.estimated_duration || 5} minutes</Typography>
               </Box>
-
-              <Box mb={3}>
-                <TextField
-                  label="Learning Objective"
-                  value={config.learning_objective || ''}
-                  onChange={(e) => updateConfig({ learning_objective: e.target.value })}
-                  placeholder="e.g., Understand product features, Learn compliance procedures"
-                  fullWidth
-                  multiline
-                  rows={2}
-                  helperText="What should learners accomplish after completing this activity?"
-                  slotProps={{
-                    input: {
-                      startAdornment: <ObjectiveIcon color="action" sx={{ mr: 1, alignSelf: 'flex-start', mt: 1 }} />
-                    }
-                  }}
-                />
-              </Box>
-
-              <FormControl component="fieldset" sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <StyleIcon color="action" sx={{ mr: 1 }} />
-                  <FormLabel>Content Style</FormLabel>
-                </Box>
-                <RadioGroup
-                  value={config.content_style || 'conversational'}
-                  onChange={(e) => updateConfig({ content_style: e.target.value as PromptConfiguration['content_style'] })}
-                  row
-                >
-                  <FormControlLabel value="conversational" control={<Radio />} label="Conversational" />
-                  <FormControlLabel value="formal" control={<Radio />} label="Formal" />
-                  <FormControlLabel value="gamified" control={<Radio />} label="Gamified" />
-                  <FormControlLabel value="scenario_based" control={<Radio />} label="Scenario-Based" />
-                </RadioGroup>
-              </FormControl>
-
-              <Box mb={3}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <ComplexityIcon color="action" sx={{ mr: 1 }} />
-                  <Typography gutterBottom>Complexity Level: {config.complexity_level || 3}/5</Typography>
-                </Box>
-                <Slider
-                  value={config.complexity_level || 3}
-                  onChange={(_, value) => updateConfig({ complexity_level: value as number })}
-                  step={1}
-                  marks
-                  min={1}
-                  max={5}
-                  valueLabelDisplay="auto"
-                />
-              </Box>
-
-              <Box mb={3}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <LengthIcon color="action" sx={{ mr: 1 }} />
-                  <Typography gutterBottom>Scenario Length: ~{config.scenario_length || 5} nodes</Typography>
-                </Box>
-                <Slider
-                  value={config.scenario_length || 5}
-                  onChange={(_, value) => updateConfig({ scenario_length: value as number })}
-                  step={1}
-                  marks
-                  min={3}
-                  max={15}
-                  valueLabelDisplay="auto"
-                />
-              </Box>
-            </CardContent>
-          </Card>
-
-          {/* Advanced Options */}
-          <Card sx={{ flex: 1 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <AdvancedIcon color="primary" sx={{ mr: 1.5 }} />
-                <Typography variant="h6">
-                  Advanced Options
-                </Typography>
-              </Box>
-
-              <FormGroup>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={config.include_variables ?? true}
-                      onChange={(e) => updateConfig({ include_variables: e.target.checked })}
-                    />
-                  }
-                  label="Include Variables"
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={config.include_branching ?? false}
-                      onChange={(e) => updateConfig({ include_branching: e.target.checked })}
-                    />
-                  }
-                  label="Include Branching Logic"
-                />
-              </FormGroup>
-            </CardContent>
-          </Card>
+              <Slider
+                value={config.estimated_duration || 5}
+                onChange={(_, value) => updateConfig({ estimated_duration: value as number })}
+                step={1}
+                marks={[
+                  { value: 1, label: '1m' },
+                  { value: 5, label: '5m' },
+                  { value: 10, label: '10m' },
+                  { value: 15, label: '15m' }
+                ]}
+                min={1}
+                max={15}
+                valueLabelDisplay="auto"
+              />
+            </Box>
+          </Box>
         </Box>
 
-        {/* Bloom's Taxonomy Reference */}
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <BloomsIcon color="primary" sx={{ mr: 1.5 }} />
-              <Typography variant="h6">
-                Learning Objectives (Bloom's Taxonomy)
+        {/* Cognitive Complexity (Bloom's Taxonomy) */}
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+            <BloomsIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary' }}>
+              Cognitive Level
+            </Typography>
+            <Tooltip title="Educational framework for categorizing learning goals from basic recall to creative synthesis">
+              <HelpIcon color="action" sx={{ ml: 1, fontSize: 18, cursor: 'help' }} />
+            </Tooltip>
+          </Box>
+          
+          {/* 2-Column Layout: Pyramid + Interactive Types */}
+          <Box sx={{ display: 'flex', gap: 4, flexDirection: { xs: 'column', lg: 'row' } }}>
+            {/* Left Column: Bloom's Taxonomy Pyramid */}
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="body2" gutterBottom sx={{ fontWeight: 600, mb: 2, color: 'text.secondary' }}>
+                Bloom's Taxonomy Levels
               </Typography>
-              <Tooltip title="Educational framework for learning objectives">
-                <HelpIcon color="action" sx={{ ml: 1, fontSize: 18 }} />
-              </Tooltip>
-            </Box>
-            
-            <Alert severity="info" sx={{ mb: 2 }}>
-              <Typography variant="body2">
-                Select cognitive levels to target. This automatically enables appropriate question types and interactions below.
-              </Typography>
-            </Alert>
-            
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 3 }}>
-              {[
-                { level: 'Remember', description: 'Recall facts, terms, basic concepts' },
-                { level: 'Understand', description: 'Explain ideas, summarize, classify' },
-                { level: 'Apply', description: 'Use knowledge in new situations' },
-                { level: 'Analyze', description: 'Break down, examine relationships' },
-                { level: 'Evaluate', description: 'Judge, critique, assess value' },
-                { level: 'Create', description: 'Build, design, compose new work' }
-              ].map((item) => {
-                const isSelected = config.blooms_levels.includes(item.level);
-                return (
-                  <Tooltip key={item.level} title={item.description}>
-                    <Chip
-                      label={item.level}
-                      clickable
-                      onClick={() => handleBloomsLevelToggle(item.level)}
-                      variant={isSelected ? 'filled' : 'outlined'}
-                      sx={{ 
-                        color: isSelected ? theme.palette.getContrastText(getBloomsLevelColor(item.level)) : getBloomsLevelColor(item.level),
-                        backgroundColor: isSelected ? getBloomsLevelColor(item.level) : 'transparent',
-                        borderColor: getBloomsLevelColor(item.level),
-                        '&:hover': { 
-                          backgroundColor: isSelected ? getBloomsLevelColor(item.level) : theme.palette.action.hover,
-                          opacity: 0.8
-                        }
-                      }}
-                    />
-                  </Tooltip>
-                );
-              })}
-            </Box>
-          </CardContent>
-        </Card>
-
-        {/* Node Types - Auto-expanded */}
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <QuestionIcon color="primary" sx={{ mr: 1.5 }} />
-              <Typography variant="h6">
-                Question Types & Interactions
-              </Typography>
-            </Box>
-            
-            <Alert severity="info" sx={{ mb: 3 }}>
-              <Typography variant="body2">
-                {config.blooms_levels.length > 0 
-                  ? 'Question types are automatically enabled based on your Bloom\'s level selection above. You can manually override any selection by checking/unchecking items below.'
-                  : 'Select Bloom\'s Taxonomy levels above to automatically enable appropriate question types, or manually select specific types below.'
-                }
-              </Typography>
-            </Alert>
-            
-            <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-              {Object.entries(getAllOptionalNodeTypesByCategory()).map(([category, nodeTypes]) => {
-                // Map category names to more descriptive labels
-                const categoryLabels: Record<string, string> = {
-                  structural: 'Content Panels',
-                  question: 'Question Types', 
-                  survey: 'Survey & Feedback',
-                  game: 'Interactive Games'
-                };
-                
-                return (
-                  <Box key={category} sx={{ minWidth: 200, flex: '1 1 200px' }}>
-                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
-                      {categoryLabels[category] || category}
-                    </Typography>
-                  <FormGroup>
-                    {nodeTypes.map(nodeType => {
-                      const isEnabled = config.node_types_enabled[category as keyof typeof config.node_types_enabled]?.includes(nodeType) || false;
-                      const isBloomsControlled = config.blooms_levels.length > 0;
-                      const enabledByBloomsLevel = getBloomsLevelForNodeType(nodeType);
-                      const isAutoEnabled = isBloomsControlled && enabledByBloomsLevel && isEnabled;
-                      
-                      return (
-                        <FormControlLabel
-                          key={nodeType}
-                          control={
-                            <Checkbox
-                              checked={isEnabled}
-                              onChange={(e) => updateNodeTypes(category as keyof typeof config.node_types_enabled, nodeType, e.target.checked)}
-                            />
-                          }
-                          label={
-                            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
-                              <Typography 
-                                variant="body2" 
-                                sx={{ 
-                                  color: isAutoEnabled ? 'inherit' : 'inherit',
-                                  fontWeight: isAutoEnabled ? 500 : 'inherit'
-                                }}
-                              >
-                                {nodeType === 'question' ? 'multiple choice' : nodeType.replace('_', ' ')}
-                              </Typography>
-                              {isAutoEnabled && enabledByBloomsLevel && (
-                                <Chip 
-                                  label={enabledByBloomsLevel} 
-                                  size="small" 
-                                  sx={{ 
-                                    height: 16, 
-                                    fontSize: '0.6rem',
-                                    backgroundColor: getBloomsLevelColor(enabledByBloomsLevel),
-                                    color: 'white',
-                                    '& .MuiChip-label': {
-                                      px: 0.5
-                                    }
-                                  }} 
-                                />
-                              )}
-                              {isEnabled && !isAutoEnabled && isBloomsControlled && (
-                                <Chip 
-                                  label="Manual" 
-                                  size="small" 
-                                  color="default"
-                                  variant="outlined"
-                                  sx={{ 
-                                    height: 16, 
-                                    fontSize: '0.6rem',
-                                    '& .MuiChip-label': {
-                                      px: 0.5
-                                    }
-                                  }} 
-                                />
-                              )}
-                            </Box>
-                          }
-                        />
-                      );
-                    })}
-                  </FormGroup>
+              
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
+                {/* Row 1: Create (top of pyramid) */}
+                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                  {[{ 
+                    level: 'Create', 
+                    description: 'Build something new',
+                    examples: 'Designs, plans, original solutions',
+                    complexity: 6
+                  }].map((item) => {
+                    const isSelected = config.blooms_levels.includes(item.level);
+                    return (
+                        <Box
+                          key={item.level}
+                          onClick={() => handleBloomsLevelToggle(item.level)}
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            width: 140,
+                            height: 65,
+                            p: 1.5,
+                            border: '2px solid',
+                            borderColor: isSelected ? getBloomsLevelColor(item.level) : 'divider',
+                            borderRadius: 2,
+                            backgroundColor: isSelected ? `${getBloomsLevelColor(item.level)}15` : 'background.paper',
+                            cursor: 'pointer',
+                            '&:hover': {
+                              backgroundColor: isSelected ? `${getBloomsLevelColor(item.level)}25` : 'action.hover'
+                            }
+                          }}
+                        >
+                          <Typography 
+                            variant="subtitle2" 
+                            sx={{ 
+                              fontWeight: 600,
+                              color: isSelected ? getBloomsLevelColor(item.level) : 'text.primary',
+                              textAlign: 'center',
+                              mb: 0.5
+                            }}
+                          >
+                            {item.level}
+                          </Typography>
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              color: 'text.secondary',
+                              textAlign: 'center',
+                              lineHeight: 1.2,
+                              fontSize: '0.7rem'
+                            }}
+                          >
+                            {item.description}
+                          </Typography>
+                        </Box>
+                    );
+                  })}
                 </Box>
-                );
-              })}
+
+                {/* Row 2: Analyze, Evaluate */}
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                  {[
+                    { 
+                      level: 'Analyze', 
+                      description: 'Break down relationships',
+                      examples: 'Categorization, root cause analysis, connections',
+                      complexity: 4
+                    },
+                    { 
+                      level: 'Evaluate', 
+                      description: 'Judge and assess',
+                      examples: 'Critiques, recommendations, justifications',
+                      complexity: 5
+                    }
+                  ].map((item) => {
+                    const isSelected = config.blooms_levels.includes(item.level);
+                    return (
+                        <Box
+                          key={item.level}
+                          onClick={() => handleBloomsLevelToggle(item.level)}
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            width: 140,
+                            height: 65,
+                            p: 1.5,
+                            border: '2px solid',
+                            borderColor: isSelected ? getBloomsLevelColor(item.level) : 'divider',
+                            borderRadius: 2,
+                            backgroundColor: isSelected ? `${getBloomsLevelColor(item.level)}15` : 'background.paper',
+                            cursor: 'pointer',
+                            '&:hover': {
+                              backgroundColor: isSelected ? `${getBloomsLevelColor(item.level)}25` : 'action.hover'
+                            }
+                          }}
+                        >
+                          <Typography 
+                            variant="subtitle2" 
+                            sx={{ 
+                              fontWeight: 600,
+                              color: isSelected ? getBloomsLevelColor(item.level) : 'text.primary',
+                              textAlign: 'center',
+                              mb: 0.5
+                            }}
+                          >
+                            {item.level}
+                          </Typography>
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              color: 'text.secondary',
+                              textAlign: 'center',
+                              lineHeight: 1.2,
+                              fontSize: '0.7rem'
+                            }}
+                          >
+                            {item.description}
+                          </Typography>
+                        </Box>
+                    );
+                  })}
+                </Box>
+
+                {/* Row 3: Remember, Understand, Apply (bottom of pyramid) */}
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                  {[
+                    { 
+                      level: 'Remember', 
+                      description: 'Recall facts and basics',
+                      examples: 'Definitions, lists, facts',
+                      complexity: 1 
+                    },
+                    { 
+                      level: 'Understand', 
+                      description: 'Explain and interpret',
+                      examples: 'Summaries, explanations, comparisons',
+                      complexity: 2
+                    },
+                    { 
+                      level: 'Apply', 
+                      description: 'Use in new situations',
+                      examples: 'Problem solving, demonstrations, calculations',
+                      complexity: 3
+                    }
+                  ].map((item) => {
+                    const isSelected = config.blooms_levels.includes(item.level);
+                    return (
+                        <Box
+                          key={item.level}
+                          onClick={() => handleBloomsLevelToggle(item.level)}
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            width: 140,
+                            height: 65,
+                            p: 1.5,
+                            border: '2px solid',
+                            borderColor: isSelected ? getBloomsLevelColor(item.level) : 'divider',
+                            borderRadius: 2,
+                            backgroundColor: isSelected ? `${getBloomsLevelColor(item.level)}15` : 'background.paper',
+                            cursor: 'pointer',
+                            '&:hover': {
+                              backgroundColor: isSelected ? `${getBloomsLevelColor(item.level)}25` : 'action.hover'
+                            }
+                          }}
+                        >
+                          <Typography 
+                            variant="subtitle2" 
+                            sx={{ 
+                              fontWeight: 600,
+                              color: isSelected ? getBloomsLevelColor(item.level) : 'text.primary',
+                              textAlign: 'center',
+                              mb: 0.5
+                            }}
+                          >
+                            {item.level}
+                          </Typography>
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              color: 'text.secondary',
+                              textAlign: 'center',
+                              lineHeight: 1.2,
+                              fontSize: '0.7rem'
+                            }}
+                          >
+                            {item.description}
+                          </Typography>
+                        </Box>
+                    );
+                  })}
+                </Box>
+              </Box>
             </Box>
-          </CardContent>
-        </Card>
+
+            {/* Right Column: Interactive Types Based on Selected Levels */}
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="body2" gutterBottom sx={{ fontWeight: 600, mb: 2, color: 'text.secondary' }}>
+                Enabled Question Types & Interactions
+              </Typography>
+              
+              {config.blooms_levels.length > 0 ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {Object.entries(config.node_types_enabled).map(([category, nodeTypes]) => {
+                    if (nodeTypes.length === 0) return null;
+                    
+                    const categoryLabels: Record<string, string> = {
+                      structural: 'Content Panels',
+                      question: 'Question Types', 
+                      survey: 'Survey & Feedback',
+                      game: 'Interactive Games'
+                    };
+                    
+                    return (
+                      <Box key={category}>
+                        <Typography variant="caption" gutterBottom sx={{ fontWeight: 500, color: 'text.secondary', display: 'block' }}>
+                          {categoryLabels[category] || category}
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
+                          {nodeTypes.map(nodeType => {
+                            const enabledByBloomsLevel = getBloomsLevelForNodeType(nodeType);
+                            return (
+                              <Chip 
+                                key={nodeType}
+                                label={nodeType === 'question' ? 'multiple choice' : nodeType.replace('_', ' ')}
+                                size="small"
+                                sx={{ 
+                                  backgroundColor: enabledByBloomsLevel ? getBloomsLevelColor(enabledByBloomsLevel) : 'default',
+                                  color: enabledByBloomsLevel ? (theme.palette.mode === 'dark' ? 'common.black' : 'common.white') : 'inherit',
+                                  fontWeight: enabledByBloomsLevel ? 500 : 'inherit',
+                                  '& .MuiChip-label': {
+                                    color: enabledByBloomsLevel ? (theme.palette.mode === 'dark' ? 'common.black' : 'common.white') : 'inherit'
+                                  }
+                                }}
+                              />
+                            );
+                          })}
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              ) : (
+                <Alert severity="info" sx={{ mt: 1 }}>
+                  <Typography variant="body2">
+                    Select Bloom's Taxonomy levels above to see which question types and interactions will be enabled for your activity.
+                  </Typography>
+                </Alert>
+              )}
+            </Box>
+          </Box>
+        </Box>
 
         {/* Custom Instructions */}
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <CustomIcon color="primary" sx={{ mr: 1.5 }} />
-              <Typography variant="h6">
-                Custom Instructions
-              </Typography>
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+            <CustomIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary' }}>
+              Custom Instructions
+            </Typography>
+          </Box>
+          <TextField
+            value={config.custom_instructions || ''}
+            onChange={(e) => updateConfig({ custom_instructions: e.target.value })}
+            placeholder="Optional: Provide additional context or requirements for content generation..."
+            fullWidth
+            multiline
+            rows={3}
+          />
+        </Box>
+
+        {/* Advanced Settings - Progressive Disclosure */}
+        <Accordion>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            aria-controls="advanced-settings-content"
+            id="advanced-settings-header"
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <AdvancedIcon color="action" sx={{ mr: 1, fontSize: 20 }} />
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary' }}>Advanced Settings</Typography>
             </Box>
-            <TextField
-              value={config.custom_instructions || ''}
-              onChange={(e) => updateConfig({ custom_instructions: e.target.value })}
-              placeholder="Add any specific requirements or instructions for the AI generation..."
-              fullWidth
-              multiline
-              rows={3}
-              helperText="Optional: Provide additional context or requirements for content generation"
-            />
-          </CardContent>
-        </Card>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              
+              {/* NLJ Features */}
+              <Box>
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+                  NLJ Features
+                </Typography>
+                <FormGroup>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={config.include_variables ?? true}
+                        onChange={(e) => updateConfig({ include_variables: e.target.checked })}
+                      />
+                    }
+                    label={
+                      <Box>
+                        <Typography variant="body2">Include Variables</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Enable variable tracking for personalized learning paths
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={config.include_branching ?? false}
+                        onChange={(e) => updateConfig({ include_branching: e.target.checked })}
+                      />
+                    }
+                    label={
+                      <Box>
+                        <Typography variant="body2">Include Branching Logic</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Enable conditional paths based on learner responses
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                </FormGroup>
+              </Box>
+
+              {/* Question Types & Interactions */}
+              <Box>
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+                  Question Types & Interactions
+                </Typography>
+                
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  <Typography variant="body2">
+                    {config.blooms_levels.length > 0 
+                      ? 'Question types are automatically enabled based on your Bloom\'s level selection above. You can manually override any selection by checking/unchecking items below.'
+                      : 'Select Bloom\'s Taxonomy levels above to automatically enable appropriate question types, or manually select specific types below.'
+                    }
+                  </Typography>
+                </Alert>
+                
+                <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                  {Object.entries(getAllOptionalNodeTypesByCategory()).map(([category, nodeTypes]) => {
+                    // Map category names to more descriptive labels
+                    const categoryLabels: Record<string, string> = {
+                      structural: 'Content Panels',
+                      question: 'Question Types', 
+                      survey: 'Survey & Feedback',
+                      game: 'Interactive Games'
+                    };
+                    
+                    return (
+                      <Box key={category} sx={{ minWidth: 200, flex: '1 1 200px' }}>
+                        <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+                          {categoryLabels[category] || category}
+                        </Typography>
+                      <FormGroup>
+                        {nodeTypes.map(nodeType => {
+                          const isEnabled = config.node_types_enabled[category as keyof typeof config.node_types_enabled]?.includes(nodeType) || false;
+                          const isBloomsControlled = config.blooms_levels.length > 0;
+                          const enabledByBloomsLevel = getBloomsLevelForNodeType(nodeType);
+                          const isAutoEnabled = isBloomsControlled && enabledByBloomsLevel && isEnabled;
+                          
+                          return (
+                            <FormControlLabel
+                              key={nodeType}
+                              control={
+                                <Checkbox
+                                  checked={isEnabled}
+                                  onChange={(e) => updateNodeTypes(category as keyof typeof config.node_types_enabled, nodeType, e.target.checked)}
+                                />
+                              }
+                              label={
+                                <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
+                                  <Typography 
+                                    variant="body2" 
+                                    sx={{ 
+                                      color: isAutoEnabled ? 'inherit' : 'inherit',
+                                      fontWeight: isAutoEnabled ? 500 : 'inherit'
+                                    }}
+                                  >
+                                    {nodeType === 'question' ? 'multiple choice' : nodeType.replace('_', ' ')}
+                                  </Typography>
+                                  {isAutoEnabled && enabledByBloomsLevel && (
+                                    <Chip 
+                                      label={enabledByBloomsLevel} 
+                                      size="small" 
+                                      sx={{ 
+                                        height: 16, 
+                                        fontSize: '0.6rem',
+                                        backgroundColor: getBloomsLevelColor(enabledByBloomsLevel),
+                                        color: theme.palette.mode === 'dark' ? 'common.black' : 'common.white',
+                                        '& .MuiChip-label': {
+                                          px: 0.5,
+                                          color: theme.palette.mode === 'dark' ? 'common.black' : 'common.white'
+                                        }
+                                      }} 
+                                    />
+                                  )}
+                                  {isEnabled && !isAutoEnabled && isBloomsControlled && (
+                                    <Chip 
+                                      label="Manual" 
+                                      size="small" 
+                                      color="default"
+                                      variant="outlined"
+                                      sx={{ 
+                                        height: 16, 
+                                        fontSize: '0.6rem',
+                                        '& .MuiChip-label': {
+                                          px: 0.5
+                                        }
+                                      }} 
+                                    />
+                                  )}
+                                </Box>
+                              }
+                            />
+                          );
+                        })}
+                      </FormGroup>
+                    </Box>
+                    );
+                  })}
+                </Box>
+              </Box>
+
+            </Box>
+          </AccordionDetails>
+        </Accordion>
 
         {/* Preview Button */}
         <Box display="flex" justifyContent="center">
@@ -734,6 +1006,6 @@ Return the complete NLJ scenario as valid JSON following the schema documentatio
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
