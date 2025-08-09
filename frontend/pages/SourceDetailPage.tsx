@@ -18,6 +18,8 @@ import {
   Stack,
   Paper,
   Grid,
+  TextField,
+  Tooltip,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -33,6 +35,8 @@ import {
   Tag as TagIcon,
   Preview as PreviewIcon,
   AudioFile as AudioFileIcon,
+  Check as CheckIcon,
+  Close as CancelIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -42,6 +46,7 @@ import {
   uploadToClaudeAPI,
   generateDocumentSummary,
   deleteSourceDocument,
+  updateSourceDocument,
   type SourceDocument 
 } from '../api/sources';
 import { apiClient } from '../api/client';
@@ -87,6 +92,8 @@ const SourceDetailPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
 
   // Extract ID from URL path since we're not using proper route parameters
   const pathSegments = window.location.pathname.split('/');
@@ -217,6 +224,19 @@ const SourceDetailPage: React.FC = () => {
     }, 120000);
   };
 
+  // Update document mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { extracted_title: string } }) => 
+      updateSourceDocument(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['source', id] });
+      setIsEditingTitle(false);
+    },
+    onError: (error) => {
+      console.error('Failed to update document:', error);
+    },
+  });
+
   // Delete document mutation
   const deleteMutation = useMutation({
     mutationFn: deleteSourceDocument,
@@ -236,6 +256,25 @@ const SourceDetailPage: React.FC = () => {
     if (window.confirm(`Are you sure you want to delete "${document.original_filename}"? This action cannot be undone.`)) {
       deleteMutation.mutate(document.id);
     }
+  };
+
+  const handleStartEditTitle = () => {
+    if (!document) return;
+    setEditedTitle(document.extracted_title || document.original_filename);
+    setIsEditingTitle(true);
+  };
+
+  const handleSaveTitle = () => {
+    if (!document || !editedTitle.trim()) return;
+    updateMutation.mutate({ 
+      id: document.id, 
+      data: { extracted_title: editedTitle.trim() } 
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingTitle(false);
+    setEditedTitle('');
   };
 
 
@@ -375,9 +414,60 @@ const SourceDetailPage: React.FC = () => {
           </Avatar>
           <Box sx={{ flexGrow: 1 }}>
             {/* Source Header - Line 1: Title */}
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-              {document.extracted_title || document.original_filename}
-            </Typography>
+            {isEditingTitle ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <TextField
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  autoFocus
+                  disabled={updateMutation.isPending}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSaveTitle();
+                    } else if (e.key === 'Escape') {
+                      handleCancelEdit();
+                    }
+                  }}
+                />
+                <Tooltip title="Save">
+                  <IconButton 
+                    onClick={handleSaveTitle}
+                    disabled={updateMutation.isPending || !editedTitle.trim()}
+                    size="small"
+                    color="primary"
+                  >
+                    {updateMutation.isPending ? <CircularProgress size={16} /> : <CheckIcon />}
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Cancel">
+                  <IconButton 
+                    onClick={handleCancelEdit}
+                    disabled={updateMutation.isPending}
+                    size="small"
+                  >
+                    <CancelIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            ) : (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, flexGrow: 1 }}>
+                  {document.extracted_title || document.original_filename}
+                </Typography>
+                <Tooltip title="Edit title">
+                  <IconButton 
+                    onClick={handleStartEditTitle}
+                    size="small"
+                    sx={{ opacity: 0.7, '&:hover': { opacity: 1 } }}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            )}
             {/* Source Header - Line 2: Details */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
               <Typography variant="body2" color="text.secondary">

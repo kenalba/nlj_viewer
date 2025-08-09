@@ -24,6 +24,7 @@ class SourceDocumentCreate(SourceDocumentBase):
 
 class SourceDocumentUpdate(BaseModel):
     """Schema for updating source document metadata."""
+    extracted_title: Optional[str] = Field(None, description="Updated extracted title")
     description: Optional[str] = Field(None, description="Updated description")
     tags: Optional[List[str]] = Field(None, description="Updated tags")
 

@@ -40,6 +40,7 @@ export interface User {
 
 export interface TokenResponse {
   access_token: string;
+  refresh_token?: string;
   token_type: string;
   expires_in: number;
   user: User;
@@ -84,6 +85,17 @@ export const authAPI = {
 
   async verifyToken(): Promise<{ message: string; user_id: string; username: string }> {
     const response = await apiClient.get('/api/auth/verify-token');
+    return response.data;
+  },
+
+  async refreshToken(): Promise<TokenResponse> {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
+    const response = await apiClient.post('/api/auth/refresh', { 
+      refresh_token: refreshToken 
+    });
     return response.data;
   },
 };

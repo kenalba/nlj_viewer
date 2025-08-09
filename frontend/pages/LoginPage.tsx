@@ -117,7 +117,16 @@ export const LoginPage: React.FC = () => {
           </Box>
 
           {/* Development Info */}
-          <Box mt={3} p={2} bgcolor="grey.100" borderRadius={1}>
+          <Box 
+            mt={3} 
+            p={2} 
+            sx={{
+              bgcolor: 'action.hover',
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 1,
+            }}
+          >
             <Typography variant="caption" color="text.secondary">
               <strong>Development Mode:</strong><br />
               Use backend registration endpoint to create accounts.<br />

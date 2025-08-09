@@ -276,6 +276,7 @@ class SourceDocumentService:
         self,
         document_id: uuid.UUID,
         user_id: uuid.UUID,
+        extracted_title: Optional[str] = None,
         description: Optional[str] = None,
         tags: Optional[List[str]] = None
     ) -> Optional[SourceDocument]:
@@ -284,6 +285,8 @@ class SourceDocumentService:
         if not document:
             return None
         
+        if extracted_title is not None:
+            document.extracted_title = extracted_title
         if description is not None:
             document.description = description
         if tags is not None:

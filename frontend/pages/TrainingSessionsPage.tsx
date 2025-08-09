@@ -313,7 +313,7 @@ const TrainingSessionsPage: React.FC = () => {
                     </Typography>
                     
                     {/* Session Date and Time */}
-                    <Box sx={{ mb: 2, p: 1.5, bgcolor: 'grey.100', borderRadius: 1, border: '1px solid', borderColor: 'grey.200' }}>
+                    <Box sx={{ mb: 2, p: 1.5, bgcolor: 'action.hover', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
                       <Typography variant="body2" fontWeight="medium" color="text.primary">
                         📅 {formatSessionDate(session.start_time)}
                       </Typography>
@@ -486,7 +486,7 @@ const TrainingSessionsPage: React.FC = () => {
 
                         {/* Session Date and Time */}
                         {session && (
-                          <Box sx={{ mb: 2, p: 1, bgcolor: 'grey.100', borderRadius: 1 }}>
+                          <Box sx={{ mb: 2, p: 1, bgcolor: 'action.hover', borderRadius: 1 }}>
                             <Typography variant="body2" fontWeight="medium">
                               📅 {formatSessionDate(session.start_time)}
                             </Typography>

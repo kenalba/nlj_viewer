@@ -162,14 +162,14 @@ export const FlowEdge = memo(({
               size="small"
               variant="filled"
               sx={{
-                backgroundColor: alpha('#fff', 0.9),
-                color: theme === 'hyundai' ? '#002c5f' : '#333',
+                backgroundColor: 'background.paper',
+                color: 'text.primary',
                 fontSize: '0.7rem',
                 height: 20,
                 fontWeight: 'bold',
                 border: `1px solid ${getEdgeColor()}`,
                 '&:hover': {
-                  backgroundColor: '#fff',
+                  backgroundColor: 'action.hover',
                 },
               }}
               icon={<ProbabilityIcon sx={{ fontSize: 12 }} />}
@@ -184,8 +184,8 @@ export const FlowEdge = memo(({
                 size="small"
                 variant="filled"
                 sx={{
-                  backgroundColor: alpha('#4A148C', 0.9), // Dark purple for branch conditions
-                  color: '#fff',
+                  backgroundColor: 'secondary.main',
+                  color: 'secondary.contrastText',
                   fontSize: '0.7rem',
                   height: 22,
                   maxWidth: 120,
@@ -212,8 +212,8 @@ export const FlowEdge = memo(({
                 size="small"
                 variant="outlined"
                 sx={{
-                  backgroundColor: alpha('#fff', 0.9),
-                  color: theme === 'hyundai' ? '#002c5f' : '#333',
+                  backgroundColor: 'background.paper',
+                  color: 'text.primary',
                   fontSize: '0.6rem',
                   height: 18,
                   minWidth: 18,
@@ -231,12 +231,12 @@ export const FlowEdge = memo(({
               size="small"
               onClick={handleMenuClick}
               sx={{
-                backgroundColor: alpha('#fff', 0.9),
-                color: theme === 'hyundai' ? '#002c5f' : '#333',
+                backgroundColor: 'background.paper',
+                color: 'text.primary',
                 width: 20,
                 height: 20,
                 '&:hover': {
-                  backgroundColor: '#fff',
+                  backgroundColor: 'action.hover',
                 },
               }}
             >

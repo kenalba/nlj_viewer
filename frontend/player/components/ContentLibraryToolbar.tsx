@@ -77,7 +77,7 @@ export const ContentLibraryToolbar = React.memo(({
     <Box
       sx={{ 
         p: 2, 
-        backgroundColor: 'grey.50', 
+        backgroundColor: 'background.paper', 
         borderBottom: 1, 
         borderColor: 'divider',
         display: 'flex',

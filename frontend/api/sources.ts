@@ -60,6 +60,7 @@ export interface CreateSourceRequest {
 }
 
 export interface UpdateSourceRequest {
+  extracted_title?: string;
   description?: string;
   tags?: string[];
 }
@@ -126,7 +127,7 @@ export const updateSourceDocument = async (
   id: string, 
   request: UpdateSourceRequest
 ): Promise<SourceDocument> => {
-  const response = await apiClient.patch(`/api/sources/${id}`, request);
+  const response = await apiClient.put(`/api/sources/${id}`, request);
   return response.data;
 };
 

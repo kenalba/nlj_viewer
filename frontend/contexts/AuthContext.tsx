@@ -37,6 +37,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     error: null,
   });
 
+  // Proactive token refresh
+  useEffect(() => {
+    const refreshInterval = setInterval(async () => {
+      const token = localStorage.getItem('access_token');
+      const refreshToken = localStorage.getItem('refresh_token');
+      
+      if (token && refreshToken && state.isAuthenticated) {
+        try {
+          // Attempt to refresh token proactively
+          await authAPI.refreshToken();
+          console.log('Token refreshed proactively');
+        } catch (error) {
+          console.log('Proactive token refresh failed:', error);
+          // Don't logout here - let the API interceptor handle it
+        }
+      }
+    }, 10 * 60 * 1000); // Refresh every 10 minutes
+
+    return () => clearInterval(refreshInterval);
+  }, [state.isAuthenticated]);
+
+  // Handle automatic logout from API interceptor
+  useEffect(() => {
+    const handleAuthLogout = (event: CustomEvent) => {
+      console.log('Auth logout event received:', event.detail);
+      setState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null,
+      });
+      // Just clear the auth state - AppRouter will handle the redirect
+    };
+
+    window.addEventListener('auth:logout', handleAuthLogout as EventListener);
+    
+    return () => {
+      window.removeEventListener('auth:logout', handleAuthLogout as EventListener);
+    };
+  }, []);
+
   // Initialize auth state from localStorage
   useEffect(() => {
     const initializeAuth = async () => {
@@ -58,6 +99,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } catch (error) {
           // Token invalid, clear stored data
           localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
           localStorage.removeItem('user');
           setState({
             user: null,
@@ -87,6 +129,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Store token and user data
       localStorage.setItem('access_token', response.access_token);
+      if (response.refresh_token) {
+        localStorage.setItem('refresh_token', response.refresh_token);
+      }
       localStorage.setItem('user', JSON.stringify(response.user));
 
       setState({
@@ -124,6 +169,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     
     setState({

@@ -258,6 +258,7 @@ async def update_source_document(
     document = await service.update_document_metadata(
         document_id=document_id,
         user_id=current_user.id,
+        extracted_title=update_data.extracted_title,
         description=update_data.description,
         tags=update_data.tags
     )

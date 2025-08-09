@@ -14,7 +14,7 @@ import {
   MenuItem,
   Tooltip,
   Stack,
-  alpha,
+  useTheme,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -51,7 +51,7 @@ const CustomHandle = memo(({
       width: 8,
       height: 8,
       backgroundColor: type === 'source' ? '#4CAF50' : '#2196F3',
-      border: '2px solid #fff',
+      border: '2px solid currentColor',
       borderRadius: '50%',
     }}
   />
@@ -109,9 +109,11 @@ export const FlowNode = memo(({
     return theme === 'hyundai' ? '#002c5f' : '#666';
   };
 
-  // Always use white text for better readability
+  // Use theme-appropriate text color for readability on colored backgrounds
+  const muiTheme = useTheme();
   const getTextColor = () => {
-    return '#ffffff';
+    // Always use white text on colored node backgrounds for maximum readability
+    return muiTheme.palette.common.white;
   };
 
   // Get node border color
@@ -119,7 +121,7 @@ export const FlowNode = memo(({
     if (selected) {
       return theme === 'hyundai' ? '#00aad2' : '#2196F3';
     }
-    return alpha(getNodeColor(), 0.3);
+    return muiTheme.palette.divider;
   };
 
   // Get connection handles configuration
@@ -197,7 +199,7 @@ export const FlowNode = memo(({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            backgroundColor: alpha('#000', 0.1),
+            backgroundColor: 'action.hover',
             borderRadius: theme === 'hyundai' ? '2px 2px 0 0' : '6px 6px 0 0',
           }}
         >
@@ -205,7 +207,7 @@ export const FlowNode = memo(({
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               {nodeIcon}
             </Box>
-            <Typography variant="caption" fontWeight="bold">
+            <Typography variant="caption" fontWeight="bold" sx={{ color: getTextColor() }}>
               {nodeTypeInfo?.label || nodeData?.nodeType || 'Unknown'}
             </Typography>
           </Stack>
@@ -249,7 +251,7 @@ export const FlowNode = memo(({
                 '& *': { 
                   fontSize: '0.7rem !important',
                   lineHeight: '1.2 !important',
-                  color: `${alpha(getTextColor(), 0.9)} !important`,
+                  color: getTextColor(),
                   textShadow: '0 1px 2px rgba(0,0,0,0.3)',
                   margin: '0 !important',
                   padding: '0 !important',
@@ -280,7 +282,7 @@ export const FlowNode = memo(({
                 variant="outlined"
                 sx={{ 
                   color: 'inherit',
-                  borderColor: alpha(getTextColor(), 0.3),
+                  borderColor: 'divider',
                   fontSize: '0.7rem',
                   height: 20,
                 }}
@@ -294,7 +296,7 @@ export const FlowNode = memo(({
                 variant="outlined"
                 sx={{ 
                   color: 'inherit',
-                  borderColor: alpha(getTextColor(), 0.3),
+                  borderColor: 'divider',
                   fontSize: '0.7rem',
                   height: 20,
                 }}
@@ -314,7 +316,7 @@ export const FlowNode = memo(({
                 variant="outlined"
                 sx={{ 
                   color: 'inherit',
-                  borderColor: alpha(getTextColor(), 0.3),
+                  borderColor: 'divider',
                   fontSize: '0.7rem',
                   height: 20,
                 }}
@@ -339,7 +341,7 @@ export const FlowNode = memo(({
               justifyContent: 'center',
             }}
           >
-            <StartIcon sx={{ fontSize: 10, color: '#fff' }} />
+            <StartIcon sx={{ fontSize: 10, color: muiTheme.palette.common.white }} />
           </Box>
         )}
         
@@ -358,7 +360,7 @@ export const FlowNode = memo(({
               justifyContent: 'center',
             }}
           >
-            <EndIcon sx={{ fontSize: 10, color: '#fff' }} />
+            <EndIcon sx={{ fontSize: 10, color: muiTheme.palette.common.white }} />
           </Box>
         )}
       </Paper>
