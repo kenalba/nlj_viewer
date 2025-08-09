@@ -36,7 +36,24 @@ import {
   RecordVoiceOver as InterviewIcon,
   School as EducationalIcon,
   Forum as DiscussionIcon,
-  Engineering as TechnicalIcon
+  Engineering as TechnicalIcon,
+  Tag as TagIcon,
+  Psychology as ObjectiveIcon,
+  Person as PersonIcon,
+  Add as AddIcon,
+  Check as CheckIcon,
+  Close as CloseIcon,
+  Edit as EditIcon,
+  Quiz as AssessmentIcon,
+  Poll as SurveyIcon,
+  SportsEsports as GamesIcon,
+  Psychology as SimulationIcon,
+  Slideshow as PresentationIcon,
+  Analytics as ReportIcon,
+  MenuBook as CourseIcon,
+  VideoLibrary as VideoIcon,
+  Summarize as SummaryIcon,
+  HourglassEmpty as ComingSoonIcon
 } from '@mui/icons-material';
 import { SourceLibrarySelection } from '../components/content-studio/SourceLibrarySelection';
 import { PromptConfiguration } from '../components/content-studio/PromptConfiguration';
@@ -52,7 +69,18 @@ interface ContentGenerationState {
   selectedDocuments: SourceDocument[];
   selectedKeywords: string[];
   selectedObjectives: string[];
-  contentType: 'activity' | 'media' | null;
+  selectedAudiences: string[];
+  customKeywords: string[];
+  customObjectives: string[];
+  customAudiences: string[];
+  editingKeyword: boolean;
+  editingObjective: boolean;
+  editingAudience: boolean;
+  newKeywordValue: string;
+  newObjectiveValue: string;
+  newAudienceValue: string;
+  contentCategory: 'interactive' | 'media' | 'reports' | null;
+  contentType: 'activity' | 'assessment' | 'survey' | 'game' | 'simulation' | 'podcast' | 'video' | 'presentation' | 'report' | 'summary' | 'course' | null;
   mediaType: 'podcast' | 'video';
   podcastStyle: string;
   podcastLength: string;
@@ -118,6 +146,17 @@ export const ContentGenerationPage: React.FC = () => {
     selectedDocuments: [],
     selectedKeywords: [],
     selectedObjectives: [],
+    selectedAudiences: [],
+    customKeywords: [],
+    customObjectives: [],
+    customAudiences: [],
+    editingKeyword: false,
+    editingObjective: false,
+    editingAudience: false,
+    newKeywordValue: '',
+    newObjectiveValue: '',
+    newAudienceValue: '',
+    contentCategory: null,
     contentType: null,
     mediaType: 'podcast',
     podcastStyle: 'npr_interview',
@@ -157,16 +196,41 @@ export const ContentGenerationPage: React.FC = () => {
     }
   }, [location.search, state.selectedDocuments.length]);
 
-  // Extract all keywords and objectives from selected documents
+  // Extract all keywords and objectives from selected documents + custom ones
   const availableKeywords = useMemo(() => {
     const allKeywords = state.selectedDocuments.flatMap(doc => doc.keywords || []);
-    return [...new Set(allKeywords)]; // Remove duplicates
-  }, [state.selectedDocuments]);
+    const allCombined = [...allKeywords, ...state.customKeywords];
+    return [...new Set(allCombined)]; // Remove duplicates
+  }, [state.selectedDocuments, state.customKeywords]);
 
   const availableObjectives = useMemo(() => {
     const allObjectives = state.selectedDocuments.flatMap(doc => doc.learning_objectives || []);
-    return [...new Set(allObjectives)]; // Remove duplicates
-  }, [state.selectedDocuments]);
+    const allCombined = [...allObjectives, ...state.customObjectives];
+    return [...new Set(allCombined)]; // Remove duplicates
+  }, [state.selectedDocuments, state.customObjectives]);
+
+  const availableAudiences = useMemo(() => {
+    // Parse target_audience strings into individual audiences
+    const allAudiences = state.selectedDocuments.flatMap(doc => {
+      if (!doc.target_audience) return [];
+      
+      // Split by common separators and clean up
+      return doc.target_audience
+        .split(/[,;|&\n]|and\s+|or\s+/i) // Split by comma, semicolon, pipe, ampersand, newlines, "and", "or"
+        .map(audience => audience.trim()) // Remove whitespace
+        .filter(audience => audience.length > 2) // Filter out very short strings
+        .map(audience => {
+          // Clean up common prefixes/suffixes
+          audience = audience.replace(/^(for\s+|to\s+|targeting\s+)/i, '');
+          audience = audience.replace(/\s+(users|people|individuals|learners|students|employees|staff)$/i, '');
+          // Capitalize first letter
+          return audience.charAt(0).toUpperCase() + audience.slice(1);
+        });
+    });
+    
+    const allCombined = [...allAudiences, ...state.customAudiences];
+    return [...new Set(allCombined)]; // Remove duplicates
+  }, [state.selectedDocuments, state.customAudiences]);
 
   // Document selection handler
   const handleDocumentSelection = (documents: SourceDocument[]) => {
@@ -195,6 +259,15 @@ export const ContentGenerationPage: React.FC = () => {
     }
   }, [availableObjectives]);
 
+  useEffect(() => {
+    if (availableAudiences.length > 0 && state.selectedAudiences.length === 0) {
+      setState(prev => ({
+        ...prev,
+        selectedAudiences: availableAudiences.slice(0, 2) // Usually 1-2 distinct audiences
+      }));
+    }
+  }, [availableAudiences]);
+
   const handlePromptConfiguration = useCallback((config: any) => {
     console.log('🔧 Prompt configuration updated:', {
       audience: config.audience_persona ? 'set' : 'empty',
@@ -222,8 +295,8 @@ export const ContentGenerationPage: React.FC = () => {
       return;
     }
 
-    // For media generation, generate transcript first
-    if (state.contentType === 'media' && state.mediaType === 'podcast') {
+    // For podcast generation, generate transcript first
+    if (state.contentType === 'podcast') {
       console.log('🎙️ Starting podcast transcript generation...');
       setState(prev => ({ ...prev, generationStatus: 'generating', error: null }));
 
@@ -444,120 +517,487 @@ export const ContentGenerationPage: React.FC = () => {
 
   const canProceedToGeneration = () => {
     if (state.selectedDocuments.length === 0) return false;
-    // Content type must be selected first
-    if (state.contentType === null) return false;
+    // Both category and content type must be selected
+    if (state.contentCategory === null || state.contentType === null) return false;
+    
+    // Only implemented content types can proceed to generation
+    if (!isContentTypeImplemented(state.contentType)) return false;
     
     // For activity generation, require prompt config
     if (state.contentType === 'activity') {
       return state.promptConfig !== null;
     }
-    // For media generation, just need documents
-    if (state.contentType === 'media') {
+    // For podcast generation, just need documents
+    if (state.contentType === 'podcast') {
       return true;
     }
-    return false;
+    // Other implemented types are ready
+    return true;
   };
 
 
-  // Render Focus section (keywords and objectives)
+  // Render Focus section (audience, keywords and objectives)
   const renderFocusSection = () => (
     <Card>
       <CardContent>
-        <Box sx={{ mb: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <TagIcon color="primary" sx={{ mr: 1.5 }} />
           <Typography variant="h6">
             2. Focus & Objectives
           </Typography>
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Choose keywords and learning objectives to focus your content generation. These will guide the AI to create more targeted and relevant content.
+          Define your target audience, choose keywords, and set learning objectives to focus your content generation. These will guide the AI to create more targeted and relevant content.
         </Typography>
         
-        {availableKeywords.length === 0 && availableObjectives.length === 0 ? (
+        {availableKeywords.length === 0 && availableObjectives.length === 0 && availableAudiences.length === 0 ? (
           <Alert severity="info">
-            No keywords or learning objectives found in selected documents. You can proceed to the next step.
+            No audience, keywords, or learning objectives found in selected documents. You can proceed to the next step.
           </Alert>
         ) : (
           <Stack spacing={3}>
-            {availableKeywords.length > 0 && (
+            {/* Target Audience Section */}
+            {(availableAudiences.length > 0 || state.selectedDocuments.length > 0) && (
               <Box>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-                  Focus Keywords ({state.selectedKeywords.length} selected)
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <PersonIcon sx={{ fontSize: 20 }} />
+                  Target Audience ({state.selectedAudiences.length} selected)
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {availableKeywords.map((keyword) => (
+                  {availableAudiences.map((audience) => {
+                    const isCustom = state.customAudiences.includes(audience);
+                    return (
+                      <Paper 
+                        key={audience} 
+                        variant="outlined" 
+                        sx={{ 
+                          py: 0.75,
+                          px: 1.5,
+                          cursor: 'pointer',
+                          bgcolor: state.selectedAudiences.includes(audience) ? 'primary.light' : 'background.paper',
+                          borderColor: state.selectedAudiences.includes(audience) ? 'primary.main' : 'divider',
+                          '&:hover': { 
+                            bgcolor: state.selectedAudiences.includes(audience) ? 'primary.light' : 'action.hover'
+                          }
+                        }}
+                        onClick={() => setState(prev => ({
+                          ...prev,
+                          selectedAudiences: prev.selectedAudiences.includes(audience)
+                            ? prev.selectedAudiences.filter(a => a !== audience)
+                            : [...prev.selectedAudiences, audience]
+                        }))}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              color: state.selectedAudiences.includes(audience) ? 'primary.contrastText' : 'text.primary',
+                              fontWeight: state.selectedAudiences.includes(audience) ? 600 : 400,
+                              fontSize: '0.875rem'
+                            }}
+                          >
+                            {audience}
+                          </Typography>
+                          {isCustom && (
+                            <CloseIcon
+                              sx={{ 
+                                fontSize: 16,
+                                color: state.selectedAudiences.includes(audience) ? 'primary.contrastText' : 'text.secondary',
+                                cursor: 'pointer'
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setState(prev => ({
+                                  ...prev,
+                                  customAudiences: prev.customAudiences.filter(a => a !== audience),
+                                  selectedAudiences: prev.selectedAudiences.filter(a => a !== audience)
+                                }));
+                              }}
+                            />
+                          )}
+                        </Box>
+                      </Paper>
+                    );
+                  })}
+                  
+                  {/* Add Custom Audience */}
+                  {state.editingAudience ? (
+                    <Paper variant="outlined" sx={{ p: 0.5, minWidth: 150 }}>
+                      <TextField
+                        size="small"
+                        value={state.newAudienceValue}
+                        onChange={(e) => setState(prev => ({ ...prev, newAudienceValue: e.target.value }))}
+                        placeholder="e.g., Sales professionals, New employees"
+                        variant="standard"
+                        InputProps={{
+                          disableUnderline: true,
+                          endAdornment: (
+                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                              <CheckIcon
+                                sx={{ fontSize: 16, cursor: 'pointer', color: 'success.main' }}
+                                onClick={() => {
+                                  if (state.newAudienceValue.trim()) {
+                                    setState(prev => ({
+                                      ...prev,
+                                      customAudiences: [...prev.customAudiences, prev.newAudienceValue.trim()],
+                                      selectedAudiences: [...prev.selectedAudiences, prev.newAudienceValue.trim()],
+                                      editingAudience: false,
+                                      newAudienceValue: ''
+                                    }));
+                                  }
+                                }}
+                              />
+                              <CloseIcon
+                                sx={{ fontSize: 16, cursor: 'pointer', color: 'error.main' }}
+                                onClick={() => setState(prev => ({ 
+                                  ...prev, 
+                                  editingAudience: false, 
+                                  newAudienceValue: '' 
+                                }))}
+                              />
+                            </Box>
+                          )
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && state.newAudienceValue.trim()) {
+                            setState(prev => ({
+                              ...prev,
+                              customAudiences: [...prev.customAudiences, prev.newAudienceValue.trim()],
+                              selectedAudiences: [...prev.selectedAudiences, prev.newAudienceValue.trim()],
+                              editingAudience: false,
+                              newAudienceValue: ''
+                            }));
+                          } else if (e.key === 'Escape') {
+                            setState(prev => ({ 
+                              ...prev, 
+                              editingAudience: false, 
+                              newAudienceValue: '' 
+                            }));
+                          }
+                        }}
+                        sx={{ minWidth: 180 }}
+                        autoFocus
+                      />
+                    </Paper>
+                  ) : (
                     <Paper 
-                      key={keyword} 
                       variant="outlined" 
                       sx={{ 
                         py: 0.75,
                         px: 1.5,
                         cursor: 'pointer',
-                        bgcolor: state.selectedKeywords.includes(keyword) ? 'primary.light' : 'background.paper',
-                        borderColor: state.selectedKeywords.includes(keyword) ? 'primary.main' : 'divider',
+                        bgcolor: 'action.hover',
+                        borderStyle: 'dashed',
                         '&:hover': { 
-                          bgcolor: state.selectedKeywords.includes(keyword) ? 'primary.light' : 'action.hover'
+                          bgcolor: 'action.selected'
                         }
                       }}
-                      onClick={() => setState(prev => ({
-                        ...prev,
-                        selectedKeywords: prev.selectedKeywords.includes(keyword)
-                          ? prev.selectedKeywords.filter(k => k !== keyword)
-                          : [...prev.selectedKeywords, keyword]
-                      }))}
+                      onClick={() => setState(prev => ({ ...prev, editingAudience: true }))}
                     >
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          color: state.selectedKeywords.includes(keyword) ? 'primary.contrastText' : 'text.primary',
-                          fontWeight: state.selectedKeywords.includes(keyword) ? 600 : 400,
-                          fontSize: '0.875rem'
-                        }}
-                      >
-                        {keyword}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <AddIcon sx={{ fontSize: 16 }} />
+                        <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                          Add Audience
+                        </Typography>
+                      </Box>
                     </Paper>
-                  ))}
+                  )}
                 </Box>
               </Box>
             )}
 
-            {availableObjectives.length > 0 && (
+            {(availableKeywords.length > 0 || state.selectedDocuments.length > 0) && (
+              <Box>
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+                  Focus Keywords ({state.selectedKeywords.length} selected)
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {availableKeywords.map((keyword) => {
+                    const isCustom = state.customKeywords.includes(keyword);
+                    return (
+                      <Paper 
+                        key={keyword} 
+                        variant="outlined" 
+                        sx={{ 
+                          py: 0.75,
+                          px: 1.5,
+                          cursor: 'pointer',
+                          bgcolor: state.selectedKeywords.includes(keyword) ? 'primary.light' : 'background.paper',
+                          borderColor: state.selectedKeywords.includes(keyword) ? 'primary.main' : 'divider',
+                          '&:hover': { 
+                            bgcolor: state.selectedKeywords.includes(keyword) ? 'primary.light' : 'action.hover'
+                          }
+                        }}
+                        onClick={() => setState(prev => ({
+                          ...prev,
+                          selectedKeywords: prev.selectedKeywords.includes(keyword)
+                            ? prev.selectedKeywords.filter(k => k !== keyword)
+                            : [...prev.selectedKeywords, keyword]
+                        }))}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              color: state.selectedKeywords.includes(keyword) ? 'primary.contrastText' : 'text.primary',
+                              fontWeight: state.selectedKeywords.includes(keyword) ? 600 : 400,
+                              fontSize: '0.875rem'
+                            }}
+                          >
+                            {keyword}
+                          </Typography>
+                          {isCustom && (
+                            <CloseIcon
+                              sx={{ 
+                                fontSize: 16,
+                                color: state.selectedKeywords.includes(keyword) ? 'primary.contrastText' : 'text.secondary',
+                                cursor: 'pointer'
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setState(prev => ({
+                                  ...prev,
+                                  customKeywords: prev.customKeywords.filter(k => k !== keyword),
+                                  selectedKeywords: prev.selectedKeywords.filter(k => k !== keyword)
+                                }));
+                              }}
+                            />
+                          )}
+                        </Box>
+                      </Paper>
+                    );
+                  })}
+                  
+                  {/* Add Custom Keyword */}
+                  {state.editingKeyword ? (
+                    <Paper variant="outlined" sx={{ p: 0.5, minWidth: 150 }}>
+                      <TextField
+                        size="small"
+                        value={state.newKeywordValue}
+                        onChange={(e) => setState(prev => ({ ...prev, newKeywordValue: e.target.value }))}
+                        placeholder="Enter keyword..."
+                        variant="standard"
+                        InputProps={{
+                          disableUnderline: true,
+                          endAdornment: (
+                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                              <CheckIcon
+                                sx={{ fontSize: 16, cursor: 'pointer', color: 'success.main' }}
+                                onClick={() => {
+                                  if (state.newKeywordValue.trim()) {
+                                    setState(prev => ({
+                                      ...prev,
+                                      customKeywords: [...prev.customKeywords, prev.newKeywordValue.trim()],
+                                      selectedKeywords: [...prev.selectedKeywords, prev.newKeywordValue.trim()],
+                                      editingKeyword: false,
+                                      newKeywordValue: ''
+                                    }));
+                                  }
+                                }}
+                              />
+                              <CloseIcon
+                                sx={{ fontSize: 16, cursor: 'pointer', color: 'error.main' }}
+                                onClick={() => setState(prev => ({ 
+                                  ...prev, 
+                                  editingKeyword: false, 
+                                  newKeywordValue: '' 
+                                }))}
+                              />
+                            </Box>
+                          )
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && state.newKeywordValue.trim()) {
+                            setState(prev => ({
+                              ...prev,
+                              customKeywords: [...prev.customKeywords, prev.newKeywordValue.trim()],
+                              selectedKeywords: [...prev.selectedKeywords, prev.newKeywordValue.trim()],
+                              editingKeyword: false,
+                              newKeywordValue: ''
+                            }));
+                          } else if (e.key === 'Escape') {
+                            setState(prev => ({ 
+                              ...prev, 
+                              editingKeyword: false, 
+                              newKeywordValue: '' 
+                            }));
+                          }
+                        }}
+                        sx={{ minWidth: 120 }}
+                        autoFocus
+                      />
+                    </Paper>
+                  ) : (
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        py: 0.75,
+                        px: 1.5,
+                        cursor: 'pointer',
+                        bgcolor: 'action.hover',
+                        borderStyle: 'dashed',
+                        '&:hover': { 
+                          bgcolor: 'action.selected'
+                        }
+                      }}
+                      onClick={() => setState(prev => ({ ...prev, editingKeyword: true }))}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <AddIcon sx={{ fontSize: 16 }} />
+                        <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                          Add Keyword
+                        </Typography>
+                      </Box>
+                    </Paper>
+                  )}
+                </Box>
+              </Box>
+            )}
+
+            {(availableObjectives.length > 0 || state.selectedDocuments.length > 0) && (
               <Box>
                 <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
                   Learning Objectives ({state.selectedObjectives.length} selected)
                 </Typography>
                 <Stack spacing={1}>
-                  {availableObjectives.map((objective, index) => (
+                  {availableObjectives.map((objective, index) => {
+                    const isCustom = state.customObjectives.includes(objective);
+                    return (
+                      <Paper 
+                        key={index} 
+                        variant="outlined" 
+                        sx={{ 
+                          p: 1.5, 
+                          cursor: 'pointer',
+                          bgcolor: state.selectedObjectives.includes(objective) ? 'primary.light' : 'background.paper',
+                          borderColor: state.selectedObjectives.includes(objective) ? 'primary.main' : 'divider',
+                          '&:hover': { 
+                            bgcolor: state.selectedObjectives.includes(objective) ? 'primary.light' : 'action.hover'
+                          }
+                        }}
+                        onClick={() => setState(prev => ({
+                          ...prev,
+                          selectedObjectives: prev.selectedObjectives.includes(objective)
+                            ? prev.selectedObjectives.filter(o => o !== objective)
+                            : [...prev.selectedObjectives, objective]
+                        }))}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              color: state.selectedObjectives.includes(objective) ? 'primary.contrastText' : 'text.primary',
+                              fontWeight: state.selectedObjectives.includes(objective) ? 600 : 400,
+                              flex: 1
+                            }}
+                          >
+                            {objective}
+                          </Typography>
+                          {isCustom && (
+                            <CloseIcon
+                              sx={{ 
+                                fontSize: 16,
+                                color: state.selectedObjectives.includes(objective) ? 'primary.contrastText' : 'text.secondary',
+                                cursor: 'pointer',
+                                ml: 1,
+                                flexShrink: 0
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setState(prev => ({
+                                  ...prev,
+                                  customObjectives: prev.customObjectives.filter(o => o !== objective),
+                                  selectedObjectives: prev.selectedObjectives.filter(o => o !== objective)
+                                }));
+                              }}
+                            />
+                          )}
+                        </Box>
+                      </Paper>
+                    );
+                  })}
+                  
+                  {/* Add Custom Objective */}
+                  {state.editingObjective ? (
+                    <Paper variant="outlined" sx={{ p: 1.5 }}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        value={state.newObjectiveValue}
+                        onChange={(e) => setState(prev => ({ ...prev, newObjectiveValue: e.target.value }))}
+                        placeholder="Enter learning objective..."
+                        variant="standard"
+                        InputProps={{
+                          disableUnderline: true,
+                          endAdornment: (
+                            <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0, ml: 1 }}>
+                              <CheckIcon
+                                sx={{ fontSize: 20, cursor: 'pointer', color: 'success.main' }}
+                                onClick={() => {
+                                  if (state.newObjectiveValue.trim()) {
+                                    setState(prev => ({
+                                      ...prev,
+                                      customObjectives: [...prev.customObjectives, prev.newObjectiveValue.trim()],
+                                      selectedObjectives: [...prev.selectedObjectives, prev.newObjectiveValue.trim()],
+                                      editingObjective: false,
+                                      newObjectiveValue: ''
+                                    }));
+                                  }
+                                }}
+                              />
+                              <CloseIcon
+                                sx={{ fontSize: 20, cursor: 'pointer', color: 'error.main' }}
+                                onClick={() => setState(prev => ({ 
+                                  ...prev, 
+                                  editingObjective: false, 
+                                  newObjectiveValue: '' 
+                                }))}
+                              />
+                            </Box>
+                          )
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && state.newObjectiveValue.trim()) {
+                            setState(prev => ({
+                              ...prev,
+                              customObjectives: [...prev.customObjectives, prev.newObjectiveValue.trim()],
+                              selectedObjectives: [...prev.selectedObjectives, prev.newObjectiveValue.trim()],
+                              editingObjective: false,
+                              newObjectiveValue: ''
+                            }));
+                          } else if (e.key === 'Escape') {
+                            setState(prev => ({ 
+                              ...prev, 
+                              editingObjective: false, 
+                              newObjectiveValue: '' 
+                            }));
+                          }
+                        }}
+                        autoFocus
+                      />
+                    </Paper>
+                  ) : (
                     <Paper 
-                      key={index} 
                       variant="outlined" 
                       sx={{ 
-                        p: 1.5, 
+                        p: 1.5,
                         cursor: 'pointer',
-                        bgcolor: state.selectedObjectives.includes(objective) ? 'primary.light' : 'background.paper',
-                        borderColor: state.selectedObjectives.includes(objective) ? 'primary.main' : 'divider',
+                        bgcolor: 'action.hover',
+                        borderStyle: 'dashed',
                         '&:hover': { 
-                          bgcolor: state.selectedObjectives.includes(objective) ? 'primary.light' : 'action.hover'
+                          bgcolor: 'action.selected'
                         }
                       }}
-                      onClick={() => setState(prev => ({
-                        ...prev,
-                        selectedObjectives: prev.selectedObjectives.includes(objective)
-                          ? prev.selectedObjectives.filter(o => o !== objective)
-                          : [...prev.selectedObjectives, objective]
-                      }))}
+                      onClick={() => setState(prev => ({ ...prev, editingObjective: true }))}
                     >
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          color: state.selectedObjectives.includes(objective) ? 'primary.contrastText' : 'text.primary',
-                          fontWeight: state.selectedObjectives.includes(objective) ? 600 : 400
-                        }}
-                      >
-                        {objective}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <AddIcon sx={{ fontSize: 20 }} />
+                        <Typography variant="body2">
+                          Add Learning Objective
+                        </Typography>
+                      </Box>
                     </Paper>
-                  ))}
+                  )}
                 </Stack>
               </Box>
             )}
@@ -567,69 +1007,341 @@ export const ContentGenerationPage: React.FC = () => {
     </Card>
   );
 
-  // Render Content Type selection
-  const renderContentTypeSection = () => (
-    <Card>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">
-            3. Content Type
-          </Typography>
-        </Box>
-        
-        <FormControl component="fieldset">
-          <FormLabel component="legend">What would you like to generate?</FormLabel>
-          <RadioGroup
-            row
-            value={state.contentType || ''}
-            onChange={(e) => setState(prev => ({ ...prev, contentType: e.target.value as 'activity' | 'media' }))}
-            sx={{ mt: 1 }}
-          >
-            <FormControlLabel
-              value="activity"
-              control={<Radio />}
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <ActivityIcon />
-                  <Typography variant="body1">Activity</Typography>
-                </Box>
-              }
-            />
-            <FormControlLabel
-              value="media"
-              control={<Radio />}
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <MediaIcon />
-                  <Typography variant="body1">Media</Typography>
-                </Box>
-              }
-            />
-          </RadioGroup>
-        </FormControl>
+  // Main content categories
+  const contentCategories = [
+    {
+      id: 'interactive',
+      label: 'Interactive Content',
+      description: 'Engaging activities that require user participation',
+      icon: ActivityIcon,
+      popular: true,
+      subtypes: [
+        {
+          id: 'activity',
+          label: 'Learning Activity',
+          description: 'Multi-step scenarios with questions and branching',
+          icon: ActivityIcon,
+          implemented: true
+        },
+        {
+          id: 'assessment',
+          label: 'Assessment',
+          description: 'Quizzes, tests, and formal evaluations',
+          icon: AssessmentIcon,
+          implemented: false
+        },
+        {
+          id: 'survey',
+          label: 'Survey',
+          description: 'Feedback forms and questionnaires',
+          icon: SurveyIcon,
+          implemented: false
+        },
+        {
+          id: 'game',
+          label: 'Learning Game',
+          description: 'Interactive games like Connections and Wordle',
+          icon: GamesIcon,
+          implemented: false
+        },
+        {
+          id: 'simulation',
+          label: 'Simulation',
+          description: 'Role-playing scenarios and interactive experiences',
+          icon: SimulationIcon,
+          implemented: false
+        }
+      ]
+    },
+    {
+      id: 'media',
+      label: 'Media Content',
+      description: 'Audio, video, and multimedia presentations',
+      icon: MediaIcon,
+      popular: true,
+      subtypes: [
+        {
+          id: 'podcast',
+          label: 'Podcast',
+          description: 'AI-generated audio conversations and narrations',
+          icon: PodcastIcon,
+          implemented: true
+        },
+        {
+          id: 'video',
+          label: 'Video',
+          description: 'AI-generated video content and tutorials',
+          icon: VideoIcon,
+          implemented: false
+        },
+        {
+          id: 'presentation',
+          label: 'Presentation',
+          description: 'Visual slide decks and multimedia presentations',
+          icon: PresentationIcon,
+          implemented: false
+        }
+      ]
+    },
+    {
+      id: 'reports',
+      label: 'Reports & Analysis',
+      description: 'Document analysis, summaries, and structured reports',
+      icon: ReportIcon,
+      subtypes: [
+        {
+          id: 'report',
+          label: 'Analysis Report',
+          description: 'Comprehensive analysis and insights from your documents',
+          icon: ReportIcon,
+          implemented: false
+        },
+        {
+          id: 'summary',
+          label: 'Document Summary',
+          description: 'Concise summaries of key points and findings',
+          icon: SummaryIcon,
+          implemented: false
+        },
+        {
+          id: 'course',
+          label: 'Learning Path',
+          description: 'Structured multi-module learning curricula',
+          icon: CourseIcon,
+          implemented: false
+        }
+      ]
+    }
+  ];
 
-        {state.contentType === 'media' && (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Media Type
+  // Render Content Type selection
+  const renderContentTypeSection = () => {
+    const selectedCategory = contentCategories.find(cat => cat.id === state.contentCategory);
+    
+    return (
+      <Card>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <ActivityIcon color="primary" sx={{ mr: 1.5 }} />
+            <Typography variant="h6">
+              3. Content Type
             </Typography>
-            <Stack direction="row" spacing={2}>
-              <Button
-                variant={state.mediaType === 'podcast' ? 'contained' : 'outlined'}
-                startIcon={<PodcastIcon />}
-                onClick={() => setState(prev => ({ ...prev, mediaType: 'podcast' }))}
-              >
-                Podcast
-              </Button>
-              {/* Video generation will be added in a future release */}
-            </Stack>
           </Box>
-        )}
-      </CardContent>
-    </Card>
-  );
+          
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Choose what type of content you'd like to generate from your source documents.
+          </Typography>
+          
+          {/* Categories Row */}
+          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+            {contentCategories.map((category) => {
+              const IconComponent = category.icon;
+              const isSelected = state.contentCategory === category.id;
+              
+              return (
+                <Card
+                  key={category.id}
+                  variant="outlined"
+                  sx={{
+                    flex: 1,
+                    cursor: 'pointer',
+                    border: isSelected ? '2px solid' : '1px solid',
+                    borderColor: isSelected ? 'primary.main' : 'divider',
+                    bgcolor: isSelected ? 'rgba(25, 118, 210, 0.08)' : 'background.paper',
+                    '&:hover': { 
+                      borderColor: isSelected ? 'primary.main' : 'primary.light',
+                      boxShadow: 2
+                    },
+                    transition: 'all 0.2s ease'
+                  }}
+                  onClick={() => setState(prev => ({
+                    ...prev,
+                    contentCategory: category.id as typeof state.contentCategory,
+                    contentType: null // Reset subtype when category changes
+                  }))}
+                >
+                  <CardContent sx={{ p: 2 }}>
+                    {/* Header with icon and badges */}
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5 }}>
+                      <IconComponent 
+                        color={isSelected ? 'primary' : 'action'} 
+                        sx={{ fontSize: 28 }}
+                      />
+                      <Box>
+                        {category.popular && (
+                          <Chip 
+                            label="Popular" 
+                            size="small" 
+                            color="primary" 
+                            sx={{ height: 18, fontSize: '0.65rem' }}
+                          />
+                        )}
+                      </Box>
+                    </Box>
+                    
+                    {/* Content */}
+                    <Box>
+                      <Typography 
+                        variant="subtitle1" 
+                        sx={{ 
+                          color: 'text.primary',
+                          fontWeight: 600,
+                          mb: 1,
+                          lineHeight: 1.3
+                        }}
+                      >
+                        {category.label}
+                      </Typography>
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          color: 'text.secondary',
+                          fontSize: '0.875rem',
+                          lineHeight: 1.4,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical'
+                        }}
+                      >
+                        {category.description}
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </Box>
+
+          {/* Subtypes - Show when category is selected */}
+          {selectedCategory && (
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 2, color: 'text.secondary' }}>
+                Choose a specific type from <strong>{selectedCategory.label}</strong>:
+              </Typography>
+              
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+                {selectedCategory.subtypes.map((subtype) => {
+                  const isSelected = state.contentType === subtype.id;
+                  const SubtypeIcon = subtype.icon;
+                  
+                  return (
+                    <Card
+                      key={subtype.id}
+                      variant="outlined"
+                      sx={{
+                        width: 200,
+                        height: 100,
+                        cursor: 'pointer',
+                        border: isSelected ? '2px solid' : '1px solid',
+                        borderColor: isSelected ? 'primary.main' : 'divider',
+                        bgcolor: isSelected ? 'rgba(25, 118, 210, 0.08)' : 'background.paper',
+                        '&:hover': { 
+                          borderColor: isSelected ? 'primary.main' : 'primary.light',
+                          boxShadow: 2
+                        },
+                        transition: 'all 0.2s ease',
+                        flexShrink: 0
+                      }}
+                      onClick={() => {
+                        setState(prev => ({ 
+                          ...prev, 
+                          contentType: subtype.id as typeof state.contentType
+                        }));
+                      }}
+                    >
+                      <CardContent sx={{ p: 1.5, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                        {/* Header with icon and title on same line */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                          <SubtypeIcon 
+                            color={isSelected ? 'primary' : 'action'} 
+                            sx={{ fontSize: 18 }}
+                          />
+                          <Typography 
+                            variant="subtitle2" 
+                            sx={{ 
+                              color: 'text.primary',
+                              fontWeight: 600,
+                              fontSize: '0.875rem',
+                              lineHeight: 1.2
+                            }}
+                          >
+                            {subtype.label}
+                          </Typography>
+                        </Box>
+                        
+                        {/* Description */}
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            color: 'text.secondary',
+                            fontSize: '0.75rem',
+                            lineHeight: 1.3,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical'
+                          }}
+                        >
+                          {subtype.description}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   // Render Configuration section
+  // Helper function to check if content type is implemented
+  const isContentTypeImplemented = (contentType: string | null): boolean => {
+    if (!contentType || !state.contentCategory) return false;
+    
+    const category = contentCategories.find(cat => cat.id === state.contentCategory);
+    if (!category) return false;
+    
+    const subtype = category.subtypes.find(sub => sub.id === contentType);
+    return subtype?.implemented ?? false;
+  };
+
+  // Coming Soon Widget Component
+  const ComingSoonWidget = () => (
+    <Box sx={{ textAlign: 'center', py: 6 }}>
+      <Box sx={{ 
+        fontSize: 64, 
+        mb: 2, 
+        filter: 'grayscale(100%)', 
+        opacity: 0.6 
+      }}>
+        🚧
+      </Box>
+      <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: 'text.primary' }}>
+        Coming Soon!
+      </Typography>
+      <Typography variant="body1" color="text.secondary" paragraph sx={{ maxWidth: 400, mx: 'auto' }}>
+        We're working hard to bring you this feature. Configuration options for this content type will be available in a future update.
+      </Typography>
+      <Box sx={{ mt: 3 }}>
+        <Chip 
+          label="In Development" 
+          color="warning" 
+          variant="outlined"
+          sx={{ 
+            fontWeight: 600,
+            fontSize: '0.875rem'
+          }}
+        />
+      </Box>
+    </Box>
+  );
+
   const renderConfigurationSection = () => (
     <Card>
       <CardContent>
@@ -640,141 +1352,148 @@ export const ContentGenerationPage: React.FC = () => {
           </Typography>
         </Box>
         
-        {state.contentType === 'activity' && (
-          <PromptConfiguration
-            selectedDocuments={state.selectedDocuments}
-            onConfigurationChange={handlePromptConfiguration}
-          />
-        )}
-        
-        {state.contentType === 'media' && state.mediaType === 'podcast' && (
-          <Box>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Configure your podcast generation settings below.
-            </Typography>
+        {/* Check if content type is implemented */}
+        {!isContentTypeImplemented(state.contentType) ? (
+          <ComingSoonWidget />
+        ) : (
+          <>
+            {state.contentType === 'activity' && (
+              <PromptConfiguration
+                selectedDocuments={state.selectedDocuments}
+                onConfigurationChange={handlePromptConfiguration}
+              />
+            )}
             
-            {/* Podcast Style Selection */}
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Podcast Style
-              </Typography>
-              <Grid container spacing={1.5}>
-                {PODCAST_STYLES.map((style) => {
-                  const IconComponent = style.icon;
-                  const isSelected = state.podcastStyle === style.value;
-                  
-                  return (
-                    <Grid item xs={6} key={style.value}>
-                      <Card
-                        variant="outlined"
-                        sx={{
-                          cursor: 'pointer',
-                          border: isSelected ? '2px solid' : '1px solid',
-                          borderColor: isSelected ? 'primary.main' : 'divider',
-                          bgcolor: isSelected ? 'rgba(25, 118, 210, 0.08)' : 'background.paper',
-                          '&:hover': { 
-                            borderColor: isSelected ? 'primary.main' : 'primary.light',
-                            boxShadow: 2
-                          },
-                          transition: 'all 0.2s ease',
-                          height: '100%'
-                        }}
-                        onClick={() => setState(prev => ({
-                          ...prev,
-                          podcastStyle: style.value
-                        }))}
-                      >
-                        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                            <IconComponent 
-                              color={isSelected ? 'primary' : 'action'} 
-                              sx={{ mt: 0.25, fontSize: 20 }}
-                            />
-                            <Box sx={{ flex: 1 }}>
-                              <Typography 
-                                variant="subtitle2" 
-                                sx={{ 
-                                  color: 'text.primary',
-                                  fontWeight: 600,
-                                  fontSize: '0.875rem',
-                                  mb: 0.5
-                                }}
-                              >
-                                {style.label}
-                              </Typography>
-                              <Typography 
-                                variant="body2" 
-                                sx={{ 
-                                  color: 'text.secondary',
-                                  fontSize: '0.75rem',
-                                  lineHeight: 1.3
-                                }}
-                              >
-                                {style.description}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  );
-                })}
-              </Grid>
-            </Box>
-
-            {/* Length and Depth Configuration */}
-            <Grid container spacing={3} sx={{ mb: 3 }}>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Length
+            {state.contentType === 'podcast' && (
+              <Box>
+                <Typography variant="body2" color="text.secondary" paragraph>
+                  Configure your podcast generation settings below.
                 </Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
-                  {LENGTH_OPTIONS.map((option) => (
-                    <Chip
-                      key={option.value}
-                      label={option.label}
-                      variant={state.podcastLength === option.value ? 'filled' : 'outlined'}
-                      onClick={() => setState(prev => ({
-                        ...prev,
-                        podcastLength: option.value
-                      }))}
-                      sx={{ cursor: 'pointer' }}
-                    />
-                  ))}
-                </Stack>
-              </Grid>
+                
+                {/* Podcast Style Selection */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Podcast Style
+                  </Typography>
+                  <Grid container spacing={1.5}>
+                    {PODCAST_STYLES.map((style) => {
+                      const IconComponent = style.icon;
+                      const isSelected = state.podcastStyle === style.value;
+                      
+                      return (
+                        <Grid item xs={6} key={style.value}>
+                          <Card
+                            variant="outlined"
+                            sx={{
+                              cursor: 'pointer',
+                              border: isSelected ? '2px solid' : '1px solid',
+                              borderColor: isSelected ? 'primary.main' : 'divider',
+                              bgcolor: isSelected ? 'rgba(25, 118, 210, 0.08)' : 'background.paper',
+                              '&:hover': { 
+                                borderColor: isSelected ? 'primary.main' : 'primary.light',
+                                boxShadow: 2
+                              },
+                              transition: 'all 0.2s ease',
+                              height: '100%'
+                            }}
+                            onClick={() => setState(prev => ({
+                              ...prev,
+                              podcastStyle: style.value
+                            }))}
+                          >
+                            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                                <IconComponent 
+                                  color={isSelected ? 'primary' : 'action'} 
+                                  sx={{ mt: 0.25, fontSize: 20 }}
+                                />
+                                <Box sx={{ flex: 1 }}>
+                                  <Typography 
+                                    variant="subtitle2" 
+                                    sx={{ 
+                                      color: 'text.primary',
+                                      fontWeight: 600,
+                                      fontSize: '0.875rem',
+                                      mb: 0.5
+                                    }}
+                                  >
+                                    {style.label}
+                                  </Typography>
+                                  <Typography 
+                                    variant="body2" 
+                                    sx={{ 
+                                      color: 'text.secondary',
+                                      fontSize: '0.75rem',
+                                      lineHeight: 1.3
+                                    }}
+                                  >
+                                    {style.description}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                </Box>
 
-              <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Depth
-                </Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
-                  {DEPTH_OPTIONS.map((option) => (
-                    <Chip
-                      key={option.value}
-                      label={option.label}
-                      variant={state.podcastDepth === option.value ? 'filled' : 'outlined'}
-                      onClick={() => setState(prev => ({
-                        ...prev,
-                        podcastDepth: option.value
-                      }))}
-                      sx={{ cursor: 'pointer' }}
-                    />
-                  ))}
-                </Stack>
-              </Grid>
-            </Grid>
-            
-            <TextField
-              fullWidth
-              label="Custom Instructions (Optional)"
-              placeholder="Additional instructions for podcast generation..."
-              multiline
-              rows={3}
-              value={state.customInstructions}
-              onChange={(e) => setState(prev => ({ ...prev, customInstructions: e.target.value }))}
-            />
-          </Box>
+                {/* Length and Depth Configuration */}
+                <Grid container spacing={3} sx={{ mb: 3 }}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Length
+                    </Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
+                      {LENGTH_OPTIONS.map((option) => (
+                        <Chip
+                          key={option.value}
+                          label={option.label}
+                          variant={state.podcastLength === option.value ? 'filled' : 'outlined'}
+                          onClick={() => setState(prev => ({
+                            ...prev,
+                            podcastLength: option.value
+                          }))}
+                          sx={{ cursor: 'pointer' }}
+                        />
+                      ))}
+                    </Stack>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Depth
+                    </Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
+                      {DEPTH_OPTIONS.map((option) => (
+                        <Chip
+                          key={option.value}
+                          label={option.label}
+                          variant={state.podcastDepth === option.value ? 'filled' : 'outlined'}
+                          onClick={() => setState(prev => ({
+                            ...prev,
+                            podcastDepth: option.value
+                          }))}
+                          sx={{ cursor: 'pointer' }}
+                        />
+                      ))}
+                    </Stack>
+                  </Grid>
+                </Grid>
+                
+                <TextField
+                  fullWidth
+                  label="Custom Instructions (Optional)"
+                  placeholder="Additional instructions for podcast generation..."
+                  multiline
+                  rows={3}
+                  value={state.customInstructions}
+                  onChange={(e) => setState(prev => ({ ...prev, customInstructions: e.target.value }))}
+                />
+              </Box>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
@@ -960,12 +1679,10 @@ export const ContentGenerationPage: React.FC = () => {
         {state.selectedDocuments.length > 0 && renderContentTypeSection()}
 
         {/* Step 4: Configuration - Only show when content type is selected and documents are selected */}
-        {state.selectedDocuments.length > 0 && state.contentType !== null && renderConfigurationSection()}
+        {state.selectedDocuments.length > 0 && state.contentCategory !== null && state.contentType !== null && renderConfigurationSection()}
 
         {/* Step 5: Generate - Only show when ready to generate */}
-        {state.selectedDocuments.length > 0 && state.contentType !== null && (
-          (state.contentType === 'activity' ? state.promptConfig !== null : true)
-        ) && (
+        {canProceedToGeneration() && (
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -1027,14 +1744,14 @@ export const ContentGenerationPage: React.FC = () => {
                 size="large"
                 onClick={handleStartGeneration}
                 disabled={!canProceedToGeneration() || state.generationStatus === 'generating'}
-                startIcon={state.contentType === 'media' ? <PodcastIcon /> : <GenerateIcon />}
+                startIcon={state.contentType === 'podcast' ? <PodcastIcon /> : <GenerateIcon />}
                 sx={{ minWidth: 200 }}
               >
                 {state.generationStatus === 'generating' 
                   ? 'Generating...'
-                  : state.contentType === 'media' 
+                  : state.contentType === 'podcast' 
                     ? 'Generate Transcript'
-                    : 'Generate Activity'
+                    : 'Generate Content'
                 }
               </Button>
             </Box>
