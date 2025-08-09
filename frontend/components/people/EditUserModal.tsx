@@ -30,8 +30,8 @@ import {
   Business as BusinessIcon,
   Home as HomeIcon
 } from '@mui/icons-material';
-import { usersAPI } from '../../api/users';
-import type { User } from '../../api/auth';
+import { usersAPI } from '../../client/users';
+import type { User } from '../../client/auth';
 
 interface EditUserModalProps {
   open: boolean;

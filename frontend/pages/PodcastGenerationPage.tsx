@@ -48,8 +48,8 @@ import {
   type PodcastScriptResponse,
   type VoiceOption,
   type MediaGenerationRequest 
-} from '../api/media';
-import { getSourceDocument, type SourceDocument } from '../api/sources';
+} from '../client/media';
+import { getSourceDocument, type SourceDocument } from '../client/sources';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 
 interface PodcastGenerationState {

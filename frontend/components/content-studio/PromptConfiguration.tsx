@@ -39,7 +39,7 @@ import {
   Help as HelpIcon,
   ExpandMore as ExpandMoreIcon
 } from '@mui/icons-material';
-import type { SourceDocument } from '../../api/sources';
+import type { SourceDocument } from '../../client/sources';
 import { 
   generateSchemaDocumentation, 
   getAllOptionalNodeTypesByCategory 

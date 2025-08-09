@@ -23,9 +23,9 @@ import {
   TrendingUp as TrendingIcon,
   Edit as EditIcon
 } from '@mui/icons-material';
-import type { ContentItem } from '../../api/content';
+import type { ContentItem } from '../../client/content';
 import { canEditContent } from '../../utils/permissions';
-import type { User } from '../../api/auth';
+import type { User } from '../../client/auth';
 
 // Content type utilities (duplicated from cells for standalone usage)
 const getContentIcon = (type: string) => {

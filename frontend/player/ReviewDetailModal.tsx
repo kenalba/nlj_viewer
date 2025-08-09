@@ -48,7 +48,7 @@ import {
 } from '@mui/icons-material';
 import QRCode from 'qrcode';
 import { useAuth } from '../contexts/AuthContext';
-import { workflowApi } from '../api/workflow';
+import { workflowApi } from '../client/workflow';
 import type { 
   PendingReview, 
   WorkflowReview,

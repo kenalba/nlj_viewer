@@ -27,7 +27,7 @@ import {
   History as HistoryIcon,
   RateReview as ReviewIcon
 } from '@mui/icons-material';
-import { workflowApi } from '../api/workflow';
+import { workflowApi } from '../client/workflow';
 import type { PendingReview } from '../types/workflow';
 import { isMultiStageWorkflow } from '../types/workflow';
 import { useAuth } from '../contexts/AuthContext';

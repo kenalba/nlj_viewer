@@ -29,10 +29,10 @@ import {
   Person as PersonIcon,
   Assignment as ReviewIcon
 } from '@mui/icons-material';
-import { workflowApi } from '../api/workflow';
-import { usersAPI } from '../api/users';
-import { contentApi, type ContentItem } from '../api/content';
-import type { User } from '../api/auth';
+import { workflowApi } from '../client/workflow';
+import { usersAPI } from '../client/users';
+import { contentApi, type ContentItem } from '../client/content';
+import type { User } from '../client/auth';
 
 interface RequestReviewModalProps {
   open: boolean;

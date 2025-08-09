@@ -27,7 +27,7 @@ import {
 } from '@mui/icons-material';
 import { VersionManagerTab } from './VersionManagerTab';
 import { useVersionManagement } from '../../hooks/useVersionManagement';
-import type { ContentItem } from '../../api/content';
+import type { ContentItem } from '../../client/content';
 
 interface FlowEditorVersionIntegrationProps {
   contentItem: ContentItem;

@@ -22,11 +22,11 @@ import {
   MoreVert as MoreVertIcon,
   History as HistoryIcon
 } from '@mui/icons-material';
-import type { ContentItem } from '../../api/content';
-import { workflowApi } from '../../api/workflow';
+import type { ContentItem } from '../../client/content';
+import { workflowApi } from '../../client/workflow';
 import { ItemActionsMenu } from './ItemActionsMenu';
 import { canEditContent } from '../../utils/permissions';
-import type { User } from '../../api/auth';
+import type { User } from '../../client/auth';
 
 // Content type utilities
 const getContentIcon = (type: string, fontSize: 'small' | 'medium' | 'large' = 'medium') => {

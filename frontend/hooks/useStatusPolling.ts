@@ -220,7 +220,7 @@ export function useBookingStatusPolling(
     }
     
     // This would use the registrationAPI
-    const { registrationAPI } = await import('../api/training');
+    const { registrationAPI } = await import('../client/training');
     return registrationAPI.getBookingStatus(bookingId);
   }, [bookingId]);
 
@@ -265,7 +265,7 @@ export function useProgramStatusPolling(
     }
     
     // This would use the trainingProgramsAPI
-    const { trainingProgramsAPI } = await import('../api/training');
+    const { trainingProgramsAPI } = await import('../client/training');
     return trainingProgramsAPI.getStatus(programId);
   }, [programId]);
 

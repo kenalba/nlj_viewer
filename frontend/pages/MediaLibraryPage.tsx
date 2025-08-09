@@ -70,7 +70,7 @@ import {
   getMediaTypeIcon,
   type MediaItem,
   type MediaListResponse 
-} from '../api/media';
+} from '../client/media';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 
 const MediaLibraryPage: React.FC = () => {

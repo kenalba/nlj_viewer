@@ -36,7 +36,7 @@ import {
   ExpandMore as ExpandIcon
 } from '@mui/icons-material';
 import { MarkdownRenderer } from '../../shared/MarkdownRenderer';
-import { contentApi } from '../../api/content';
+import { contentApi } from '../../client/content';
 import type { PendingReview } from '../../types/workflow';
 import type { NLJScenario, NLJNode } from '../../types/nlj';
 

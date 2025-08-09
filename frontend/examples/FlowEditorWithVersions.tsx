@@ -9,7 +9,7 @@ import { useSnackbar } from 'notistack';
 import { FlowEditor } from '../editor/FlowEditor';
 import { useVersionManagement } from '../hooks/useVersionManagement';
 import { useAuth } from '../contexts/AuthContext';
-import type { ContentItem } from '../api/content';
+import type { ContentItem } from '../client/content';
 import type { NLJScenario } from '../types/nlj';
 
 interface FlowEditorWithVersionsProps {

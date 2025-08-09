@@ -29,7 +29,7 @@ import PodcastGenerationPage from './pages/PodcastGenerationPage';
 import { PeopleTab } from './components/people/PeopleTab';
 import AnalyticsPage from './pages/AnalyticsPage';
 import { useAuth } from './contexts/AuthContext';
-import { contentApi, type ContentItem } from './api/content';
+import { contentApi, type ContentItem } from './client/content';
 // import { HomePage } from './components/HomePage';
 
 // Import the full HomePage component

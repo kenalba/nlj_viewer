@@ -48,7 +48,7 @@ import {
   Timeline as TimelineIcon,
   Code as CodeIcon,
 } from '@mui/icons-material';
-import { apiClient } from '../../api/client';
+import { apiClient } from '../../client/client';
 
 interface XAPIStatement {
   id: string;

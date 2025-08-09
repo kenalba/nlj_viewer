@@ -27,7 +27,7 @@ import {
   Visibility as ViewAsIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-import type { User } from '../api/auth';
+import type { User } from '../client/auth';
 
 type UserRole = 'PLAYER' | 'LEARNER' | 'CREATOR' | 'REVIEWER' | 'APPROVER' | 'ADMIN';
 type JobCode = 'DP' | 'GM' | 'SM' | 'SP' | 'FM' | 'FI' | 'BM' | 'BD' | 'IM';

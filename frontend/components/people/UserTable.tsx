@@ -38,9 +38,9 @@ import {
   Delete as DeleteIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { usersAPI } from '../../api/users';
-import type { User } from '../../api/auth';
-import type { UserListResponse } from '../../api/users';
+import { usersAPI } from '../../client/users';
+import type { User } from '../../client/auth';
+import type { UserListResponse } from '../../client/users';
 import { EditUserModal } from './EditUserModal';
 import { UserTableToolbar } from './UserTableToolbar';
 

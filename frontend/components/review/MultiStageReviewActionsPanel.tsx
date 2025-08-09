@@ -36,7 +36,7 @@ import {
   SwapHoriz as DelegateIcon,
   Add as AddIcon
 } from '@mui/icons-material';
-import { workflowApi } from '../../api/workflow';
+import { workflowApi } from '../../client/workflow';
 import type {
   MultiStageWorkflow,
   WorkflowStageInstance,

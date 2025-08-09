@@ -50,8 +50,8 @@ import {
   type SharedToken, 
   type CreateShareRequest,
   type ShareAnalytics 
-} from '../api/sharing';
-import type { ContentItem } from '../api/content';
+} from '../client/sharing';
+import type { ContentItem } from '../client/content';
 
 interface ShareModalProps {
   open: boolean;

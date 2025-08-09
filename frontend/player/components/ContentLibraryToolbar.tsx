@@ -22,7 +22,7 @@ import {
 } from '@mui/icons-material';
 import { BulkActionsMenu } from './BulkActionsMenu';
 import { canPerformBulkActions } from '../../utils/permissions';
-import type { User } from '../../api/auth';
+import type { User } from '../../client/auth';
 
 interface ContentLibraryToolbarProps {
   searchTerm: string;

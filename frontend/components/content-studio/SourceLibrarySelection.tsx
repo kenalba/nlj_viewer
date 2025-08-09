@@ -51,7 +51,7 @@ import {
   Close as CloseIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { getSourceDocuments, uploadSourceDocument, type SourceDocument } from '../../api/sources';
+import { getSourceDocuments, uploadSourceDocument, type SourceDocument } from '../../client/sources';
 import { formatBytes, formatDistanceToNow } from '../../utils/formatters';
 
 // Utility function for debouncing search input

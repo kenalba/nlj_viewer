@@ -52,7 +52,7 @@ import {
   Groups as GroupsIcon,
   Insights as InsightsIcon
 } from '@mui/icons-material';
-import { apiClient } from '../../api/client';
+import { apiClient } from '../../client/client';
 
 interface PerformanceCharacteristics {
   adaptability_score: number;

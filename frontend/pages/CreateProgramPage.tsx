@@ -34,7 +34,7 @@ import {
   MyLocation as MyLocationIcon,
 } from '@mui/icons-material';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
-import { trainingProgramsAPI, type TrainingProgramCreate, type EventResponse } from '../api/training';
+import { trainingProgramsAPI, type TrainingProgramCreate, type EventResponse } from '../client/training';
 import { useProgramStatusPolling } from '../hooks/useStatusPolling';
 import { StatusIndicator } from '../components/training';
 

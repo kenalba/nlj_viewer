@@ -23,7 +23,7 @@ import {
 } from '@mui/icons-material';
 import { formatDistanceToNow } from 'date-fns';
 
-import { SourceDocument } from '../../api/sources';
+import { SourceDocument } from '../../client/sources';
 
 interface SourceDocumentCardProps {
   document: SourceDocument;

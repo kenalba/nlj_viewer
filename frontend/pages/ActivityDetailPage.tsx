@@ -56,8 +56,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   contentApi,
   type ContentItem 
-} from '../api/content';
-import { workflowApi, type ContentVersion } from '../api/workflow';
+} from '../client/content';
+import { workflowApi, type ContentVersion } from '../client/workflow';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { formatDistanceToNow } from '../utils/formatters';
 import { useAuth } from '../contexts/AuthContext';

@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { authAPI, type User, type LoginRequest, type RegisterRequest, type PasswordChangeRequest } from '../api/auth';
+import { authAPI, type User, type LoginRequest, type RegisterRequest, type PasswordChangeRequest } from '../client/auth';
 
 interface AuthState {
   user: User | null;

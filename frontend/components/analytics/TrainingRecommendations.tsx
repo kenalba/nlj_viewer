@@ -44,7 +44,7 @@ import {
   BookmarkBorder as BookmarkIcon,
   Assignment as AssignmentIcon
 } from '@mui/icons-material';
-import { apiClient } from '../../api/client';
+import { apiClient } from '../../client/client';
 
 interface TrainingRecommendation {
   topic: string;

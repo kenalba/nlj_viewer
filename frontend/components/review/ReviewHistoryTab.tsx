@@ -24,7 +24,7 @@ import {
   Edit as RevisionIcon,
   Schedule as ClockIcon
 } from '@mui/icons-material';
-import { workflowApi } from '../../api/workflow';
+import { workflowApi } from '../../client/workflow';
 import type { PendingReview, WorkflowReview } from '../../types/workflow';
 import {
   getWorkflowStateColor,

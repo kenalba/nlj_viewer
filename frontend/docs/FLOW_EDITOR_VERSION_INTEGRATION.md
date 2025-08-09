@@ -17,7 +17,7 @@ The version management system is integrated at three levels:
 ```tsx
 import { FlowEditor } from '../editor/FlowEditor';
 import { useVersionManagement } from '../hooks/useVersionManagement';
-import type { ContentItem } from '../api/content';
+import type { ContentItem } from '../client/content';
 
 function ContentEditorPage({ contentItem }: { contentItem: ContentItem }) {
   const handleVersionSave = async (changeSummary: string) => {
@@ -43,7 +43,7 @@ function ContentEditorPage({ contentItem }: { contentItem: ContentItem }) {
 ```tsx
 import { FlowEditor } from '../editor/FlowEditor';
 import { useVersionManagement } from '../hooks/useVersionManagement';
-import { workflowApi } from '../api/workflow';
+import { workflowApi } from '../client/workflow';
 
 function AdvancedContentEditor({ contentItem }: { contentItem: ContentItem }) {
   const [currentScenario, setCurrentScenario] = useState(contentItem.nlj_data);

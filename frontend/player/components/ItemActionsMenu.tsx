@@ -22,10 +22,10 @@ import {
   Send as SubmitIcon,
   Visibility as ViewDetailsIcon
 } from '@mui/icons-material';
-import type { ContentItem } from '../../api/content';
-import { contentApi } from '../../api/content';
+import type { ContentItem } from '../../client/content';
+import { contentApi } from '../../client/content';
 import { canEditContent, canDeleteContent, canViewAnalytics } from '../../utils/permissions';
-import type { User } from '../../api/auth';
+import type { User } from '../../client/auth';
 
 interface ItemActionsMenuProps {
   anchorEl: HTMLElement | null;

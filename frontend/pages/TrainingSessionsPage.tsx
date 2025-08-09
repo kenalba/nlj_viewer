@@ -34,7 +34,7 @@ import {
   Share as ShareIcon,
 } from '@mui/icons-material';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
-import { trainingSessionsAPI, registrationAPI, trainingProgramsAPI, type TrainingSession, type Registration, type TrainingProgram } from '../api/training';
+import { trainingSessionsAPI, registrationAPI, trainingProgramsAPI, type TrainingSession, type Registration, type TrainingProgram } from '../client/training';
 import { useAuth } from '../contexts/AuthContext';
 import RegistrationModal from '../components/training/RegistrationModal';
 import ShareSessionModal from '../components/training/ShareSessionModal';

@@ -30,7 +30,7 @@ import {
   FilterList as FilterIcon,
   Star as StarIcon,
 } from '@mui/icons-material';
-import { apiClient } from '../../api/client';
+import { apiClient } from '../../client/client';
 import { PlaceholderCard } from './PlaceholderCard';
 
 interface LearnerData {

@@ -34,7 +34,7 @@ import {
   Refresh as RetryIcon,
   Description as DocumentIcon
 } from '@mui/icons-material';
-import { SourceDocument } from '../../api/sources';
+import { SourceDocument } from '../../client/sources';
 import { formatBytes } from '../../utils/formatters';
 
 interface GenerationProgressProps {

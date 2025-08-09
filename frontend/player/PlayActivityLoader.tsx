@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, CircularProgress, Typography, Alert, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { contentApi } from '../api/content';
+import { contentApi } from '../client/content';
 import { useGameContext } from '../contexts/GameContext';
 import { useAuth } from '../contexts/AuthContext';
 import type { NLJScenario } from '../types/nlj';

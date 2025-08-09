@@ -54,7 +54,7 @@ import {
   KeyboardArrowDown as ArrowDownIcon,
   KeyboardArrowUp as ArrowUpIcon
 } from '@mui/icons-material';
-import { contentApi } from '../../api/content';
+import { contentApi } from '../../client/content';
 import type { PendingReview } from '../../types/workflow';
 import type { NLJScenario, NLJNode } from '../../types/nlj';
 

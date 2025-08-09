@@ -59,9 +59,9 @@ import { SourceLibrarySelection } from '../components/content-studio/SourceLibra
 import { PromptConfiguration } from '../components/content-studio/PromptConfiguration';
 import { GenerationProgress } from '../components/content-studio/GenerationProgress';
 import { GenerationResults } from '../components/content-studio/GenerationResults';
-import { type SourceDocument, getSourceDocument } from '../api/sources';
-import { generateContent, pollGenerationStatus, type PromptConfiguration as ApiPromptConfiguration } from '../api/generation';
-import { generatePodcastScript, generatePodcast, getGenerationStatus, type PodcastScriptRequest, type MediaGenerationRequest } from '../api/media';
+import { type SourceDocument, getSourceDocument } from '../client/sources';
+import { generateContent, pollGenerationStatus, type PromptConfiguration as ApiPromptConfiguration } from '../client/generation';
+import { generatePodcastScript, generatePodcast, getGenerationStatus, type PodcastScriptRequest, type MediaGenerationRequest } from '../client/media';
 import { generateUnifiedPrompt, type ContentStudioConfig } from '../utils/promptGenerator';
 import type { NLJScenario } from '../types/nlj';
 

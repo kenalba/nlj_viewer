@@ -5,9 +5,9 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useSnackbar } from 'notistack';
-import { workflowApi } from '../api/workflow';
+import { workflowApi } from '../client/workflow';
 import { ContentVersion, VersionStatus } from '../types/workflow';
-import type { ContentItem } from '../api/content';
+import type { ContentItem } from '../client/content';
 
 interface UseVersionManagementOptions {
   contentItem: ContentItem;

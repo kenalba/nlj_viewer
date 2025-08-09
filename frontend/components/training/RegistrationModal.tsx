@@ -37,7 +37,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
 } from '@mui/icons-material';
-import { registrationAPI, type TrainingSession, type RegistrationRequest, type BookingResponse, type BookingStatusResponse } from '../../api/training';
+import { registrationAPI, type TrainingSession, type RegistrationRequest, type BookingResponse, type BookingStatusResponse } from '../../client/training';
 import { useBookingStatusPolling } from '../../hooks/useStatusPolling';
 import StatusIndicator from './StatusIndicator';
 

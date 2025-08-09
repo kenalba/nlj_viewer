@@ -47,7 +47,7 @@ import {
   Share as ShareIcon,
 } from '@mui/icons-material';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
-import { trainingProgramsAPI, trainingSessionsAPI, type TrainingProgram, type TrainingSession, type EventResponse } from '../api/training';
+import { trainingProgramsAPI, trainingSessionsAPI, type TrainingProgram, type TrainingSession, type EventResponse } from '../client/training';
 import { useAuth } from '../contexts/AuthContext';
 import { StatusIndicator, useProgramStatusPolling } from '../components/training';
 

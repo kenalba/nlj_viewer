@@ -29,7 +29,7 @@ import {
   Check as CheckIcon,
 } from '@mui/icons-material';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
-import { type TrainingSession } from '../../api/training';
+import { type TrainingSession } from '../../client/training';
 
 interface ShareSessionModalProps {
   open: boolean;

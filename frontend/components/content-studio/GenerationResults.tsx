@@ -31,7 +31,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import type { NLJScenario } from '../../types/nlj';
-import { apiClient } from '../../api/client';
+import { apiClient } from '../../client/client';
 
 interface GenerationResultsProps {
   generatedContent: NLJScenario | null;

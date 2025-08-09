@@ -41,10 +41,10 @@ import {
   AccountTree as MultiStageIcon,
   CheckCircle as StageIcon
 } from '@mui/icons-material';
-import { workflowApi } from '../api/workflow';
-import { usersAPI } from '../api/users';
-import { contentApi, type ContentItem } from '../api/content';
-import type { User } from '../api/auth';
+import { workflowApi } from '../client/workflow';
+import { usersAPI } from '../client/users';
+import { contentApi, type ContentItem } from '../client/content';
+import type { User } from '../client/auth';
 import type { WorkflowTemplate, WorkflowTemplateType } from '../types/workflow';
 
 interface SubmitForReviewModalProps {

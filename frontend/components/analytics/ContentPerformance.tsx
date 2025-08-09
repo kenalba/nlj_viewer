@@ -46,7 +46,7 @@ import {
 } from '@mui/icons-material';
 import { BarChart, LineChart, PieChart } from '@mui/x-charts';
 import { AnalyticsData } from '../../hooks/useAnalyticsData';
-import { apiClient } from '../../api/client';
+import { apiClient } from '../../client/client';
 
 interface ActivityPerformance {
   activity_id: string;

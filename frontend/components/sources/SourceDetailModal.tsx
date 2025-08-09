@@ -31,7 +31,7 @@ import {
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 
-import { SourceDocument } from '../../api/sources';
+import { SourceDocument } from '../../client/sources';
 
 interface SourceDetailModalProps {
   open: boolean;

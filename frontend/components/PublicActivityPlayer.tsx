@@ -28,7 +28,7 @@ import {
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 
-import { sharingApi, type PublicActivity } from '../api/sharing';
+import { sharingApi, type PublicActivity } from '../client/sharing';
 import { GameView } from '../player/GameView';
 import { GameProvider, useGameContext } from '../contexts/GameContext';
 import type { NLJScenario } from '../types/nlj';

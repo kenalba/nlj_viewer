@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { apiClient } from '../api/client';
+import { apiClient } from '../client/client';
 
 export interface PlatformMetrics {
   total_statements: number;

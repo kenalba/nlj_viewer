@@ -50,7 +50,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
-import { SourceDocument, getSourceDocuments, uploadSourceDocument, deleteSourceDocument } from '../api/sources';
+import { SourceDocument, getSourceDocuments, uploadSourceDocument, deleteSourceDocument } from '../client/sources';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import SourceDocumentCard from '../components/sources/SourceDocumentCard';
 import UploadSourceModal from '../components/sources/UploadSourceModal';

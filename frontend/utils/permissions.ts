@@ -3,7 +3,7 @@
  * Handles case-insensitive role checking and provides a clean API
  */
 
-import type { User } from '../api/auth';
+import type { User } from '../client/auth';
 
 export type UserRole = 'PLAYER' | 'LEARNER' | 'CREATOR' | 'REVIEWER' | 'APPROVER' | 'ADMIN';
 

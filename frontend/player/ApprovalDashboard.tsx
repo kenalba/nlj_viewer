@@ -46,7 +46,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { canManageUsers, canReviewContent } from '../utils/permissions';
-import { workflowApi } from '../api/workflow';
+import { workflowApi } from '../client/workflow';
 import type { 
   PendingReview, 
   WorkflowState, 

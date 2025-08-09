@@ -21,7 +21,7 @@ import {
   LocationOn as LocationIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
-import { type TrainingSession } from '../../api/training';
+import { type TrainingSession } from '../../client/training';
 
 interface TrainingSessionCardProps {
   session: TrainingSession;

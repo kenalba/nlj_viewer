@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { apiClient } from '../../api/client';
+import { apiClient } from '../../client/client';
 import {
   Box,
   Typography,

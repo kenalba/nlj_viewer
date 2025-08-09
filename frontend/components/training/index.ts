@@ -16,7 +16,7 @@ export type {
   EventResponse,
   BookingResponse,
   BookingStatusResponse,
-} from '../../api/training';
+} from '../../client/training';
 
 // Re-export hooks
 export { useStatusPolling, useBookingStatusPolling, useProgramStatusPolling } from '../../hooks/useStatusPolling';

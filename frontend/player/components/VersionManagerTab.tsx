@@ -31,9 +31,9 @@ import {
 import { useSnackbar } from 'notistack';
 import { VersionHistoryViewer } from './VersionHistoryViewer';
 import { VersionComparisonModal } from './VersionComparisonModal';
-import { workflowApi } from '../../api/workflow';
+import { workflowApi } from '../../client/workflow';
 import { ContentVersion } from '../../types/workflow';
-import type { ContentItem } from '../../api/content';
+import type { ContentItem } from '../../client/content';
 
 interface VersionManagerTabProps {
   contentItem: ContentItem;

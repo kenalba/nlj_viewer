@@ -33,7 +33,7 @@ import { VersionManagementModal } from './components/VersionManagementModal';
 import { VariableBrowserModal } from './components/VariableBrowserModal';
 import type { NLJScenario } from '../types/nlj';
 import type { ActivitySettings } from '../types/settings';
-import type { ContentItem } from '../api/content';
+import type { ContentItem } from '../client/content';
 import { useTheme } from '../contexts/ThemeContext';
 import { useGameContext } from '../contexts/GameContext';
 import { useVersionManagement } from '../hooks/useVersionManagement';

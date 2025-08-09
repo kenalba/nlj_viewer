@@ -51,7 +51,7 @@ import {
   AutoFixHigh as InterventionIcon,
   PriorityHigh as HighRiskIcon
 } from '@mui/icons-material';
-import { apiClient } from '../../api/client';
+import { apiClient } from '../../client/client';
 
 interface ComplianceRequirement {
   requirement_id: string;

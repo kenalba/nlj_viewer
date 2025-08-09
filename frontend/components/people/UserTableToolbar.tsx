@@ -20,7 +20,7 @@ import {
   Delete as DeleteIcon
 } from '@mui/icons-material';
 import { canManageUsers } from '../../utils/permissions';
-import type { User } from '../../api/auth';
+import type { User } from '../../client/auth';
 
 interface UserTableToolbarProps {
   searchTerm: string;

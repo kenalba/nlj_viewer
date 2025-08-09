@@ -47,10 +47,10 @@ import {
   NavigateNext as NextIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { workflowApi } from '../api/workflow';
-import { usersAPI } from '../api/users';
-import { contentApi, type ContentItem } from '../api/content';
-import type { User } from '../api/auth';
+import { workflowApi } from '../client/workflow';
+import { usersAPI } from '../client/users';
+import { contentApi, type ContentItem } from '../client/content';
+import type { User } from '../client/auth';
 import type { WorkflowTemplate, WorkflowTemplateType } from '../types/workflow';
 
 type ReviewFlowType = 'single' | 'multi';

@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import type { User } from '../api/auth';
+import type { User } from '../client/auth';
 
 interface DashboardMetrics {
   completedActivities: number;

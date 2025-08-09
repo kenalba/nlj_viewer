@@ -48,8 +48,8 @@ import {
   deleteSourceDocument,
   updateSourceDocument,
   type SourceDocument 
-} from '../api/sources';
-import { apiClient } from '../api/client';
+} from '../client/sources';
+import { apiClient } from '../client/client';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 
 // PDF Preview Component

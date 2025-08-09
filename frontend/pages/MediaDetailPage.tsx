@@ -53,10 +53,10 @@ import {
   getMediaStateColor,
   type MediaItem,
   type MediaShareResponse
-} from '../api/media';
+} from '../client/media';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
-import { API_BASE_URL } from '../api/config';
-import { apiClient } from '../api/client';
+import { API_BASE_URL } from '../client/config';
+import { apiClient } from '../client/client';
 
 // Audio Player Component
 const AudioPlayer: React.FC<{ media: MediaItem }> = ({ media }) => {

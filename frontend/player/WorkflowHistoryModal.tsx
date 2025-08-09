@@ -37,7 +37,7 @@ import {
   Close as CloseIcon,
   History as HistoryIcon
 } from '@mui/icons-material';
-import { workflowApi } from '../api/workflow';
+import { workflowApi } from '../client/workflow';
 import type { WorkflowReview, ReviewDecision, WorkflowState } from '../types/workflow';
 import {
   getReviewDecisionColor,

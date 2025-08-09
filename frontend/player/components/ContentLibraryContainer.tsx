@@ -28,10 +28,10 @@ import {
 import { useGameContext } from '../../contexts/GameContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { contentApi } from '../../api/content';
-import type { ContentItem, ContentFilters } from '../../api/content';
+import { contentApi } from '../../client/content';
+import type { ContentItem, ContentFilters } from '../../client/content';
 import { getAllowedContentStates, canEditContent, canCreateContent, canPerformBulkActions } from '../../utils/permissions';
-import { workflowApi } from '../../api/workflow';
+import { workflowApi } from '../../client/workflow';
 import { CreateActivityModal } from '../../shared/CreateActivityModal';
 import { ImportActivityModal } from '../../shared/ImportActivityModal';
 import type { ActivityTemplate } from '../../utils/activityTemplates';

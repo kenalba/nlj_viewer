@@ -46,8 +46,8 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { usersAPI } from '../api/users';
-import type { User } from '../api/auth';
+import { usersAPI } from '../client/users';
+import type { User } from '../client/auth';
 import { canEditUser } from '../utils/permissions';
 
 interface TabPanelProps {

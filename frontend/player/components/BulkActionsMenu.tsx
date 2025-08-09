@@ -21,7 +21,7 @@ import {
   Delete as DeleteIcon
 } from '@mui/icons-material';
 import { canBulkReject, canBulkPublish } from '../../utils/permissions';
-import type { User } from '../../api/auth';
+import type { User } from '../../client/auth';
 
 interface BulkActionsMenuProps {
   anchorEl: HTMLElement | null;

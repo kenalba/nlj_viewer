@@ -44,7 +44,7 @@ import {
   MoreVert as MoreIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-import type { ContentItem } from '../../api/content';
+import type { ContentItem } from '../../client/content';
 import type { ContentVersion } from '../../types/workflow';
 
 interface VersionManagementModalProps {

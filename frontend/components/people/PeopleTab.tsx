@@ -19,8 +19,8 @@ import {
   Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
-import { usersAPI, type UserFilters } from '../../api/users';
-import type { User } from '../../api/auth';
+import { usersAPI, type UserFilters } from '../../client/users';
+import type { User } from '../../client/auth';
 import { UserTable } from './UserTable';
 import { CreateUserModal } from './CreateUserModal';
 

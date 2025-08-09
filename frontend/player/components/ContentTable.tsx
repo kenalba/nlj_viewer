@@ -17,8 +17,8 @@ import {
   Box,
   Typography
 } from '@mui/material';
-import type { ContentItem } from '../../api/content';
-import type { User } from '../../api/auth';
+import type { ContentItem } from '../../client/content';
+import type { User } from '../../client/auth';
 import {
   TitleDescriptionCell,
   ContentTypeCell,
