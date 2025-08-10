@@ -63,7 +63,7 @@ export const LoginPage: React.FC = () => {
           {/* Logo/Title */}
           <Box textAlign="center" mb={3}>
             <Typography variant="h4" component="h1" gutterBottom>
-              NLJ Platform
+              Welcome to Ander
             </Typography>
             <Typography variant="subtitle1" color="text.secondary">
               Sign in to continue

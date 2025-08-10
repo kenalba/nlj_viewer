@@ -706,6 +706,11 @@ export const ContentGenerationPage: React.FC = () => {
               </Box>
             )}
 
+            {/* Divider between Audience and Keywords */}
+            {(availableAudiences.length > 0 || state.selectedDocuments.length > 0) && (availableKeywords.length > 0 || state.selectedDocuments.length > 0) && (
+              <Divider sx={{ my: 1 }} />
+            )}
+
             {(availableKeywords.length > 0 || state.selectedDocuments.length > 0) && (
               <Box>
                 <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
@@ -852,6 +857,11 @@ export const ContentGenerationPage: React.FC = () => {
                   )}
                 </Box>
               </Box>
+            )}
+
+            {/* Divider between Keywords and Objectives */}
+            {(availableKeywords.length > 0 || state.selectedDocuments.length > 0) && (availableObjectives.length > 0 || state.selectedDocuments.length > 0) && (
+              <Divider sx={{ my: 1 }} />
             )}
 
             {(availableObjectives.length > 0 || state.selectedDocuments.length > 0) && (
@@ -1345,12 +1355,15 @@ export const ContentGenerationPage: React.FC = () => {
   const renderConfigurationSection = () => (
     <Card>
       <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <ConfigIcon color="primary" sx={{ mr: 1.5 }} />
           <Typography variant="h6">
             4. Configuration
           </Typography>
         </Box>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          Configure specific settings for your selected content type to customize the generation process.
+        </Typography>
         
         {/* Check if content type is implemented */}
         {!isContentTypeImplemented(state.contentType) ? (
@@ -1439,6 +1452,9 @@ export const ContentGenerationPage: React.FC = () => {
                   </Grid>
                 </Box>
 
+                {/* Divider before Length and Depth */}
+                <Divider sx={{ my: 3 }} />
+
                 {/* Length and Depth Configuration */}
                 <Grid container spacing={3} sx={{ mb: 3 }}>
                   <Grid item xs={12} sm={6}>
@@ -1481,6 +1497,9 @@ export const ContentGenerationPage: React.FC = () => {
                     </Stack>
                   </Grid>
                 </Grid>
+                
+                {/* Divider before Custom Instructions */}
+                <Divider sx={{ my: 3 }} />
                 
                 <TextField
                   fullWidth

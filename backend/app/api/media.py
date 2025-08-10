@@ -91,10 +91,10 @@ async def generate_podcast_script(
             source_document_id=request.source_document_id,
             selected_keywords=request.selected_keywords,
             selected_objectives=request.selected_objectives,
+            db=db,
             style=request.style,
             length_preference=request.length_preference,
-            conversation_depth=request.conversation_depth,
-            db=db
+            conversation_depth=request.conversation_depth
         )
         
         return PodcastScriptResponse(**script_data)
