@@ -98,19 +98,29 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         <Box
           sx={{
             position: 'fixed',
-            top: 16,
-            left: 16,
+            top: { xs: 'env(safe-area-inset-top, 16px)', sm: 16 },
+            left: { xs: 'env(safe-area-inset-left, 16px)', sm: 16 },
             zIndex: theme.zIndex.appBar + 1,
             backgroundColor: theme.palette.background.paper,
             borderRadius: '50%',
             boxShadow: theme.shadows[4],
+            // Ensure button doesn't get clipped on small screens
+            minWidth: 48,
+            minHeight: 48,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <IconButton
             onClick={() => navigate('/app/home')}
+            size="small"
             sx={{
               color: theme.palette.primary.main,
-              p: 1.5
+              p: 1.5,
+              // Ensure proper touch target size on mobile
+              minWidth: 44,
+              minHeight: 44,
             }}
           >
             <HomeIcon />

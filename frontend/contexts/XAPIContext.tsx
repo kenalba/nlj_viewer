@@ -87,6 +87,12 @@ export interface XAPIContextActions {
     response: string,
     sectionId?: string
   ) => void;
+  trackSurveyDistribution: (params: {
+    surveyId: string;
+    surveyTitle: string;
+    method: string;
+    recipientCount: number;
+  }) => void;
   
   // Navigation
   trackNodeVisited: (nodeId: string, nodeType: string) => void;
@@ -572,6 +578,42 @@ export const XAPIProvider: React.FC<XAPIProviderProps> = ({
         extensions: {
           'http://nlj-viewer.com/extensions/question-id': questionId
         }
+      })
+    };
+    
+    trackEvent(event);
+  }, [actor, trackEvent]);
+
+  const trackSurveyDistribution = useCallback((params: {
+    surveyId: string;
+    surveyTitle: string;
+    method: string;
+    recipientCount: number;
+  }) => {
+    if (!actor) return;
+    
+    const event: SurveyEvent = {
+      type: 'distributed',
+      activityId: params.surveyId,
+      activityName: params.surveyTitle,
+      activityType: XAPI_ACTIVITY_TYPES.SURVEY,
+      surveyId: params.surveyId,
+      surveyType: 'distribution',
+      actor,
+      anonymous: false,
+      timestamp: new Date().toISOString(),
+      result: createResult({
+        completion: true,
+        success: true,
+        extensions: {
+          'http://nlj-viewer.com/extensions/distribution-method': params.method,
+          'http://nlj-viewer.com/extensions/recipient-count': params.recipientCount
+        }
+      }),
+      context: createXAPIContext({
+        registration: sessionId.current,
+        platform: 'NLJ Viewer',
+        language: 'en-US'
       })
     };
     
@@ -1072,6 +1114,7 @@ export const XAPIProvider: React.FC<XAPIProviderProps> = ({
     trackSurveyStarted,
     trackSurveyCompleted,
     trackSurveyResponse,
+    trackSurveyDistribution,
     trackNodeVisited,
     trackConnectionsGameStarted,
     trackConnectionsGroupFound,

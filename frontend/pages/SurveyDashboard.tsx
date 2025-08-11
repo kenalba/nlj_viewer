@@ -123,6 +123,7 @@ const SurveyCard: React.FC<SurveyCardProps> = ({
     <Card
       sx={{
         height: '100%',
+        width: '100%',
         display: 'flex',
         flexDirection: 'column',
         transition: 'all 0.2s ease-in-out',
@@ -167,7 +168,7 @@ const SurveyCard: React.FC<SurveyCardProps> = ({
         )}
 
         {/* Survey Statistics */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 2 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1, mb: 2 }}>
           <Box
             sx={{
               p: 1,
@@ -198,6 +199,21 @@ const SurveyCard: React.FC<SurveyCardProps> = ({
               {stats?.totalResponses || 0}
             </Typography>
           </Box>
+          <Box
+            sx={{
+              p: 1,
+              borderRadius: 1,
+              backgroundColor: alpha(theme.palette.info.main, 0.05),
+              border: `1px solid ${alpha(theme.palette.info.main, 0.1)}`,
+            }}
+          >
+            <Typography variant="caption" color="text.secondary">
+              Response Rate
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: 'info.main' }}>
+              {stats?.responseRate || 0}%
+            </Typography>
+          </Box>
         </Box>
 
         {stats && stats.totalResponses > 0 && (
@@ -220,20 +236,29 @@ const SurveyCard: React.FC<SurveyCardProps> = ({
               <Button
                 size="small"
                 variant="outlined"
+                startIcon={<AnalyticsIcon />}
+                onClick={() => onViewResults(survey)}
+                sx={{ flex: 1 }}
+              >
+                Details
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<PlayIcon />}
+                onClick={() => window.open(`/app/play/${survey.id}`, '_blank')}
+                sx={{ flex: 1 }}
+              >
+                Preview
+              </Button>
+              <Button
+                size="small"
+                variant="contained"
                 startIcon={<SendIcon />}
                 onClick={() => onSend(survey)}
                 sx={{ flex: 1 }}
               >
                 Send
-              </Button>
-              <Button
-                size="small"
-                variant="contained"
-                startIcon={<AnalyticsIcon />}
-                onClick={() => onViewResults(survey)}
-                sx={{ flex: 1 }}
-              >
-                Results
               </Button>
             </>
           )}
@@ -246,16 +271,6 @@ const SurveyCard: React.FC<SurveyCardProps> = ({
               sx={{ flex: 1 }}
             >
               Continue Editing
-            </Button>
-          )}
-          {survey.state.toLowerCase() === 'published' && (
-            <Button
-              size="small"
-              variant="outlined"
-              startIcon={<PlayIcon />}
-              onClick={() => window.open(`/app/play/${survey.id}`, '_blank')}
-            >
-              Preview
             </Button>
           )}
         </Stack>
@@ -373,12 +388,11 @@ export const SurveyDashboard: React.FC = () => {
   };
 
   const handleSendSurvey = (survey: ContentItem) => {
-    // TODO: Open distribution modal
-    console.log('Send survey:', survey.title);
+    navigate(`/app/surveys/${survey.id}/send`);
   };
 
   const handleViewResults = (survey: ContentItem) => {
-    navigate(`/app/surveys/${survey.id}/analytics`);
+    navigate(`/app/surveys/${survey.id}`);
   };
 
   const handleEditSurvey = (survey: ContentItem) => {
@@ -548,29 +562,43 @@ export const SurveyDashboard: React.FC = () => {
         </Box>
       )}
 
-      {/* Survey Cards Grid */}
+      {/* Survey Cards Flexbox Layout */}
       {!isLoading && surveys.length > 0 && (
-        <Grid container spacing={3}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 3,
+            '& > *': {
+              flex: '1 1 400px', // Flexible width with preferred size
+              minWidth: 320,
+              maxWidth: 500,
+              '@media (max-width: 768px)': {
+                flex: '1 1 100%',
+                maxWidth: 'none',
+              },
+            },
+          }}
+        >
           {surveys.map((survey) => (
-            <Grid key={survey.id} xs={12} sm={6} lg={4}>
-              <SurveyCard
-                survey={survey}
-                // TODO: Implement real survey stats
-                stats={{
-                  totalQuestions: 5, // Placeholder
-                  totalResponses: 0, // Placeholder
-                  completionRate: 0, // Placeholder
-                  responseRate: 0, // Placeholder
-                }}
-                onSend={handleSendSurvey}
-                onViewResults={handleViewResults}
-                onEdit={canEdit ? handleEditSurvey : undefined}
-                onDelete={canEdit ? handleDeleteSurvey : undefined}
-                onShare={handleShareSurvey}
-              />
-            </Grid>
+            <SurveyCard
+              key={survey.id}
+              survey={survey}
+              // TODO: Implement real survey stats
+              stats={{
+                totalQuestions: 5, // Placeholder
+                totalResponses: 0, // Placeholder
+                completionRate: 0, // Placeholder
+                responseRate: 0, // Placeholder
+              }}
+              onSend={handleSendSurvey}
+              onViewResults={handleViewResults}
+              onEdit={canEdit ? handleEditSurvey : undefined}
+              onDelete={canEdit ? handleDeleteSurvey : undefined}
+              onShare={handleShareSurvey}
+            />
           ))}
-        </Grid>
+        </Box>
       )}
 
       {/* Create Activity Modal */}

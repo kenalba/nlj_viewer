@@ -532,6 +532,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
         );
 
       case 'likert_scale':
+      case 'LikertScaleNode':  // Support legacy survey format
         return (
           <LikertScaleNode 
             key={node.id}
@@ -541,6 +542,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
         );
 
       case 'rating':
+      case 'RatingNode':  // Support legacy survey format
         return (
           <RatingNode 
             key={node.id}
@@ -550,6 +552,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
         );
 
       case 'slider':
+      case 'SliderNode':  // Support legacy survey format
         return (
           <SliderNode 
             key={node.id}
@@ -559,6 +562,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
         );
 
       case 'text_area':
+      case 'TextAreaNode':  // Support legacy survey format
         return (
           <TextAreaNode 
             key={node.id}
@@ -568,6 +572,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = ({
         );
 
       case 'matrix':
+      case 'MatrixNode':  // Support legacy survey format
         return (
           <MatrixNode 
             key={node.id}

@@ -205,7 +205,8 @@ services:
   ralph-lrs:
     image: fundocker/ralph:latest
     container_name: nlj_ralph_lrs
-    command: ["ralph", "runserver", "--backend", "es"]
+    user: root
+    entrypoint: ["/app/config/init.sh"]
     environment:
       # Elasticsearch backend configuration
       - RALPH_BACKENDS__LRS__ES__HOSTS=http://elasticsearch:9200
@@ -217,10 +218,9 @@ services:
       - RALPH_RUNSERVER_PORT=8100
       - RALPH_RUNSERVER_BACKEND=es
       
-      # Authentication configuration
+      # Authentication configuration file path
       - RALPH_AUTH__BACKENDS=basic
-      - RALPH_AUTH__BASIC__USERNAME=nlj-platform
-      - RALPH_AUTH__BASIC__PASSWORD=nlj-secure-secret-2024
+      - RALPH_AUTH__BASIC__FILE=/app/config/auth.json
       
       # Performance settings
       - RALPH_BACKENDS__LRS__ES__WRITE_CHUNK_SIZE=500

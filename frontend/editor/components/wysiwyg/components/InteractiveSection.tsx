@@ -14,6 +14,10 @@ import type { NLJNode } from '../../../../../types/nlj';
 import { ChoiceEditor } from '../../editors/ChoiceEditor';
 import { TrueFalseEditor } from '../../editors/TrueFalseEditor';
 import { LikertScaleEditor } from '../../editors/LikertScaleEditor';
+import { RatingEditor } from '../../editors/RatingEditor';
+import { MatrixEditor } from '../../editors/MatrixEditor';
+import { SliderEditor } from '../../editors/SliderEditor';
+import { TextAreaEditor } from '../../editors/TextAreaEditor';
 import { ShortAnswerEditor } from '../../editors/ShortAnswerEditor';
 import { ConnectionsEditor } from '../../editors/ConnectionsEditor';
 import { WordleEditor } from '../../editors/WordleEditor';
@@ -179,14 +183,36 @@ export const InteractiveSection: React.FC<InteractiveSectionProps> = ({
         />
       )}
 
-      {/* Other Assessment Types */}
-      {(['rating', 'matrix', 'slider', 'text_area'].includes(nodeType)) && (
-        <Alert severity="info">
-          <Typography variant="body2">
-            <strong>{nodeType.replace('_', ' ').toUpperCase()} Configuration:</strong> 
-            Advanced editing for this assessment type will be available in a future update.
-          </Typography>
-        </Alert>
+      {/* Rating Editor */}
+      {nodeType === 'rating' && (
+        <RatingEditor
+          node={node}
+          onUpdate={onUpdate}
+        />
+      )}
+
+      {/* Matrix Editor */}
+      {nodeType === 'matrix' && (
+        <MatrixEditor
+          node={node}
+          onUpdate={onUpdate}
+        />
+      )}
+
+      {/* Slider Editor */}
+      {nodeType === 'slider' && (
+        <SliderEditor
+          node={node}
+          onUpdate={onUpdate}
+        />
+      )}
+
+      {/* Text Area Editor */}
+      {nodeType === 'text_area' && (
+        <TextAreaEditor
+          node={node}
+          onUpdate={onUpdate}
+        />
       )}
 
       {/* Connections Game Editor */}
