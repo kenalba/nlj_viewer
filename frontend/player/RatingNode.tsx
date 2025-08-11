@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Rating, Button, Alert, FormHelperText, useTheme as useMuiTheme } from '@mui/material';
+import { Box, Typography, Rating, Button, FormHelperText, useTheme as useMuiTheme } from '@mui/material';
 import { Star, StarBorder } from '@mui/icons-material';
 import type { RatingNode as RatingNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from '../shared/MediaViewer';
+import { UnifiedSurveyQuestionNode } from './UnifiedSurveyQuestionNode';
 import { useAudio } from '../contexts/AudioContext';
-import { useTheme } from '../contexts/ThemeContext';
 import { useNodeSettings } from '../hooks/useNodeSettings';
-import { getStarColors } from '../utils/feedbackColors';
 import { useIsMobile } from '../utils/mobileDetection';
 import { MarkdownRenderer } from '../shared/MarkdownRenderer';
 
@@ -19,47 +18,29 @@ interface RatingNodeProps {
 export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) => {
   const settings = useNodeSettings(question.id);
   const [selectedValue, setSelectedValue] = useState<number | null>(question.defaultValue || null);
-  const [showValidation, setShowValidation] = useState(false);
+  const { playSound } = useAudio();
+  const muiTheme = useMuiTheme();
+  const isMobile = useIsMobile();
 
   if (import.meta.env.DEV) {
     console.log(`RatingNode ${question.id}: shuffleAnswerOrder=${settings.shuffleAnswerOrder}, reinforcementEligible=${settings.reinforcementEligible}`);
   }
-  const { playSound } = useAudio();
-  const { themeMode } = useTheme();
-  const muiTheme = useMuiTheme();
-  const isMobile = useIsMobile();
 
   const handleValueSelect = useCallback((value: number) => {
     console.log('handleValueSelect:', value, typeof value);
     const numValue = Number(value);
     if (!isNaN(numValue)) {
       setSelectedValue(numValue);
-      setShowValidation(false);
       playSound('click');
     }
   }, [playSound]);
 
-  const handleSubmit = useCallback(() => {
-    console.log('handleSubmit:', selectedValue, typeof selectedValue);
-    if (question.required && selectedValue === null) {
-      setShowValidation(true);
-      playSound('error');
-      return;
-    }
-
-    playSound('navigate');
-    onAnswer(selectedValue);
-  }, [question.required, selectedValue, playSound, onAnswer]);
 
   // Add keyboard controls for rating questions
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Handle Enter key to submit
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        handleSubmit();
-        return;
-      }
+      // Only handle keyboard events for this component when it's active
+      if (event.target !== document.body) return;
 
       // Handle number keys based on rating type
       if (question.ratingType === 'stars') {
@@ -96,7 +77,7 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [question, handleValueSelect, handleSubmit]);
+  }, [question, handleValueSelect]);
 
   const renderStarRating = () => {
     
@@ -118,13 +99,13 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
           aria-label="Rating"
           sx={{
             '& .MuiRating-iconFilled': {
-              color: getStarColors(muiTheme, themeMode).filled,
+              color: 'primary.main',
             },
             '& .MuiRating-iconEmpty': {
-              color: getStarColors(muiTheme, themeMode).empty,
+              color: 'action.disabled',
             },
             '& .MuiRating-iconHover': {
-              color: getStarColors(muiTheme, themeMode).hover,
+              color: 'primary.light',
             },
           }}
         />
@@ -158,12 +139,19 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
             key={value}
             variant={selectedValue === value ? 'contained' : 'outlined'}
             onClick={() => handleValueSelect(value)}
-            className={selectedValue === value ? 'selected' : ''}
             sx={{
               borderRadius: 3,
               minWidth: 60,
               minHeight: 48,
-              }}
+              borderColor: selectedValue === value ? 'primary.main' : 'divider',
+              color: selectedValue === value ? 'primary.contrastText' : 'text.primary',
+              backgroundColor: selectedValue === value ? 'primary.main' : 'transparent',
+              '&:hover': {
+                borderColor: 'primary.main',
+                backgroundColor: selectedValue === value ? 'primary.dark' : 'primary.light',
+                color: selectedValue === value ? 'primary.contrastText' : 'primary.main',
+              },
+            }}
             >
               {value}
             </Button>
@@ -184,12 +172,19 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
             key={index}
             variant={selectedValue === index ? 'contained' : 'outlined'}
             onClick={() => handleValueSelect(index)}
-            className={selectedValue === index ? 'selected' : ''}
             sx={{
               borderRadius: 3,
               minHeight: 48,
               justifyContent: 'flex-start',
               textAlign: 'left',
+              borderColor: selectedValue === index ? 'primary.main' : 'divider',
+              color: selectedValue === index ? 'primary.contrastText' : 'text.primary',
+              backgroundColor: selectedValue === index ? 'primary.main' : 'transparent',
+              '&:hover': {
+                borderColor: 'primary.main',
+                backgroundColor: selectedValue === index ? 'primary.dark' : 'primary.light',
+                color: selectedValue === index ? 'primary.contrastText' : 'primary.main',
+              },
             }}
           >
             <MarkdownRenderer content={category} />
@@ -212,7 +207,8 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
     }
   };
 
-  return (
+  // Pure render function for the rating question UI
+  const renderRatingQuestion = () => (
     <NodeCard animate={true}>
       <Box sx={{ mb: 3 }}>
         {question.media && (
@@ -246,23 +242,59 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
 
       {/* Rating Component */}
       {getRatingComponent()}
-
-      {/* Validation Error */}
-      {showValidation && question.required && selectedValue === null && (
-        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-          This question is required. Please select a rating.
-        </Alert>
+      
+      {/* Keyboard Controls Helper - Hide on mobile */}
+      {!isMobile && (
+        <FormHelperText sx={{ textAlign: 'center', mt: 1, fontSize: '0.75rem', opacity: 0.7 }}>
+          {question.ratingType === 'stars' ? `Use number keys (1-${question.range.max})` : 
+           question.ratingType === 'categorical' ? `Use number keys (1-${question.categories?.length || 0})` :
+           `Use number keys (${question.range.min}-${question.range.max})`} or click to select • Enter to submit
+        </FormHelperText>
       )}
+    </NodeCard>
+  );
 
-      {/* Submit Button */}
+  // Check if this is a survey question (has followUp capability)
+  const isSurveyQuestion = question.followUp !== undefined;
+
+  // If it's a survey question, wrap with UnifiedSurveyQuestionNode
+  if (isSurveyQuestion) {
+    return (
+      <UnifiedSurveyQuestionNode
+        question={question}
+        onAnswer={onAnswer}
+        response={selectedValue}
+        hasResponse={selectedValue !== null && selectedValue > 0}
+      >
+        {renderRatingQuestion()}
+      </UnifiedSurveyQuestionNode>
+    );
+  }
+
+  // Otherwise render as regular training question with submit button
+  return (
+    <Box>
+      {renderRatingQuestion()}
+      
+      {/* Submit Button for non-survey questions */}
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
         <Button
           variant="contained"
-          onClick={handleSubmit}
+          onClick={() => onAnswer(selectedValue || 0)}
           size="large"
+          disabled={question.required && selectedValue === null}
           sx={{
             borderRadius: 3,
             minWidth: 120,
+            backgroundColor: 'primary.main',
+            color: 'primary.contrastText',
+            '&:hover': {
+              backgroundColor: 'primary.dark',
+            },
+            '&:disabled': {
+              backgroundColor: 'action.disabledBackground',
+              color: 'action.disabled',
+            },
           }}
         >
           {selectedValue !== null && selectedValue > 0 ? 'Submit' : 'Skip'}
@@ -275,15 +307,6 @@ export const RatingNode: React.FC<RatingNodeProps> = ({ question, onAnswer }) =>
           * This question is required
         </FormHelperText>
       )}
-      
-      {/* Keyboard Controls Helper - Hide on mobile */}
-      {!isMobile && (
-        <FormHelperText sx={{ textAlign: 'center', mt: 1, fontSize: '0.75rem', opacity: 0.7 }}>
-          {question.ratingType === 'stars' ? `Use number keys (1-${question.range.max})` : 
-           question.ratingType === 'categorical' ? `Use number keys (1-${question.categories?.length || 0})` :
-           `Use number keys (${question.range.min}-${question.range.max})`} or click to select • Enter to submit
-        </FormHelperText>
-      )}
-    </NodeCard>
+    </Box>
   );
 };

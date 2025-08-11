@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Button, Alert, FormHelperText } from '@mui/material';
+import { Box, Typography, Button, FormHelperText } from '@mui/material';
 import type { LikertScaleNode as LikertScaleNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from '../shared/MediaViewer';
+import { UnifiedSurveyQuestionNode } from './UnifiedSurveyQuestionNode';
 import { useAudio } from '../contexts/AudioContext';
-import { useTheme } from '../contexts/ThemeContext';
-import { useXAPI } from '../contexts/XAPIContext';
 import { useNodeSettings } from '../hooks/useNodeSettings';
 import { useIsMobile } from '../utils/mobileDetection';
 import { MarkdownRenderer } from '../shared/MarkdownRenderer';
@@ -18,19 +17,15 @@ interface LikertScaleNodeProps {
 export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAnswer }) => {
   const settings = useNodeSettings(question.id);
   const [selectedValue, setSelectedValue] = useState<number | null>(question.defaultValue || null);
-  const [showValidation, setShowValidation] = useState(false);
   const { playSound } = useAudio();
+  const isMobile = useIsMobile();
 
   if (import.meta.env.DEV) {
     console.log(`LikertScaleNode ${question.id}: shuffleAnswerOrder=${settings.shuffleAnswerOrder}, reinforcementEligible=${settings.reinforcementEligible}`);
   }
-  const { themeMode } = useTheme();
-  const { trackSurveyResponse } = useXAPI();
-  const isMobile = useIsMobile();
 
   const handleValueSelect = useCallback((value: number) => {
     setSelectedValue(value);
-    setShowValidation(false);
     playSound('click');
   }, [playSound]);
 
@@ -42,25 +37,6 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
     }
     return values;
   }, [question.scale.min, question.scale.max, question.scale.step]);
-
-  const handleSubmit = useCallback(() => {
-    if (question.required && selectedValue === null) {
-      setShowValidation(true);
-      playSound('error');
-      return;
-    }
-
-    playSound('navigate');
-    
-    // Track survey response
-    trackSurveyResponse(
-      'current-survey', // We'll get this from context later
-      question.id,
-      selectedValue?.toString() || '0'
-    );
-    
-    onAnswer(selectedValue || 0);
-  }, [question.required, selectedValue, playSound, onAnswer, trackSurveyResponse]);
 
   // Keyboard support
   useEffect(() => {
@@ -93,20 +69,14 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
           handleValueSelect(scaleValues[0]);
         }
       }
-      
-      // Handle Enter key to submit
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        handleSubmit();
-      }
     };
 
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
-  }, [selectedValue, question.required, getScaleValues, handleValueSelect, handleSubmit]);
+  }, [selectedValue, getScaleValues, handleValueSelect]);
 
-  const getButtonVariant = () => {
-    return 'outlined' as const; // Always use outlined, selected state will be handled by className
+  const getButtonVariant = (value: number) => {
+    return selectedValue === value ? 'contained' : 'outlined';
   };
 
   const getButtonStyles = (value: number) => {
@@ -116,17 +86,21 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
       borderRadius: 3,
       minWidth: 60,
       minHeight: 48,
-      ...(isSelected && {
-        '&.selected': {
-          // Theme-based selected styles will be applied via className
-        },
-      }),
+      borderColor: isSelected ? 'primary.main' : 'divider',
+      color: isSelected ? 'primary.contrastText' : 'text.primary',
+      backgroundColor: isSelected ? 'primary.main' : 'transparent',
+      '&:hover': {
+        borderColor: 'primary.main',
+        backgroundColor: isSelected ? 'primary.dark' : 'primary.light',
+        color: isSelected ? 'primary.contrastText' : 'primary.main',
+      },
     };
   };
 
   const scaleValues = getScaleValues();
 
-  return (
+  // Pure render function for the Likert scale question UI
+  const renderLikertScaleQuestion = () => (
     <NodeCard animate={true}>
       <Box sx={{ mb: 3 }}>
         {question.media && (
@@ -193,10 +167,9 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
         {scaleValues.map((value) => (
           <Button
             key={value}
-            variant={getButtonVariant()}
+            variant={getButtonVariant(value)}
             onClick={() => handleValueSelect(value)}
             sx={getButtonStyles(value)}
-            className={selectedValue === value ? 'selected' : ''}
           >
             {question.showNumbers !== false && (
               <Typography fontWeight="bold">
@@ -206,35 +179,57 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
           </Button>
         ))}
       </Box>
-
-      {/* Validation Error */}
-      {showValidation && question.required && selectedValue === null && (
-        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-          This question is required. Please select a value.
-        </Alert>
+      
+      {/* Keyboard Controls Helper - Hide on mobile */}
+      {!isMobile && (
+        <FormHelperText sx={{ textAlign: 'center', mt: 1, fontSize: '0.75rem', opacity: 0.7 }}>
+          Use number keys (1-{getScaleValues().length}) or arrow keys to select • Enter to submit
+        </FormHelperText>
       )}
+    </NodeCard>
+  );
 
-      {/* Submit Button */}
+  // Check if this is a survey question (has followUp capability)
+  const isSurveyQuestion = question.followUp !== undefined;
+
+  // If it's a survey question, wrap with UnifiedSurveyQuestionNode
+  if (isSurveyQuestion) {
+    return (
+      <UnifiedSurveyQuestionNode
+        question={question}
+        onAnswer={onAnswer}
+        response={selectedValue}
+        hasResponse={selectedValue !== null}
+      >
+        {renderLikertScaleQuestion()}
+      </UnifiedSurveyQuestionNode>
+    );
+  }
+
+  // Otherwise render as regular training question with submit button
+  return (
+    <Box>
+      {renderLikertScaleQuestion()}
+      
+      {/* Submit Button for non-survey questions */}
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
         <Button
           variant="contained"
-          onClick={handleSubmit}
+          onClick={() => onAnswer(selectedValue || 0)}
           size="large"
           disabled={question.required && selectedValue === null}
           sx={{
             borderRadius: 3,
             minWidth: 120,
-            ...(themeMode === 'unfiltered' && {
-              backgroundColor: '#F6FA24',
-              color: '#000000',
-              '&:hover': {
-                backgroundColor: '#FFD700',
-              },
-              '&:disabled': {
-                backgroundColor: '#333333',
-                color: '#666666',
-              },
-            }),
+            backgroundColor: 'primary.main',
+            color: 'primary.contrastText',
+            '&:hover': {
+              backgroundColor: 'primary.dark',
+            },
+            '&:disabled': {
+              backgroundColor: 'action.disabledBackground',
+              color: 'action.disabled',
+            },
           }}
         >
           {selectedValue !== null ? 'Submit' : 'Skip'}
@@ -247,13 +242,6 @@ export const LikertScaleNode: React.FC<LikertScaleNodeProps> = ({ question, onAn
           * This question is required
         </FormHelperText>
       )}
-      
-      {/* Keyboard Controls Helper - Hide on mobile */}
-      {!isMobile && (
-        <FormHelperText sx={{ textAlign: 'center', mt: 1, fontSize: '0.75rem', opacity: 0.7 }}>
-          Use number keys (1-{getScaleValues().length}) or arrow keys to select • Enter to submit
-        </FormHelperText>
-      )}
-    </NodeCard>
+    </Box>
   );
 };

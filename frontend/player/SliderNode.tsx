@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Slider, Button, Alert, FormHelperText } from '@mui/material';
+import { Box, Typography, Slider, Button, FormHelperText } from '@mui/material';
 import type { SliderNode as SliderNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from '../shared/MediaViewer';
+import { UnifiedSurveyQuestionNode } from './UnifiedSurveyQuestionNode';
 import { useAudio } from '../contexts/AudioContext';
 import { useNodeSettings } from '../hooks/useNodeSettings';
 import { MarkdownRenderer } from '../shared/MarkdownRenderer';
@@ -18,7 +19,6 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
     question.defaultValue !== undefined ? question.defaultValue : 
     question.required ? null : null
   );
-  const [showValidation, setShowValidation] = useState(false);
   const { playSound } = useAudio();
 
   if (import.meta.env.DEV) {
@@ -28,24 +28,15 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
   const handleValueChange = (_event: Event, newValue: number | number[]) => {
     const value = Array.isArray(newValue) ? newValue[0] : newValue;
     setSelectedValue(value);
-    setShowValidation(false);
     playSound('click');
-  };
-
-  const handleSubmit = () => {
-    if (question.required && selectedValue === null) {
-      setShowValidation(true);
-      playSound('error');
-      return;
-    }
-
-    playSound('navigate');
-    onAnswer(selectedValue);
   };
 
   // Add keyboard controls for slider
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Only handle keyboard events when this component is active
+      if (event.target !== document.body) return;
+
       const range = question.range.max - question.range.min;
       
       // Handle number keys (1-9) for percentage-based positioning
@@ -72,16 +63,12 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
           setSelectedValue(question.range.max); // 0 = 100%
           playSound('click');
           break;
-        case 'Enter':
-          event.preventDefault();
-          handleSubmit();
-          break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedValue, question.range, playSound, handleSubmit]);
+  }, [selectedValue, question.range, playSound]);
 
   const formatValue = (value: number) => {
     if (question.range.precision !== undefined) {
@@ -123,7 +110,8 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
 
   const marks = generateMarks();
 
-  return (
+  // Pure render function for the slider question UI
+  const renderSliderQuestion = () => (
     <NodeCard animate={true}>
       <Box sx={{ mb: 3 }}>
         {question.media && (
@@ -158,7 +146,7 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
       {/* Current Value Display */}
       {question.showValue !== false && selectedValue !== null && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-          <Typography variant="h6" color="primary">
+          <Typography variant="h6" color="primary.main">
             {getValueLabel(selectedValue)}
           </Typography>
         </Box>
@@ -197,30 +185,31 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
           sx={{
             width: 'calc(100% - 48px)', // Account for thumb width and halo
             margin: '0 24px', // Center the slider and provide thumb + halo space
+            color: 'primary.main',
+            '& .MuiSlider-thumb': {
+              backgroundColor: 'primary.main',
+              '&:hover, &.Mui-focusVisible': {
+                boxShadow: `0px 0px 0px 8px rgba(0, 0, 0, 0.16)`,
+              },
+            },
+            '& .MuiSlider-track': {
+              backgroundColor: 'primary.main',
+            },
+            '& .MuiSlider-rail': {
+              backgroundColor: 'action.disabled',
+            },
+            '& .MuiSlider-mark': {
+              backgroundColor: 'action.disabled',
+            },
+            '& .MuiSlider-markLabel': {
+              color: 'text.secondary',
+            },
+            '& .MuiSlider-valueLabel': {
+              backgroundColor: 'primary.main',
+              color: 'primary.contrastText',
+            },
           }}
         />
-      </Box>
-
-      {/* Validation Error */}
-      {showValidation && question.required && selectedValue === null && (
-        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-          This question is required. Please select a value.
-        </Alert>
-      )}
-
-      {/* Submit Button */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          size="large"
-          sx={{
-            borderRadius: 3,
-            minWidth: 120,
-          }}
-        >
-          {selectedValue !== null ? 'Submit' : 'Skip'}
-        </Button>
       </Box>
 
       {/* Helper Text */}
@@ -230,10 +219,59 @@ export const SliderNode: React.FC<SliderNodeProps> = ({ question, onAnswer }) =>
             * This question is required
           </FormHelperText>
         )}
-        <FormHelperText sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+        <FormHelperText sx={{ fontSize: '0.75rem', opacity: 0.7 }}>
           Use number keys 1-9 for 10%-90%, 0 for 100%, Enter to submit
         </FormHelperText>
       </Box>
     </NodeCard>
+  );
+
+  // Check if this is a survey question (has followUp capability)
+  const isSurveyQuestion = question.followUp !== undefined;
+
+  // If it's a survey question, wrap with UnifiedSurveyQuestionNode
+  if (isSurveyQuestion) {
+    return (
+      <UnifiedSurveyQuestionNode
+        question={question}
+        onAnswer={onAnswer}
+        response={selectedValue}
+        hasResponse={selectedValue !== null}
+      >
+        {renderSliderQuestion()}
+      </UnifiedSurveyQuestionNode>
+    );
+  }
+
+  // Otherwise render as regular training question with submit button
+  return (
+    <Box>
+      {renderSliderQuestion()}
+      
+      {/* Submit Button for non-survey questions */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+        <Button
+          variant="contained"
+          onClick={() => onAnswer(selectedValue)}
+          size="large"
+          disabled={question.required && selectedValue === null}
+          sx={{
+            borderRadius: 3,
+            minWidth: 120,
+            backgroundColor: 'primary.main',
+            color: 'primary.contrastText',
+            '&:hover': {
+              backgroundColor: 'primary.dark',
+            },
+            '&:disabled': {
+              backgroundColor: 'action.disabledBackground',
+              color: 'action.disabled',
+            },
+          }}
+        >
+          {selectedValue !== null ? 'Submit' : 'Skip'}
+        </Button>
+      </Box>
+    </Box>
   );
 };

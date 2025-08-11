@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, Typography, TextField, Button, Alert, FormHelperText } from '@mui/material';
+import { Box, Typography, TextField, Button, FormHelperText } from '@mui/material';
 import type { TextAreaNode as TextAreaNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from '../shared/MediaViewer';
+import { UnifiedSurveyQuestionNode } from './UnifiedSurveyQuestionNode';
 import { useAudio } from '../contexts/AudioContext';
-import { useTheme } from '../contexts/ThemeContext';
 import { useNodeSettings } from '../hooks/useNodeSettings';
 import { MarkdownRenderer } from '../shared/MarkdownRenderer';
 
@@ -16,15 +16,12 @@ interface TextAreaNodeProps {
 export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }) => {
   const settings = useNodeSettings(question.id);
   const [textValue, setTextValue] = useState<string>('');
-  const [showValidation, setShowValidation] = useState(false);
-  const [validationError, setValidationError] = useState<string>('');
   const { playSound } = useAudio();
-  const { themeMode } = useTheme();
+  const textFieldRef = useRef<HTMLTextAreaElement>(null);
 
   if (import.meta.env.DEV) {
     console.log(`TextAreaNode ${question.id}: shuffleAnswerOrder=${settings.shuffleAnswerOrder}, reinforcementEligible=${settings.reinforcementEligible}`);
   }
-  const textFieldRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-focus the text field when component mounts
   useEffect(() => {
@@ -36,39 +33,22 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
   const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = event.target.value;
     setTextValue(value);
-    setShowValidation(false);
-    setValidationError('');
   };
 
-  const validateInput = (value: string): string | null => {
-    if (question.required && value.trim().length === 0) {
-      return 'This question is required. Please enter a response.';
+  const isValidResponse = (): boolean => {
+    if (question.required && textValue.trim().length === 0) {
+      return false;
     }
     
-    if (question.minLength && value.length < question.minLength) {
-      return `Response must be at least ${question.minLength} characters long.`;
+    if (question.minLength && textValue.length < question.minLength) {
+      return false;
     }
     
-    if (question.maxLength && value.length > question.maxLength) {
-      return `Response must not exceed ${question.maxLength} characters.`;
+    if (question.maxLength && textValue.length > question.maxLength) {
+      return false;
     }
     
-    return null;
-  };
-
-  const handleSubmit = () => {
-    const trimmedValue = textValue.trim();
-    const error = validateInput(textValue); // Use original value for length validation
-    
-    if (error) {
-      setValidationError(error);
-      setShowValidation(true);
-      playSound('error');
-      return;
-    }
-
-    playSound('navigate');
-    onAnswer(trimmedValue);
+    return true;
   };
 
   const getWordCount = () => {
@@ -81,12 +61,8 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
     return textValue.length;
   };
 
-  const isSubmitDisabled = () => {
-    // Don't disable button to allow validation error display
-    return false;
-  };
-
-  return (
+  // Pure render function for the text area question UI
+  const renderTextAreaQuestion = () => (
     <NodeCard animate={true}>
       <Box sx={{ mb: 3 }}>
         {question.media && (
@@ -127,7 +103,6 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
           onChange={handleTextChange}
           placeholder={question.placeholder || 'Type your response here...'}
           fullWidth
-          
           inputRef={textFieldRef}
           inputProps={{
             spellCheck: question.spellCheck !== false,
@@ -138,23 +113,21 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: 2,
-              ...(themeMode === 'unfiltered' && {
-                '& fieldset': {
-                  borderColor: '#333333',
+              '& fieldset': {
+                borderColor: 'divider',
+              },
+              '&:hover fieldset': {
+                borderColor: 'primary.main',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: 'primary.main',
+              },
+              '& .MuiInputBase-input': {
+                color: 'text.primary',
+                '&::placeholder': {
+                  color: 'text.disabled',
                 },
-                '&:hover fieldset': {
-                  borderColor: '#F6FA24',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#F6FA24',
-                },
-                '& .MuiInputBase-input': {
-                  color: '#FFFFFF',
-                  '&::placeholder': {
-                    color: '#666666',
-                  },
-                },
-              }),
+              },
             },
           }}
         />
@@ -170,7 +143,6 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
           )}
           {question.maxLength && (
             <Typography 
-              
               color={getCharacterCount() > question.maxLength * 0.9 ? 'warning.main' : 'text.secondary'}
             >
               Characters: {getCharacterCount()}/{question.maxLength}
@@ -178,40 +150,6 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
           )}
         </Box>
       )}
-
-      {/* Validation Error */}
-      {showValidation && validationError && (
-        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-          {validationError}
-        </Alert>
-      )}
-
-      {/* Submit Button */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          size="large"
-          disabled={isSubmitDisabled()}
-          sx={{
-            borderRadius: 3,
-            minWidth: 120,
-            ...(themeMode === 'unfiltered' && {
-              backgroundColor: '#F6FA24',
-              color: '#000000',
-              '&:hover': {
-                backgroundColor: '#FFD700',
-              },
-              '&:disabled': {
-                backgroundColor: '#333333',
-                color: '#666666',
-              },
-            }),
-          }}
-        >
-          {textValue.trim().length > 0 ? 'Submit' : 'Skip'}
-        </Button>
-      </Box>
 
       {/* Helper Text */}
       <Box sx={{ textAlign: 'center', mt: 1 }}>
@@ -227,5 +165,54 @@ export const TextAreaNode: React.FC<TextAreaNodeProps> = ({ question, onAnswer }
         )}
       </Box>
     </NodeCard>
+  );
+
+  // Check if this is a survey question (has followUp capability)
+  const isSurveyQuestion = question.followUp !== undefined;
+
+  // If it's a survey question, wrap with UnifiedSurveyQuestionNode
+  if (isSurveyQuestion) {
+    return (
+      <UnifiedSurveyQuestionNode
+        question={question}
+        onAnswer={onAnswer}
+        response={textValue.trim()}
+        hasResponse={textValue.trim().length > 0}
+      >
+        {renderTextAreaQuestion()}
+      </UnifiedSurveyQuestionNode>
+    );
+  }
+
+  // Otherwise render as regular training question with submit button
+  return (
+    <Box>
+      {renderTextAreaQuestion()}
+      
+      {/* Submit Button for non-survey questions */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+        <Button
+          variant="contained"
+          onClick={() => onAnswer(textValue.trim())}
+          size="large"
+          disabled={question.required && !isValidResponse()}
+          sx={{
+            borderRadius: 3,
+            minWidth: 120,
+            backgroundColor: 'primary.main',
+            color: 'primary.contrastText',
+            '&:hover': {
+              backgroundColor: 'primary.dark',
+            },
+            '&:disabled': {
+              backgroundColor: 'action.disabledBackground',
+              color: 'action.disabled',
+            },
+          }}
+        >
+          {textValue.trim().length > 0 ? 'Submit' : 'Skip'}
+        </Button>
+      </Box>
+    </Box>
   );
 };

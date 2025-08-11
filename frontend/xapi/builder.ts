@@ -393,6 +393,160 @@ export function surveyEventToStatement(event: SurveyEvent): XAPIStatement {
 }
 
 /**
+ * Create an xAPI statement for a survey question response (including follow-up)
+ */
+export function buildSurveyResponseStatement(config: {
+  actor: XAPIActor;
+  surveyId: string;
+  questionId: string;
+  questionText: string;
+  questionType: string;
+  response: string | number;
+  followUpResponse?: string;
+  timestamp?: string;
+  duration?: number;
+  context?: XAPIContext;
+}): XAPIStatement {
+  const activity = createActivity({
+    id: `${config.surveyId}/question/${config.questionId}`,
+    name: `Survey Question: ${config.questionText}`,
+    type: XAPI_ACTIVITY_TYPES.QUESTION,
+    extensions: {
+      'http://nlj-viewer.com/extensions/question-type': config.questionType,
+      'http://nlj-viewer.com/extensions/survey-id': config.surveyId,
+      'http://nlj-viewer.com/extensions/has-follow-up': !!config.followUpResponse
+    }
+  });
+
+  const resultExtensions: Record<string, unknown> = {
+    'http://nlj-viewer.com/extensions/question-metadata': {
+      question_text: config.questionText,
+      question_type: config.questionType,
+      has_follow_up: !!config.followUpResponse
+    }
+  };
+
+  // Add follow-up response to extensions if provided
+  if (config.followUpResponse) {
+    resultExtensions['http://nlj-viewer.com/extensions/follow-up-response'] = config.followUpResponse;
+  }
+
+  const result = createResult({
+    response: String(config.response),
+    duration: config.duration,
+    extensions: resultExtensions
+  });
+
+  const context = createContext({
+    parentActivity: createActivity({
+      id: config.surveyId,
+      name: `Survey: ${config.surveyId}`,
+      type: XAPI_ACTIVITY_TYPES.SURVEY
+    }),
+    ...config.context
+  });
+
+  return createStatement()
+    .setActor(config.actor)
+    .setVerb(XAPI_VERBS.RESPONDED)
+    .setObject(activity)
+    .setResult(result)
+    .setContext(context)
+    .setTimestamp(config.timestamp)
+    .build();
+}
+
+/**
+ * Create an xAPI statement for survey completion
+ */
+export function buildSurveyCompletionStatement(config: {
+  actor: XAPIActor;
+  surveyId: string;
+  surveyName: string;
+  totalQuestions: number;
+  answeredQuestions: number;
+  completion: boolean;
+  duration?: number;
+  timestamp?: string;
+  context?: XAPIContext;
+}): XAPIStatement {
+  const activity = createActivity({
+    id: config.surveyId,
+    name: config.surveyName,
+    type: XAPI_ACTIVITY_TYPES.SURVEY,
+    extensions: {
+      'http://nlj-viewer.com/extensions/total-questions': config.totalQuestions,
+      'http://nlj-viewer.com/extensions/answered-questions': config.answeredQuestions
+    }
+  });
+
+  const completionRate = config.totalQuestions > 0 ? config.answeredQuestions / config.totalQuestions : 0;
+
+  const result = createResult({
+    completion: config.completion,
+    score: {
+      scaled: completionRate,
+      raw: config.answeredQuestions,
+      max: config.totalQuestions
+    },
+    duration: config.duration,
+    extensions: {
+      'http://nlj-viewer.com/extensions/response-count': config.answeredQuestions,
+      'http://nlj-viewer.com/extensions/completion-rate': completionRate
+    }
+  });
+
+  return createStatement()
+    .setActor(config.actor)
+    .setVerb(config.completion ? XAPI_VERBS.COMPLETED : XAPI_VERBS.ABANDONED)
+    .setObject(activity)
+    .setResult(result)
+    .setContext(config.context)
+    .setTimestamp(config.timestamp)
+    .build();
+}
+
+/**
+ * Create an xAPI statement for survey distribution
+ */
+export function buildSurveyDistributionStatement(config: {
+  actor: XAPIActor;
+  surveyId: string;
+  surveyName: string;
+  distributionMethod: 'email' | 'sms' | 'link' | 'upload';
+  recipientCount: number;
+  timestamp?: string;
+  context?: XAPIContext;
+}): XAPIStatement {
+  const activity = createActivity({
+    id: config.surveyId,
+    name: config.surveyName,
+    type: XAPI_ACTIVITY_TYPES.SURVEY,
+    extensions: {
+      'http://nlj-viewer.com/extensions/distribution-method': config.distributionMethod,
+      'http://nlj-viewer.com/extensions/recipient-count': config.recipientCount
+    }
+  });
+
+  const result = createResult({
+    success: true,
+    extensions: {
+      'http://nlj-viewer.com/extensions/distribution-method': config.distributionMethod,
+      'http://nlj-viewer.com/extensions/recipient-count': config.recipientCount
+    }
+  });
+
+  return createStatement()
+    .setActor(config.actor)
+    .setVerb(XAPI_VERBS.SHARED)
+    .setObject(activity)
+    .setResult(result)
+    .setContext(config.context)
+    .setTimestamp(config.timestamp)
+    .build();
+}
+
+/**
  * Convert a connections event to an xAPI statement
  */
 export function connectionsEventToStatement(event: ConnectionsEvent): XAPIStatement {

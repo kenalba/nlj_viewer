@@ -83,6 +83,9 @@ export {
   eventToStatement,
   questionEventToStatement,
   surveyEventToStatement,
+  buildSurveyResponseStatement,
+  buildSurveyCompletionStatement,
+  buildSurveyDistributionStatement,
   connectionsEventToStatement,
   wordleEventToStatement,
   validateStatement

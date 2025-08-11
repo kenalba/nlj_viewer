@@ -121,6 +121,8 @@ export interface QuestionNode extends BaseNode {
   content?: string;
   media?: Media;
   additionalMediaList?: MediaWrapper[];
+  // Survey follow-up capability
+  followUp?: SurveyFollowUpConfig;
   // Question-level settings
   settings?: NodeSettings;
 }
@@ -153,6 +155,8 @@ export interface TrueFalseNode extends BaseNode {
   media?: Media;
   additionalMediaList?: MediaWrapper[];
   correctAnswer: boolean;
+  // Survey follow-up capability
+  followUp?: SurveyFollowUpConfig;
   // Question-level settings
   settings?: NodeSettings;
 }
@@ -205,6 +209,8 @@ export interface ShortAnswerNode extends BaseNode {
   additionalMediaList?: MediaWrapper[];
   correctAnswers: string[];
   caseSensitive?: boolean;
+  // Survey follow-up capability
+  followUp?: SurveyFollowUpConfig;
   // Question-level settings
   settings?: NodeSettings;
 }
@@ -228,12 +234,22 @@ export interface NodeResponse {
   nodeId: string;
   nodeType: string;
   response: NodeResponseValue;
+  followUpResponse?: string; // Verbatim follow-up response
   timestamp: Date;
   timeToRespond: number;
   isCorrect?: boolean;
   isSkipped?: boolean;
   attemptNumber?: number;
   metadata?: JSONObject;
+}
+
+// Survey-specific follow-up configuration interface
+export interface SurveyFollowUpConfig {
+  enabled: boolean;
+  prompt?: string; // Custom follow-up prompt, defaults to "Please explain your answer:"
+  required?: boolean; // Whether follow-up response is required
+  placeholder?: string; // Placeholder text for follow-up input
+  maxLength?: number; // Maximum character limit for follow-up response
 }
 
 // Survey-specific node types
@@ -258,6 +274,8 @@ export interface LikertScaleNode extends BaseNode {
   required?: boolean;
   showNumbers?: boolean;
   showLabels?: boolean;
+  // Survey follow-up capability
+  followUp?: SurveyFollowUpConfig;
   // Question-level settings
   settings?: NodeSettings;
 }
@@ -283,6 +301,8 @@ export interface RatingNode extends BaseNode {
     filled?: string;
     empty?: string;
   };
+  // Survey follow-up capability
+  followUp?: SurveyFollowUpConfig;
   // Question-level settings
   settings?: NodeSettings;
 }
@@ -309,6 +329,8 @@ export interface MatrixNode extends BaseNode {
   allowMultiplePerRow?: boolean;
   randomizeRows?: boolean;
   randomizeColumns?: boolean;
+  // Survey follow-up capability
+  followUp?: SurveyFollowUpConfig;
   // Question-level settings
   settings?: NodeSettings;
 }
@@ -335,6 +357,8 @@ export interface SliderNode extends BaseNode {
   showValue?: boolean;
   showTicks?: boolean;
   continuous?: boolean;
+  // Survey follow-up capability
+  followUp?: SurveyFollowUpConfig;
   // Question-level settings
   settings?: NodeSettings;
 }
@@ -354,6 +378,8 @@ export interface TextAreaNode extends BaseNode {
   resizable?: boolean;
   spellCheck?: boolean;
   wordCount?: boolean;
+  // Survey follow-up capability
+  followUp?: SurveyFollowUpConfig;
   // Question-level settings
   settings?: NodeSettings;
 }
@@ -375,6 +401,8 @@ export interface MultiSelectNode extends BaseNode {
   maxSelections?: number;
   randomizeOptions?: boolean;
   required?: boolean;
+  // Survey follow-up capability
+  followUp?: SurveyFollowUpConfig;
   // Question-level settings
   settings?: NodeSettings;
 }
@@ -397,6 +425,8 @@ export interface CheckboxNode extends BaseNode {
     correct?: string;
     incorrect?: string;
   };
+  // Survey follow-up capability
+  followUp?: SurveyFollowUpConfig;
   // Question-level settings
   settings?: NodeSettings;
 }

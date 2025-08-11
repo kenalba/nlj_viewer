@@ -13,7 +13,6 @@ import {
   FormControlLabel,
   Checkbox,
   Button,
-  Alert,
   FormHelperText,
   Paper,
   useMediaQuery
@@ -22,6 +21,7 @@ import { useTheme as useMuiTheme } from '@mui/material/styles';
 import type { MatrixNode as MatrixNodeType } from '../types/nlj';
 import { NodeCard } from './NodeCard';
 import { MediaViewer } from '../shared/MediaViewer';
+import { UnifiedSurveyQuestionNode } from './UnifiedSurveyQuestionNode';
 import { useAudio } from '../contexts/AudioContext';
 import { useNodeSettings } from '../hooks/useNodeSettings';
 import { MarkdownRenderer } from '../shared/MarkdownRenderer';
@@ -34,8 +34,6 @@ interface MatrixNodeProps {
 export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) => {
   const settings = useNodeSettings(question.id);
   const [responses, setResponses] = useState<Record<string, string | string[]>>({});
-  const [showValidation, setShowValidation] = useState(false);
-  const [validationError, setValidationError] = useState<string>('');
   const [currentRowIndex, setCurrentRowIndex] = useState(0);
   const { playSound } = useAudio();
   const muiTheme = useMuiTheme();
@@ -50,8 +48,6 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
       ...prev,
       [rowId]: columnId
     }));
-    setShowValidation(false);
-    setValidationError('');
     playSound('click');
   };
 
@@ -71,13 +67,11 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
         [rowId]: newResponses
       };
     });
-    setShowValidation(false);
-    setValidationError('');
     playSound('click');
   };
 
-  const validateResponses = (): string | null => {
-    if (!question.required) return null;
+  const hasValidResponse = (): boolean => {
+    if (!question.required) return true;
     
     for (const row of question.rows) {
       if (row.required !== false) {
@@ -85,27 +79,13 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
         if (!response || 
             (Array.isArray(response) && response.length === 0) ||
             (typeof response === 'string' && response.trim().length === 0)) {
-          return `Please provide a response for "${row.text}".`;
+          return false;
         }
       }
     }
     
-    return null;
+    return true;
   };
-
-  const handleSubmit = useCallback(() => {
-    const error = validateResponses();
-    
-    if (error) {
-      setValidationError(error);
-      setShowValidation(true);
-      playSound('error');
-      return;
-    }
-
-    playSound('navigate');
-    onAnswer(responses);
-  }, [responses, playSound, onAnswer, validateResponses]);
 
   // Keyboard controls
   useEffect(() => {
@@ -151,17 +131,11 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
           setCurrentRowIndex(currentRowIndex + 1);
         }
       }
-      
-      // Handle Enter key to submit
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        handleSubmit();
-      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [currentRowIndex, question, responses, handleSingleResponse, handleMultipleResponse, handleSubmit]);
+  }, [currentRowIndex, question, responses, handleSingleResponse, handleMultipleResponse]);
 
   const renderTableHeader = () => (
     <TableHead>
@@ -205,12 +179,12 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
       }}>
         <MarkdownRenderer content={row.text} />
         {row.required !== false && (
-          <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+          <Typography component="span" color="error.main" sx={{ ml: 0.5 }}>
             *
           </Typography>
         )}
         {currentRowIndex === rowIndex && (
-          <Typography component="span" sx={{ ml: 1, fontSize: '0.8rem', opacity: 0.7 }}>
+          <Typography component="span" sx={{ ml: 1, fontSize: '0.8rem', color: 'text.secondary' }}>
             (active)
           </Typography>
         )}
@@ -226,6 +200,12 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
           <Radio
             checked={responses[row.id] === column.id}
             onChange={() => handleSingleResponse(row.id, column.id)}
+            sx={{
+              color: 'action.disabled',
+              '&.Mui-checked': {
+                color: 'primary.main',
+              },
+            }}
           />
         </TableCell>
       ))}
@@ -246,12 +226,12 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
       }}>
         <MarkdownRenderer content={row.text} />
         {row.required !== false && (
-          <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+          <Typography component="span" color="error.main" sx={{ ml: 0.5 }}>
             *
           </Typography>
         )}
         {currentRowIndex === rowIndex && (
-          <Typography component="span" sx={{ ml: 1, fontSize: '0.8rem', opacity: 0.7 }}>
+          <Typography component="span" sx={{ ml: 1, fontSize: '0.8rem', color: 'text.secondary' }}>
             (active)
           </Typography>
         )}
@@ -267,6 +247,12 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
           <Checkbox
             checked={((responses[row.id] as string[]) || []).includes(column.id)}
             onChange={(e) => handleMultipleResponse(row.id, column.id, e.target.checked)}
+            sx={{
+              color: 'action.disabled',
+              '&.Mui-checked': {
+                color: 'primary.main',
+              },
+            }}
           />
         </TableCell>
       ))}
@@ -280,6 +266,8 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
         mb: 3,
         borderRadius: 2,
         overflow: 'auto',
+        border: '1px solid',
+        borderColor: 'divider',
       }}
     >
       <Table size={isMobile ? 'small' : 'medium'}>
@@ -308,12 +296,14 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
             borderRadius: 2,
             backgroundColor: currentRowIndex === index ? 'action.hover' : 'background.paper',
             transition: 'background-color 0.2s ease',
+            border: '1px solid',
+            borderColor: 'divider',
           }}
         >
-          <Typography sx={{ mb: 2, fontWeight: 'medium' }}>
+          <Typography sx={{ mb: 2, fontWeight: 'medium', color: 'text.primary' }}>
             {row.text}
             {row.required !== false && (
-              <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+              <Typography component="span" color="error.main" sx={{ ml: 0.5 }}>
                 *
               </Typography>
             )}
@@ -328,9 +318,15 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
                     <Checkbox
                       checked={((responses[row.id] as string[]) || []).includes(column.id)}
                       onChange={(e) => handleMultipleResponse(row.id, column.id, e.target.checked)}
+                      sx={{
+                        color: 'action.disabled',
+                        '&.Mui-checked': {
+                          color: 'primary.main',
+                        },
+                      }}
                     />
                   }
-                  label={column.text}
+                  label={<Typography color="text.primary">{column.text}</Typography>}
                 />
               ))}
             </Box>
@@ -344,9 +340,16 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
                   key={column.id}
                   value={column.id}
                   control={
-                    <Radio />
+                    <Radio 
+                      sx={{
+                        color: 'action.disabled',
+                        '&.Mui-checked': {
+                          color: 'primary.main',
+                        },
+                      }}
+                    />
                   }
-                  label={column.text}
+                  label={<Typography color="text.primary">{column.text}</Typography>}
                 />
               ))}
             </RadioGroup>
@@ -356,7 +359,8 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
     </Box>
   );
 
-  return (
+  // Pure render function for the matrix question UI
+  const renderMatrixQuestion = () => (
     <NodeCard animate={true}>
       <Box sx={{ mb: 3 }}>
         {question.media && (
@@ -391,28 +395,6 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
       {/* Matrix Table or Mobile Cards */}
       {isMobile ? renderMobileCards() : renderTable()}
 
-      {/* Validation Error */}
-      {showValidation && validationError && (
-        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-          {validationError}
-        </Alert>
-      )}
-
-      {/* Submit Button */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          size="large"
-          sx={{
-            borderRadius: 3,
-            minWidth: 120,
-          }}
-        >
-          Submit
-        </Button>
-      </Box>
-
       {/* Helper Text */}
       <Box sx={{ textAlign: 'center', mt: 1 }}>
         {question.required && (
@@ -425,5 +407,54 @@ export const MatrixNode: React.FC<MatrixNodeProps> = ({ question, onAnswer }) =>
         </FormHelperText>
       </Box>
     </NodeCard>
+  );
+
+  // Check if this is a survey question (has followUp capability)
+  const isSurveyQuestion = question.followUp !== undefined;
+
+  // If it's a survey question, wrap with UnifiedSurveyQuestionNode
+  if (isSurveyQuestion) {
+    return (
+      <UnifiedSurveyQuestionNode
+        question={question}
+        onAnswer={onAnswer}
+        response={responses}
+        hasResponse={hasValidResponse()}
+      >
+        {renderMatrixQuestion()}
+      </UnifiedSurveyQuestionNode>
+    );
+  }
+
+  // Otherwise render as regular training question with submit button
+  return (
+    <Box>
+      {renderMatrixQuestion()}
+      
+      {/* Submit Button for non-survey questions */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+        <Button
+          variant="contained"
+          onClick={() => onAnswer(responses)}
+          size="large"
+          disabled={question.required && !hasValidResponse()}
+          sx={{
+            borderRadius: 3,
+            minWidth: 120,
+            backgroundColor: 'primary.main',
+            color: 'primary.contrastText',
+            '&:hover': {
+              backgroundColor: 'primary.dark',
+            },
+            '&:disabled': {
+              backgroundColor: 'action.disabledBackground',
+              color: 'action.disabled',
+            },
+          }}
+        >
+          Submit
+        </Button>
+      </Box>
+    </Box>
   );
 };

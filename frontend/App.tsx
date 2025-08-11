@@ -28,6 +28,7 @@ import MediaDetailPage from './pages/MediaDetailPage';
 import PodcastGenerationPage from './pages/PodcastGenerationPage';
 import { PeopleTab } from './components/people/PeopleTab';
 import AnalyticsPage from './pages/AnalyticsPage';
+import SurveyDashboard from './pages/SurveyDashboard';
 import { useAuth } from './contexts/AuthContext';
 import { contentApi, type ContentItem } from './client/content';
 // import { HomePage } from './components/HomePage';
@@ -245,6 +246,20 @@ const AppContent: React.FC = () => {
     }
     // Main activities page: /app/activities
     return <ContentLibrary contentType="all" />;
+  }
+  
+  if (path.includes('/surveys')) {
+    // Survey analytics page: /app/surveys/[id]/analytics
+    if (path.includes('/surveys/') && path.includes('/analytics') && path.split('/').length > 4) {
+      // TODO: Create SurveyAnalyticsPage component
+      return <AnalyticsPage />; // Temporary fallback
+    }
+    // Survey detail page: /app/surveys/[id]
+    if (path.includes('/app/surveys/') && path.split('/').length > 3 && !path.includes('/analytics')) {
+      return <ActivityDetailPage />; // Reuse ActivityDetailPage for now
+    }
+    // Main surveys page: /app/surveys
+    return <SurveyDashboard />;
   }
   
   if (path.includes('/approvals') && canReview) {
