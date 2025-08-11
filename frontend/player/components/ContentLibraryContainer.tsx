@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
+  Card,
   Typography,
   Button,
   Alert,
@@ -23,7 +24,8 @@ import {
   Add as AddIcon,
   FileUpload as ImportIcon,
   ViewModule as CardViewIcon,
-  TableRows as TableViewIcon
+  TableRows as TableViewIcon,
+  Assignment as ActivityIcon
 } from '@mui/icons-material';
 import { useGameContext } from '../../contexts/GameContext';
 import { useNavigate } from 'react-router-dom';
@@ -680,7 +682,37 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
       />
 
       {/* Content Display */}
-      {viewMode === 'card' ? (
+      {content.length === 0 ? (
+        <Card sx={{ p: 6, textAlign: 'center' }}>
+          <ActivityIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Typography variant="h6" gutterBottom>
+            No activities found
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            {searchTerm 
+              ? 'Try adjusting your search or filter criteria'
+              : 'No activities available yet. Create your first activity to get started!'}
+          </Typography>
+          {canCreateContent(user) && !searchTerm && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreateActivity}
+            >
+              Create Your First Activity
+            </Button>
+          )}
+        </Card>
+      ) : filteredContent.length === 0 ? (
+        <Card sx={{ p: 6, textAlign: 'center' }}>
+          <Typography variant="h6" gutterBottom>
+            No activities found
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Try adjusting your search or filter criteria.
+          </Typography>
+        </Card>
+      ) : viewMode === 'card' ? (
         <ContentCardGrid
           content={filteredContent}
           user={user}
@@ -688,60 +720,26 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
           onEditContent={handleEditContent}
         />
       ) : (
-        <Box>
-          
-          {filteredContent.length > 0 ? (
-            filteredContent.every(item => item.id) ? (
-              <ContentTable
-                content={filteredContent}
-                selectedIds={selectedIds}
-                onSelectionChange={handleSelectionChange}
-                user={user}
-                onPlayContent={handlePlayContent}
-                onEditContent={handleEditContent}
-                onDeleteContent={handleDeleteSingleItem}
-                onSubmitForReview={handleSubmitSingleItemForReview}
-              />
-            ) : (
-              <Box textAlign="center" py={8}>
-                <Alert severity="warning" sx={{ mb: 2 }}>
-                  <Typography variant="body2">
-                    Some activity data is malformed. Please contact support.
-                  </Typography>
-                </Alert>
-              </Box>
-            )
-          ) : (
-            <Box textAlign="center" py={8}>
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                No activities found
+        filteredContent.every(item => item.id) ? (
+          <ContentTable
+            content={filteredContent}
+            selectedIds={selectedIds}
+            onSelectionChange={handleSelectionChange}
+            user={user}
+            onPlayContent={handlePlayContent}
+            onEditContent={handleEditContent}
+            onDeleteContent={handleDeleteSingleItem}
+            onSubmitForReview={handleSubmitSingleItemForReview}
+          />
+        ) : (
+          <Box textAlign="center" py={8}>
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <Typography variant="body2">
+                Some activity data is malformed. Please contact support.
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Try adjusting your search or filter criteria.
-              </Typography>
-            </Box>
-          )}
-        </Box>
-      )}
-
-      {content.length === 0 && !loading && (
-        <Box textAlign="center" py={8}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            No activities found
-          </Typography>
-          <Typography variant="body2" color="text.secondary" mb={3}>
-            No activities available yet. Create your first activity to get started!
-          </Typography>
-          {canCreateContent(user) && (
-            <Button 
-              variant="contained" 
-              startIcon={<AddIcon />}
-              onClick={handleCreateActivity}
-            >
-              Create Your First Activity
-            </Button>
-          )}
-        </Box>
+            </Alert>
+          </Box>
+        )
       )}
 
       {/* Modals */}

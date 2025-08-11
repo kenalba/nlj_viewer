@@ -24,15 +24,15 @@ WORKDIR /app
 COPY pyproject.toml README.md ./
 
 # Create virtual environment and install dependencies
-RUN uv venv .venv && \
+RUN uv venv .venv --python /usr/local/bin/python3 && \
     . .venv/bin/activate && \
     uv pip install -e ".[dev]"
 
 # Copy application code
 COPY . .
 
-# Ensure the virtual environment is activated for all subsequent commands
-ENV PATH="/app/.venv/bin:$PATH"
+# Ensure the virtual environment packages are accessible
+ENV PYTHONPATH="/app:/app/.venv/lib/python3.11/site-packages"
 
 # Create uploads directory
 RUN mkdir -p uploads
@@ -45,4 +45,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Default command for development
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["/usr/local/bin/python3", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
