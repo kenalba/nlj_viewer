@@ -9,7 +9,7 @@ from datetime import datetime
 
 from sqlalchemy import select, func, or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.models.content import ContentItem, ContentState, ContentType, LearningStyle
 from app.models.user import User, UserRole
@@ -62,7 +62,7 @@ class ContentService:
         query = select(ContentItem).where(ContentItem.id == content_id)
 
         if include_nlj_data:
-            query = query.options(selectinload(ContentItem.creator))
+            query = query.options(joinedload(ContentItem.creator))
 
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
@@ -75,8 +75,8 @@ class ContentService:
     ) -> Tuple[List[ContentItem], int]:
         """Get paginated content list with filters."""
 
-        # Base query
-        query = select(ContentItem).options(selectinload(ContentItem.creator))
+        # Base query with joined loading to avoid N+1 queries
+        query = select(ContentItem).options(joinedload(ContentItem.creator))
         count_query = select(func.count(ContentItem.id))
 
         # Apply filters

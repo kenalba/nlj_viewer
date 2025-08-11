@@ -9,7 +9,7 @@ from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.models import (
     ContentItem, ContentVersion, ApprovalWorkflow, WorkflowReview,
@@ -45,7 +45,7 @@ class WorkflowService:
         # Get the content item
         result = await self.db.execute(
             select(ContentItem)
-            .options(selectinload(ContentItem.versions))
+            .options(joinedload(ContentItem.versions))
             .where(ContentItem.id == content_id)
         )
         content = result.scalar_one_or_none()
@@ -120,7 +120,7 @@ class WorkflowService:
         result = await self.db.execute(
             select(ApprovalWorkflow)
             .options(
-                selectinload(ApprovalWorkflow.content_version).selectinload(ContentVersion.content)
+                joinedload(ApprovalWorkflow.content_version).joinedload(ContentVersion.content)
             )
             .where(ApprovalWorkflow.content_version_id == version_id)
         )
@@ -175,7 +175,7 @@ class WorkflowService:
         result = await self.db.execute(
             select(ApprovalWorkflow)
             .options(
-                selectinload(ApprovalWorkflow.content_version).selectinload(ContentVersion.content)
+                joinedload(ApprovalWorkflow.content_version).joinedload(ContentVersion.content)
             )
             .where(ApprovalWorkflow.id == workflow_id)
         )
@@ -225,7 +225,7 @@ class WorkflowService:
         result = await self.db.execute(
             select(ApprovalWorkflow)
             .options(
-                selectinload(ApprovalWorkflow.content_version).selectinload(ContentVersion.content)
+                joinedload(ApprovalWorkflow.content_version).joinedload(ContentVersion.content)
             )
             .where(ApprovalWorkflow.id == workflow_id)
         )
@@ -280,7 +280,7 @@ class WorkflowService:
         result = await self.db.execute(
             select(ApprovalWorkflow)
             .options(
-                selectinload(ApprovalWorkflow.content_version).selectinload(ContentVersion.content)
+                joinedload(ApprovalWorkflow.content_version).joinedload(ContentVersion.content)
             )
             .where(ApprovalWorkflow.id == workflow_id)
         )
@@ -330,7 +330,7 @@ class WorkflowService:
         result = await self.db.execute(
             select(ApprovalWorkflow)
             .options(
-                selectinload(ApprovalWorkflow.content_version).selectinload(ContentVersion.content)
+                joinedload(ApprovalWorkflow.content_version).joinedload(ContentVersion.content)
             )
             .where(ApprovalWorkflow.id == workflow_id)
         )
@@ -378,8 +378,8 @@ class WorkflowService:
         result = await self.db.execute(
             select(ContentVersion)
             .options(
-                selectinload(ContentVersion.content).selectinload(ContentItem.versions),
-                selectinload(ContentVersion.approval_workflow)
+                joinedload(ContentVersion.content).joinedload(ContentItem.versions),
+                joinedload(ContentVersion.approval_workflow)
             )
             .where(ContentVersion.id == version_id)
         )
@@ -433,7 +433,7 @@ class WorkflowService:
         result = await self.db.execute(
             select(ApprovalWorkflow)
             .options(
-                selectinload(ApprovalWorkflow.content_version).selectinload(ContentVersion.content)
+                joinedload(ApprovalWorkflow.content_version).joinedload(ContentVersion.content)
             )
             .where(ApprovalWorkflow.id == workflow_id)
         )
@@ -479,8 +479,8 @@ class WorkflowService:
         """Get workflows pending review."""
         
         query = select(ApprovalWorkflow).options(
-            selectinload(ApprovalWorkflow.content_version).selectinload(ContentVersion.content),
-            selectinload(ApprovalWorkflow.assigned_reviewer)
+            joinedload(ApprovalWorkflow.content_version).joinedload(ContentVersion.content),
+            joinedload(ApprovalWorkflow.assigned_reviewer)
         ).where(
             ApprovalWorkflow.current_state.in_([
                 WorkflowState.SUBMITTED_FOR_REVIEW,
@@ -502,7 +502,7 @@ class WorkflowService:
         
         result = await self.db.execute(
             select(WorkflowReview)
-            .options(selectinload(WorkflowReview.reviewer))
+            .options(joinedload(WorkflowReview.reviewer))
             .where(WorkflowReview.workflow_id == workflow_id)
             .order_by(WorkflowReview.created_at.desc())
         )
@@ -639,8 +639,8 @@ class WorkflowService:
         """Get workflow templates, optionally filtered by content type."""
         
         query = select(WorkflowTemplate).options(
-            selectinload(WorkflowTemplate.stages),
-            selectinload(WorkflowTemplate.creator)
+            joinedload(WorkflowTemplate.stages),
+            joinedload(WorkflowTemplate.creator)
         ).where(WorkflowTemplate.is_active == is_active)
         
         if content_type:
@@ -657,7 +657,7 @@ class WorkflowService:
         
         result = await self.db.execute(
             select(WorkflowTemplate)
-            .options(selectinload(WorkflowTemplate.stages))
+            .options(joinedload(WorkflowTemplate.stages))
             .where(
                 WorkflowTemplate.content_type == content_type,
                 WorkflowTemplate.is_default == True,
@@ -678,7 +678,7 @@ class WorkflowService:
         # Get the template with stages
         result = await self.db.execute(
             select(WorkflowTemplate)
-            .options(selectinload(WorkflowTemplate.stages))
+            .options(joinedload(WorkflowTemplate.stages))
             .where(WorkflowTemplate.id == template_id)
         )
         template = result.scalar_one_or_none()
@@ -729,7 +729,7 @@ class WorkflowService:
         # Get the stage instance
         result = await self.db.execute(
             select(WorkflowStageInstance)
-            .options(selectinload(WorkflowStageInstance.template_stage))
+            .options(joinedload(WorkflowStageInstance.template_stage))
             .where(WorkflowStageInstance.id == stage_instance_id)
         )
         stage_instance = result.scalar_one_or_none()
@@ -819,9 +819,9 @@ class WorkflowService:
         result = await self.db.execute(
             select(WorkflowStageInstance)
             .options(
-                selectinload(WorkflowStageInstance.workflow).selectinload(ApprovalWorkflow.content_version).selectinload(ContentVersion.content),
-                selectinload(WorkflowStageInstance.template_stage),
-                selectinload(WorkflowStageInstance.reviewer_assignments)
+                joinedload(WorkflowStageInstance.workflow).joinedload(ApprovalWorkflow.content_version).joinedload(ContentVersion.content),
+                joinedload(WorkflowStageInstance.template_stage),
+                joinedload(WorkflowStageInstance.reviewer_assignments)
             )
             .where(WorkflowStageInstance.id == stage_instance_id)
         )
@@ -974,9 +974,9 @@ class WorkflowService:
         """Get stage instances assigned to a specific reviewer."""
         
         query = select(WorkflowStageInstance).options(
-            selectinload(WorkflowStageInstance.workflow).selectinload(ApprovalWorkflow.content_version).selectinload(ContentVersion.content),
-            selectinload(WorkflowStageInstance.template_stage),
-            selectinload(WorkflowStageInstance.reviewer_assignments)
+            joinedload(WorkflowStageInstance.workflow).joinedload(ApprovalWorkflow.content_version).joinedload(ContentVersion.content),
+            joinedload(WorkflowStageInstance.template_stage),
+            joinedload(WorkflowStageInstance.reviewer_assignments)
         ).join(
             StageReviewerAssignment,
             WorkflowStageInstance.id == StageReviewerAssignment.stage_instance_id

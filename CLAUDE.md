@@ -186,7 +186,19 @@ sudo nginx -s reload
    docker compose restart nlj-frontend
    ```
 
-5. **Port Conflicts**
+5. **Activities Tab Not Loading / Timeout Issues**
+   ```bash
+   # If Activities tab hangs or times out, likely database performance issue
+   # Solution: Clear database and reload sample data
+   docker compose down --volumes
+   docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.localstack.yml -f docker-compose.rds.yml --env-file backend/.env up -d
+   
+   # Wait for services to be healthy, then load sample surveys
+   cd backend && source .venv/bin/activate && python scripts/load_sample_surveys.py
+   # This loads 4 sample surveys: Employee Engagement, Manager Effectiveness, Work-Life Balance, Automotive Sales
+   ```
+
+6. **Port Conflicts**
    ```bash
    # Check for conflicting services on required ports
    lsof -i :5173  # Frontend
@@ -218,6 +230,10 @@ async def test():
     print(health)
 asyncio.run(test())
 "
+
+# Test content API with authentication
+TOKEN=$(curl -s -X POST "http://localhost:8000/api/auth/login" -H "Content-Type: application/json" -d '{"username":"admin","password":"admin123456"}' | jq -r '.access_token')
+curl -s "http://localhost:8000/api/content/?limit=5" -H "Authorization: Bearer $TOKEN" | jq '{total: .total, titles: [.items[].title]}'
 ```
 
 ## Architecture

@@ -9,7 +9,7 @@ from typing import Optional, List
 
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.models.shared_token import SharedToken
 from app.models.content import ContentItem, ContentState
@@ -71,7 +71,7 @@ class SharedTokenService:
         """Get a share token by token string."""
         result = await self.db.execute(
             select(SharedToken)
-            .options(selectinload(SharedToken.content))
+            .options(joinedload(SharedToken.content))
             .where(SharedToken.token == token_string)
         )
         return result.scalar_one_or_none()
@@ -181,7 +181,7 @@ class SharedTokenService:
         
         result = await self.db.execute(
             select(SharedToken)
-            .options(selectinload(SharedToken.content))
+            .options(joinedload(SharedToken.content))
             .where(SharedToken.created_by == user_id)
             .order_by(SharedToken.created_at.desc())
         )

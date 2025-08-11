@@ -9,7 +9,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.core.security import get_password_hash, verify_password
 from app.models.user import User, UserRole
@@ -26,7 +26,7 @@ class UserService:
         """Get user by ID."""
         result = await self.db.execute(
             select(User)
-            .options(selectinload(User.created_content))
+            .options(joinedload(User.created_content))
             .where(User.id == user_id)
         )
         return result.scalar_one_or_none()

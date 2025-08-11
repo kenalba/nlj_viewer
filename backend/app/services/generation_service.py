@@ -13,7 +13,7 @@ from typing import List, Optional, Dict, Any, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.models.generation_session import GenerationSession, GenerationStatus
 from app.models.source_document import SourceDocument
@@ -179,7 +179,7 @@ class GenerationService:
         
         # Get session with source documents
         query = select(GenerationSession).options(
-            selectinload(GenerationSession.source_documents)
+            joinedload(GenerationSession.source_documents)
         ).where(
             and_(
                 GenerationSession.id == session_id,
@@ -694,7 +694,7 @@ class GenerationService:
     ) -> Tuple[List[GenerationSession], int]:
         """Get user's generation sessions with filtering."""
         query = select(GenerationSession).options(
-            selectinload(GenerationSession.source_documents)
+            joinedload(GenerationSession.source_documents)
         ).where(GenerationSession.user_id == user_id)
         
         if status:
@@ -721,8 +721,8 @@ class GenerationService:
     ) -> Optional[GenerationSession]:
         """Get generation session by ID with ownership validation."""
         query = select(GenerationSession).options(
-            selectinload(GenerationSession.source_documents),
-            selectinload(GenerationSession.created_activities)
+            joinedload(GenerationSession.source_documents),
+            joinedload(GenerationSession.created_activities)
         ).where(
             and_(
                 GenerationSession.id == session_id,

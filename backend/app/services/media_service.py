@@ -11,7 +11,7 @@ from fastapi import UploadFile
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.models.media import MediaItem, MediaType, MediaState
 from app.models.source_document import SourceDocument
@@ -320,7 +320,7 @@ class MediaService:
         query = query.offset(offset).limit(limit)
         
         # Include source document in results
-        query = query.options(selectinload(MediaItem.source_document))
+        query = query.options(joinedload(MediaItem.source_document))
         
         result = await db.execute(query)
         media_items = result.scalars().all()
@@ -339,7 +339,7 @@ class MediaService:
                 MediaItem.id == media_id,
                 MediaItem.created_by == user_id
             )
-        ).options(selectinload(MediaItem.source_document))
+        ).options(joinedload(MediaItem.source_document))
         
         result = await db.execute(query)
         return result.scalar_one_or_none()

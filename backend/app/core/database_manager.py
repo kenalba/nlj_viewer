@@ -177,8 +177,20 @@ class DatabaseConnectionManager:
     async def _ensure_tables(self):
         """Ensure all database tables exist."""
         try:
-            # Import Base after engine is created to avoid circular imports
+            # Import Base and models - the old engine in database.py won't interfere 
+            # since we're using our own engine for table creation
             from app.core.database import Base
+            
+            # Import all models to register them with Base metadata
+            from app.models.user import User  # noqa: F401
+            from app.models.content import ContentItem  # noqa: F401
+            from app.models.workflow import ContentVersion, ApprovalWorkflow  # noqa: F401
+            from app.models.generation_session import GenerationSession  # noqa: F401
+            from app.models.activity_source import ActivitySource  # noqa: F401
+            from app.models.source_document import SourceDocument  # noqa: F401
+            from app.models.shared_token import SharedToken  # noqa: F401
+            from app.models.media import MediaItem  # noqa: F401
+            from app.models.training_program import TrainingProgram, TrainingSession  # noqa: F401
             
             async with self.engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)

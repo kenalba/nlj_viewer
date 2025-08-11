@@ -10,7 +10,7 @@ from uuid import UUID
 
 from sqlalchemy import and_, or_, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.models.training_program import TrainingProgram, TrainingSession, TrainingBooking
 from app.models.user import User
@@ -110,7 +110,7 @@ class SchedulingService:
         
         stmt = (
             select(TrainingSession)
-            .options(selectinload(TrainingSession.session))
+            .options(joinedload(TrainingSession.session))
             .where(and_(*conditions))
         )
         
@@ -344,7 +344,7 @@ class SchedulingService:
         
         stmt = (
             select(TrainingSession)
-            .options(selectinload(TrainingSession.bookings))
+            .options(joinedload(TrainingSession.bookings))
             .where(and_(*conditions))
             .order_by(TrainingSession.start_time)
         )

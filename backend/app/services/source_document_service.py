@@ -12,7 +12,7 @@ from pathlib import Path
 import aiofiles
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.models.source_document import SourceDocument, FileType, ConversionStatus
 from app.models.user import User
