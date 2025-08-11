@@ -7,6 +7,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Optional, Tuple, Dict, Any
 from pathlib import Path
+from fastapi import UploadFile
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_
@@ -15,6 +16,7 @@ from sqlalchemy.orm import selectinload
 from app.models.media import MediaItem, MediaType, MediaState
 from app.models.source_document import SourceDocument
 from app.core.config import settings
+from app.services.s3_service import s3_media_service
 
 
 class MediaService:
@@ -24,9 +26,13 @@ class MediaService:
     """
     
     def __init__(self):
-        # Media storage directory - separate from regular uploads
-        self.media_dir = Path(settings.UPLOAD_DIR if hasattr(settings, 'UPLOAD_DIR') else '/tmp/nlj_uploads') / 'media'
-        self.media_dir.mkdir(parents=True, exist_ok=True)
+        # Check if S3 is configured, fall back to local storage
+        self.use_s3 = bool(settings.S3_BUCKET_MEDIA)
+        
+        if not self.use_s3:
+            # Media storage directory - separate from regular uploads
+            self.media_dir = Path(settings.UPLOAD_DIR if hasattr(settings, 'UPLOAD_DIR') else '/tmp/nlj_uploads') / 'media'
+            self.media_dir.mkdir(parents=True, exist_ok=True)
     
     async def create_media_item(
         self,
@@ -102,6 +108,155 @@ class MediaService:
         await db.refresh(media_item)
         
         return media_item
+    
+    async def upload_media_file(
+        self,
+        db: AsyncSession,
+        media_id: uuid.UUID,
+        file: UploadFile,
+        user_id: uuid.UUID,
+        make_public: bool = False
+    ) -> Optional[MediaItem]:
+        """
+        Upload media file to S3 storage and update database record.
+        
+        Args:
+            db: Database session
+            media_id: Media item ID
+            file: FastAPI UploadFile object
+            user_id: User ID for verification
+            make_public: Whether to make file publicly accessible
+            
+        Returns:
+            Updated MediaItem instance
+        """
+        # Get media item and verify ownership
+        media_item = await self.get_media_by_id(db, media_id, user_id)
+        if not media_item:
+            return None
+        
+        try:
+            if self.use_s3:
+                # Upload to S3
+                upload_result = await s3_media_service.upload_media_file(
+                    file=file,
+                    media_id=media_id,
+                    folder=f"media/{media_item.media_type.value}",
+                    make_public=make_public
+                )
+                
+                # Update media item with S3 info
+                media_item.file_path = upload_result['s3_key']
+                media_item.file_size = upload_result['file_size']
+                media_item.mime_type = upload_result['content_type']
+                
+                # Set public URL if applicable
+                if make_public and upload_result.get('public_url'):
+                    # Store public URL in generation_config for easy access
+                    if not media_item.generation_config:
+                        media_item.generation_config = {}
+                    media_item.generation_config['public_url'] = upload_result['public_url']
+            
+            else:
+                # Local file storage (fallback)
+                file_path = self.get_media_file_path(media_id, media_item.media_type)
+                
+                # Save file locally
+                file_content = await file.read()
+                with open(file_path, 'wb') as f:
+                    f.write(file_content)
+                
+                media_item.file_path = file_path
+                media_item.file_size = len(file_content)
+                media_item.mime_type = file.content_type
+            
+            await db.commit()
+            await db.refresh(media_item)
+            return media_item
+            
+        except Exception as e:
+            await db.rollback()
+            raise Exception(f"Failed to upload media file: {str(e)}")
+    
+    async def get_media_file_url(
+        self,
+        media_item: MediaItem,
+        expires_in: int = 3600
+    ) -> Optional[str]:
+        """
+        Get URL for accessing media file.
+        
+        Args:
+            media_item: MediaItem instance
+            expires_in: URL expiration time in seconds (for private files)
+            
+        Returns:
+            File access URL or None if file doesn't exist
+        """
+        if not media_item.file_path:
+            return None
+        
+        try:
+            if self.use_s3:
+                # Check if file has public URL
+                if media_item.generation_config and media_item.generation_config.get('public_url'):
+                    return media_item.generation_config['public_url']
+                
+                # Generate presigned URL for private access
+                return s3_media_service.generate_presigned_url(
+                    s3_key=media_item.file_path,
+                    expires_in=expires_in
+                )
+            
+            else:
+                # Local file - return relative path or construct URL
+                return f"/media/files/{media_item.id}{media_item.get_file_extension()}"
+            
+        except Exception as e:
+            print(f"Failed to get media file URL: {e}")
+            return None
+    
+    async def download_media_file(
+        self,
+        media_item: MediaItem
+    ) -> Optional[tuple[bytes, str, str]]:
+        """
+        Download media file content.
+        
+        Args:
+            media_item: MediaItem instance
+            
+        Returns:
+            Tuple of (file_content, content_type, filename) or None
+        """
+        if not media_item.file_path:
+            return None
+        
+        try:
+            if self.use_s3:
+                # Download from S3
+                return await s3_media_service.download_media_file(
+                    s3_key=media_item.file_path,
+                    as_attachment=True
+                )
+            
+            else:
+                # Read local file
+                if os.path.exists(media_item.file_path):
+                    with open(media_item.file_path, 'rb') as f:
+                        content = f.read()
+                    
+                    return (
+                        content,
+                        media_item.mime_type or 'application/octet-stream',
+                        media_item.title + media_item.get_file_extension()
+                    )
+                
+                return None
+            
+        except Exception as e:
+            print(f"Failed to download media file: {e}")
+            return None
     
     async def get_user_media(
         self,
@@ -293,9 +448,15 @@ class MediaService:
             return False
         
         try:
-            # Delete media file if it exists
-            if media_item.file_path and os.path.exists(media_item.file_path):
-                os.unlink(media_item.file_path)
+            # Delete media file
+            if media_item.file_path:
+                if self.use_s3:
+                    # Delete from S3
+                    await s3_media_service.delete_media_file(media_item.file_path)
+                else:
+                    # Delete local file
+                    if os.path.exists(media_item.file_path):
+                        os.unlink(media_item.file_path)
             
             # Delete from database
             from sqlalchemy import delete as sql_delete

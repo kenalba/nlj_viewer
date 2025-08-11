@@ -78,9 +78,9 @@ docker exec nlj_api alembic current
 echo "🌱 Seeding database with sample data..."
 docker exec nlj_api python seed_database.py
 
-# Start Kafka (optional)
-echo "📨 Starting Kafka service..."
-docker-compose up kafka -d
+# Start RedPanda (optional)
+echo "📨 Starting RedPanda service..."
+docker-compose up redpanda -d
 
 echo ""
 echo "🎉 Development environment reset complete!"

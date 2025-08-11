@@ -13,21 +13,15 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 from passlib.context import CryptContext
 
 # Import only what we need
 from app.models.user import User, UserRole
+from app.core.database_manager import db_manager
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# Database URL from environment or default
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", 
-    "postgresql+asyncpg://nlj_user:nlj_pass@localhost:5432/nlj_platform"
-)
 
 async def create_users(session: AsyncSession):
     """Create basic users for all roles."""
@@ -90,17 +84,16 @@ async def create_users(session: AsyncSession):
 async def seed_users_only():
     """Main seeding function - users only."""
     print("Starting minimal database seeding (users only)...")
+    print("🔍 Detecting database configuration...")
     
-    # Create async engine
-    engine = create_async_engine(DATABASE_URL, echo=False)
+    # Initialize database manager (handles both RDS and direct PostgreSQL)
+    await db_manager.initialize()
     
-    # Create session factory
-    async_session = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+    connection_info = db_manager.get_connection_info()
+    print(f"📊 Connected to: {'RDS' if connection_info.get('use_rds') else 'Direct PostgreSQL'}")
     
     try:
-        async with async_session() as session:
+        async with db_manager.get_session() as session:
             await create_users(session)
             
         print("\n🎉 Database seeding complete!")
@@ -116,7 +109,7 @@ async def seed_users_only():
         print(f"Error seeding database: {e}")
         raise
     finally:
-        await engine.dispose()
+        await db_manager.close()
 
 if __name__ == "__main__":
     asyncio.run(seed_users_only())

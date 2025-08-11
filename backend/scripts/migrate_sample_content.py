@@ -29,7 +29,7 @@ from sqlalchemy import select
 sys.path.append(str(Path(__file__).parent.parent))
 
 from app.core.config import settings
-from app.core.database import get_db, create_tables, AsyncSessionLocal
+from app.core.database_manager import db_manager, create_tables
 from app.models.content import ContentItem, ContentState, ContentType, LearningStyle
 from app.models.user import User, UserRole
 
@@ -300,10 +300,18 @@ class ContentMigrator:
             logger.error(f"Frontend static directory not found: {self.frontend_static_path}")
             return False
         
+        logger.info("🔍 Detecting database configuration...")
+        
+        # Initialize database manager (handles both RDS and direct PostgreSQL)
+        await db_manager.initialize()
+        
         # Ensure database tables exist
         await create_tables()
         
-        async with AsyncSessionLocal() as session:
+        connection_info = db_manager.get_connection_info()
+        logger.info(f"📊 Connected to: {'RDS' if connection_info.get('use_rds') else 'Direct PostgreSQL'}")
+        
+        async with db_manager.get_session() as session:
             try:
                 # Ensure admin user exists
                 admin_user_id = await self.ensure_admin_user(session)
@@ -363,6 +371,8 @@ class ContentMigrator:
                 if not self.dry_run:
                     await session.rollback()
                 return False
+            finally:
+                await db_manager.close()
     
     async def create_database_backup(self):
         """Create a backup of the content data."""
@@ -378,7 +388,10 @@ class ContentMigrator:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_file = backup_dir / f"sample_content_backup_{timestamp}.json"
         
-        async with AsyncSessionLocal() as session:
+        # Initialize database manager for this function too
+        await db_manager.initialize()
+        
+        async with db_manager.get_session() as session:
             try:
                 # Export all template content
                 result = await session.execute(
@@ -413,6 +426,8 @@ class ContentMigrator:
                 
             except Exception as e:
                 logger.error(f"❌ Backup failed: {e}")
+            finally:
+                await db_manager.close()
 
 
 async def main():

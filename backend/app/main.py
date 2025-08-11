@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.core.database import create_tables
+from app.core.database_manager import db_manager, create_tables
 from app.services.kafka_service import kafka_service
 from app.services.kafka_ralph_consumer import start_kafka_ralph_consumer, stop_kafka_ralph_consumer
 
@@ -16,8 +16,9 @@ from app.services.kafka_ralph_consumer import start_kafka_ralph_consumer, stop_k
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
-    # Startup
-    await create_tables()
+    # Startup - automatically initialize database with tables and optional seeding
+    auto_seed = settings.AUTO_SEED_DATABASE if hasattr(settings, 'AUTO_SEED_DATABASE') else False
+    await db_manager.ensure_initialized(auto_seed=auto_seed)
     
     # Initialize Kafka producer for event publishing
     try:
@@ -45,6 +46,11 @@ async def lifespan(app: FastAPI):
         await kafka_service.stop()
     except Exception as e:
         print(f"Warning: Error shutting down Kafka connections: {e}")
+    
+    try:
+        await db_manager.close()
+    except Exception as e:
+        print(f"Warning: Error shutting down database connections: {e}")
 
 
 # Create FastAPI application with modern configuration
@@ -100,6 +106,8 @@ from app.api.training_registrations import router as training_registrations_rout
 from app.api.registrations import router as registrations_router
 from app.api.analytics import router as analytics_router
 from app.api.survey_analytics import router as survey_analytics_router
+from app.api.notifications import router as notifications_router
+from app.api.database import router as database_router
 
 app.include_router(auth_router, prefix="/api/auth", tags=["authentication"])
 app.include_router(users_router, prefix="/api/users", tags=["users"])
@@ -117,6 +125,8 @@ app.include_router(training_registrations_router, prefix="/api/training-registra
 app.include_router(registrations_router, prefix="/api/my-registrations", tags=["registrations"])
 app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"])
 app.include_router(survey_analytics_router, prefix="/api/surveys", tags=["surveys"])
+app.include_router(notifications_router, prefix="/api", tags=["notifications"])
+app.include_router(database_router, prefix="/api", tags=["database"])
 
 
 

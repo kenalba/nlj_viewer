@@ -14,7 +14,7 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.database import get_db
+from app.core.database_manager import get_db
 from app.core.deps import get_current_user
 from app.models.training_program import TrainingProgram, TrainingSession, TrainingBooking
 from app.models.user import User, UserRole

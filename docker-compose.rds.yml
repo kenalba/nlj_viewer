@@ -1,0 +1,49 @@
+# RDS Migration Docker Compose Override
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.localstack.yml -f docker-compose.rds.yml up
+
+
+services:
+  # Remove the direct PostgreSQL container when using RDS
+  nlj-db:
+    deploy:
+      replicas: 0  # Completely disable the service
+
+  # Update LocalStack configuration for RDS
+  localstack:
+    environment:
+      # Add RDS configuration
+      - RDS_PORT_5432=5432
+      - RDS_DELAY=5  # Reduced delay for development
+
+  # Override NLJ API service for RDS connection
+  nlj-api:
+    environment:
+      # RDS Configuration  
+      - USE_RDS=true
+      - RDS_ENDPOINT_URL=http://localstack:4566
+      - RDS_DB_INSTANCE_ID=nlj-postgres-dev
+      - RDS_REPLICA_INSTANCE_ID=nlj-postgres-replica
+      
+      # Database URL will be dynamically set by the application based on RDS endpoint
+      # Adding SSL disable for LocalStack compatibility
+      - DATABASE_URL_TEMPLATE=postgresql+asyncpg://nlj_admin:nlj_secure_password_2024@{host}:{port}/nlj_platform?ssl=disable
+    
+    # Override depends_on to remove nlj-db dependency
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    
+    # Add health check that waits for RDS
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import sys; sys.path.append('/app'); from app.services.database_service import rds_database_service; import asyncio; result = asyncio.run(rds_database_service.get_connection_info()); sys.exit(0 if result.get('available') else 1)\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s  # Give time for RDS to initialize
+
+volumes:
+  # Remove PostgreSQL data volume when using RDS
+  nlj_db_data:
+    external: false

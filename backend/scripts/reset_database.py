@@ -11,26 +11,25 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy import text
+from app.core.database_manager import db_manager
 from app.core.database import Base
 from app.models import *  # Import all models
-
-# Database URL from environment or default
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", 
-    "postgresql+asyncpg://nlj_user:nlj_pass@localhost:5432/nlj_platform"
-)
 
 async def reset_database():
     """Completely reset the database."""
     print("🔄 Resetting database...")
+    print("🔍 Detecting database configuration...")
     
-    # Create engine
-    engine = create_async_engine(DATABASE_URL, echo=False)
+    # Initialize database manager (handles both RDS and direct PostgreSQL)
+    await db_manager.initialize()
+    
+    connection_info = db_manager.get_connection_info()
+    print(f"📊 Connected to: {'RDS' if connection_info.get('use_rds') else 'Direct PostgreSQL'}")
+    print(f"🔗 Database: {connection_info.get('url', 'Unknown')}")
     
     try:
-        async with engine.begin() as conn:
+        # Use the database manager's engine
+        async with db_manager.engine.begin() as conn:
             print("🗑️  Dropping all tables...")
             
             # Drop all tables
@@ -47,7 +46,7 @@ async def reset_database():
         print(f"❌ Error resetting database: {e}")
         raise
     finally:
-        await engine.dispose()
+        await db_manager.close()
 
 if __name__ == "__main__":
     asyncio.run(reset_database())

@@ -20,59 +20,59 @@ services:
     networks:
       - nlj_network
 
-  # Event Infrastructure - Kafka (KRaft Mode)
-  kafka:
-    image: confluentinc/cp-kafka:latest
-    container_name: nlj_kafka
-    user: root  # Fix permission issues
+  # Event Infrastructure - RedPanda (Kafka API Compatible)
+  redpanda:
+    image: redpandadata/redpanda:latest
+    container_name: nlj_redpanda
     ports:
-      - "9092:9092"
-      - "9093:9093"
-    environment:
-      # KRaft Configuration
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: 'broker,controller'
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:9093'
-      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
-      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:9093,PLAINTEXT_HOST://0.0.0.0:9092'
-      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
-      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
-      
-      # Cluster Configuration
-      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
-      
-      # Replication and ISR Settings (for single node)
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      
-      # Log Configuration - 30 days retention for event sourcing
-      KAFKA_LOG_RETENTION_HOURS: 720  # 30 days
-      KAFKA_LOG_SEGMENT_BYTES: 1073741824
-      KAFKA_LOG_DIRS: '/var/lib/kafka/data'
-      
-      # Logging
-      KAFKA_LOG4J_LOGGERS: "kafka.controller=WARN,kafka.producer.async.DefaultEventHandler=WARN,state.change.logger=WARN,kafka.authorizer.logger=WARN"
-      KAFKA_LOG4J_ROOT_LOGLEVEL: "WARN"
-      
-      # Performance tuning for development
-      KAFKA_NUM_PARTITIONS: 3
-      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
-      KAFKA_MIN_INSYNC_REPLICAS: 1
-      
+      - "9092:9092"     # Kafka API (same as original Kafka)
+      - "9644:9644"     # Admin API  
+    command:
+      - redpanda
+      - start
+      - --node-id=0
+      - --kafka-addr=PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+      - --pandaproxy-addr=PLAINTEXT://0.0.0.0:8083
+      - --advertise-pandaproxy-addr=PLAINTEXT://redpanda:8083
+      - --schema-registry-addr=PLAINTEXT://0.0.0.0:8084
+      - --rpc-addr=redpanda:33145
+      - --advertise-rpc-addr=redpanda:33145
+      - --mode=dev-container
+      - --smp=1
+      - --memory=1G
+      - --reserve-memory=0M
+      - --overprovisioned
+      - --default-log-level=info
     volumes:
-      - kafka_data:/var/lib/kafka/data
+      - redpanda_data:/var/lib/redpanda/data
     networks:
       - nlj_network
     healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
+      test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy:.*true' || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 5
       start_period: 30s
     restart: unless-stopped
+
+  # RedPanda Console - Web UI for RedPanda Management
+  redpanda-console:
+    image: redpandadata/console:latest
+    container_name: nlj_redpanda_console
+    ports:
+      - "8080:8080"     # Web UI (same as original Kafka UI port)
+    environment:
+      KAFKA_BROKERS: redpanda:29092
+      REDPANDA_ADMINAPI_ENABLED: true
+      REDPANDA_ADMINAPI_URLS: http://redpanda:9644
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    networks:
+      - nlj_network
+    profiles:
+      - dev-tools
 
 
   # NLJ FastAPI Backend
@@ -89,8 +89,8 @@ services:
       # Database Configuration
       - DATABASE_URL=postgresql+asyncpg://nlj_user:nlj_pass@nlj-db:5432/nlj_platform
       
-      # Kafka Configuration
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      # RedPanda Configuration (Kafka API Compatible)
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:29092
       - KAFKA_CLIENT_ID=nlj-platform
       
       # Calendar Integration
@@ -133,7 +133,7 @@ services:
     depends_on:
       nlj-db:
         condition: service_healthy
-      kafka:
+      redpanda:
         condition: service_healthy
     networks:
       - nlj_network
@@ -248,28 +248,11 @@ services:
     profiles:
       - analytics
 
-  # Kafka UI for development (optional)
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    container_name: nlj_kafka_ui
-    ports:
-      - "8080:8080"
-    environment:
-      KAFKA_CLUSTERS_0_NAME: local-kraft
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
-      DYNAMIC_CONFIG_ENABLED: 'true'
-    depends_on:
-      kafka:
-        condition: service_healthy
-    networks:
-      - nlj_network
-    profiles:
-      - dev-tools
 
 volumes:
   nlj_db_data:
     driver: local
-  kafka_data:
+  redpanda_data:
     driver: local
   elasticsearch_data:
     driver: local

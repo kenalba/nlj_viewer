@@ -30,3 +30,6 @@ backend/.webui_secret_key
 # Environment variables
 .env
 backend/.env
+
+# LocalStack data
+localstack_data/

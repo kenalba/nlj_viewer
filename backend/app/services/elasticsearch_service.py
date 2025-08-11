@@ -268,7 +268,7 @@ class ElasticsearchService:
             "aggs": {
                 # Total activities count
                 "total_activities": {
-                    "cardinality": {"field": "object.id"}
+                    "cardinality": {"field": "object.id.keyword"}
                 },
                 
                 # Completed activities
@@ -283,7 +283,7 @@ class ElasticsearchService:
                     },
                     "aggs": {
                         "unique_completed": {
-                            "cardinality": {"field": "object.id"}
+                            "cardinality": {"field": "object.id.keyword"}
                         }
                     }
                 },
@@ -445,7 +445,7 @@ class ElasticsearchService:
             },
             "aggs": {
                 "unique_learners": {
-                    "cardinality": {"field": "actor.mbox"}
+                    "cardinality": {"field": "actor.mbox.keyword"}
                 },
                 "completed_attempts": {
                     "filter": {
@@ -558,10 +558,10 @@ class ElasticsearchService:
                     "value_count": {"field": "id"}
                 },
                 "unique_learners": {
-                    "cardinality": {"field": "actor.mbox"}
+                    "cardinality": {"field": "actor.mbox.keyword"}
                 },
                 "unique_activities": {
-                    "cardinality": {"field": "object.id"}
+                    "cardinality": {"field": "object.id.keyword"}
                 },
                 "completion_rate": {
                     "filter": {
@@ -584,10 +584,10 @@ class ElasticsearchService:
                     }
                 },
                 "top_verbs": {
-                    "terms": {"field": "verb.id", "size": 10}
+                    "terms": {"field": "verb.id.keyword", "size": 10}
                 },
                 "activity_types": {
-                    "terms": {"field": "object.definition.type", "size": 10}
+                    "terms": {"field": "object.definition.type.keyword", "size": 10}
                 }
             }
         }

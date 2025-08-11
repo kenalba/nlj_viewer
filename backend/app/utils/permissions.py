@@ -39,3 +39,10 @@ def can_approve_content(user: User) -> bool:
     if not user:
         return False
     return user.role in [UserRole.APPROVER, UserRole.ADMIN]
+
+
+def can_manage_system(user: User) -> bool:
+    """Check if user can manage system settings (databases, backups, etc)."""
+    if not user:
+        return False
+    return user.role == UserRole.ADMIN

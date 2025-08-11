@@ -72,9 +72,9 @@ docker exec nlj_api alembic upgrade head
 echo "🌱 Seeding database with sample data..."
 docker exec nlj_api python seed_database.py
 
-# Start Kafka (optional for development)
-echo "📨 Starting Kafka service (optional)..."
-docker-compose up kafka -d
+# Start RedPanda (optional for development)
+echo "📨 Starting RedPanda service (optional)..."
+docker-compose up redpanda -d
 
 echo ""
 echo "🎉 Development environment setup complete!"
@@ -85,7 +85,7 @@ echo "  • NLJ Frontend: http://localhost:5173 (run 'npm run dev' in frontend/)
 echo "  • NLJ API: http://localhost:8000"
 echo "  • API Docs: http://localhost:8000/docs"
 echo "  • PostgreSQL: localhost:5432"
-echo "  • Kafka: localhost:9092"
+echo "  • RedPanda: localhost:9092"
 echo ""
 echo "👥 Test Users Created:"
 echo "  • Admin: admin / admin123456"

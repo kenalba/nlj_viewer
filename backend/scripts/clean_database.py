@@ -13,7 +13,7 @@ from pathlib import Path
 # Add the app directory to Python path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from app.core.database import create_tables, AsyncSessionLocal
+from app.core.database_manager import db_manager, create_tables
 from app.models.content import ContentItem
 from app.models.workflow import ContentVersion, ApprovalWorkflow
 from sqlalchemy import delete
@@ -29,11 +29,18 @@ logger = logging.getLogger(__name__)
 async def clean_database():
     """Clean all content-related data from database."""
     logger.info("🧹 Starting database cleanup...")
+    logger.info("🔍 Detecting database configuration...")
+    
+    # Initialize database manager (handles both RDS and direct PostgreSQL)
+    await db_manager.initialize()
     
     # Ensure database tables exist
     await create_tables()
     
-    async with AsyncSessionLocal() as session:
+    connection_info = db_manager.get_connection_info()
+    logger.info(f"📊 Connected to: {'RDS' if connection_info.get('use_rds') else 'Direct PostgreSQL'}")
+    
+    async with db_manager.get_session() as session:
         try:
             # Delete in proper order to avoid foreign key constraints
             
@@ -59,6 +66,8 @@ async def clean_database():
             logger.error(f"❌ Database cleanup failed: {e}")
             await session.rollback()
             return False
+        finally:
+            await db_manager.close()
 
 
 async def main():

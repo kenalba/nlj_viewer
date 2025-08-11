@@ -16,24 +16,19 @@ from typing import Any, Dict, List
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 from passlib.context import CryptContext
 
 # Import all models
 from app.models.user import User, UserRole
 from app.models.content import ContentItem
 from app.models.training_program import TrainingProgram, TrainingSession
-from app.core.database import Base
+from app.core.database_manager import db_manager, create_tables
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Database URL from environment or default
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", 
-    "postgresql+asyncpg://nlj_user:nlj_pass@localhost:5432/nlj_platform"
-)
+# Database connection now handled by database_manager
 
 async def create_users(session: AsyncSession) -> Dict[str, User]:
     """Create basic users for all roles."""
@@ -618,14 +613,19 @@ async def create_training_sessions(session: AsyncSession, programs: List[Trainin
 async def seed_database():
     """Main function to seed the database with all sample data."""
     print("Starting database seeding...")
+    print("🔍 Detecting database configuration...")
     
-    # Create async engine
-    engine = create_async_engine(DATABASE_URL, echo=False)
+    # Initialize database manager (handles both RDS and direct PostgreSQL)
+    await db_manager.initialize()
     
-    # Create session factory
-    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    # Create tables if they don't exist
+    await create_tables()
     
-    async with async_session() as session:
+    connection_info = db_manager.get_connection_info()
+    print(f"📊 Connected to: {'RDS' if connection_info.get('use_rds') else 'Direct PostgreSQL'}")
+    print(f"🔗 Database: {connection_info.get('url', 'Unknown')}")
+    
+    async with db_manager.get_session() as session:
         try:
             # Create all sample data
             users = await create_users(session)
@@ -665,7 +665,7 @@ async def seed_database():
             await session.rollback()
             raise
         finally:
-            await engine.dispose()
+            await db_manager.close()
 
 if __name__ == "__main__":
     asyncio.run(seed_database())

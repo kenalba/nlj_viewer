@@ -11,22 +11,22 @@ import os
 # Add app to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-from app.core.config import settings
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.content import ContentService
+from app.core.database_manager import db_manager
 
 
 async def debug_content():
     """Debug content retrieval."""
+    print("🔍 Detecting database configuration...")
     
-    # Create database connection
-    engine = create_async_engine(settings.DATABASE_URL, echo=True)
-    async_session = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+    # Initialize database manager (handles both RDS and direct PostgreSQL)
+    await db_manager.initialize()
     
-    async with async_session() as db:
+    connection_info = db_manager.get_connection_info()
+    print(f"📊 Connected to: {'RDS' if connection_info.get('use_rds') else 'Direct PostgreSQL'}")
+    
+    async with db_manager.get_session() as db:
         service = ContentService(db)
         
         # Test ID that was failing
@@ -60,6 +60,8 @@ async def debug_content():
             print(f"Error fetching content: {e}")
             import traceback
             traceback.print_exc()
+        finally:
+            await db_manager.close()
 
 
 if __name__ == "__main__":

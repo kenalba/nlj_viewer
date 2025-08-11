@@ -37,8 +37,8 @@ services:
       # Expose API port for external access
       - "8000:8000"
 
-  # Enable Kafka UI and other dev tools by default
-  kafka-ui:
+  # Enable RedPanda Console and other dev tools by default
+  redpanda-console:
     profiles: []  # Remove dev-tools profile to always start in dev mode
 
   # Expose PostgreSQL for development access
@@ -46,8 +46,8 @@ services:
     ports:
       - "5432:5432"
 
-  # Expose Kafka for development access
-  kafka:
+  # Expose RedPanda for development access
+  redpanda:
     ports:
       - "9092:9092"
 

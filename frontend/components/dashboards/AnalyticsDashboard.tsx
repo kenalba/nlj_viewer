@@ -26,7 +26,7 @@ import {
   TextField,
   InputAdornment,
   Chip,
-  Grid,
+  Grid2,
   Paper,
   Table,
   TableBody,
@@ -389,7 +389,7 @@ const OverviewTab: React.FC<{ data: AnalyticsData | null }> = ({ data }) => {
   return (
     <Box>
       {/* Key Metrics Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid2 container spacing={3} sx={{ mb: 4 }}>
         <Grid xs={12} sm={6} md={3}>
           <MetricCard
             icon={<SchoolIcon />}
@@ -433,7 +433,7 @@ const OverviewTab: React.FC<{ data: AnalyticsData | null }> = ({ data }) => {
       </Grid>
 
       {/* Charts Row */}
-      <Grid container spacing={3}>
+      <Grid2 container spacing={3}>
         <Grid xs={12} lg={8}>
           <Card>
             <CardContent>
@@ -543,7 +543,7 @@ const LearnerAnalyticsTab: React.FC = () => {
         </Button>
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid2 container spacing={3}>
         {/* Top Performers */}
         <Grid xs={12} md={6}>
           <Card>
@@ -703,7 +703,7 @@ const ActivityAnalyticsTab: React.FC = () => {
       </Card>
 
       {/* Charts Row */}
-      <Grid container spacing={3}>
+      <Grid2 container spacing={3}>
         <Grid xs={12} md={6}>
           <Card>
             <CardContent>
@@ -760,7 +760,7 @@ const TrendsInsightsTab: React.FC<{ data: AnalyticsData | null }> = ({ data }) =
         📈 Platform Trends & Insights
       </Typography>
 
-      <Grid container spacing={3}>
+      <Grid2 container spacing={3}>
         {/* Trends Chart */}
         <Grid xs={12}>
           <Card>

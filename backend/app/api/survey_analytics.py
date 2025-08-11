@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user
-from app.core.database import get_db
+from app.core.database_manager import get_db
 from app.models.user import User
 from app.utils.permissions import can_view_analytics, can_edit_content
 from app.services.ralph_lrs_service import RalphLRSService, get_ralph_lrs_service

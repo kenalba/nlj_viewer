@@ -28,6 +28,15 @@ class Settings(BaseSettings):
         description="Async PostgreSQL database URL"
     )
     
+    # RDS Configuration (for LocalStack and AWS)
+    RDS_ENDPOINT_URL: str | None = Field(default=None, description="RDS endpoint URL (set for LocalStack: http://localhost:4566)")
+    RDS_DB_INSTANCE_ID: str = Field(default="nlj-postgres-dev", description="Primary RDS instance identifier")
+    RDS_REPLICA_INSTANCE_ID: str = Field(default="nlj-postgres-replica", description="Read replica instance identifier")
+    USE_RDS: bool = Field(default=False, description="Use RDS instead of direct PostgreSQL connection")
+    
+    # Database initialization settings
+    AUTO_SEED_DATABASE: bool = Field(default=False, description="Automatically seed database with essential users on startup if empty")
+    
     # Security settings
     SECRET_KEY: str = Field(
         default="your-secret-key-change-in-production",
@@ -109,7 +118,24 @@ class Settings(BaseSettings):
         description="Microsoft OAuth redirect URI"
     )
     
-    # Email settings (for future notifications)
+    # AWS/LocalStack Configuration
+    AWS_REGION: str = Field(default="us-east-1", description="AWS region")
+    AWS_ACCESS_KEY_ID: str = Field(default="test", description="AWS access key (use 'test' for LocalStack)")
+    AWS_SECRET_ACCESS_KEY: str = Field(default="test", description="AWS secret key (use 'test' for LocalStack)")
+    
+    # S3 Configuration
+    S3_ENDPOINT_URL: str | None = Field(default=None, description="S3 endpoint URL (set for LocalStack: http://localhost:4566)")
+    S3_BUCKET_MEDIA: str = Field(default="nlj-media-prod", description="S3 bucket for media storage")
+    S3_BUCKET_BACKUPS: str = Field(default="nlj-backups-prod", description="S3 bucket for backups")
+    S3_PUBLIC_URL_BASE: str | None = Field(default=None, description="Base URL for public S3 access")
+    
+    # SES Configuration
+    SES_ENDPOINT_URL: str | None = Field(default=None, description="SES endpoint URL (set for LocalStack: http://localhost:4566)")
+    SES_FROM_EMAIL: str = Field(default="noreply@nlj-platform.com", description="Default from email address")
+    SES_ADMIN_EMAIL: str = Field(default="admin@nlj-platform.com", description="Admin email address")
+    SES_CONFIGURATION_SET: str = Field(default="nlj-email-tracking", description="SES configuration set for tracking")
+    
+    # Email settings (legacy SMTP - keeping for backward compatibility)
     EMAIL_HOST: str | None = Field(default=None)
     EMAIL_PORT: int = Field(default=587)
     EMAIL_USER: str | None = Field(default=None)

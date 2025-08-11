@@ -98,41 +98,41 @@ class User(Base):
     # Relationships using modern typing
     created_content: Mapped[list["ContentItem"]] = relationship(
         back_populates="creator",
-        lazy="selectin"
+        lazy="select"
     )
     source_documents: Mapped[list["SourceDocument"]] = relationship(
         back_populates="owner",
-        lazy="selectin"
+        lazy="select"
     )
     generation_sessions: Mapped[list["GenerationSession"]] = relationship(
         back_populates="creator",
-        lazy="selectin"
+        lazy="select"
     )
     created_media: Mapped[list["MediaItem"]] = relationship(
         back_populates="creator",
-        lazy="selectin"
+        lazy="select"
     )
     
     # Training relationships (updated for new structure)
     created_programs: Mapped[list["TrainingProgram"]] = relationship(
         foreign_keys="TrainingProgram.created_by_id",
         back_populates="created_by",
-        lazy="selectin"
+        lazy="select"
     )
     instructor_sessions: Mapped[list["TrainingSession"]] = relationship(
         foreign_keys="TrainingSession.instructor_id",
         back_populates="instructor",
-        lazy="selectin"
+        lazy="select"
     )
     training_bookings: Mapped[list["TrainingBooking"]] = relationship(
         foreign_keys="TrainingBooking.learner_id",
         back_populates="learner",
-        lazy="selectin"
+        lazy="select"
     )
     attendance_records: Mapped[list["AttendanceRecord"]] = relationship(
         foreign_keys="AttendanceRecord.learner_id",
         back_populates="learner",
-        lazy="selectin"
+        lazy="select"
     )
     
     # TODO: Uncomment when ApprovalStep model is implemented

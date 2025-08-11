@@ -70,30 +70,64 @@ A full-stack TypeScript application for creating, managing, and delivering inter
 
 ## Quick Start
 
-### Development (Frontend Only - Legacy)
+### Prerequisites
+1. **Docker & Docker Compose**: Install Docker Desktop or Docker Engine with Compose V2
+2. **LocalStack Pro API Key**: Required for RDS/S3/SES services
+   - Sign up at https://localstack.cloud and get your API key
+   - Add to `backend/.env`: `LOCALSTACK_API_KEY=your_api_key_here`
+
+### Development Environment Setup
+
+#### Step 1: Environment Configuration
 ```bash
-cd frontend
-npm install
-npm run dev
+# Create backend/.env with required configuration
+cp backend/.env.example backend/.env
+
+# Edit backend/.env and add:
+# LOCALSTACK_API_KEY=your_localstack_pro_api_key
+# USE_RDS=true
+# (other settings as needed)
 ```
 
-Visit `http://localhost:5173` to load scenarios.
-
-### Full System Development (Recommended)
+#### Step 2: Start Full Development Stack
 ```bash
-# Start all services with frontend hot reload
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+# Start all services including LocalStack RDS, analytics, and frontend hot reload
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.dev.yml \
+  -f docker-compose.localstack.yml \
+  -f docker-compose.rds.yml \
+  --env-file backend/.env \
+  up
 
-# Visit these URLs:
-# - NLJ Frontend: http://localhost:5173 (with hot reload)
-# - NLJ API: http://localhost:8000/docs
-# - Kafka UI: http://localhost:8080
+# This starts:
+# - LocalStack Pro (RDS PostgreSQL, S3, SES)
+# - NLJ API with RDS connection
+# - Frontend with hot reload
+# - RedPanda (Kafka replacement)
+# - Elasticsearch for analytics
+# - Ralph LRS for xAPI data
 ```
 
-### Production Deployment (Docker)
+#### Step 3: Access the Platform
+- **NLJ Frontend**: http://localhost:5173 (with hot reload)
+- **NLJ API**: http://localhost:8000/docs
+- **LocalStack Health**: http://localhost:4566/_localstack/health
+- **Elasticsearch**: http://localhost:9200
+- **Ralph LRS**: http://localhost:8100
+- **RedPanda Console**: http://localhost:8080
+
+#### Step 4: Populate with Sample Data
 ```bash
-# Start production system with built frontend
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Generate sample activities, surveys, training events, and xAPI data
+docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.localstack.yml -f docker-compose.rds.yml \
+  exec nlj-api python scripts/generate_fake_analytics_data.py
+```
+
+### Production Deployment
+```bash
+# Production system with built frontend
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 # Visit these URLs:
 # - NLJ Platform: http://localhost (nginx-served frontend + API proxy)
@@ -114,6 +148,77 @@ sudo nginx -s reload
 
 **Production Site**: https://callcoach.training  
 **API Documentation**: https://callcoach.training/api/docs
+
+### Troubleshooting Development Setup
+
+#### Common Issues
+
+1. **LocalStack License Error (exit code 55)**
+   ```bash
+   # Ensure LOCALSTACK_API_KEY is set in backend/.env
+   echo "LOCALSTACK_API_KEY=your_key_here" >> backend/.env
+   
+   # Pass env file to docker compose
+   docker compose --env-file backend/.env -f ... up
+   ```
+
+2. **Database Connection Issues**
+   ```bash
+   # Check RDS instance status
+   curl http://localhost:4566/_localstack/health
+   
+   # Verify RDS endpoint
+   docker compose exec nlj-api python -c "
+   from app.services.database_service import rds_database_service
+   import asyncio
+   print(asyncio.run(rds_database_service.get_connection_info()))
+   "
+   ```
+
+3. **Analytics API 500 Errors**
+   - Elasticsearch needs proper field mappings for xAPI data
+   - Fixed by using `.keyword` fields for aggregations (already implemented)
+   - Check Elasticsearch health: `curl http://localhost:9200/_cluster/health`
+
+4. **Frontend Hot Reload Issues**
+   ```bash
+   # If frontend doesn't reload, restart the frontend service
+   docker compose restart nlj-frontend
+   ```
+
+5. **Port Conflicts**
+   ```bash
+   # Check for conflicting services on required ports
+   lsof -i :5173  # Frontend
+   lsof -i :8000  # API
+   lsof -i :4566  # LocalStack
+   lsof -i :9200  # Elasticsearch
+   ```
+
+#### Health Check Commands
+```bash
+# Check all service health
+docker compose ps
+
+# Test API connectivity
+curl http://localhost:8000/health
+
+# Test frontend
+curl http://localhost:5173
+
+# Test LocalStack services
+curl http://localhost:4566/_localstack/health
+
+# Test database connection
+docker compose exec nlj-api python -c "
+import asyncio
+from app.core.database_manager import db_manager
+async def test():
+    health = await db_manager.health_check()
+    print(health)
+asyncio.run(test())
+"
+```
 
 ## Architecture
 

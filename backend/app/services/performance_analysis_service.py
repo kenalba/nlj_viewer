@@ -262,7 +262,7 @@ class PerformanceAnalysisService:
             query["aggs"] = {
                 "users": {
                     "terms": {
-                        "field": "actor.mbox",  # Remove .keyword as it might not be mapped
+                        "field": "actor.mbox.keyword",
                         "size": 1000
                     },
                     "aggs": {
@@ -284,7 +284,7 @@ class PerformanceAnalysisService:
                         },
                         "total_activities": {
                             "cardinality": {
-                                "field": "object.id"  # Remove .keyword
+                                "field": "object.id.keyword"
                             }
                         },
                         "performance_trend": {
@@ -690,7 +690,7 @@ class PerformanceAnalysisService:
                                 }
                             },
                             "activity_preferences": {
-                                "terms": {"field": "object.definition.type", "size": 10}
+                                "terms": {"field": "object.definition.type.keyword", "size": 10}
                             },
                             "completion_patterns": {
                                 "date_histogram": {
@@ -875,7 +875,7 @@ class PerformanceAnalysisService:
                     "query": {"match_all": {}},
                     "aggs": {
                         "users": {
-                            "terms": {"field": "actor.mbox", "size": 1000}
+                            "terms": {"field": "actor.mbox.keyword", "size": 1000}
                         }
                     }
                 }
