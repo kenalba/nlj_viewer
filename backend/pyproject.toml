@@ -42,6 +42,7 @@ dependencies = [
     "kafka-python",
     # Elasticsearch for analytics
     "elasticsearch[async]",
+    "bcrypt>=4.3.0",
 ]
 
 [project.optional-dependencies]

@@ -99,6 +99,7 @@ from app.api.training_sessions import router as training_sessions_router
 from app.api.training_registrations import router as training_registrations_router
 from app.api.registrations import router as registrations_router
 from app.api.analytics import router as analytics_router
+from app.api.survey_analytics import router as survey_analytics_router
 
 app.include_router(auth_router, prefix="/api/auth", tags=["authentication"])
 app.include_router(users_router, prefix="/api/users", tags=["users"])
@@ -115,6 +116,7 @@ app.include_router(training_sessions_router, prefix="/api/training-sessions", ta
 app.include_router(training_registrations_router, prefix="/api/training-registrations", tags=["training-registrations"])
 app.include_router(registrations_router, prefix="/api/my-registrations", tags=["registrations"])
 app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"])
+app.include_router(survey_analytics_router, prefix="/api/surveys", tags=["surveys"])
 
 
 

@@ -254,17 +254,62 @@ class RalphLRSService:
         self,
         activity_id: str,
         since: Optional[str] = None,
-        limit: Optional[int] = 100
+        limit: Optional[int] = 100,
+        verb_filter: Optional[str] = None
     ) -> List[Dict[str, Any]]:
-        """Get all statements for a specific activity"""
+        """Get all statements for a specific activity with optional verb filtering"""
         try:
-            result = await self.get_statements(
-                activity=activity_id,
-                since=since,
-                limit=limit
-            )
+            # If verb_filter is provided, we need to make separate requests for each verb
+            if verb_filter:
+                all_statements = []
+                verbs = [verb.strip() for verb in verb_filter.split(',')]
+                
+                for verb in verbs:
+                    # Map common verb names to full URIs
+                    verb_uris = {
+                        'responded': 'http://adlnet.gov/expapi/verbs/responded',
+                        'completed': 'http://adlnet.gov/expapi/verbs/completed',
+                        'experienced': 'http://adlnet.gov/expapi/verbs/experienced',
+                        'attempted': 'http://adlnet.gov/expapi/verbs/attempted'
+                    }
+                    
+                    verb_uri = verb_uris.get(verb, verb)
+                    
+                    result = await self.get_statements(
+                        activity=activity_id,
+                        verb=verb_uri,
+                        since=since,
+                        limit=limit
+                    )
+                    
+                    all_statements.extend(result.get("statements", []))
+                
+                # Remove duplicates and sort by timestamp
+                seen_ids = set()
+                unique_statements = []
+                for stmt in all_statements:
+                    stmt_id = stmt.get('id')
+                    if stmt_id and stmt_id not in seen_ids:
+                        seen_ids.add(stmt_id)
+                        unique_statements.append(stmt)
+                
+                # Sort by timestamp (newest first)
+                unique_statements.sort(
+                    key=lambda x: x.get('timestamp', ''),
+                    reverse=True
+                )
+                
+                statements = unique_statements[:limit] if limit else unique_statements
+                
+            else:
+                result = await self.get_statements(
+                    activity=activity_id,
+                    since=since,
+                    limit=limit
+                )
+                
+                statements = result.get("statements", [])
             
-            statements = result.get("statements", [])
             logger.debug(f"Retrieved {len(statements)} statements for activity {activity_id}")
             
             return statements
@@ -273,6 +318,162 @@ class RalphLRSService:
             logger.error(f"Error retrieving statements for activity {activity_id}: {str(e)}")
             raise
     
+    # ========================================================================
+    # SURVEY-SPECIFIC METHODS
+    # ========================================================================
+    
+    async def get_survey_statistics(
+        self,
+        survey_id: str,
+        since: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Get comprehensive statistics for a survey"""
+        try:
+            # Get all survey-related statements
+            statements = await self.get_activity_statements(
+                activity_id=survey_id,
+                since=since,
+                verb_filter="responded,completed",
+                limit=1000
+            )
+            
+            # Analyze survey responses
+            response_statements = [s for s in statements 
+                                 if s.get('verb', {}).get('id') == 'http://adlnet.gov/expapi/verbs/responded']
+            completion_statements = [s for s in statements 
+                                   if s.get('verb', {}).get('id') == 'http://adlnet.gov/expapi/verbs/completed']
+            
+            # Extract unique respondents
+            respondent_emails = set()
+            for stmt in statements:
+                actor = stmt.get('actor', {})
+                if actor.get('mbox'):
+                    respondent_emails.add(actor['mbox'])
+            
+            # Calculate response times from completion statements
+            completion_times = []
+            for stmt in completion_statements:
+                result = stmt.get('result', {})
+                if 'duration' in result:
+                    # Parse ISO 8601 duration - simplified parsing
+                    duration_str = result['duration']
+                    try:
+                        # Basic ISO 8601 duration parsing (PT###S format)
+                        if duration_str.startswith('PT') and duration_str.endswith('S'):
+                            seconds = float(duration_str[2:-1])
+                            completion_times.append(seconds / 60)  # Convert to minutes
+                    except ValueError:
+                        pass
+            
+            # Find timestamps
+            timestamps = [datetime.fromisoformat(s.get('timestamp', '').replace('Z', '+00:00')) 
+                         for s in statements if s.get('timestamp')]
+            
+            last_response_at = max(timestamps).isoformat() if timestamps else None
+            
+            # Calculate statistics
+            unique_respondent_count = len(respondent_emails)
+            completion_rate = (len(completion_statements) / unique_respondent_count * 100) if unique_respondent_count > 0 else 0
+            avg_completion_time = sum(completion_times) / len(completion_times) if completion_times else 0
+            
+            return {
+                "total_responses": len(response_statements),
+                "unique_respondents": unique_respondent_count,
+                "completion_rate": round(completion_rate, 2),
+                "average_completion_time": round(avg_completion_time, 1),
+                "last_response_at": last_response_at,
+                "response_distribution": {
+                    "responses": len(response_statements),
+                    "completions": len(completion_statements),
+                    "partial": unique_respondent_count - len(completion_statements) if unique_respondent_count > len(completion_statements) else 0
+                }
+            }
+            
+        except Exception as e:
+            logger.warning(f"Unable to retrieve survey statistics for {survey_id} - Ralph LRS may not be available: {str(e)}")
+            # Return empty statistics when Ralph LRS is not available
+            return {
+                "total_responses": 0,
+                "unique_respondents": 0,
+                "completion_rate": 0.0,
+                "average_completion_time": 0.0,
+                "last_response_at": None,
+                "response_distribution": {
+                    "responses": 0,
+                    "completions": 0,
+                    "partial": 0
+                }
+            }
+    
+    async def get_survey_responses_with_followup(
+        self,
+        survey_id: str,
+        since: Optional[str] = None,
+        limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """Get survey responses including follow-up text from extensions"""
+        try:
+            statements = await self.get_activity_statements(
+                activity_id=survey_id,
+                since=since,
+                verb_filter="responded",
+                limit=limit
+            )
+            
+            responses = []
+            for stmt in statements:
+                actor = stmt.get('actor', {})
+                result = stmt.get('result', {})
+                object_data = stmt.get('object', {})
+                
+                # Extract respondent info
+                respondent_id = actor.get('mbox', 'anonymous')
+                if respondent_id.startswith('mailto:'):
+                    respondent_id = respondent_id[7:]
+                
+                # Build response data
+                response_data = {
+                    "statement_id": stmt.get('id'),
+                    "respondent_id": respondent_id,
+                    "question_id": object_data.get('id', '').split('#')[-1] if '#' in object_data.get('id', '') else 'unknown',
+                    "response_value": result.get('response'),
+                    "timestamp": stmt.get('timestamp'),
+                    "raw_score": result.get('score', {}).get('raw') if result.get('score') else None,
+                    "success": result.get('success')
+                }
+                
+                # Extract follow-up response from extensions
+                extensions = result.get('extensions', {})
+                follow_up_keys = [
+                    'http://nlj.platform/extensions/follow_up_response',
+                    'http://adlnet.gov/expapi/extensions/followup_response'
+                ]
+                
+                for key in follow_up_keys:
+                    if key in extensions:
+                        response_data["follow_up_response"] = extensions[key]
+                        break
+                
+                # Extract question type from extensions
+                question_type_keys = [
+                    'http://nlj.platform/extensions/question_type',
+                    'http://adlnet.gov/expapi/extensions/question_type'
+                ]
+                
+                for key in question_type_keys:
+                    if key in extensions:
+                        response_data["question_type"] = extensions[key]
+                        break
+                
+                responses.append(response_data)
+            
+            return responses
+            
+        except Exception as e:
+            logger.warning(f"Unable to retrieve survey responses for {survey_id} - Ralph LRS may not be available: {str(e)}")
+            # Return empty responses when Ralph LRS is not available
+            return []
+
     # ========================================================================
     # ANALYTICS METHODS
     # ========================================================================
