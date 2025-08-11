@@ -223,3 +223,32 @@ async def verify_token(
         "user_id": str(current_user.id),
         "username": current_user.username
     }
+
+
+@router.post("/refresh", response_model=TokenResponse)
+async def refresh_token(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> TokenResponse:
+    """
+    Refresh access token.
+    
+    Issues a new access token for the currently authenticated user.
+    This endpoint can be called when the current token is about to expire.
+    """
+    # Create new access token
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        subject=current_user.id,
+        expires_delta=access_token_expires
+    )
+    
+    # Refresh user to load all attributes properly
+    await db.refresh(current_user)
+    
+    return TokenResponse(
+        access_token=access_token,
+        token_type="bearer",
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user=UserResponse.model_validate(current_user)
+    )

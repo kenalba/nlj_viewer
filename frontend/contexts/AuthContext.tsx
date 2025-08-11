@@ -62,13 +62,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const handleAuthLogout = (event: CustomEvent) => {
       console.log('Auth logout event received:', event.detail);
+      const message = event.detail || 'Your session has expired. Please log in again.';
+      
       setState({
         user: null,
         isAuthenticated: false,
         isLoading: false,
-        error: null,
+        error: message,
       });
-      // Just clear the auth state - AppRouter will handle the redirect
+      
+      // Force redirect to login page
+      if (window.location.pathname !== '/login' && !window.location.pathname.startsWith('/shared/')) {
+        console.log('Token expired, redirecting to login');
+        // Add a small delay to let the user see the error message briefly if they're on the page
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1500);
+      }
     };
 
     window.addEventListener('auth:logout', handleAuthLogout as EventListener);

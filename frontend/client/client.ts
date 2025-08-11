@@ -70,21 +70,20 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = localStorage.getItem('refresh_token');
+        // Try to refresh using current token (proactive refresh before expiry)
+        const currentToken = localStorage.getItem('access_token');
         
-        if (refreshToken) {
-          // Attempt token refresh
-          const response = await apiClient.post('/api/auth/refresh', { 
-            refresh_token: refreshToken 
+        if (currentToken) {
+          // Attempt token refresh - but this will fail if token is already expired
+          // This is for proactive refresh only
+          const response = await apiClient.post('/api/auth/refresh', {}, {
+            headers: { Authorization: `Bearer ${currentToken}` }
           });
           
-          const { access_token, refresh_token: newRefreshToken } = response.data;
+          const { access_token } = response.data;
           
-          // Update stored tokens
+          // Update stored token
           localStorage.setItem('access_token', access_token);
-          if (newRefreshToken) {
-            localStorage.setItem('refresh_token', newRefreshToken);
-          }
           
           // Update default authorization header
           apiClient.defaults.headers.common.Authorization = `Bearer ${access_token}`;
@@ -95,17 +94,20 @@ apiClient.interceptors.response.use(
           // Retry original request
           originalRequest.headers.Authorization = `Bearer ${access_token}`;
           return apiClient(originalRequest);
+        } else {
+          throw new Error('No token available');
         }
       } catch (refreshError) {
         // Refresh failed, logout user
+        console.log('Token refresh failed, logging out user');
         processQueue(refreshError, null);
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         localStorage.removeItem('user');
         
-        // Use custom event to avoid HMR disruption
+        // Use custom event to notify auth context
         window.dispatchEvent(new CustomEvent('auth:logout', { 
-          detail: 'Token refresh failed' 
+          detail: 'Your session has expired. Please log in again.' 
         }));
       } finally {
         isRefreshing = false;
