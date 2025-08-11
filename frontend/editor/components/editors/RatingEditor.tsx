@@ -20,6 +20,8 @@ import {
   Chip,
   IconButton,
 } from '@mui/material';
+
+import { FollowupEditor } from './FollowupEditor';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
@@ -326,6 +328,12 @@ export const RatingEditor: React.FC<RatingEditorProps> = ({
           label="Show Numeric Value"
         />
       </Stack>
+
+      {/* Follow-up Configuration */}
+      <FollowupEditor
+        followUp={nljNode.followUp}
+        onUpdate={(followUp) => onUpdate({ followUp })}
+      />
 
       {/* Instructions */}
       <Alert severity="info">

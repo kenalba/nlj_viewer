@@ -17,6 +17,7 @@ import {
 
 import type { FlowNode } from '../../flow/types/flow';
 import type { NLJNode, TextAreaNode } from '../../../../types/nlj';
+import { FollowupEditor } from './FollowupEditor';
 
 interface TextAreaEditorProps {
   node: FlowNode;
@@ -246,6 +247,12 @@ export const TextAreaEditor: React.FC<TextAreaEditorProps> = ({
           label="Show Word Count"
         />
       </Stack>
+
+      {/* Follow-up Configuration */}
+      <FollowupEditor
+        followUp={nljNode.followUp}
+        onUpdate={(followUp) => onUpdate({ followUp })}
+      />
 
       {/* Instructions */}
       <Alert severity="info">

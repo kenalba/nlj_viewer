@@ -34,6 +34,7 @@ import {
 
 import type { FlowNode } from '../../flow/types/flow';
 import type { NLJNode, MatrixNode } from '../../../../types/nlj';
+import { FollowupEditor } from './FollowupEditor';
 
 interface MatrixEditorProps {
   node: FlowNode;
@@ -341,6 +342,12 @@ export const MatrixEditor: React.FC<MatrixEditorProps> = ({
           label="Randomize Column Order"
         />
       </Stack>
+
+      {/* Follow-up Configuration */}
+      <FollowupEditor
+        followUp={nljNode.followUp}
+        onUpdate={(followUp) => onUpdate({ followUp })}
+      />
 
       {/* Instructions */}
       <Alert severity="info">

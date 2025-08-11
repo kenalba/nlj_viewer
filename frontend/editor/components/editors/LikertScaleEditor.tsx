@@ -15,6 +15,8 @@ import {
   Paper,
 } from '@mui/material';
 
+import { FollowupEditor } from './FollowupEditor';
+
 import type { FlowNode } from '../../flow/types/flow';
 import type { NLJNode } from '../../../../types/nlj';
 
@@ -161,6 +163,12 @@ export const LikertScaleEditor: React.FC<LikertScaleEditorProps> = ({
           label="Required Question"
         />
       </Stack>
+
+      {/* Follow-up Configuration */}
+      <FollowupEditor
+        followUp={nljNode.followUp}
+        onUpdate={(followUp) => onUpdate({ followUp })}
+      />
 
       {/* Instructions */}
       <Alert severity="info">

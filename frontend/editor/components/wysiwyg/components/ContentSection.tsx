@@ -26,13 +26,28 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
   const nljNode = node.data.nljNode;
   const nodeType = node.data.nodeType;
 
-  // Check if node has different content fields
-  const hasTextField = 'text' in nljNode;
+  // Handle legacy text/content field consolidation
+  const hasLegacyTextField = 'text' in nljNode && nljNode.text && nljNode.text.trim() !== '';
   const hasContentField = 'content' in nljNode;
-  const hasDescriptionField = 'description' in nljNode;
+  
+  // Consolidate legacy text into content if both exist
+  React.useEffect(() => {
+    if (hasLegacyTextField && nljNode.text && nljNode.text.trim() !== '') {
+      const consolidatedContent = [nljNode.content, nljNode.text]
+        .filter(content => content && content.trim() !== '')
+        .join('\n\n');
+      
+      if (consolidatedContent !== nljNode.content) {
+        onUpdate({ 
+          content: consolidatedContent,
+          text: undefined // Clear the legacy text field
+        });
+      }
+    }
+  }, [hasLegacyTextField, nljNode.text, nljNode.content, onUpdate]);
 
   // Get appropriate labels for different node types
-  const getTextLabel = () => {
+  const getContentLabel = () => {
     switch (nodeType) {
       case 'question':
       case 'true_false':
@@ -42,7 +57,7 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
       case 'matrix':
       case 'slider':
       case 'text_area':
-        return 'Question Text';
+        return 'Question Content';
       case 'interstitial_panel':
         return 'Panel Content';
       case 'connections':
@@ -53,24 +68,8 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
     }
   };
 
-  const getContentLabel = () => {
-    switch (nodeType) {
-      case 'question':
-      case 'true_false':
-      case 'short_answer':
-        return 'Additional Information';
-      case 'interstitial_panel':
-        return 'Additional Content';
-      default:
-        return 'Additional Content';
-    }
-  };
-
   return (
     <Stack spacing={2}>
-      <Typography variant="subtitle1" color="text.primary" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
-        Content
-      </Typography>
 
       {/* Node Title Field - Skip for choice nodes */}
       {nodeType !== 'choice' && (
@@ -90,63 +89,18 @@ export const ContentSection: React.FC<ContentSectionProps> = ({
         </Box>
       )}
 
-      {/* Main Text Field */}
-      {hasTextField && (
-        <Box>
-          <RichTextEditor
-            value={nljNode.text || ''}
-            onUpdate={(value) => onUpdate({ text: value })}
-            placeholder={`Enter ${getTextLabel().toLowerCase()}... (Markdown supported)`}
-            minHeight={100}
-            showToolbar={true}
-            autoFocus={false}
-          />
-        </Box>
-      )}
+      {/* Main Content Field */}
+      <Box>
+        <RichTextEditor
+          value={nljNode.content || ''}
+          onUpdate={(value) => onUpdate({ content: value })}
+          placeholder={`Enter ${getContentLabel().toLowerCase()}... (Markdown supported)`}
+          minHeight={100}
+          showToolbar={true}
+          autoFocus={false}
+        />
+      </Box>
 
-      {/* Additional Content Field */}
-      {hasContentField && (
-        <Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.75rem' }}>
-            {getContentLabel()}
-          </Typography>
-          
-          <RichTextEditor
-            value={nljNode.content || ''}
-            onUpdate={(value) => onUpdate({ content: value })}
-            placeholder={`Enter ${getContentLabel().toLowerCase()}... (Markdown supported)`}
-            minHeight={70}
-            showToolbar={true}
-            autoFocus={false}
-          />
-          
-        </Box>
-      )}
-
-      {/* Description Field */}
-      {hasDescriptionField && (
-        <Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.75rem' }}>
-            Description
-          </Typography>
-          
-          <RichTextEditor
-            value={nljNode.description || ''}
-            onUpdate={(value) => onUpdate({ description: value })}
-            placeholder="Enter description for this node..."
-            minHeight={50}
-            showToolbar={false}
-            autoFocus={false}
-          />
-        </Box>
-      )}
-
-      {/* Show message if no content fields */}
-      {!hasTextField && !hasContentField && !hasDescriptionField && (
-        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.75rem' }}>
-          This node type doesn't have editable content fields.
-        </Typography>
-      )}
     </Stack>
   );
 };

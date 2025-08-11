@@ -17,6 +17,7 @@ import {
 
 import type { FlowNode } from '../../flow/types/flow';
 import type { NLJNode, SliderNode } from '../../../../types/nlj';
+import { FollowupEditor } from './FollowupEditor';
 
 interface SliderEditorProps {
   node: FlowNode;
@@ -274,6 +275,12 @@ export const SliderEditor: React.FC<SliderEditorProps> = ({
           label="Continuous Movement"
         />
       </Stack>
+
+      {/* Follow-up Configuration */}
+      <FollowupEditor
+        followUp={nljNode.followUp}
+        onUpdate={(followUp) => onUpdate({ followUp })}
+      />
 
       {/* Instructions */}
       <Alert severity="info">
