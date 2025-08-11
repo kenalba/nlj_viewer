@@ -9,7 +9,8 @@ A full-stack TypeScript application for creating, managing, and delivering inter
 - **PostgreSQL Database**: Robust data persistence with SQLAlchemy ORM and 139+ sample activities
 - **JWT Authentication**: Secure user authentication with session management and role-based access control
 - **Multi-Tier Permissions**: Player/Creator/Reviewer/Approver/Admin roles with centralized permission functions
-- **Event-Driven Architecture**: Apache Kafka (KRaft mode) for real-time integration and xAPI event streaming
+- **Event-Driven Architecture**: RedPanda (Kafka-compatible) for real-time integration and xAPI event streaming
+  - **RedPanda Console**: Web UI for managing Kafka topics, consumers, messages, and schema registry
 - **Training Session Management**: Complete native scheduling system with registration, booking, and conflict resolution
 - **Docker Deployment**: Containerized deployment with development and production configurations
 - **Content Management**: Full CRUD operations with filtering, search, pagination, and approval workflows
@@ -104,7 +105,7 @@ docker compose \
 # - LocalStack Pro (RDS PostgreSQL, S3, SES)
 # - NLJ API with RDS connection
 # - Frontend with hot reload
-# - RedPanda (Kafka replacement)
+# - RedPanda (Kafka replacement) with Console UI
 # - Elasticsearch for analytics
 # - Ralph LRS for xAPI data
 ```
@@ -115,7 +116,7 @@ docker compose \
 - **LocalStack Health**: http://localhost:4566/_localstack/health
 - **Elasticsearch**: http://localhost:9200
 - **Ralph LRS**: http://localhost:8100
-- **RedPanda Console**: http://localhost:8080
+- **RedPanda Console**: http://localhost:8080 (Kafka/event streaming management)
 
 #### Step 4: Populate with Sample Data
 ```bash

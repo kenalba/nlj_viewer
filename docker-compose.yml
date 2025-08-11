@@ -56,23 +56,24 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  # RedPanda Console - Web UI for RedPanda Management
+  # RedPanda Console - Web UI for RedPanda/Kafka Management
   redpanda-console:
     image: redpandadata/console:latest
     container_name: nlj_redpanda_console
     ports:
-      - "8080:8080"     # Web UI (same as original Kafka UI port)
+      - "8080:8080"     # Web UI for Kafka/RedPanda management
     environment:
       KAFKA_BROKERS: redpanda:29092
       REDPANDA_ADMINAPI_ENABLED: true
       REDPANDA_ADMINAPI_URLS: http://redpanda:9644
+      CONSOLE_KAFKA_SCHEMAREGISTRY_ENABLED: true
+      CONSOLE_KAFKA_SCHEMAREGISTRY_URLS: http://redpanda:8084
     depends_on:
       redpanda:
         condition: service_healthy
     networks:
       - nlj_network
-    profiles:
-      - dev-tools
+    restart: unless-stopped
 
 
   # NLJ FastAPI Backend

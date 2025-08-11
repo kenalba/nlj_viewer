@@ -81,6 +81,7 @@ export function tokenize(expression: string): Token[] {
     // Strings (quoted)
     if (char === '"' || char === "'") {
       const quote = char;
+      const tokenStart = position; // Record the start position before moving
       let value = '';
       position++; // Skip opening quote
       
@@ -109,7 +110,7 @@ export function tokenize(expression: string): Token[] {
       }
       
       position++; // Skip closing quote
-      tokens.push({ type: 'string', value, position: position - value.length - 2 });
+      tokens.push({ type: 'string', value, position: tokenStart });
       continue;
     }
 
@@ -409,8 +410,10 @@ export function validateExpression(expression: string): ExpressionResult {
 export function extractVariables(expression: string): string[] {
   try {
     const tokens = tokenize(expression);
-    const variables = new Set<string>();
+    // Try to parse the expression to ensure it's valid
+    parse(tokens);
     
+    const variables = new Set<string>();
     tokens.forEach(token => {
       if (token.type === 'identifier') {
         variables.add(token.value);
@@ -429,6 +432,9 @@ export function extractVariables(expression: string): string[] {
 export function getExpressionDescription(expression: string): string {
   try {
     const tokens = tokenize(expression);
+    // Try to parse the expression to ensure it's valid
+    parse(tokens);
+    
     return tokens.map(token => {
       switch (token.type) {
         case 'identifier':
