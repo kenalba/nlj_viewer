@@ -153,13 +153,13 @@ class ContentItem(Base):
     # Relationships with modern typing
     creator: Mapped["User"] = relationship(
         back_populates="created_content",
-        lazy="selectin"
+        lazy="select"
     )
     
     # Self-referential relationship for content variants
     parent_content: Mapped["ContentItem | None"] = relationship(
         remote_side=[id],
-        lazy="selectin"
+        lazy="select"
     )
     
     # Version-aware relationships
@@ -167,25 +167,25 @@ class ContentItem(Base):
         back_populates="content",
         cascade="all, delete-orphan",
         order_by="ContentVersion.version_number.desc()",
-        lazy="selectin"
+        lazy="select"
     )
     
     # Generation and source lineage relationships
     generation_session: Mapped["GenerationSession | None"] = relationship(
         back_populates="created_activities",
-        lazy="selectin"
+        lazy="select"
     )
     source_lineage: Mapped[list["ActivitySource"]] = relationship(
         back_populates="activity",
         cascade="all, delete-orphan",
-        lazy="selectin"
+        lazy="select"
     )
     
     # Public sharing tokens
     shared_tokens: Mapped[list["SharedToken"]] = relationship(
         back_populates="content",
         cascade="all, delete-orphan",
-        lazy="selectin"
+        lazy="select"
     )
     
     def __repr__(self) -> str:

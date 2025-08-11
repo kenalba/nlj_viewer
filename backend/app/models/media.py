@@ -208,19 +208,19 @@ class MediaItem(Base):
     # Relationships
     creator: Mapped["User"] = relationship(
         back_populates="created_media",
-        lazy="selectin"
+        lazy="select"
     )
     
     source_document: Mapped["SourceDocument"] = relationship(
         back_populates="generated_media",
-        lazy="selectin"
+        lazy="select"
     )
     
     # Public sharing tokens
     shared_tokens: Mapped[list["SharedToken"]] = relationship(
         back_populates="media",
         cascade="all, delete-orphan",
-        lazy="selectin"
+        lazy="select"
     )
     
     def __repr__(self) -> str:

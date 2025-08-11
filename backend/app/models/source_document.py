@@ -209,19 +209,19 @@ class SourceDocument(Base):
     # Relationships
     owner: Mapped["User"] = relationship(
         back_populates="source_documents",
-        lazy="selectin"
+        lazy="select"
     )
     
     generation_sessions: Mapped[List["GenerationSession"]] = relationship(
         secondary="generation_session_sources",
         back_populates="source_documents",
-        lazy="selectin"
+        lazy="select"
     )
     
     generated_media: Mapped[List["MediaItem"]] = relationship(
         back_populates="source_document",
         cascade="all, delete-orphan",
-        lazy="selectin"
+        lazy="select"
     )
     
     def __repr__(self) -> str:

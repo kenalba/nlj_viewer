@@ -138,7 +138,7 @@ class User(Base):
     # TODO: Uncomment when ApprovalStep model is implemented
     # approval_steps: Mapped[list["ApprovalStep"]] = relationship(
     #     back_populates="approver",
-    #     lazy="selectin"
+    #     lazy="select"
     # )
     
     def __repr__(self) -> str:

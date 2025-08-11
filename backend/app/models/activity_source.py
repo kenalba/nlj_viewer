@@ -79,13 +79,13 @@ class ActivitySource(Base):
     # Relationships
     activity: Mapped["ContentItem"] = relationship(
         back_populates="source_lineage",
-        lazy="selectin"
+        lazy="select"
     )
     source_document: Mapped["SourceDocument"] = relationship(
-        lazy="selectin"
+        lazy="select"
     )
     generation_session: Mapped["GenerationSession"] = relationship(
-        lazy="selectin"
+        lazy="select"
     )
     
     def __repr__(self) -> str:

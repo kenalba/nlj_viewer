@@ -122,18 +122,18 @@ class GenerationSession(Base):
     # Relationships
     creator: Mapped["User"] = relationship(
         back_populates="generation_sessions",
-        lazy="selectin"
+        lazy="select"
     )
     
     source_documents: Mapped[List["SourceDocument"]] = relationship(
         secondary=generation_session_sources,
         back_populates="generation_sessions",
-        lazy="selectin"
+        lazy="select"
     )
     
     created_activities: Mapped[List["ContentItem"]] = relationship(
         back_populates="generation_session",
-        lazy="selectin"
+        lazy="select"
     )
     
     def __repr__(self) -> str:

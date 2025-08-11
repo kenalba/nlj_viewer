@@ -150,18 +150,18 @@ class ContentVersion(Base):
     # Relationships
     content: Mapped["ContentItem"] = relationship(
         back_populates="versions",
-        lazy="selectin"
+        lazy="select"
     )
     creator: Mapped["User"] = relationship(
         foreign_keys=[created_by],
-        lazy="selectin"
+        lazy="select"
     )
     
     # Link to approval workflow for this version
     approval_workflow: Mapped["ApprovalWorkflow | None"] = relationship(
         back_populates="content_version",
         uselist=False,
-        lazy="selectin"
+        lazy="select"
     )
     
     def __repr__(self) -> str:
@@ -281,15 +281,15 @@ class ApprovalWorkflow(Base):
     # Relationships
     content_version: Mapped["ContentVersion"] = relationship(
         back_populates="approval_workflow",
-        lazy="selectin"
+        lazy="select"
     )
     assigned_reviewer: Mapped["User | None"] = relationship(
         foreign_keys=[assigned_reviewer_id],
-        lazy="selectin"
+        lazy="select"
     )
     template: Mapped["WorkflowTemplate | None"] = relationship(
         back_populates="workflows",
-        lazy="selectin"
+        lazy="select"
     )
     
     # Multi-stage workflow instances
@@ -297,7 +297,7 @@ class ApprovalWorkflow(Base):
         back_populates="workflow",
         cascade="all, delete-orphan",
         order_by="WorkflowStageInstance.template_stage_id",
-        lazy="selectin"
+        lazy="select"
     )
     
     # Review history
@@ -305,7 +305,7 @@ class ApprovalWorkflow(Base):
         back_populates="workflow",
         cascade="all, delete-orphan",
         order_by="WorkflowReview.created_at.desc()",
-        lazy="selectin"
+        lazy="select"
     )
     
     def __repr__(self) -> str:
@@ -436,15 +436,15 @@ class WorkflowReview(Base):
     # Relationships
     workflow: Mapped["ApprovalWorkflow"] = relationship(
         back_populates="reviews",
-        lazy="selectin"
+        lazy="select"
     )
     reviewer: Mapped["User"] = relationship(
         foreign_keys=[reviewer_id],
-        lazy="selectin"
+        lazy="select"
     )
     stage_instance: Mapped["WorkflowStageInstance | None"] = relationship(
         back_populates="reviews",
-        lazy="selectin"
+        lazy="select"
     )
     
     def __repr__(self) -> str:
@@ -539,17 +539,17 @@ class WorkflowTemplate(Base):
     # Relationships
     creator: Mapped["User"] = relationship(
         foreign_keys=[created_by],
-        lazy="selectin"
+        lazy="select"
     )
     stages: Mapped[list["WorkflowTemplateStage"]] = relationship(
         back_populates="template",
         cascade="all, delete-orphan",
         order_by="WorkflowTemplateStage.stage_order",
-        lazy="selectin"
+        lazy="select"
     )
     workflows: Mapped[list["ApprovalWorkflow"]] = relationship(
         back_populates="template",
-        lazy="selectin"
+        lazy="select"
     )
     
     def __repr__(self) -> str:
@@ -634,11 +634,11 @@ class WorkflowTemplateStage(Base):
     # Relationships
     template: Mapped["WorkflowTemplate"] = relationship(
         back_populates="stages",
-        lazy="selectin"
+        lazy="select"
     )
     stage_instances: Mapped[list["WorkflowStageInstance"]] = relationship(
         back_populates="template_stage",
-        lazy="selectin"
+        lazy="select"
     )
     
     def __repr__(self) -> str:
@@ -726,21 +726,21 @@ class WorkflowStageInstance(Base):
     # Relationships
     workflow: Mapped["ApprovalWorkflow"] = relationship(
         back_populates="stage_instances",
-        lazy="selectin"
+        lazy="select"
     )
     template_stage: Mapped["WorkflowTemplateStage"] = relationship(
         back_populates="stage_instances",
-        lazy="selectin"
+        lazy="select"
     )
     reviewer_assignments: Mapped[list["StageReviewerAssignment"]] = relationship(
         back_populates="stage_instance",
         cascade="all, delete-orphan",
-        lazy="selectin"
+        lazy="select"
     )
     reviews: Mapped[list["WorkflowReview"]] = relationship(
         foreign_keys="WorkflowReview.stage_instance_id",
         back_populates="stage_instance",
-        lazy="selectin"
+        lazy="select"
     )
     
     def __repr__(self) -> str:
@@ -839,19 +839,19 @@ class StageReviewerAssignment(Base):
     # Relationships
     stage_instance: Mapped["WorkflowStageInstance"] = relationship(
         back_populates="reviewer_assignments",
-        lazy="selectin"
+        lazy="select"
     )
     reviewer: Mapped["User | None"] = relationship(
         foreign_keys=[reviewer_id],
-        lazy="selectin"
+        lazy="select"
     )
     delegated_from: Mapped["User | None"] = relationship(
         foreign_keys=[delegated_from_id],
-        lazy="selectin"
+        lazy="select"
     )
     assigner: Mapped["User"] = relationship(
         foreign_keys=[assigned_by],
-        lazy="selectin"
+        lazy="select"
     )
     
     def __repr__(self) -> str:
