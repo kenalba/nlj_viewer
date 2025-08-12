@@ -67,6 +67,14 @@ class ContentCreate(ContentBase):
         None,
         description="Parent content ID for variants"
     )
+    import_source: Optional[str] = Field(
+        None,
+        description="Import source type if created from import (e.g., 'trivie_xlsx', 'nlj_json')"
+    )
+    import_filename: Optional[str] = Field(
+        None,
+        description="Original filename if imported from file"
+    )
 
 
 class ContentUpdate(BaseModel):

@@ -3,14 +3,56 @@ NLJ Platform FastAPI Backend
 Modern FastAPI application with async support and comprehensive API for content management.
 """
 
+import logging
+import sys
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
+
+# Configure logging for Docker container output
+def configure_logging():
+    """Configure application-wide logging for Docker container visibility."""
+    
+    # Create formatter that includes timestamp, level, module, and message
+    formatter = logging.Formatter(
+        fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    
+    # Configure root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    
+    # Remove default handlers to avoid duplication
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+    
+    # Create console handler that outputs to stdout (visible in Docker logs)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(formatter)
+    root_logger.addHandler(console_handler)
+    
+    # Set specific loggers to appropriate levels
+    logging.getLogger('app.services.event_consumers').setLevel(logging.INFO)
+    logging.getLogger('app.services.kafka_service').setLevel(logging.INFO)
+    logging.getLogger('app.core.database_manager').setLevel(logging.INFO)
+    
+    # Quiet down some noisy third-party loggers
+    logging.getLogger('aiokafka').setLevel(logging.WARNING)
+    logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
+    logging.getLogger('anthropic').setLevel(logging.INFO)
+    
+    print("✅ Logging configured for Docker container visibility")
+
+# Configure logging on module import
+configure_logging()
 from app.core.database_manager import db_manager, create_tables
 from app.services.kafka_service import kafka_service
 from app.services.kafka_ralph_consumer import start_kafka_ralph_consumer, stop_kafka_ralph_consumer
+from app.services.event_consumers import start_content_generation_consumer, stop_content_generation_consumer
 
 
 @asynccontextmanager
@@ -29,28 +71,56 @@ async def lifespan(app: FastAPI):
     
     # Start Kafka Ralph LRS consumer for analytics
     try:
+        print("🚀 Starting Kafka Ralph LRS consumer for analytics...")
         await start_kafka_ralph_consumer()
+        print("✅ Kafka Ralph LRS consumer started successfully")
     except Exception as e:
         # Log error but don't fail startup - Ralph LRS may not be available in all environments
-        print(f"Warning: Failed to start Kafka Ralph consumer: {e}")
+        print(f"⚠️  Warning: Failed to start Kafka Ralph consumer: {e}")
+    
+    # Start Content Generation event consumer
+    try:
+        print("🚀 Starting Content Generation event consumer...")
+        await start_content_generation_consumer()
+        print("✅ Content Generation event consumer started successfully")
+    except Exception as e:
+        # Log error but don't fail startup - Kafka may not be available in all environments
+        print(f"⚠️  Warning: Failed to start Content Generation consumer: {e}")
+    
+    print("🎉 All event consumers initialized!")
     
     yield
     
     # Shutdown
     try:
+        print("🔌 Shutting down Content Generation consumer...")
+        await stop_content_generation_consumer()
+        print("✅ Content Generation consumer stopped")
+    except Exception as e:
+        print(f"⚠️  Warning: Error shutting down Content Generation consumer: {e}")
+    
+    try:
+        print("🔌 Shutting down Kafka Ralph consumer...")
         await stop_kafka_ralph_consumer()
+        print("✅ Kafka Ralph consumer stopped")
     except Exception as e:
-        print(f"Warning: Error shutting down Kafka Ralph consumer: {e}")
+        print(f"⚠️  Warning: Error shutting down Kafka Ralph consumer: {e}")
     
     try:
+        print("🔌 Shutting down Kafka connections...")
         await kafka_service.stop()
+        print("✅ Kafka connections closed")
     except Exception as e:
-        print(f"Warning: Error shutting down Kafka connections: {e}")
+        print(f"⚠️  Warning: Error shutting down Kafka connections: {e}")
     
     try:
+        print("🔌 Shutting down database connections...")
         await db_manager.close()
+        print("✅ Database connections closed")
     except Exception as e:
-        print(f"Warning: Error shutting down database connections: {e}")
+        print(f"⚠️  Warning: Error shutting down database connections: {e}")
+    
+    print("👋 Graceful shutdown complete!")
 
 
 # Create FastAPI application with modern configuration

@@ -7,7 +7,7 @@ import uuid
 from typing import List, Optional
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -60,7 +60,6 @@ class EmailResponse(BaseModel):
 @router.post("/send-survey-invitation", response_model=EmailResponse)
 async def send_survey_invitation(
     request: SurveyInvitationRequest,
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):

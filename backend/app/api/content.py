@@ -15,6 +15,7 @@ from app.core.deps import get_current_user
 from app.models.user import User, UserRole
 from app.models.content import ContentState, ContentType, LearningStyle
 from app.services.content import ContentService
+from app.services.kafka_service import get_xapi_event_service
 from app.schemas.content import (
     ContentCreate,
     ContentUpdate,
@@ -56,6 +57,26 @@ async def create_content(
         
         # Refresh to ensure all attributes are loaded
         await db.refresh(content, ["creator"])
+        
+        # Publish IMPORTED event if content was created from import
+        if content_data.import_source:
+            try:
+                xapi_service = await get_xapi_event_service()
+                await xapi_service.publish_content_generation_imported(
+                    session_id=str(content.id),  # Use content ID as session ID for imports
+                    user_id=str(current_user.id),
+                    user_email=current_user.email,
+                    user_name=current_user.full_name or current_user.username,
+                    import_source=content_data.import_source,
+                    import_description=f"Imported content from {content_data.import_source}",
+                    original_filename=content_data.import_filename,
+                    session_title=content.title
+                )
+            except Exception as e:
+                # Log error but don't fail the creation
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to publish content import event for {content.id}: {e}")
         
         # Create response data within the session context
         response_data = {
@@ -312,6 +333,43 @@ async def update_content(
             } if content.creator else None
         }
         
+        # Publish content modification event
+        try:
+            # Check if this content was generated (has generation session link)
+            # Look for generation session association to determine if this is generated content
+            from app.models.generation_session import GenerationSession
+            from app.models.activity_source import ActivitySource
+            from sqlalchemy import select
+            
+            # Try to find if this content is linked to a generation session
+            generation_session_id = None
+            stmt = select(GenerationSession.id).join(
+                ActivitySource, GenerationSession.id == ActivitySource.generation_session_id
+            ).where(ActivitySource.activity_id == content.id)
+            
+            result = await db.execute(stmt)
+            gen_session = result.scalar_one_or_none()
+            
+            if gen_session:
+                generation_session_id = str(gen_session)
+                
+                # Publish MODIFIED event for generated content
+                xapi_service = await get_xapi_event_service()
+                await xapi_service.publish_content_generation_modified(
+                    session_id=generation_session_id,
+                    user_id=str(current_user.id),
+                    user_email=current_user.email,
+                    user_name=current_user.full_name or current_user.username,
+                    modification_type="manual_edit",
+                    modification_description=f"Content updated via API: {content.title}",
+                    session_title=content.title
+                )
+        except Exception as e:
+            # Log error but don't fail the update
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to publish content modification event for {content_id}: {e}")
+        
         return ContentResponse.model_validate(response_data)
         
     except PermissionError as e:
@@ -430,6 +488,57 @@ async def update_content_state(
                 "role": content.creator.role
             } if content.creator else None
         }
+        
+        # Publish content events for state changes
+        try:
+            xapi_service = await get_xapi_event_service()
+            
+            # Check if this is a review workflow state change
+            review_states = ['submitted', 'in_review', 'approved', 'rejected', 'published']
+            if content.state.lower() in review_states:
+                # Publish REVIEWED event for approval workflow
+                await xapi_service.publish_content_generation_reviewed(
+                    session_id=str(content.id),  # Use content ID as session ID for non-generated content
+                    user_id=str(current_user.id),
+                    user_email=current_user.email,
+                    user_name=current_user.full_name or current_user.username,
+                    review_status=content.state.lower(),
+                    review_comment=state_update.comment or f"Content state changed to: {content.state}",
+                    session_title=content.title
+                )
+            
+            # Also check if this content was generated (has generation session link) for MODIFIED events
+            from app.models.generation_session import GenerationSession
+            from app.models.activity_source import ActivitySource
+            from sqlalchemy import select
+            
+            # Try to find if this content is linked to a generation session
+            generation_session_id = None
+            stmt = select(GenerationSession.id).join(
+                ActivitySource, GenerationSession.id == ActivitySource.generation_session_id
+            ).where(ActivitySource.activity_id == content.id)
+            
+            result = await db.execute(stmt)
+            gen_session = result.scalar_one_or_none()
+            
+            if gen_session:
+                generation_session_id = str(gen_session)
+                
+                # Publish MODIFIED event for generated content
+                await xapi_service.publish_content_generation_modified(
+                    session_id=generation_session_id,
+                    user_id=str(current_user.id),
+                    user_email=current_user.email,
+                    user_name=current_user.full_name or current_user.username,
+                    modification_type="state_change",
+                    modification_description=f"Content state changed to: {content.state}",
+                    session_title=content.title
+                )
+        except Exception as e:
+            # Log error but don't fail the update
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to publish content state modification event for {content_id}: {e}")
         
         return ContentResponse.model_validate(response_data)
         

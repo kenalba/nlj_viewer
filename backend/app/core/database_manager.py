@@ -56,7 +56,7 @@ class DatabaseConnectionManager:
             # Create async engine for RDS
             self.engine = create_async_engine(
                 self._connection_url,
-                echo=settings.DEBUG,
+                echo=False,  # Disable verbose SQL logging
                 pool_pre_ping=True,  # Important for RDS connections
                 pool_recycle=3600,   # Recycle connections every hour
                 pool_size=5,         # Smaller pool for RDS
@@ -85,7 +85,7 @@ class DatabaseConnectionManager:
             # Create async engine for direct PostgreSQL
             self.engine = create_async_engine(
                 self._connection_url,
-                echo=settings.DEBUG,
+                echo=False,  # Disable verbose SQL logging
                 pool_size=10,
                 max_overflow=20
             )

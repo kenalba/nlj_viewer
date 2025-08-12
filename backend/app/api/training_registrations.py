@@ -7,7 +7,7 @@ import logging
 from typing import Annotated, Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -68,7 +68,6 @@ class RegistrationResponse(BaseModel):
 @router.post("/register", response_model=BookingResponse)
 async def register_for_training(
     booking_data: BookingRequest,
-    background_tasks: BackgroundTasks,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
     xapi_service: Annotated[XAPIEventService, Depends(get_xapi_event_service)]
@@ -126,27 +125,8 @@ async def register_for_training(
             special_requirements=booking_data.special_requirements
         )
         
-        # Trigger booking event consumer
-        booking_event_data = {
-            "id": str(uuid4()),
-            "object": {
-                "id": f"http://nlj.platform/training-sessions/{booking_data.session_id}",
-                "definition": {"name": {"en-US": program.title}}
-            },
-            "actor": {
-                "name": current_user.full_name or current_user.email,
-                "mbox": f"mailto:{current_user.email}",
-                "account": {"name": str(current_user.id)}
-            },
-            "context": {
-                "extensions": {
-                    "http://nlj.platform/extensions/booking_id": booking_id,
-                    "http://nlj.platform/extensions/registration_method": booking_data.registration_method,
-                    "http://nlj.platform/extensions/special_requirements": booking_data.special_requirements or {}
-                }
-            }
-        }
-        await consume_booking_requested_event(booking_event_data, background_tasks)
+        # The event consumer will handle the booking processing asynchronously via Kafka
+        # No need to directly call the consumer function - the published event above will trigger it
         
         # Generate event ID for tracking
         event_id = str(uuid4())

@@ -6,7 +6,7 @@ Provides backup, restore, monitoring, and configuration management.
 from typing import List, Optional
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from app.core.deps import get_current_user
@@ -102,7 +102,6 @@ async def get_database_status(
 @router.post("/snapshots", response_model=SnapshotResponse)
 async def create_snapshot(
     request: SnapshotRequest,
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user)
 ):
     """
@@ -167,7 +166,6 @@ async def list_snapshots(
 @router.post("/restore")
 async def restore_from_snapshot(
     request: RestoreRequest,
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user)
 ):
     """

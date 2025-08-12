@@ -68,8 +68,8 @@ export const getGenerationStatus = async (sessionId: string): Promise<Generation
 export const pollGenerationStatus = async (
   sessionId: string,
   onProgress?: (progress: GenerationProgressResponse) => void,
-  maxAttempts: number = 60,
-  intervalMs: number = 5000
+  maxAttempts: number = 120, // Increased for event-driven processing
+  intervalMs: number = 3000  // Reduced interval for faster feedback
 ): Promise<GenerationProgressResponse> => {
   let attempts = 0;
   const sessionIdShort = sessionId.substring(0, 8);

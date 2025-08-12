@@ -144,7 +144,7 @@ TRAINING_TOPICS = {
     }
 }
 
-# NLJ Activity topics (for future integration with activity events)
+# NLJ Activity topics (for activity events and content generation)
 ACTIVITY_TOPICS = {
     "nlj.activities.completed": {
         "description": "NLJ activity completion events",
@@ -163,6 +163,18 @@ ACTIVITY_TOPICS = {
         "replication_factor": 1,
         "config": {
             "retention.ms": "7776000000",  # 90 days (audit trail)
+            "cleanup.policy": "delete",
+            "compression.type": "gzip"
+        }
+    },
+    
+    # Content Generation topic (single topic for all content generation events)
+    "nlj.content.generation": {
+        "description": "All content generation events (requested, started, progress, completed, failed, modified, imported, reviewed)",
+        "partitions": 6,  # Higher throughput for all generation events
+        "replication_factor": 1,
+        "config": {
+            "retention.ms": "7776000000",  # 90 days (long retention for audit trail)
             "cleanup.policy": "delete",
             "compression.type": "gzip"
         }
@@ -325,7 +337,7 @@ def print_topic_summary():
         print(f"    {config['description']}")
         print(f"    Partitions: {config['partitions']}, Retention: {int(config['config']['retention.ms'])//86400000} days")
     
-    print("\n🎯 ACTIVITY & REVIEW TOPICS:")
+    print("\n🎯 ACTIVITY, REVIEW & CONTENT GENERATION TOPICS:")
     for topic_name, config in ACTIVITY_TOPICS.items():
         print(f"  • {topic_name}")
         print(f"    {config['description']}")

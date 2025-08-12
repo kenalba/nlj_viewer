@@ -476,6 +476,9 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
 
   const handleActivityImported = useCallback(async (scenario: NLJScenario, fileName: string) => {
     try {
+      // Determine import source type based on file extension
+      const importSource = fileName.toLowerCase().endsWith('.xlsx') ? 'trivie_xlsx' : 'nlj_json';
+      
       const contentData = {
         title: scenario.name,
         description: `Imported from ${fileName}`,
@@ -487,7 +490,9 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
         content_type: 'training' as const,
         learning_style: 'visual' as const,
         is_template: false,
-        template_category: 'Imported'
+        template_category: 'Imported',
+        import_source: importSource,
+        import_filename: fileName
       };
 
       await contentApi.create(contentData);

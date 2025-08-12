@@ -6,7 +6,7 @@ Manages AI content generation sessions and activity creation.
 import uuid
 from typing import List, Optional, Dict, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +15,7 @@ from app.core.deps import get_current_user
 from app.models.user import User, UserRole
 from app.models.generation_session import GenerationSession, GenerationStatus
 from app.services.generation_service import GenerationService
+from app.services.kafka_service import get_xapi_event_service
 from app.schemas.generation import (
     GenerationSessionCreate,
     GenerationSessionResponse,
@@ -96,7 +97,6 @@ async def create_generation_session(
 )
 async def start_generation(
     session_id: uuid.UUID,
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ) -> GenerationSessionResponse:
@@ -118,14 +118,33 @@ async def start_generation(
             detail=f"Session is not in pending state (current: {session.status})"
         )
     
-    # Start generation in background
-    background_tasks.add_task(service.start_generation, session_id, current_user.id)
-    
-    # Return session with updated status
-    session.status = GenerationStatus.PROCESSING
-    await db.commit()
-    
-    return GenerationSessionResponse.from_orm(session)
+    # Publish content generation requested event instead of background task
+    try:
+        xapi_service = await get_xapi_event_service()
+        
+        # Get source document IDs for the event
+        source_doc_ids = [str(source.source_document_id) for source in session.activity_sources] if session.activity_sources else []
+        
+        await xapi_service.publish_content_generation_requested(
+            session_id=str(session_id),
+            user_id=str(current_user.id),
+            user_email=current_user.email,
+            user_name=current_user.full_name or current_user.username,
+            source_document_ids=source_doc_ids,
+            prompt_config=session.prompt_config or {}
+        )
+        
+        # Update session status - the event consumer will handle the actual generation
+        session.status = GenerationStatus.PROCESSING
+        await db.commit()
+        
+        return GenerationSessionResponse.from_orm(session)
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to start generation: {str(e)}"
+        )
 
 
 @router.get(
@@ -241,16 +260,12 @@ async def cancel_generation_session(
 )
 async def retry_generation_session(
     session_id: uuid.UUID,
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ) -> GenerationSessionResponse:
     """Retry failed generation session."""
     
     service = GenerationService(db)
-    
-    # Start retry in background with proper session management  
-    background_tasks.add_task(_retry_generation_task, session_id, current_user.id)
     
     session = await service.get_session_by_id(session_id, current_user.id)
     if not session:
@@ -259,7 +274,41 @@ async def retry_generation_session(
             detail="Generation session not found"
         )
     
-    return GenerationSessionResponse.from_orm(session)
+    if session.status not in [GenerationStatus.FAILED, GenerationStatus.CANCELLED]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Session cannot be retried (current status: {session.status})"
+        )
+    
+    # Publish content generation requested event for retry instead of background task
+    try:
+        xapi_service = await get_xapi_event_service()
+        
+        # Get source document IDs for the event
+        source_doc_ids = [str(source.source_document_id) for source in session.activity_sources] if session.activity_sources else []
+        
+        await xapi_service.publish_content_generation_requested(
+            session_id=str(session_id),
+            user_id=str(current_user.id),
+            user_email=current_user.email,
+            user_name=current_user.full_name or current_user.username,
+            source_document_ids=source_doc_ids,
+            prompt_config=session.prompt_config or {}
+        )
+        
+        # Reset session to processing state
+        session.status = GenerationStatus.PROCESSING
+        session.error_message = None
+        session.error_details = None
+        await db.commit()
+        
+        return GenerationSessionResponse.from_orm(session)
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retry generation: {str(e)}"
+        )
 
 
 @router.post(
@@ -323,7 +372,6 @@ async def get_generation_statistics(
 )
 async def content_studio_generate(
     request: ContentStudioGenerateRequest,
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ) -> GenerationProgressResponse:
@@ -350,8 +398,20 @@ async def content_studio_generate(
             generated_prompt_text=request.generated_prompt
         )
         
-        # Start generation in background with proper session management
-        background_tasks.add_task(_start_generation_task, session.id, current_user.id)
+        # Publish content generation requested event instead of background task
+        xapi_service = await get_xapi_event_service()
+        
+        # Get source document IDs for the event
+        source_doc_ids = [str(doc_id) for doc_id in request.source_document_ids]
+        
+        await xapi_service.publish_content_generation_requested(
+            session_id=str(session.id),
+            user_id=str(current_user.id),
+            user_email=current_user.email,
+            user_name=current_user.full_name or current_user.username,
+            source_document_ids=source_doc_ids,
+            prompt_config=request.prompt_config
+        )
         
         # Update session status
         session.status = GenerationStatus.PROCESSING
@@ -430,13 +490,17 @@ async def content_studio_generation_status(
     # Handle both enum and string status values
     status_str = session.status.value if hasattr(session.status, 'value') else session.status
     
-    print(f"🔍 Returning GenerationProgressResponse:")
-    print(f"  - session_id: {session.id}")
-    print(f"  - status: {status_str}")
-    print(f"  - progress_percentage: {progress_map.get(session.status)}")
-    print(f"  - error_message: {session.error_message}")
-    print(f"  - generated_content type: {type(generated_content)}")
-    print(f"  - generated_content keys: {list(generated_content.keys()) if isinstance(generated_content, dict) else 'Not a dict'}")
+    # Reduced logging - only log when status changes or on errors
+    if session.error_message or session.status != GenerationStatus.PROCESSING:
+        print(f"🔍 Generation Status Update:")
+        print(f"  - session_id: {session.id}")
+        print(f"  - status: {status_str}")
+        print(f"  - progress_percentage: {progress_map.get(session.status)}")
+        if session.error_message:
+            print(f"  - error_message: {session.error_message}")
+        if generated_content:
+            print(f"  - generated_content type: {type(generated_content)}")
+            print(f"  - generated_content keys: {list(generated_content.keys()) if isinstance(generated_content, dict) else 'Not a dict'}")
     
     return GenerationProgressResponse(
         session_id=session.id,
@@ -447,74 +511,3 @@ async def content_studio_generation_status(
         generated_content=generated_content
     )
 
-
-async def _start_generation_task(session_id: uuid.UUID, user_id: uuid.UUID):
-    """
-    Background task to start content generation with proper database session management.
-    """
-    import logging
-    logger = logging.getLogger(__name__)
-    
-    logger.info(f"🚀 Starting background generation task for session {session_id}")
-    
-    from app.core.database_manager import db_manager
-    
-    # Ensure database manager is initialized
-    await db_manager.ensure_initialized()
-    db = db_manager.get_session()
-    
-    try:
-        logger.info(f"🔧 Creating GenerationService for session {session_id}")
-        service = GenerationService(db)
-        
-        logger.info(f"🎯 Calling start_generation for session {session_id}")
-        success = await service.start_generation(session_id, user_id)
-        
-        if success:
-            logger.info(f"✅ Generation completed successfully for session {session_id}")
-        else:
-            logger.error(f"❌ Generation failed for session {session_id} (returned False)")
-            
-    except Exception as e:
-        logger.error(f"💥 Background generation task failed for session {session_id}: {str(e)}")
-        logger.error(f"Exception type: {type(e).__name__}")
-        import traceback
-        logger.error(f"Full traceback: {traceback.format_exc()}")
-        
-        # Try to update session status to failed
-        try:
-            session = await db.get(GenerationSession, session_id)
-            if session:
-                session.fail_with_error(f"Background task error: {str(e)}")
-                await db.commit()
-                logger.info(f"🔄 Updated session {session_id} status to failed")
-        except Exception as update_error:
-            logger.error(f"Failed to update session status: {update_error}")
-            await db.rollback()
-    finally:
-        # Clean up database session
-        await db.close()
-
-
-async def _retry_generation_task(session_id: uuid.UUID, user_id: uuid.UUID):
-    """
-    Background task to retry failed generation with proper database session management.
-    """
-    from app.core.database_manager import db_manager
-    
-    # Ensure database manager is initialized
-    await db_manager.ensure_initialized()
-    db = db_manager.get_session()
-    
-    try:
-        service = GenerationService(db)
-        await service.retry_failed_session(session_id, user_id)
-    except Exception as e:
-        # Log the error but don't raise it since this is a background task
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Background retry generation task failed for session {session_id}: {str(e)}")
-        await db.rollback()
-    finally:
-        # Clean up database session
-        await db.close()

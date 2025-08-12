@@ -158,6 +158,11 @@ class KafkaService:
             ("nlj.training.bookings", "http://adlnet.gov/expapi/verbs/asked"): "booking.requested",
             ("nlj.training.bookings", "http://adlnet.gov/expapi/verbs/registered"): "booking.confirmed",
             ("nlj.training.bookings", "http://nlj.platform/verbs/waitlisted"): "booking.waitlisted",
+            # Content generation events
+            ("nlj.content.generation", "http://adlnet.gov/expapi/verbs/authored"): "content.generation.requested",
+            ("nlj.content.generation", "http://adlnet.gov/expapi/verbs/modified"): "content.generation.modified",
+            ("nlj.content.generation", "http://adlnet.gov/expapi/verbs/imported"): "content.generation.imported",
+            ("nlj.content.generation", "http://adlnet.gov/expapi/verbs/reviewed"): "content.generation.reviewed",
         }
         
         verb_id = event.get("verb", {}).get("id")
@@ -856,6 +861,457 @@ class XAPIEventService:
             topic="nlj.training.certificates",
             event=event,
             key=f"{program_id}:{learner_id}"
+        )
+
+    # =========================================================================
+    # CONTENT GENERATION EVENTS
+    # =========================================================================
+
+    async def publish_content_generation_requested(
+        self,
+        session_id: str,
+        user_id: str,
+        user_email: str,
+        user_name: str,
+        source_document_ids: List[str],
+        prompt_config: Dict[str, Any],
+        session_title: Optional[str] = None
+    ) -> None:
+        """Publish a content generation requested event."""
+
+        event = {
+            "id": str(uuid4()),
+            "version": "1.0.3",
+            "actor": {
+                "objectType": "Agent",
+                "name": user_name,
+                "mbox": f"mailto:{user_email}",
+                "account": {
+                    "name": user_id,
+                    "homePage": "http://nlj.platform"
+                }
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/authored",
+                "display": {"en-US": "requested"}
+            },
+            "object": {
+                "objectType": "Activity",
+                "id": f"http://nlj.platform/content-generation-sessions/{session_id}",
+                "definition": {
+                    "name": {"en-US": session_title or f"Content Generation Session {session_id}"},
+                    "description": {"en-US": "AI-powered content generation session"},
+                    "type": "http://nlj.platform/activities/content-generation"
+                }
+            },
+            "result": {
+                "extensions": {
+                    "http://nlj.platform/extensions/generation_status": "requested"
+                }
+            },
+            "context": {
+                "platform": "NLJ Platform",
+                "extensions": {
+                    "http://nlj.platform/extensions/source_document_ids": source_document_ids,
+                    "http://nlj.platform/extensions/prompt_config": prompt_config
+                }
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+        await self.kafka.publish_event(
+            topic="nlj.content.generation",
+            event=event,
+            key=session_id
+        )
+
+    async def publish_content_generation_started(
+        self,
+        session_id: str,
+        user_id: str,
+        user_email: str,
+        user_name: str,
+        session_title: Optional[str] = None
+    ) -> None:
+        """Publish a content generation started event."""
+
+        event = {
+            "id": str(uuid4()),
+            "version": "1.0.3",
+            "actor": {
+                "objectType": "Agent",
+                "name": user_name,
+                "mbox": f"mailto:{user_email}",
+                "account": {
+                    "name": user_id,
+                    "homePage": "http://nlj.platform"
+                }
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/authored",
+                "display": {"en-US": "started"}
+            },
+            "object": {
+                "objectType": "Activity",
+                "id": f"http://nlj.platform/content-generation-sessions/{session_id}",
+                "definition": {
+                    "name": {"en-US": session_title or f"Content Generation Session {session_id}"},
+                    "description": {"en-US": "AI-powered content generation session"},
+                    "type": "http://nlj.platform/activities/content-generation"
+                }
+            },
+            "result": {
+                "extensions": {
+                    "http://nlj.platform/extensions/generation_status": "started"
+                }
+            },
+            "context": {
+                "platform": "NLJ Platform"
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+        await self.kafka.publish_event(
+            topic="nlj.content.generation",
+            event=event,
+            key=session_id
+        )
+
+    async def publish_content_generation_progress(
+        self,
+        session_id: str,
+        user_id: str,
+        user_email: str,
+        user_name: str,
+        progress_percentage: int,
+        current_step: str,
+        session_title: Optional[str] = None
+    ) -> None:
+        """Publish a content generation progress event."""
+
+        event = {
+            "id": str(uuid4()),
+            "version": "1.0.3",
+            "actor": {
+                "objectType": "Agent",
+                "name": user_name,
+                "mbox": f"mailto:{user_email}",
+                "account": {
+                    "name": user_id,
+                    "homePage": "http://nlj.platform"
+                }
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/authored",
+                "display": {"en-US": "progressing"}
+            },
+            "object": {
+                "objectType": "Activity",
+                "id": f"http://nlj.platform/content-generation-sessions/{session_id}",
+                "definition": {
+                    "name": {"en-US": session_title or f"Content Generation Session {session_id}"},
+                    "description": {"en-US": "AI-powered content generation session"},
+                    "type": "http://nlj.platform/activities/content-generation"
+                }
+            },
+            "result": {
+                "extensions": {
+                    "http://nlj.platform/extensions/generation_status": "progressing",
+                    "http://nlj.platform/extensions/progress_percentage": progress_percentage,
+                    "http://nlj.platform/extensions/current_step": current_step
+                }
+            },
+            "context": {
+                "platform": "NLJ Platform"
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+        await self.kafka.publish_event(
+            topic="nlj.content.generation",
+            event=event,
+            key=session_id
+        )
+
+    async def publish_content_generation_completed(
+        self,
+        session_id: str,
+        user_id: str,
+        user_email: str,
+        user_name: str,
+        generated_content_size: Optional[int] = None,
+        session_title: Optional[str] = None
+    ) -> None:
+        """Publish a content generation completed event."""
+
+        event = {
+            "id": str(uuid4()),
+            "version": "1.0.3",
+            "actor": {
+                "objectType": "Agent",
+                "name": user_name,
+                "mbox": f"mailto:{user_email}",
+                "account": {
+                    "name": user_id,
+                    "homePage": "http://nlj.platform"
+                }
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/authored",
+                "display": {"en-US": "completed"}
+            },
+            "object": {
+                "objectType": "Activity",
+                "id": f"http://nlj.platform/content-generation-sessions/{session_id}",
+                "definition": {
+                    "name": {"en-US": session_title or f"Content Generation Session {session_id}"},
+                    "description": {"en-US": "AI-powered content generation session"},
+                    "type": "http://nlj.platform/activities/content-generation"
+                }
+            },
+            "result": {
+                "completion": True,
+                "success": True,
+                "extensions": {
+                    "http://nlj.platform/extensions/generation_status": "completed",
+                    "http://nlj.platform/extensions/generated_content_size": generated_content_size or 0
+                }
+            },
+            "context": {
+                "platform": "NLJ Platform"
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+        await self.kafka.publish_event(
+            topic="nlj.content.generation",
+            event=event,
+            key=session_id
+        )
+
+    async def publish_content_generation_failed(
+        self,
+        session_id: str,
+        user_id: str,
+        user_email: str,
+        user_name: str,
+        error_message: str,
+        error_type: Optional[str] = None,
+        session_title: Optional[str] = None
+    ) -> None:
+        """Publish a content generation failed event."""
+
+        event = {
+            "id": str(uuid4()),
+            "version": "1.0.3",
+            "actor": {
+                "objectType": "Agent",
+                "name": user_name,
+                "mbox": f"mailto:{user_email}",
+                "account": {
+                    "name": user_id,
+                    "homePage": "http://nlj.platform"
+                }
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/authored",
+                "display": {"en-US": "failed"}
+            },
+            "object": {
+                "objectType": "Activity",
+                "id": f"http://nlj.platform/content-generation-sessions/{session_id}",
+                "definition": {
+                    "name": {"en-US": session_title or f"Content Generation Session {session_id}"},
+                    "description": {"en-US": "AI-powered content generation session"},
+                    "type": "http://nlj.platform/activities/content-generation"
+                }
+            },
+            "result": {
+                "completion": False,
+                "success": False,
+                "extensions": {
+                    "http://nlj.platform/extensions/generation_status": "failed"
+                }
+            },
+            "context": {
+                "platform": "NLJ Platform",
+                "extensions": {
+                    "http://nlj.platform/extensions/error_message": error_message,
+                    "http://nlj.platform/extensions/error_type": error_type or "unknown"
+                }
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+        await self.kafka.publish_event(
+            topic="nlj.content.generation",
+            event=event,
+            key=session_id
+        )
+
+    async def publish_content_generation_modified(
+        self,
+        session_id: str,
+        user_id: str,
+        user_email: str,
+        user_name: str,
+        modification_type: str,  # "manual_edit", "flow_editor_change", "regeneration", "parameter_update"
+        modification_description: Optional[str] = None,
+        session_title: Optional[str] = None
+    ) -> None:
+        """Publish a content generation modified event."""
+
+        event = {
+            "id": str(uuid4()),
+            "version": "1.0.3",
+            "actor": {
+                "objectType": "Agent",
+                "name": user_name,
+                "mbox": f"mailto:{user_email}",
+                "account": {
+                    "name": user_id,
+                    "homePage": "http://nlj.platform"
+                }
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/modified",
+                "display": {"en-US": "modified"}
+            },
+            "object": {
+                "objectType": "Activity",
+                "id": f"http://nlj.platform/content-generation-sessions/{session_id}",
+                "definition": {
+                    "name": {"en-US": session_title or f"Content Generation Session {session_id}"},
+                    "description": {"en-US": "AI-powered content generation session"},
+                    "type": "http://nlj.platform/activities/content-generation"
+                }
+            },
+            "context": {
+                "platform": "NLJ Platform",
+                "extensions": {
+                    "http://nlj.platform/extensions/modification_type": modification_type,
+                    "http://nlj.platform/extensions/modification_description": modification_description or ""
+                }
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+        await self.kafka.publish_event(
+            topic="nlj.content.generation",
+            event=event,
+            key=session_id
+        )
+
+    async def publish_content_generation_imported(
+        self,
+        session_id: str,
+        user_id: str,
+        user_email: str,
+        user_name: str,
+        import_source: str,
+        import_type: str,  # "trivie_excel", "nlj_json", "external_source", "template"
+        imported_items_count: Optional[int] = None,
+        session_title: Optional[str] = None
+    ) -> None:
+        """Publish a content generation imported event."""
+
+        event = {
+            "id": str(uuid4()),
+            "version": "1.0.3",
+            "actor": {
+                "objectType": "Agent",
+                "name": user_name,
+                "mbox": f"mailto:{user_email}",
+                "account": {
+                    "name": user_id,
+                    "homePage": "http://nlj.platform"
+                }
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/imported",
+                "display": {"en-US": "imported"}
+            },
+            "object": {
+                "objectType": "Activity",
+                "id": f"http://nlj.platform/content-generation-sessions/{session_id}",
+                "definition": {
+                    "name": {"en-US": session_title or f"Content Generation Session {session_id}"},
+                    "description": {"en-US": "AI-powered content generation session"},
+                    "type": "http://nlj.platform/activities/content-generation"
+                }
+            },
+            "context": {
+                "platform": "NLJ Platform",
+                "extensions": {
+                    "http://nlj.platform/extensions/import_source": import_source,
+                    "http://nlj.platform/extensions/import_type": import_type,
+                    "http://nlj.platform/extensions/imported_items_count": imported_items_count or 0
+                }
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+        await self.kafka.publish_event(
+            topic="nlj.content.generation",
+            event=event,
+            key=session_id
+        )
+
+    async def publish_content_generation_reviewed(
+        self,
+        session_id: str,
+        reviewer_id: str,
+        reviewer_email: str,
+        reviewer_name: str,
+        review_status: str,  # "approved", "rejected", "needs_revision", "pending"
+        reviewer_comments: Optional[str] = None,
+        session_title: Optional[str] = None
+    ) -> None:
+        """Publish a content generation reviewed event."""
+
+        event = {
+            "id": str(uuid4()),
+            "version": "1.0.3",
+            "actor": {
+                "objectType": "Agent",
+                "name": reviewer_name,
+                "mbox": f"mailto:{reviewer_email}",
+                "account": {
+                    "name": reviewer_id,
+                    "homePage": "http://nlj.platform"
+                }
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/reviewed",
+                "display": {"en-US": "reviewed"}
+            },
+            "object": {
+                "objectType": "Activity",
+                "id": f"http://nlj.platform/content-generation-sessions/{session_id}",
+                "definition": {
+                    "name": {"en-US": session_title or f"Content Generation Session {session_id}"},
+                    "description": {"en-US": "AI-powered content generation session"},
+                    "type": "http://nlj.platform/activities/content-generation"
+                }
+            },
+            "result": {
+                "extensions": {
+                    "http://nlj.platform/extensions/review_status": review_status
+                }
+            },
+            "context": {
+                "platform": "NLJ Platform",
+                "extensions": {
+                    "http://nlj.platform/extensions/reviewer_comments": reviewer_comments or ""
+                }
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+        await self.kafka.publish_event(
+            topic="nlj.content.generation",
+            event=event,
+            key=session_id
         )
 
     # =========================================================================

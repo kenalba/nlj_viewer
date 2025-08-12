@@ -40,11 +40,12 @@ A full-stack TypeScript application for creating, managing, and delivering inter
 - **Progress Tracking**: Visual progress indicators and completion tracking
 - **Media Support**: Images, videos, and rich content integration
 
-### **Content Management & AI Generation**
+### **Content Management & AI Generation ✅**
 - **Content Studio**: Integrated AI-powered content generation with Claude API
   - Document upload and management (PDF, DOCX, PPTX) with Claude Files API
   - Source document library with metadata extraction and reuse capabilities
-  - Real-time content generation with progress tracking and error handling
+  - **Event-Driven Content Generation**: Real-time processing via RedPanda/Kafka event architecture
+  - Progress tracking and error handling with immediate event processing
   - Direct integration with Flow Editor for seamless content creation workflow
 - **LLM Content Generation**: Comprehensive prompt generation system for external AI tools
 - **Document Intelligence**: AI-generated metadata including summaries, keywords, learning objectives

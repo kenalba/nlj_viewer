@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Annotated, Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -154,7 +154,6 @@ def check_program_permissions(user: User, action: str = "read") -> bool:
 @router.post("/", response_model=EventResponse)
 async def create_training_program(
     program_data: TrainingProgramCreate,
-    background_tasks: BackgroundTasks,
     current_user: Annotated[User, Depends(get_current_user)],
     xapi_service: Annotated[XAPIEventService, Depends(get_xapi_event_service)]
 ) -> EventResponse:
@@ -203,7 +202,7 @@ async def create_training_program(
                 }
             }
         }
-        await consume_program_created_event(event_data, background_tasks)
+        # Event consumer will handle program creation asynchronously via Kafka
         
         # Generate event ID for tracking
         event_id = str(uuid4())
@@ -233,7 +232,7 @@ async def create_training_program(
                 },
                 "context": {"extensions": {}}
             }
-            await consume_program_published_event(publish_event_data, background_tasks)
+            # Event consumer will handle program publishing asynchronously via Kafka
         
         return EventResponse(
             message="Program creation initiated",
@@ -494,7 +493,6 @@ async def delete_training_program(
 async def create_training_session(
     program_id: UUID,
     session_data: TrainingSessionCreate,
-    background_tasks: BackgroundTasks,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
     xapi_service: Annotated[XAPIEventService, Depends(get_xapi_event_service)]
@@ -567,7 +565,7 @@ async def create_training_session(
                 }
             }
         }
-        await consume_session_scheduled_event(session_event_data, background_tasks)
+        # Event consumer will handle session scheduling asynchronously via Kafka
         
         # Generate event ID for tracking
         event_id = str(uuid4())

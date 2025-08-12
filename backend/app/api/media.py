@@ -5,7 +5,7 @@ Media API endpoints for podcast and media generation.
 import uuid
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 import os
@@ -40,7 +40,6 @@ router = APIRouter(prefix="/media", tags=["media"])
 @router.post("/generate-podcast", response_model=MediaResponse)
 async def generate_podcast(
     request: MediaGenerationRequest,
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -106,7 +105,6 @@ async def generate_podcast_script(
 @router.post("/generate-audio", response_model=AudioGenerationResponse)
 async def generate_audio_from_transcript(
     request: AudioGenerationRequest,
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user)
 ):
     """
