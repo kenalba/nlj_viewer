@@ -93,21 +93,21 @@ cp backend/.env.example backend/.env
 #### Step 2: Start Full Development Stack
 ```bash
 # Start all services including LocalStack RDS, analytics, and frontend hot reload
-docker compose \
+docker compose --profile analytics \
   -f docker-compose.yml \
   -f docker-compose.dev.yml \
   -f docker-compose.localstack.yml \
   -f docker-compose.rds.yml \
   --env-file backend/.env \
-  up
+  up -d
 
 # This starts:
 # - LocalStack Pro (RDS PostgreSQL, S3, SES)
 # - NLJ API with RDS connection
 # - Frontend with hot reload
 # - RedPanda (Kafka replacement) with Console UI
-# - Elasticsearch for analytics
-# - Ralph LRS for xAPI data
+# - Elasticsearch for analytics (enabled via --profile analytics)
+# - Ralph LRS for xAPI data (enabled via --profile analytics)
 ```
 
 #### Step 3: Access the Platform
@@ -121,7 +121,8 @@ docker compose \
 #### Step 4: Populate with Sample Data
 ```bash
 # Generate sample activities, surveys, training events, and xAPI data
-docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.localstack.yml -f docker-compose.rds.yml \
+docker compose --profile analytics \
+  -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.localstack.yml -f docker-compose.rds.yml \
   exec nlj-api python scripts/generate_fake_analytics_data.py
 ```
 

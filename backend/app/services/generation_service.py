@@ -731,7 +731,7 @@ class GenerationService:
         )
         
         result = await self.db.execute(query)
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
     
     async def create_activity_from_session(
         self,

@@ -457,52 +457,64 @@ async def _start_generation_task(session_id: uuid.UUID, user_id: uuid.UUID):
     
     logger.info(f"🚀 Starting background generation task for session {session_id}")
     
-    from app.core.database import AsyncSessionLocal
+    from app.core.database_manager import db_manager
     
-    async with AsyncSessionLocal() as db:
+    # Ensure database manager is initialized
+    await db_manager.ensure_initialized()
+    db = db_manager.get_session()
+    
+    try:
+        logger.info(f"🔧 Creating GenerationService for session {session_id}")
+        service = GenerationService(db)
+        
+        logger.info(f"🎯 Calling start_generation for session {session_id}")
+        success = await service.start_generation(session_id, user_id)
+        
+        if success:
+            logger.info(f"✅ Generation completed successfully for session {session_id}")
+        else:
+            logger.error(f"❌ Generation failed for session {session_id} (returned False)")
+            
+    except Exception as e:
+        logger.error(f"💥 Background generation task failed for session {session_id}: {str(e)}")
+        logger.error(f"Exception type: {type(e).__name__}")
+        import traceback
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        
+        # Try to update session status to failed
         try:
-            logger.info(f"🔧 Creating GenerationService for session {session_id}")
-            service = GenerationService(db)
-            
-            logger.info(f"🎯 Calling start_generation for session {session_id}")
-            success = await service.start_generation(session_id, user_id)
-            
-            if success:
-                logger.info(f"✅ Generation completed successfully for session {session_id}")
-            else:
-                logger.error(f"❌ Generation failed for session {session_id} (returned False)")
-                
-        except Exception as e:
-            logger.error(f"💥 Background generation task failed for session {session_id}: {str(e)}")
-            logger.error(f"Exception type: {type(e).__name__}")
-            import traceback
-            logger.error(f"Full traceback: {traceback.format_exc()}")
-            
-            # Try to update session status to failed
-            try:
-                session = await db.get(GenerationSession, session_id)
-                if session:
-                    session.fail_with_error(f"Background task error: {str(e)}")
-                    await db.commit()
-                    logger.info(f"🔄 Updated session {session_id} status to failed")
-            except Exception as update_error:
-                logger.error(f"Failed to update session status: {update_error}")
-                await db.rollback()
+            session = await db.get(GenerationSession, session_id)
+            if session:
+                session.fail_with_error(f"Background task error: {str(e)}")
+                await db.commit()
+                logger.info(f"🔄 Updated session {session_id} status to failed")
+        except Exception as update_error:
+            logger.error(f"Failed to update session status: {update_error}")
+            await db.rollback()
+    finally:
+        # Clean up database session
+        await db.close()
 
 
 async def _retry_generation_task(session_id: uuid.UUID, user_id: uuid.UUID):
     """
     Background task to retry failed generation with proper database session management.
     """
-    from app.core.database import AsyncSessionLocal
+    from app.core.database_manager import db_manager
     
-    async with AsyncSessionLocal() as db:
-        try:
-            service = GenerationService(db)
-            await service.retry_failed_session(session_id, user_id)
-        except Exception as e:
-            # Log the error but don't raise it since this is a background task
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Background retry generation task failed for session {session_id}: {str(e)}")
-            await db.rollback()
+    # Ensure database manager is initialized
+    await db_manager.ensure_initialized()
+    db = db_manager.get_session()
+    
+    try:
+        service = GenerationService(db)
+        await service.retry_failed_session(session_id, user_id)
+    except Exception as e:
+        # Log the error but don't raise it since this is a background task
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Background retry generation task failed for session {session_id}: {str(e)}")
+        await db.rollback()
+    finally:
+        # Clean up database session
+        await db.close()

@@ -45,8 +45,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       if (token && refreshToken && state.isAuthenticated) {
         try {
-          // Attempt to refresh token proactively
-          await authAPI.refreshToken();
+          // Attempt to refresh token proactively with timeout
+          const refreshPromise = authAPI.refreshToken();
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Proactive refresh timeout')), 15000) // 15 second timeout
+          );
+          
+          await Promise.race([refreshPromise, timeoutPromise]);
           console.log('Token refreshed proactively');
         } catch (error) {
           console.log('Proactive token refresh failed:', error);
@@ -96,8 +101,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (token && userStr) {
         try {
-          // Verify token is still valid
-          await authAPI.verifyToken();
+          // Verify token is still valid with a shorter timeout for UX
+          const verifyPromise = authAPI.verifyToken();
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Token verification timeout')), 10000) // 10 second timeout
+          );
+          
+          await Promise.race([verifyPromise, timeoutPromise]);
           const user = JSON.parse(userStr);
           
           setState({
@@ -107,7 +117,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             error: null,
           });
         } catch (error) {
-          // Token invalid, clear stored data
+          console.warn('Token verification failed, clearing auth state:', error);
+          // Token invalid or timeout, clear stored data
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
           localStorage.removeItem('user');

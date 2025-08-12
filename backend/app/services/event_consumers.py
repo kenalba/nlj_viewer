@@ -13,7 +13,7 @@ from fastapi import BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import and_, select, func
 
-from app.core.database import AsyncSessionLocal
+from app.core.database_manager import db_manager
 from app.models.training_program import (
     TrainingProgram, TrainingSession, TrainingBooking, 
     AttendanceRecord, XAPIEventLog
@@ -59,7 +59,9 @@ class EventConsumerService:
         """Process program created event - create database record."""
         
         try:
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 # Extract program data from xAPI event
                 program_id = event_data["object"]["id"].split("/")[-1]
                 program_name = event_data["object"]["definition"]["name"]["en-US"]
@@ -91,14 +93,20 @@ class EventConsumerService:
                 )
 
                 logger.info(f"Created program from event: {program_id}")
+            finally:
+                await db.close()
 
         except Exception as e:
             logger.error(f"Failed to process program.created event: {e}")
             # Log failed processing
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 await self._log_event_processing(
                     db, event_data.get("id", "unknown"), "program.created", "failed", str(e)
                 )
+            finally:
+                await db.close()
 
     async def handle_program_published_event(
         self,
@@ -116,7 +124,9 @@ class EventConsumerService:
         """Process program published event - update database record."""
         
         try:
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 program_id = event_data["object"]["id"].split("/")[-1]
                 
                 # Update program to published status
@@ -136,13 +146,19 @@ class EventConsumerService:
                 await self._log_event_processing(
                     db, event_data["id"], "program.published", "success"
                 )
+            finally:
+                await db.close()
 
         except Exception as e:
             logger.error(f"Failed to process program.published event: {e}")
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 await self._log_event_processing(
                     db, event_data.get("id", "unknown"), "program.published", "failed", str(e)
                 )
+            finally:
+                await db.close()
 
     # =========================================================================
     # SESSION LIFECYCLE EVENT HANDLERS
@@ -164,7 +180,9 @@ class EventConsumerService:
         """Process session scheduled event - create session record."""
         
         try:
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 # Extract session data from xAPI event
                 session_id = event_data["object"]["id"].split("/")[-1]
                 session_title = event_data["object"]["definition"]["name"]["en-US"]
@@ -206,13 +224,19 @@ class EventConsumerService:
 
                 # Check for scheduling conflicts (publish conflict event if needed)
                 await self._check_scheduling_conflicts(session_id, start_time, end_time, location)
+            finally:
+                await db.close()
 
         except Exception as e:
             logger.error(f"Failed to process session.scheduled event: {e}")
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 await self._log_event_processing(
                     db, event_data.get("id", "unknown"), "session.scheduled", "failed", str(e)
                 )
+            finally:
+                await db.close()
 
     # =========================================================================
     # BOOKING & REGISTRATION EVENT HANDLERS
@@ -234,7 +258,9 @@ class EventConsumerService:
         """Process booking requested event - check capacity and confirm/waitlist."""
         
         try:
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 # Extract booking data
                 session_id = event_data["object"]["id"].split("/")[-1]
                 learner_id = event_data["actor"]["account"]["name"]
@@ -308,13 +334,19 @@ class EventConsumerService:
                 )
 
                 logger.info(f"Processed booking request: {booking_id} -> {booking_status}")
+            finally:
+                await db.close()
 
         except Exception as e:
             logger.error(f"Failed to process booking.requested event: {e}")
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 await self._log_event_processing(
                     db, event_data.get("id", "unknown"), "booking.requested", "failed", str(e)
                 )
+            finally:
+                await db.close()
 
     # =========================================================================
     # UTILITY METHODS
@@ -330,7 +362,9 @@ class EventConsumerService:
         """Check for scheduling conflicts and publish conflict events if found."""
         
         try:
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 # Check for time/location conflicts
                 conflict_conditions = [
                     TrainingSession.status == "scheduled",
@@ -377,6 +411,8 @@ class EventConsumerService:
                         conflict_type="time_overlap" if not location else "location_conflict",
                         conflict_details=conflict_details
                     )
+            finally:
+                await db.close()
 
         except Exception as e:
             logger.error(f"Failed to check scheduling conflicts: {e}")
@@ -420,7 +456,9 @@ class EventConsumerService:
         """Process session cancelled event - update session status and notify learners."""
         
         try:
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 # Extract cancellation data
                 session_id = event_data["object"]["id"].split("/")[-1]
                 extensions = event_data["context"]["extensions"]
@@ -449,13 +487,19 @@ class EventConsumerService:
                     )
                 else:
                     logger.warning(f"Session not found for cancellation event: {session_id}")
+            finally:
+                await db.close()
 
         except Exception as e:
             logger.error(f"Failed to process session.cancelled event: {e}")
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 await self._log_event_processing(
                     db, event_data.get("id", "unknown"), "session.cancelled", "failed", str(e)
                 )
+            finally:
+                await db.close()
 
     async def handle_booking_cancelled_event(
         self,
@@ -473,7 +517,9 @@ class EventConsumerService:
         """Process booking cancelled event - update booking status and handle waitlist promotion."""
         
         try:
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 # Extract booking data
                 session_id = event_data["object"]["id"].split("/")[-1]
                 learner_id = event_data["actor"]["account"]["name"]
@@ -503,13 +549,19 @@ class EventConsumerService:
                     )
                 else:
                     logger.warning(f"Booking not found for cancellation event: {booking_id}")
+            finally:
+                await db.close()
 
         except Exception as e:
             logger.error(f"Failed to process booking.cancelled event: {e}")
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 await self._log_event_processing(
                     db, event_data.get("id", "unknown"), "booking.cancelled", "failed", str(e)
                 )
+            finally:
+                await db.close()
 
     # =========================================================================
     # ATTENDANCE EVENT HANDLERS
@@ -531,7 +583,9 @@ class EventConsumerService:
         """Process attendance check-in event - create attendance record."""
         
         try:
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 # Extract attendance data
                 session_id = event_data["object"]["id"].split("/")[-1]
                 learner_id = event_data["actor"]["account"]["name"]
@@ -573,13 +627,19 @@ class EventConsumerService:
                 await self._log_event_processing(
                     db, event_data["id"], "attendance.checked_in", "success"
                 )
+            finally:
+                await db.close()
 
         except Exception as e:
             logger.error(f"Failed to process attendance.checked_in event: {e}")
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 await self._log_event_processing(
                     db, event_data.get("id", "unknown"), "attendance.checked_in", "failed", str(e)
                 )
+            finally:
+                await db.close()
 
     async def handle_attendance_completed_event(
         self,
@@ -597,7 +657,9 @@ class EventConsumerService:
         """Process attendance completion event - update attendance record with completion data."""
         
         try:
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 # Extract attendance data
                 session_id = event_data["object"]["id"].split("/")[-1]
                 learner_id = event_data["actor"]["account"]["name"]
@@ -636,13 +698,19 @@ class EventConsumerService:
                     )
                 else:
                     logger.warning(f"Attendance record not found for completion event: {session_id}:{learner_id}")
+            finally:
+                await db.close()
 
         except Exception as e:
             logger.error(f"Failed to process attendance.completed event: {e}")
-            async with AsyncSessionLocal() as db:
+            await db_manager.ensure_initialized()
+            db = db_manager.get_session()
+            try:
                 await self._log_event_processing(
                     db, event_data.get("id", "unknown"), "attendance.completed", "failed", str(e)
                 )
+            finally:
+                await db.close()
 
 
 # Global event consumer instance

@@ -38,6 +38,9 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Dependency for getting database session.
     Modern async generator pattern.
+    
+    NOTE: This function is deprecated. Use database_manager.get_db() instead
+    for consistent database connectivity across LocalStack RDS and standard PostgreSQL.
     """
     async with AsyncSessionLocal() as session:
         try:
