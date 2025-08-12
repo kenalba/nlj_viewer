@@ -45,10 +45,14 @@ def configure_logging():
     logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
     logging.getLogger('anthropic').setLevel(logging.INFO)
     
-    print("✅ Logging configured for Docker container visibility")
+    print("✅ Logging configured for Docker container visibility")  # Keep as print since this runs before logger setup
 
 # Configure logging on module import
 configure_logging()
+
+# Get logger for main module after logging is configured
+logger = logging.getLogger(__name__)
+
 from app.core.database_manager import db_manager, create_tables
 from app.services.kafka_service import kafka_service
 from app.services.kafka_ralph_consumer import start_kafka_ralph_consumer, stop_kafka_ralph_consumer
@@ -67,60 +71,60 @@ async def lifespan(app: FastAPI):
         await kafka_service.start_producer()
     except Exception as e:
         # Log error but don't fail startup - Kafka may not be available in all environments
-        print(f"Warning: Failed to initialize Kafka producer: {e}")
+        logger.warning(f"Failed to initialize Kafka producer: {e}")
     
     # Start Kafka Ralph LRS consumer for analytics
     try:
-        print("🚀 Starting Kafka Ralph LRS consumer for analytics...")
+        logger.info("🚀 Starting Kafka Ralph LRS consumer for analytics...")
         await start_kafka_ralph_consumer()
-        print("✅ Kafka Ralph LRS consumer started successfully")
+        logger.info("✅ Kafka Ralph LRS consumer started successfully")
     except Exception as e:
         # Log error but don't fail startup - Ralph LRS may not be available in all environments
-        print(f"⚠️  Warning: Failed to start Kafka Ralph consumer: {e}")
+        logger.warning(f"⚠️  Failed to start Kafka Ralph consumer: {e}")
     
     # Start Content Generation event consumer
     try:
-        print("🚀 Starting Content Generation event consumer...")
+        logger.info("🚀 Starting Content Generation event consumer...")
         await start_content_generation_consumer()
-        print("✅ Content Generation event consumer started successfully")
+        logger.info("✅ Content Generation event consumer started successfully")
     except Exception as e:
         # Log error but don't fail startup - Kafka may not be available in all environments
-        print(f"⚠️  Warning: Failed to start Content Generation consumer: {e}")
+        logger.warning(f"⚠️  Failed to start Content Generation consumer: {e}")
     
-    print("🎉 All event consumers initialized!")
+    logger.info("🎉 All event consumers initialized!")
     
     yield
     
     # Shutdown
     try:
-        print("🔌 Shutting down Content Generation consumer...")
+        logger.info("🔌 Shutting down Content Generation consumer...")
         await stop_content_generation_consumer()
-        print("✅ Content Generation consumer stopped")
+        logger.info("✅ Content Generation consumer stopped")
     except Exception as e:
-        print(f"⚠️  Warning: Error shutting down Content Generation consumer: {e}")
+        logger.warning(f"⚠️  Error shutting down Content Generation consumer: {e}")
     
     try:
-        print("🔌 Shutting down Kafka Ralph consumer...")
+        logger.info("🔌 Shutting down Kafka Ralph consumer...")
         await stop_kafka_ralph_consumer()
-        print("✅ Kafka Ralph consumer stopped")
+        logger.info("✅ Kafka Ralph consumer stopped")
     except Exception as e:
-        print(f"⚠️  Warning: Error shutting down Kafka Ralph consumer: {e}")
+        logger.warning(f"⚠️  Error shutting down Kafka Ralph consumer: {e}")
     
     try:
-        print("🔌 Shutting down Kafka connections...")
+        logger.info("🔌 Shutting down Kafka connections...")
         await kafka_service.stop()
-        print("✅ Kafka connections closed")
+        logger.info("✅ Kafka connections closed")
     except Exception as e:
-        print(f"⚠️  Warning: Error shutting down Kafka connections: {e}")
+        logger.warning(f"⚠️  Error shutting down Kafka connections: {e}")
     
     try:
-        print("🔌 Shutting down database connections...")
+        logger.info("🔌 Shutting down database connections...")
         await db_manager.close()
-        print("✅ Database connections closed")
+        logger.info("✅ Database connections closed")
     except Exception as e:
-        print(f"⚠️  Warning: Error shutting down database connections: {e}")
+        logger.warning(f"⚠️  Error shutting down database connections: {e}")
     
-    print("👋 Graceful shutdown complete!")
+    logger.info("👋 Graceful shutdown complete!")
 
 
 # Create FastAPI application with modern configuration

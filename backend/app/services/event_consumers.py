@@ -1756,27 +1756,27 @@ class ContentGenerationConsumer:
 
     async def start_consuming(self) -> None:
         """Start the Kafka consumer and begin processing events"""
-        print(f"🔍 DEBUG: start_consuming called, is_running={self.is_running}")
+        logger.debug(f"start_consuming called, is_running={self.is_running}")
         if self.is_running:
             logger.warning("Content generation consumer is already running")
             return
 
         try:
             logger.info("Starting content generation event consumer...")
-            print("🔍 DEBUG: About to call kafka.start_consumer")
+            logger.debug("About to call kafka.start_consumer")
 
             # Start Kafka consumer
             await self.kafka.start_consumer(
                 topics=self.topics, group_id="nlj-content-generation-consumer"
             )
-            print("🔍 DEBUG: kafka.start_consumer completed")
+            logger.debug("kafka.start_consumer completed")
 
             self.is_running = True
 
             # Start consuming events
-            print("🔍 DEBUG: About to create consumer task...")
+            logger.debug("About to create consumer task...")
             self.consumer_task = asyncio.create_task(self._consume_events())
-            print(f"🔍 DEBUG: Consumer task created: {self.consumer_task}")
+            logger.debug(f"Consumer task created: {self.consumer_task}")
 
             logger.info("Content generation event consumer started successfully")
 
@@ -1813,36 +1813,32 @@ class ContentGenerationConsumer:
     async def _consume_events(self) -> None:
         """Main event consumption loop"""
         try:
-            print(
-                "🔍 DEBUG: Content generation consumer loop started, waiting for events..."
-            )
-            print(
-                f"🔍 DEBUG: Kafka service: {self.kafka}, Consumer: {self.kafka.consumer if self.kafka else None}"
-            )
+            logger.debug("Content generation consumer loop started, waiting for events...")
+            logger.debug(f"Kafka service: {self.kafka}, Consumer: {self.kafka.consumer if self.kafka else None}")
 
             if not self.kafka:
-                print("🔍 DEBUG ERROR: No kafka service available!")
+                logger.error("No kafka service available!")
                 return
 
             if not self.kafka.consumer:
-                print("🔍 DEBUG ERROR: Kafka consumer not initialized!")
+                logger.error("Kafka consumer not initialized!")
                 return
 
             async for event in self.kafka.consume_events():
                 if not self.is_running:
-                    print("🔍 DEBUG: Consumer stopped, breaking out of event loop")
+                    logger.debug("Consumer stopped, breaking out of event loop")
                     break
 
-                print(f"🔍 DEBUG: Received event from Kafka: {type(event)}")
+                logger.debug(f"Received event from Kafka: {type(event)}")
                 await self._process_event(event)
 
         except asyncio.CancelledError:
-            print("🔍 DEBUG: Content generation consumer task cancelled")
+            logger.debug("Content generation consumer task cancelled")
         except Exception as e:
-            print(f"🔍 DEBUG ERROR: Error in content generation consumer loop: {e}")
+            logger.error(f"Error in content generation consumer loop: {e}")
             import traceback
 
-            print(f"🔍 DEBUG ERROR: Traceback: {traceback.format_exc()}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             if self.is_running:
                 # Attempt to restart consumer after error
                 logger.info("Attempting to restart content generation consumer...")
@@ -1854,8 +1850,8 @@ class ContentGenerationConsumer:
         """Process a single event"""
         try:
             # Debug: Log the raw event structure
-            print(f"🔍 DEBUG: Raw event structure:")
-            print(
+            logger.debug(f"Raw event structure:")
+            logger.debug(
                 f"  Event keys: {list(event.keys()) if isinstance(event, dict) else 'Not a dict'}"
             )
 
@@ -1863,8 +1859,8 @@ class ContentGenerationConsumer:
             topic = event.get("topic", "")
             event_data = event.get("value", {})  # Fix: Use 'value' not 'event'
 
-            print(f"  Extracted topic: {topic}")
-            print(
+            logger.debug(f"  Extracted topic: {topic}")
+            logger.debug(
                 f"  Event data keys: {list(event_data.keys()) if isinstance(event_data, dict) else 'Not a dict'}"
             )
 
@@ -1872,29 +1868,29 @@ class ContentGenerationConsumer:
             event_type = self._extract_event_type(topic, event_data)
 
             if not event_type:
-                print(
-                    f"🔍 DEBUG: Unknown event type for topic {topic}: {event_data.get('verb', {}).get('id')}"
+                logger.debug(
+                    f"Unknown event type for topic {topic}: {event_data.get('verb', {}).get('id')}"
                 )
                 return
 
             # Get handler for event type
             handler = self.event_handlers.get(event_type)
             if not handler:
-                print(f"🔍 DEBUG ERROR: No handler found for event type: {event_type}")
+                logger.error(f"No handler found for event type: {event_type}")
                 return
 
-            print(f"🔍 DEBUG: Processing {event_type} event with handler: {handler}")
+            logger.debug(f"Processing {event_type} event with handler: {handler}")
 
             # Call event handler directly (no background tasks needed)
-            print(f"🔍 DEBUG: About to call event handler: {handler}")
+            logger.debug(f"About to call event handler: {handler}")
             await handler(event_data)
-            print(f"🔍 DEBUG: Event handler completed successfully")
+            logger.debug(f"Event handler completed successfully")
 
         except Exception as e:
-            print(f"🔍 DEBUG ERROR: Error processing event: {e}")
+            logger.error(f"Error processing event: {e}")
             import traceback
 
-            print(f"🔍 DEBUG ERROR: Traceback: {traceback.format_exc()}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
 
     def _extract_event_type(self, topic: str, event: Dict[str, Any]) -> Optional[str]:
         """Extract event type from topic and verb for validation."""
@@ -1957,17 +1953,17 @@ class ContentGenerationConsumer:
         )
         status = result_status or context_status
 
-        print(
-            f"🔍 DEBUG: Event processing: topic={topic}, verb={verb_id}, status={status}"
+        logger.debug(
+            f"Event processing: topic={topic}, verb={verb_id}, status={status}"
         )
 
         if verb_id and status:
             event_type = topic_verb_status_mapping.get((topic, verb_id, status))
-            print(f"✅ DEBUG: Mapped to event type: {event_type}")
+            logger.debug(f"Mapped to event type: {event_type}")
             return event_type
         else:
-            print(
-                f"❌ DEBUG: Missing verb_id ({verb_id}) or status ({status}) - event keys: {list(event.keys())}"
+            logger.debug(
+                f"Missing verb_id ({verb_id}) or status ({status}) - event keys: {list(event.keys())}"
             )
 
         return None
@@ -1993,17 +1989,17 @@ async def get_content_generation_consumer() -> ContentGenerationConsumer:
 async def start_content_generation_consumer() -> None:
     """Start the content generation consumer service"""
     try:
-        print("🔍 DEBUG: start_content_generation_consumer() called")
+        logger.debug("start_content_generation_consumer() called")
         consumer = await get_content_generation_consumer()
-        print(f"🔍 DEBUG: Got consumer instance: {consumer}")
-        print(f"🔍 DEBUG: Consumer kafka service: {consumer.kafka}")
+        logger.debug(f"Got consumer instance: {consumer}")
+        logger.debug(f"Consumer kafka service: {consumer.kafka}")
         await consumer.start_consuming()
-        print("🔍 DEBUG: start_consuming() completed")
+        logger.debug("start_consuming() completed")
     except Exception as e:
-        print(f"🔍 DEBUG: Exception in start_content_generation_consumer: {e}")
+        logger.error(f"Exception in start_content_generation_consumer: {e}")
         import traceback
 
-        print(f"🔍 DEBUG: Traceback: {traceback.format_exc()}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise
 
 

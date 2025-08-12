@@ -63,7 +63,7 @@ export const LoginPage: React.FC = () => {
           {/* Logo/Title */}
           <Box textAlign="center" mb={3}>
             <Typography variant="h4" component="h1" gutterBottom>
-              Welcome to Ander
+              Welcome to the Ander Performance Intelligence Ecosystem
             </Typography>
             <Typography variant="subtitle1" color="text.secondary">
               Sign in to continue
@@ -130,7 +130,6 @@ export const LoginPage: React.FC = () => {
             <Typography variant="caption" color="text.secondary">
               <strong>Development Mode:</strong><br />
               Use backend registration endpoint to create accounts.<br />
-              Default admin: admin/admin123456
             </Typography>
           </Box>
         </Paper>
