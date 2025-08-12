@@ -16,11 +16,9 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database_manager import get_db
 from app.core.deps import get_current_user
-from app.models.training_program import TrainingProgram, TrainingSession, TrainingBooking
+from app.models.training_program import TrainingBooking, TrainingProgram, TrainingSession
 from app.models.user import User, UserRole
-from app.services.scheduling_service import SchedulingService, SchedulingError, get_scheduling_service
-from app.services.kafka_service import get_xapi_event_service, XAPIEventService
-from app.services.event_consumers import consume_program_created_event, consume_program_published_event, consume_session_scheduled_event
+from app.services.kafka_service import XAPIEventService, get_xapi_event_service
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +28,7 @@ router = APIRouter()
 # Pydantic schemas for API requests/responses
 class TrainingProgramCreate(BaseModel):
     """Schema for creating training programs."""
+
     title: str = Field(..., min_length=3, max_length=255, description="Program title")
     description: Optional[str] = Field(None, description="Program description")
     duration_minutes: int = Field(default=120, ge=15, le=480, description="Standard program duration in minutes")
@@ -44,6 +43,7 @@ class TrainingProgramCreate(BaseModel):
 
 class TrainingProgramUpdate(BaseModel):
     """Schema for updating training programs."""
+
     title: Optional[str] = Field(None, min_length=3, max_length=255)
     description: Optional[str] = None
     duration_minutes: Optional[int] = Field(None, ge=15, le=480)
@@ -59,6 +59,7 @@ class TrainingProgramUpdate(BaseModel):
 
 class TrainingProgramResponse(BaseModel):
     """Schema for training program responses."""
+
     id: UUID
     title: str
     description: Optional[str]
@@ -74,7 +75,7 @@ class TrainingProgramResponse(BaseModel):
     created_by_id: UUID
     created_at: datetime
     updated_at: datetime
-    
+
     # Computed fields
     total_sessions: int = 0
     upcoming_sessions: int = 0
@@ -86,6 +87,7 @@ class TrainingProgramResponse(BaseModel):
 
 class TrainingSessionCreate(BaseModel):
     """Schema for creating training sessions (scheduled instances)."""
+
     program_id: UUID = Field(..., description="Training program UUID")
     start_time: datetime = Field(..., description="Session start time")
     end_time: datetime = Field(..., description="Session end time")
@@ -99,6 +101,7 @@ class TrainingSessionCreate(BaseModel):
 
 class TrainingSessionResponse(BaseModel):
     """Schema for training session responses."""
+
     id: UUID
     program_id: UUID
     start_time: datetime
@@ -116,7 +119,7 @@ class TrainingSessionResponse(BaseModel):
     attendance_taken_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime
-    
+
     # Computed fields
     available_spots: int = 0
     total_bookings: int = 0
@@ -129,6 +132,7 @@ class TrainingSessionResponse(BaseModel):
 
 class EventResponse(BaseModel):
     """Schema for event-driven operation responses."""
+
     message: str = Field(..., description="Operation status message")
     event_id: str = Field(..., description="Event ID for tracking")
     resource_id: str = Field(..., description="ID of created/updated resource")
@@ -139,37 +143,38 @@ def check_program_permissions(user: User, action: str = "read") -> bool:
     """Check if user has permissions for training program operations."""
     if user.role in [UserRole.ADMIN, UserRole.APPROVER]:
         return True
-    
+
     if action == "read" and user.role in [UserRole.REVIEWER, UserRole.CREATOR, UserRole.PLAYER]:
         return True
-    
+
     if action in ["create", "update", "delete"] and user.role in [UserRole.CREATOR, UserRole.REVIEWER]:
         return True
-    
+
     return False
 
 
 # Training Programs Endpoints
 
+
 @router.post("/", response_model=EventResponse)
 async def create_training_program(
     program_data: TrainingProgramCreate,
     current_user: Annotated[User, Depends(get_current_user)],
-    xapi_service: Annotated[XAPIEventService, Depends(get_xapi_event_service)]
+    xapi_service: Annotated[XAPIEventService, Depends(get_xapi_event_service)],
 ) -> EventResponse:
     """Create a new training program template via event-driven architecture."""
-    
+
     if not check_program_permissions(current_user, "create"):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient permissions to create training programs"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions to create training programs"
         )
-    
+
     try:
         # Generate program ID
         from uuid import uuid4
+
         program_id = str(uuid4())
-        
+
         # Publish program.created event
         await xapi_service.publish_program_created(
             program_id=program_id,
@@ -179,36 +184,36 @@ async def create_training_program(
             creator_email=current_user.email,
             creator_name=current_user.full_name or current_user.email,
             learning_objectives=program_data.learning_objectives,
-            prerequisites=[str(p) for p in program_data.prerequisites] if program_data.prerequisites else None
+            prerequisites=[str(p) for p in program_data.prerequisites] if program_data.prerequisites else None,
         )
-        
+
         # Trigger event consumer via BackgroundTask
-        event_data = {
+        {
             "id": str(uuid4()),
             "object": {
                 "id": f"http://nlj.platform/training-programs/{program_id}",
                 "definition": {
                     "name": {"en-US": program_data.title},
-                    "description": {"en-US": program_data.description or ""}
-                }
+                    "description": {"en-US": program_data.description or ""},
+                },
             },
-            "actor": {
-                "account": {"name": str(current_user.id)}
-            },
+            "actor": {"account": {"name": str(current_user.id)}},
             "context": {
                 "extensions": {
                     "http://nlj.platform/extensions/learning_objectives": program_data.learning_objectives or [],
-                    "http://nlj.platform/extensions/prerequisites": [str(p) for p in program_data.prerequisites] if program_data.prerequisites else []
+                    "http://nlj.platform/extensions/prerequisites": (
+                        [str(p) for p in program_data.prerequisites] if program_data.prerequisites else []
+                    ),
                 }
-            }
+            },
         }
         # Event consumer will handle program creation asynchronously via Kafka
-        
+
         # Generate event ID for tracking
         event_id = str(uuid4())
-        
+
         logger.info(f"Published program.created event for program {program_id}")
-        
+
         # If program should be published immediately, publish that event too
         if program_data.is_published:
             await xapi_service.publish_program_published(
@@ -216,36 +221,33 @@ async def create_training_program(
                 program_title=program_data.title,
                 publisher_id=str(current_user.id),
                 publisher_email=current_user.email,
-                publisher_name=current_user.full_name or current_user.email
+                publisher_name=current_user.full_name or current_user.email,
             )
             logger.info(f"Published program.published event for program {program_id}")
-            
+
             # Trigger publish event consumer
-            publish_event_data = {
+            {
                 "id": str(uuid4()),
                 "object": {
                     "id": f"http://nlj.platform/training-programs/{program_id}",
-                    "definition": {"name": {"en-US": program_data.title}}
+                    "definition": {"name": {"en-US": program_data.title}},
                 },
-                "actor": {
-                    "account": {"name": str(current_user.id)}
-                },
-                "context": {"extensions": {}}
+                "actor": {"account": {"name": str(current_user.id)}},
+                "context": {"extensions": {}},
             }
             # Event consumer will handle program publishing asynchronously via Kafka
-        
+
         return EventResponse(
             message="Program creation initiated",
             event_id=event_id,
             resource_id=program_id,
-            status_endpoint=f"/api/training-programs/{program_id}"
+            status_endpoint=f"/api/training-programs/{program_id}",
         )
-        
+
     except Exception as e:
         logger.error(f"Error publishing program.created event: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to initiate program creation"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to initiate program creation"
         )
 
 
@@ -253,52 +255,41 @@ async def create_training_program(
 async def get_training_program(
     program_id: UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)]
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> TrainingProgramResponse:
     """Get training program details."""
-    
+
     if not check_program_permissions(current_user, "read"):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient permissions to view training programs"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions to view training programs"
         )
-    
+
     # Get program with related data
     stmt = (
         select(TrainingProgram)
-        .options(
-            selectinload(TrainingProgram.sessions),
-            selectinload(TrainingProgram.bookings)
-        )
+        .options(selectinload(TrainingProgram.sessions), selectinload(TrainingProgram.bookings))
         .where(TrainingProgram.id == program_id)
     )
-    
+
     result = await db.execute(stmt)
     program = result.scalar_one_or_none()
-    
+
     if not program:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Training program not found"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Training program not found")
+
     # Check if user can see unpublished programs
     if not program.is_published and current_user.role == UserRole.PLAYER:
         if program.created_by_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Training program not found"
-            )
-    
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Training program not found")
+
     # Calculate computed fields
     program_response = TrainingProgramResponse.model_validate(program)
     program_response.total_sessions = len(program.sessions or [])
-    program_response.upcoming_sessions = len([
-        s for s in (program.sessions or []) 
-        if s.start_time > datetime.now(timezone.utc) and s.status == "scheduled"
-    ])
+    program_response.upcoming_sessions = len(
+        [s for s in (program.sessions or []) if s.start_time > datetime.now(timezone.utc) and s.status == "scheduled"]
+    )
     program_response.total_bookings = len(program.bookings or [])
-    
+
     return program_response
 
 
@@ -308,59 +299,55 @@ async def list_training_programs(
     current_user: Annotated[User, Depends(get_current_user)],
     published_only: bool = True,
     skip: int = 0,
-    limit: int = 100
+    limit: int = 100,
 ) -> List[TrainingProgramResponse]:
     """List training programs with optional filters."""
-    
+
     if not check_program_permissions(current_user, "read"):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient permissions to view training programs"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions to view training programs"
         )
-    
+
     # Build query
     stmt = select(TrainingProgram).options(
-        selectinload(TrainingProgram.sessions),
-        selectinload(TrainingProgram.bookings)
+        selectinload(TrainingProgram.sessions), selectinload(TrainingProgram.bookings)
     )
-    
+
     conditions = []
-    
+
     # Published filter
     if published_only and current_user.role == UserRole.PLAYER:
-        conditions.append(TrainingProgram.is_published == True)
+        conditions.append(TrainingProgram.is_published)
     elif not published_only and current_user.role == UserRole.PLAYER:
         # Players can only see their own unpublished programs
-        conditions.append(
-            or_(
-                TrainingProgram.is_published == True,
-                TrainingProgram.created_by_id == current_user.id
-            )
-        )
-    
+        conditions.append(or_(TrainingProgram.is_published, TrainingProgram.created_by_id == current_user.id))
+
     # Active programs only
-    conditions.append(TrainingProgram.is_active == True)
-    
+    conditions.append(TrainingProgram.is_active)
+
     if conditions:
         stmt = stmt.where(and_(*conditions))
-    
+
     stmt = stmt.offset(skip).limit(limit).order_by(TrainingProgram.created_at.desc())
-    
+
     result = await db.execute(stmt)
     programs = result.scalars().all()
-    
+
     # Build response with computed fields
     program_responses = []
     for program in programs:
         program_response = TrainingProgramResponse.model_validate(program)
         program_response.total_sessions = len(program.sessions or [])
-        program_response.upcoming_sessions = len([
-            s for s in (program.sessions or []) 
-            if s.start_time > datetime.now(timezone.utc) and s.status == "scheduled"
-        ])
+        program_response.upcoming_sessions = len(
+            [
+                s
+                for s in (program.sessions or [])
+                if s.start_time > datetime.now(timezone.utc) and s.status == "scheduled"
+            ]
+        )
         program_response.total_bookings = len(program.bookings or [])
         program_responses.append(program_response)
-    
+
     return program_responses
 
 
@@ -372,51 +359,42 @@ async def update_training_program(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> TrainingProgramResponse:
     """Update training program."""
-    
+
     if not check_program_permissions(current_user, "update"):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient permissions to update training programs"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions to update training programs"
         )
-    
+
     # Get existing program
     stmt = select(TrainingProgram).where(TrainingProgram.id == program_id)
     result = await db.execute(stmt)
     program = result.scalar_one_or_none()
-    
+
     if not program:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Training program not found"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Training program not found")
+
     # Check ownership for non-admin users
-    if (current_user.role not in [UserRole.ADMIN, UserRole.APPROVER] and 
-        program.created_by_id != current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Can only update your own training programs"
-        )
-    
+    if current_user.role not in [UserRole.ADMIN, UserRole.APPROVER] and program.created_by_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Can only update your own training programs")
+
     try:
         # Update program fields
         update_data = program_data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(program, field, value)
-        
+
         await db.commit()
         await db.refresh(program)
-        
+
         logger.info(f"Updated training program {program.id}")
-        
+
         return TrainingProgramResponse.model_validate(program)
-        
+
     except Exception as e:
         logger.error(f"Error updating training program: {e}")
         await db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update training program"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update training program"
         )
 
 
@@ -427,67 +405,56 @@ async def delete_training_program(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> Dict[str, str]:
     """Delete training program."""
-    
+
     if not check_program_permissions(current_user, "delete"):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient permissions to delete training programs"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions to delete training programs"
         )
-    
+
     # Get existing program
     stmt = select(TrainingProgram).where(TrainingProgram.id == program_id)
     result = await db.execute(stmt)
     program = result.scalar_one_or_none()
-    
+
     if not program:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Training program not found"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Training program not found")
+
     # Check ownership for non-admin users
-    if (current_user.role not in [UserRole.ADMIN, UserRole.APPROVER] and 
-        program.created_by_id != current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Can only delete your own training programs"
-        )
-    
+    if current_user.role not in [UserRole.ADMIN, UserRole.APPROVER] and program.created_by_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Can only delete your own training programs")
+
     # Check for existing sessions/bookings
     stmt = select(TrainingBooking).where(
-        and_(
-            TrainingBooking.program_id == program_id,
-            TrainingBooking.booking_status.in_(["confirmed", "pending"])
-        )
+        and_(TrainingBooking.program_id == program_id, TrainingBooking.booking_status.in_(["confirmed", "pending"]))
     )
     result = await db.execute(stmt)
     active_bookings = result.scalars().all()
-    
+
     if active_bookings:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete program with active bookings. Cancel bookings first."
+            detail="Cannot delete program with active bookings. Cancel bookings first.",
         )
-    
+
     try:
         # Soft delete - mark as inactive instead of hard delete
         program.is_active = False
         await db.commit()
-        
+
         logger.info(f"Deleted training program {program.id}")
-        
+
         return {"message": "Training program deleted successfully"}
-        
+
     except Exception as e:
         logger.error(f"Error deleting training program: {e}")
         await db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete training program"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete training program"
         )
 
 
 # Training Sessions Endpoints (for scheduled instances)
+
 
 @router.post("/{program_id}/sessions", response_model=EventResponse)
 async def create_training_session(
@@ -495,40 +462,35 @@ async def create_training_session(
     session_data: TrainingSessionCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-    xapi_service: Annotated[XAPIEventService, Depends(get_xapi_event_service)]
+    xapi_service: Annotated[XAPIEventService, Depends(get_xapi_event_service)],
 ) -> EventResponse:
     """Create a new training session for a program via event-driven architecture."""
-    
+
     if not check_program_permissions(current_user, "create"):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient permissions to create training sessions"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions to create training sessions"
         )
-    
+
     # Get the program
     stmt = select(TrainingProgram).where(TrainingProgram.id == program_id)
     result = await db.execute(stmt)
     program = result.scalar_one_or_none()
-    
+
     if not program:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Training program not found"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Training program not found")
+
     # Check ownership for non-admin users
-    if (current_user.role not in [UserRole.ADMIN, UserRole.APPROVER] and 
-        program.created_by_id != current_user.id):
+    if current_user.role not in [UserRole.ADMIN, UserRole.APPROVER] and program.created_by_id != current_user.id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Can only create sessions for your own training programs"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Can only create sessions for your own training programs"
         )
-    
+
     try:
         # Generate session ID
         from uuid import uuid4
+
         session_id = str(uuid4())
-        
+
         # Publish session.scheduled event
         await xapi_service.publish_session_scheduled(
             session_id=session_id,
@@ -541,19 +503,17 @@ async def create_training_session(
             scheduler_id=str(current_user.id),
             scheduler_email=current_user.email,
             scheduler_name=current_user.full_name or current_user.email,
-            instructor_id=str(session_data.instructor_id) if session_data.instructor_id else None
+            instructor_id=str(session_data.instructor_id) if session_data.instructor_id else None,
         )
-        
+
         # Trigger session event consumer
-        session_event_data = {
+        {
             "id": str(uuid4()),
             "object": {
                 "id": f"http://nlj.platform/training-sessions/{session_id}",
-                "definition": {"name": {"en-US": program.title}}
+                "definition": {"name": {"en-US": program.title}},
             },
-            "actor": {
-                "account": {"name": str(current_user.id)}
-            },
+            "actor": {"account": {"name": str(current_user.id)}},
             "context": {
                 "extensions": {
                     "http://nlj.platform/extensions/program_id": str(program_id),
@@ -561,29 +521,30 @@ async def create_training_session(
                     "http://nlj.platform/extensions/end_time": session_data.end_time.isoformat(),
                     "http://nlj.platform/extensions/location": session_data.location or "",
                     "http://nlj.platform/extensions/capacity": session_data.capacity,
-                    "http://nlj.platform/extensions/instructor_id": str(session_data.instructor_id) if session_data.instructor_id else None
+                    "http://nlj.platform/extensions/instructor_id": (
+                        str(session_data.instructor_id) if session_data.instructor_id else None
+                    ),
                 }
-            }
+            },
         }
         # Event consumer will handle session scheduling asynchronously via Kafka
-        
+
         # Generate event ID for tracking
         event_id = str(uuid4())
-        
+
         logger.info(f"Published session.scheduled event for session {session_id}")
-        
+
         return EventResponse(
             message="Session scheduling initiated",
             event_id=event_id,
             resource_id=session_id,
-            status_endpoint=f"/api/training-sessions/{session_id}"
+            status_endpoint=f"/api/training-sessions/{session_id}",
         )
-        
+
     except Exception as e:
         logger.error(f"Error publishing session.scheduled event: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to initiate session scheduling"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to initiate session scheduling"
         )
 
 
@@ -592,16 +553,15 @@ async def list_training_sessions(
     program_id: UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-    include_past: bool = False
+    include_past: bool = False,
 ) -> List[TrainingSessionResponse]:
     """List training sessions for a program."""
-    
+
     if not check_program_permissions(current_user, "read"):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient permissions to view training sessions"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions to view training sessions"
         )
-    
+
     # Build query
     stmt = (
         select(TrainingSession)
@@ -609,36 +569,30 @@ async def list_training_sessions(
         .where(TrainingSession.program_id == program_id)
         .order_by(TrainingSession.start_time)
     )
-    
+
     # Filter out past sessions unless requested
     if not include_past:
         stmt = stmt.where(TrainingSession.start_time > datetime.now(timezone.utc))
-    
+
     result = await db.execute(stmt)
     sessions = result.scalars().all()
-    
+
     # Build response with computed fields
     session_responses = []
     for session in sessions:
         session_response = TrainingSessionResponse.model_validate(session)
-        
+
         # Calculate booking statistics
-        confirmed_bookings = len([
-            b for b in session.bookings 
-            if b.booking_status in ["confirmed", "pending"]
-        ])
-        waitlist_bookings = len([
-            b for b in session.bookings 
-            if b.booking_status == "waitlist"
-        ])
-        
+        confirmed_bookings = len([b for b in session.bookings if b.booking_status in ["confirmed", "pending"]])
+        waitlist_bookings = len([b for b in session.bookings if b.booking_status == "waitlist"])
+
         available_spots = max(0, session.capacity - confirmed_bookings)
-        
+
         session_response.available_spots = available_spots
         session_response.total_bookings = len(session.bookings)
         session_response.confirmed_bookings = confirmed_bookings
         session_response.waitlist_count = waitlist_bookings
-        
+
         session_responses.append(session_response)
-    
+
     return session_responses

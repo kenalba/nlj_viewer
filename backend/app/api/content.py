@@ -3,28 +3,27 @@ Content API endpoints for NLJ scenario management.
 Provides CRUD operations with role-based access control.
 """
 
-import uuid
 import math
-from typing import List
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database_manager import get_db
 from app.core.deps import get_current_user
-from app.models.user import User, UserRole
 from app.models.content import ContentState, ContentType, LearningStyle
-from app.services.content import ContentService
-from app.services.kafka_service import get_xapi_event_service
+from app.models.user import User, UserRole
 from app.schemas.content import (
     ContentCreate,
-    ContentUpdate,
-    ContentResponse,
-    ContentSummary,
+    ContentFilters,
     ContentListResponse,
+    ContentResponse,
     ContentStateUpdate,
-    ContentFilters
+    ContentSummary,
+    ContentUpdate,
 )
+from app.services.content import ContentService
+from app.services.kafka_service import get_xapi_event_service
 
 router = APIRouter(prefix="/content", tags=["content"])
 
@@ -34,30 +33,25 @@ router = APIRouter(prefix="/content", tags=["content"])
     response_model=ContentResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create new content",
-    description="Create a new NLJ scenario. Requires Creator role or higher."
+    description="Create a new NLJ scenario. Requires Creator role or higher.",
 )
 async def create_content(
-    content_data: ContentCreate,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    content_data: ContentCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ) -> ContentResponse:
     """Create new content item."""
-    
+
     # Permission check: Creator role or higher
     if current_user.role not in [UserRole.CREATOR, UserRole.REVIEWER, UserRole.APPROVER, UserRole.ADMIN]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient permissions to create content"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions to create content")
+
     service = ContentService(db)
-    
+
     try:
         content = await service.create_content(content_data, current_user.id)
-        
+
         # Refresh to ensure all attributes are loaded
         await db.refresh(content, ["creator"])
-        
+
         # Publish IMPORTED event if content was created from import
         if content_data.import_source:
             try:
@@ -70,14 +64,15 @@ async def create_content(
                     import_source=content_data.import_source,
                     import_description=f"Imported content from {content_data.import_source}",
                     original_filename=content_data.import_filename,
-                    session_title=content.title
+                    session_title=content.title,
                 )
             except Exception as e:
                 # Log error but don't fail the creation
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.warning(f"Failed to publish content import event for {content.id}: {e}")
-        
+
         # Create response data within the session context
         response_data = {
             "id": content.id,
@@ -93,37 +88,37 @@ async def create_content(
             "view_count": content.view_count,
             "completion_count": content.completion_count,
             "created_by": content.created_by,
-            "parent_content_id": getattr(content, 'parent_content_id', None),
+            "parent_content_id": getattr(content, "parent_content_id", None),
             "created_at": content.created_at,
             "updated_at": content.updated_at,
-            "published_at": getattr(content, 'published_at', None),
-            "creator": {
-                "id": content.creator.id,
-                "username": content.creator.username,
-                "full_name": content.creator.full_name,
-                "role": content.creator.role
-            } if content.creator else None
+            "published_at": getattr(content, "published_at", None),
+            "creator": (
+                {
+                    "id": content.creator.id,
+                    "username": content.creator.username,
+                    "full_name": content.creator.full_name,
+                    "role": content.creator.role,
+                }
+                if content.creator
+                else None
+            ),
         }
-        
+
         return ContentResponse.model_validate(response_data)
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to create content: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to create content: {str(e)}")
 
 
 @router.get(
     "/",
     response_model=ContentListResponse,
     summary="List content items",
-    description="Get paginated list of content with filtering and role-based access."
+    description="Get paginated list of content with filtering and role-based access.",
 )
 async def list_content(
     # Pagination
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(20, ge=1, le=100, description="Items per page"),
-    
     # Filters
     state: str = Query(None, description="Filter by state"),
     content_type: str = Query(None, description="Filter by content type"),
@@ -132,16 +127,14 @@ async def list_content(
     template_category: str = Query(None, description="Filter by template category"),
     created_by: str = Query(None, description="Filter by creator ID"),
     search: str = Query(None, min_length=1, max_length=100, description="Search in title/description"),
-    
     # Sorting
     sort_by: str = Query("created_at", description="Sort field"),
     sort_order: str = Query("desc", regex="^(asc|desc)$", description="Sort order"),
-    
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> ContentListResponse:
     """Get paginated content list with filters."""
-    
+
     # Build filters object - handle enum conversions
     try:
         filters = ContentFilters(
@@ -155,21 +148,16 @@ async def list_content(
             created_by=uuid.UUID(created_by) if created_by else None,
             search=search,
             sort_by=sort_by,
-            sort_order=sort_order
+            sort_order=sort_order,
         )
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid filter parameter: {str(e)}"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid filter parameter: {str(e)}")
+
     service = ContentService(db)
-    
+
     try:
-        items, total = await service.get_content_list(
-            filters, current_user.id, current_user.role
-        )
-        
+        items, total = await service.get_content_list(filters, current_user.id, current_user.role)
+
         # Convert to summary format (without full NLJ data for performance)
         content_summaries = []
         for item in items:
@@ -182,69 +170,58 @@ async def list_content(
                 # Log the error but continue processing other items
                 print(f"Warning: Failed to process content item {getattr(item, 'id', 'unknown')}: {e}")
                 continue
-        
+
         pages = math.ceil(total / size) if total > 0 else 1
-        
-        return ContentListResponse(
-            items=content_summaries,
-            total=total,
-            page=page,
-            size=size,
-            pages=pages
-        )
-        
+
+        return ContentListResponse(items=content_summaries, total=total, page=page, size=size, pages=pages)
+
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to list content: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to list content: {str(e)}")
 
 
 @router.get(
     "/{content_id}",
     response_model=ContentResponse,
     summary="Get content by ID",
-    description="Get specific content item with full NLJ data."
+    description="Get specific content item with full NLJ data.",
 )
 async def get_content(
-    content_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    content_id: uuid.UUID, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ) -> ContentResponse:
     """Get content by ID."""
-    
+
     service = ContentService(db)
     content = await service.get_content_by_id(content_id)
-    
+
     if not content:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content not found"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
+
     # Permission check: role-based access
     if current_user.role == UserRole.CREATOR:
         # Creators can see their own content, published content, or any content for preview
         # Allow preview access to draft content for testing/preview purposes
-        if content.created_by != current_user.id and content.state not in ["draft", "submitted", "in_review", "published"]:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied"
-            )
+        if content.created_by != current_user.id and content.state not in [
+            "draft",
+            "submitted",
+            "in_review",
+            "published",
+        ]:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
     elif current_user.role == UserRole.REVIEWER:
         # Reviewers can see their own content, submitted content, published content, or draft content for preview
         # Allow preview access to all content including drafts
-        if (content.created_by != current_user.id and 
-            content.state not in ["draft", "submitted", "in_review", "published"]):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied"
-            )
+        if content.created_by != current_user.id and content.state not in [
+            "draft",
+            "submitted",
+            "in_review",
+            "published",
+        ]:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
     # Approvers and Admins can see all content (no additional check needed)
-    
+
     # Refresh the object to ensure all attributes are loaded
     await db.refresh(content, ["creator"])
-    
+
     # Create response data within the session context
     response_data = {
         "id": content.id,
@@ -262,17 +239,21 @@ async def get_content(
         "created_by": content.created_by,
         "created_at": content.created_at,
         "updated_at": content.updated_at,
-        "creator": {
-            "id": content.creator.id,
-            "username": content.creator.username,
-            "full_name": content.creator.full_name,
-            "role": content.creator.role
-        } if content.creator else None
+        "creator": (
+            {
+                "id": content.creator.id,
+                "username": content.creator.username,
+                "full_name": content.creator.full_name,
+                "role": content.creator.role,
+            }
+            if content.creator
+            else None
+        ),
     }
-    
+
     # Increment view count for analytics
     await service.increment_view_count(content_id)
-    
+
     return ContentResponse.model_validate(response_data)
 
 
@@ -280,32 +261,27 @@ async def get_content(
     "/{content_id}",
     response_model=ContentResponse,
     summary="Update content",
-    description="Update existing content. Only creator or admin can edit."
+    description="Update existing content. Only creator or admin can edit.",
 )
 async def update_content(
     content_id: uuid.UUID,
     content_data: ContentUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> ContentResponse:
     """Update content item."""
-    
+
     service = ContentService(db)
-    
+
     try:
-        content = await service.update_content(
-            content_id, content_data, current_user.id, current_user.role
-        )
-        
+        content = await service.update_content(content_id, content_data, current_user.id, current_user.role)
+
         if not content:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Content not found"
-            )
-        
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
+
         # Refresh to ensure all attributes are loaded
         await db.refresh(content, ["creator"])
-        
+
         # Create response data within the session context
         response_data = {
             "id": content.id,
@@ -321,38 +297,45 @@ async def update_content(
             "view_count": content.view_count,
             "completion_count": content.completion_count,
             "created_by": content.created_by,
-            "parent_content_id": getattr(content, 'parent_content_id', None),
+            "parent_content_id": getattr(content, "parent_content_id", None),
             "created_at": content.created_at,
             "updated_at": content.updated_at,
-            "published_at": getattr(content, 'published_at', None),
-            "creator": {
-                "id": content.creator.id,
-                "username": content.creator.username,
-                "full_name": content.creator.full_name,
-                "role": content.creator.role
-            } if content.creator else None
+            "published_at": getattr(content, "published_at", None),
+            "creator": (
+                {
+                    "id": content.creator.id,
+                    "username": content.creator.username,
+                    "full_name": content.creator.full_name,
+                    "role": content.creator.role,
+                }
+                if content.creator
+                else None
+            ),
         }
-        
+
         # Publish content modification event
         try:
             # Check if this content was generated (has generation session link)
             # Look for generation session association to determine if this is generated content
-            from app.models.generation_session import GenerationSession
-            from app.models.activity_source import ActivitySource
             from sqlalchemy import select
-            
+
+            from app.models.activity_source import ActivitySource
+            from app.models.generation_session import GenerationSession
+
             # Try to find if this content is linked to a generation session
             generation_session_id = None
-            stmt = select(GenerationSession.id).join(
-                ActivitySource, GenerationSession.id == ActivitySource.generation_session_id
-            ).where(ActivitySource.activity_id == content.id)
-            
+            stmt = (
+                select(GenerationSession.id)
+                .join(ActivitySource, GenerationSession.id == ActivitySource.generation_session_id)
+                .where(ActivitySource.activity_id == content.id)
+            )
+
             result = await db.execute(stmt)
             gen_session = result.scalar_one_or_none()
-            
+
             if gen_session:
                 generation_session_id = str(gen_session)
-                
+
                 # Publish MODIFIED event for generated content
                 xapi_service = await get_xapi_event_service()
                 await xapi_service.publish_content_generation_modified(
@@ -362,106 +345,77 @@ async def update_content(
                     user_name=current_user.full_name or current_user.username,
                     modification_type="manual_edit",
                     modification_description=f"Content updated via API: {content.title}",
-                    session_title=content.title
+                    session_title=content.title,
                 )
         except Exception as e:
             # Log error but don't fail the update
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning(f"Failed to publish content modification event for {content_id}: {e}")
-        
+
         return ContentResponse.model_validate(response_data)
-        
+
     except PermissionError as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to update content: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to update content: {str(e)}")
 
 
 @router.delete(
     "/{content_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete content",
-    description="Delete content item. Only creator or admin can delete draft content."
+    description="Delete content item. Only creator or admin can delete draft content.",
 )
 async def delete_content(
-    content_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    content_id: uuid.UUID, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     """Delete content item."""
-    
+
     service = ContentService(db)
-    
+
     try:
-        deleted = await service.delete_content(
-            content_id, current_user.id, current_user.role
-        )
-        
+        deleted = await service.delete_content(content_id, current_user.id, current_user.role)
+
         if not deleted:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Content not found"
-            )
-        
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
+
     except PermissionError as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to delete content: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to delete content: {str(e)}")
 
 
 @router.patch(
     "/{content_id}/state",
     response_model=ContentResponse,
     summary="Update content state",
-    description="Update content workflow state with role-based validation."
+    description="Update content workflow state with role-based validation.",
 )
 async def update_content_state(
     content_id: uuid.UUID,
     state_update: ContentStateUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> ContentResponse:
     """Update content state."""
-    
+
     service = ContentService(db)
-    
+
     try:
-        content = await service.update_content_state(
-            content_id, state_update, current_user.id, current_user.role
-        )
-        
+        content = await service.update_content_state(content_id, state_update, current_user.id, current_user.role)
+
         if not content:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Content not found"
-            )
-        
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
+
         # Refresh to ensure all attributes are loaded
         await db.refresh(content, ["creator"])
-        
+
         # Create response data within the session context
         response_data = {
             "id": content.id,
@@ -477,24 +431,28 @@ async def update_content_state(
             "view_count": content.view_count,
             "completion_count": content.completion_count,
             "created_by": content.created_by,
-            "parent_content_id": getattr(content, 'parent_content_id', None),
+            "parent_content_id": getattr(content, "parent_content_id", None),
             "created_at": content.created_at,
             "updated_at": content.updated_at,
-            "published_at": getattr(content, 'published_at', None),
-            "creator": {
-                "id": content.creator.id,
-                "username": content.creator.username,
-                "full_name": content.creator.full_name,
-                "role": content.creator.role
-            } if content.creator else None
+            "published_at": getattr(content, "published_at", None),
+            "creator": (
+                {
+                    "id": content.creator.id,
+                    "username": content.creator.username,
+                    "full_name": content.creator.full_name,
+                    "role": content.creator.role,
+                }
+                if content.creator
+                else None
+            ),
         }
-        
+
         # Publish content events for state changes
         try:
             xapi_service = await get_xapi_event_service()
-            
+
             # Check if this is a review workflow state change
-            review_states = ['submitted', 'in_review', 'approved', 'rejected', 'published']
+            review_states = ["submitted", "in_review", "approved", "rejected", "published"]
             if content.state.lower() in review_states:
                 # Publish REVIEWED event for approval workflow
                 await xapi_service.publish_content_generation_reviewed(
@@ -504,26 +462,29 @@ async def update_content_state(
                     user_name=current_user.full_name or current_user.username,
                     review_status=content.state.lower(),
                     review_comment=state_update.comment or f"Content state changed to: {content.state}",
-                    session_title=content.title
+                    session_title=content.title,
                 )
-            
+
             # Also check if this content was generated (has generation session link) for MODIFIED events
-            from app.models.generation_session import GenerationSession
-            from app.models.activity_source import ActivitySource
             from sqlalchemy import select
-            
+
+            from app.models.activity_source import ActivitySource
+            from app.models.generation_session import GenerationSession
+
             # Try to find if this content is linked to a generation session
             generation_session_id = None
-            stmt = select(GenerationSession.id).join(
-                ActivitySource, GenerationSession.id == ActivitySource.generation_session_id
-            ).where(ActivitySource.activity_id == content.id)
-            
+            stmt = (
+                select(GenerationSession.id)
+                .join(ActivitySource, GenerationSession.id == ActivitySource.generation_session_id)
+                .where(ActivitySource.activity_id == content.id)
+            )
+
             result = await db.execute(stmt)
             gen_session = result.scalar_one_or_none()
-            
+
             if gen_session:
                 generation_session_id = str(gen_session)
-                
+
                 # Publish MODIFIED event for generated content
                 await xapi_service.publish_content_generation_modified(
                     session_id=generation_session_id,
@@ -532,50 +493,40 @@ async def update_content_state(
                     user_name=current_user.full_name or current_user.username,
                     modification_type="state_change",
                     modification_description=f"Content state changed to: {content.state}",
-                    session_title=content.title
+                    session_title=content.title,
                 )
         except Exception as e:
             # Log error but don't fail the update
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning(f"Failed to publish content state modification event for {content_id}: {e}")
-        
+
         return ContentResponse.model_validate(response_data)
-        
+
     except PermissionError as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to update content state: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to update content state: {str(e)}")
 
 
 @router.post(
     "/{content_id}/analytics/view",
     status_code=status.HTTP_200_OK,
     summary="Record content view",
-    description="Increment view count for analytics."
+    description="Increment view count for analytics.",
 )
 async def record_content_view(
-    content_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    content_id: uuid.UUID, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     """Record content view for analytics."""
-    
+
     service = ContentService(db)
     success = await service.increment_view_count(content_id)
-    
+
     if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content not found"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
+
     return {"message": "View recorded"}
 
 
@@ -583,22 +534,17 @@ async def record_content_view(
     "/{content_id}/analytics/completion",
     status_code=status.HTTP_200_OK,
     summary="Record content completion",
-    description="Increment completion count for analytics."
+    description="Increment completion count for analytics.",
 )
 async def record_content_completion(
-    content_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    content_id: uuid.UUID, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     """Record content completion for analytics."""
-    
+
     service = ContentService(db)
     success = await service.increment_completion_count(content_id)
-    
+
     if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content not found"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
+
     return {"message": "Completion recorded"}

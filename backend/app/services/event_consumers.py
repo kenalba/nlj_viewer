@@ -10,23 +10,22 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+from sqlalchemy import and_, func, select
+
 # FastAPI BackgroundTasks removed - using direct event processing
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_, select, func
 
 from app.core.database_manager import db_manager
-from app.models.training_program import (
-    TrainingProgram,
-    TrainingSession,
-    TrainingBooking,
-    AttendanceRecord,
-    XAPIEventLog,
-)
-from app.models.user import User
 from app.models.generation_session import GenerationSession, GenerationStatus
 from app.models.source_document import SourceDocument
-from app.services.kafka_service import get_xapi_event_service, XAPIEventService
+from app.models.training_program import (
+    AttendanceRecord,
+    TrainingBooking,
+    TrainingProgram,
+    TrainingSession,
+)
 from app.services.claude_service import claude_service
+from app.services.kafka_service import XAPIEventService, get_xapi_event_service
 
 logger = logging.getLogger(__name__)
 
@@ -65,19 +64,13 @@ class EventConsumerService:
                 # Extract program data from xAPI event
                 program_id = event_data["object"]["id"].split("/")[-1]
                 program_name = event_data["object"]["definition"]["name"]["en-US"]
-                program_description = event_data["object"]["definition"]["description"][
-                    "en-US"
-                ]
+                program_description = event_data["object"]["definition"]["description"]["en-US"]
                 creator_id = event_data["actor"]["account"]["name"]
 
                 # Get learning objectives and prerequisites from extensions
                 extensions = event_data["context"]["extensions"]
-                learning_objectives = extensions.get(
-                    "http://nlj.platform/extensions/learning_objectives", []
-                )
-                prerequisites = extensions.get(
-                    "http://nlj.platform/extensions/prerequisites", []
-                )
+                learning_objectives = extensions.get("http://nlj.platform/extensions/learning_objectives", [])
+                prerequisites = extensions.get("http://nlj.platform/extensions/prerequisites", [])
 
                 # Create program record
                 program = TrainingProgram(
@@ -85,9 +78,7 @@ class EventConsumerService:
                     title=program_name,
                     description=program_description,
                     learning_objectives=learning_objectives,
-                    prerequisites=(
-                        [UUID(p) for p in prerequisites] if prerequisites else None
-                    ),
+                    prerequisites=([UUID(p) for p in prerequisites] if prerequisites else None),
                     created_by_id=UUID(creator_id),
                     is_published=False,  # Programs start as unpublished
                 )
@@ -96,9 +87,7 @@ class EventConsumerService:
                 await db.commit()
 
                 # Log successful processing
-                await self._log_event_processing(
-                    db, event_data["id"], "program.created", "success"
-                )
+                await self._log_event_processing(db, event_data["id"], "program.created", "success")
 
                 logger.info(f"Created program from event: {program_id}")
             finally:
@@ -135,9 +124,7 @@ class EventConsumerService:
                 program_id = event_data["object"]["id"].split("/")[-1]
 
                 # Update program to published status
-                stmt = select(TrainingProgram).where(
-                    TrainingProgram.id == UUID(program_id)
-                )
+                stmt = select(TrainingProgram).where(TrainingProgram.id == UUID(program_id))
                 result = await db.execute(stmt)
                 program = result.scalar_one_or_none()
 
@@ -150,9 +137,7 @@ class EventConsumerService:
                     logger.warning(f"Program not found for publish event: {program_id}")
 
                 # Log processing
-                await self._log_event_processing(
-                    db, event_data["id"], "program.published", "success"
-                )
+                await self._log_event_processing(db, event_data["id"], "program.published", "success")
             finally:
                 await db.close()
 
@@ -189,8 +174,8 @@ class EventConsumerService:
             try:
                 # Extract session data from xAPI event
                 session_id = event_data["object"]["id"].split("/")[-1]
-                session_title = event_data["object"]["definition"]["name"]["en-US"]
-                scheduler_id = event_data["actor"]["account"]["name"]
+                event_data["object"]["definition"]["name"]["en-US"]
+                event_data["actor"]["account"]["name"]
 
                 extensions = event_data["context"]["extensions"]
                 program_id = extensions["http://nlj.platform/extensions/program_id"]
@@ -198,14 +183,10 @@ class EventConsumerService:
                 end_time_str = extensions["http://nlj.platform/extensions/end_time"]
                 location = extensions.get("http://nlj.platform/extensions/location", "")
                 capacity = extensions["http://nlj.platform/extensions/capacity"]
-                instructor_id = extensions.get(
-                    "http://nlj.platform/extensions/instructor_id"
-                )
+                instructor_id = extensions.get("http://nlj.platform/extensions/instructor_id")
 
                 # Parse datetime strings
-                start_time = datetime.fromisoformat(
-                    start_time_str.replace("Z", "+00:00")
-                )
+                start_time = datetime.fromisoformat(start_time_str.replace("Z", "+00:00"))
                 end_time = datetime.fromisoformat(end_time_str.replace("Z", "+00:00"))
 
                 # Create session record
@@ -224,16 +205,12 @@ class EventConsumerService:
                 await db.commit()
 
                 # Log successful processing
-                await self._log_event_processing(
-                    db, event_data["id"], "session.scheduled", "success"
-                )
+                await self._log_event_processing(db, event_data["id"], "session.scheduled", "success")
 
                 logger.info(f"Created session from event: {session_id}")
 
                 # Check for scheduling conflicts (publish conflict event if needed)
-                await self._check_scheduling_conflicts(
-                    session_id, start_time, end_time, location
-                )
+                await self._check_scheduling_conflicts(session_id, start_time, end_time, location)
             finally:
                 await db.close()
 
@@ -271,22 +248,16 @@ class EventConsumerService:
                 # Extract booking data
                 session_id = event_data["object"]["id"].split("/")[-1]
                 learner_id = event_data["actor"]["account"]["name"]
-                learner_name = event_data["actor"]["name"]
-                learner_email = event_data["actor"]["mbox"].replace("mailto:", "")
+                event_data["actor"]["name"]
+                event_data["actor"]["mbox"].replace("mailto:", "")
 
                 extensions = event_data["context"]["extensions"]
                 booking_id = extensions["http://nlj.platform/extensions/booking_id"]
-                registration_method = extensions[
-                    "http://nlj.platform/extensions/registration_method"
-                ]
-                special_requirements = extensions.get(
-                    "http://nlj.platform/extensions/special_requirements", {}
-                )
+                registration_method = extensions["http://nlj.platform/extensions/registration_method"]
+                special_requirements = extensions.get("http://nlj.platform/extensions/special_requirements", {})
 
                 # Get session and check capacity
-                stmt = select(TrainingSession).where(
-                    TrainingSession.id == UUID(session_id)
-                )
+                stmt = select(TrainingSession).where(TrainingSession.id == UUID(session_id))
                 result = await db.execute(stmt)
                 session = result.scalar_one_or_none()
 
@@ -309,9 +280,7 @@ class EventConsumerService:
                     booking_status = "confirmed"
                     is_waitlisted = False
                     waitlist_position = None
-                    logger.info(
-                        f"Booking confirmed for learner {learner_id} in session {session_id}"
-                    )
+                    logger.info(f"Booking confirmed for learner {learner_id} in session {session_id}")
                 else:
                     booking_status = "waitlist"
                     is_waitlisted = True
@@ -339,22 +308,16 @@ class EventConsumerService:
                     booking_status=booking_status,
                     is_waitlisted=is_waitlisted,
                     waitlist_position=waitlist_position,
-                    special_requirements=(
-                        special_requirements if special_requirements else None
-                    ),
+                    special_requirements=(special_requirements if special_requirements else None),
                 )
 
                 db.add(booking)
                 await db.commit()
 
                 # Log successful processing
-                await self._log_event_processing(
-                    db, event_data["id"], "booking.requested", "success"
-                )
+                await self._log_event_processing(db, event_data["id"], "booking.requested", "success")
 
-                logger.info(
-                    f"Processed booking request: {booking_id} -> {booking_status}"
-                )
+                logger.info(f"Processed booking request: {booking_id} -> {booking_status}")
             finally:
                 await db.close()
 
@@ -410,9 +373,7 @@ class EventConsumerService:
 
                 if conflicts:
                     # Publish conflict detection event
-                    logger.warning(
-                        f"Scheduling conflicts detected for session {session_id}"
-                    )
+                    logger.warning(f"Scheduling conflicts detected for session {session_id}")
 
                     from uuid import uuid4
 
@@ -437,9 +398,7 @@ class EventConsumerService:
                         conflict_id=conflict_id,
                         session_id=session_id,
                         conflicting_session_ids=conflicting_session_ids,
-                        conflict_type=(
-                            "time_overlap" if not location else "location_conflict"
-                        ),
+                        conflict_type=("time_overlap" if not location else "location_conflict"),
                         conflict_details=conflict_details,
                     )
             finally:
@@ -486,22 +445,14 @@ class EventConsumerService:
                 # Extract cancellation data
                 session_id = event_data["object"]["id"].split("/")[-1]
                 extensions = event_data["context"]["extensions"]
-                cancellation_reason = extensions.get(
-                    "http://nlj.platform/extensions/cancellation_reason", ""
-                )
-                cancelled_at_str = extensions.get(
-                    "http://nlj.platform/extensions/cancelled_at", ""
-                )
+                cancellation_reason = extensions.get("http://nlj.platform/extensions/cancellation_reason", "")
+                cancelled_at_str = extensions.get("http://nlj.platform/extensions/cancelled_at", "")
 
                 # Parse cancellation datetime
-                cancelled_at = datetime.fromisoformat(
-                    cancelled_at_str.replace("Z", "+00:00")
-                )
+                cancelled_at = datetime.fromisoformat(cancelled_at_str.replace("Z", "+00:00"))
 
                 # Update session status
-                stmt = select(TrainingSession).where(
-                    TrainingSession.id == UUID(session_id)
-                )
+                stmt = select(TrainingSession).where(TrainingSession.id == UUID(session_id))
                 result = await db.execute(stmt)
                 session = result.scalar_one_or_none()
 
@@ -514,13 +465,9 @@ class EventConsumerService:
                     logger.info(f"Cancelled session from event: {session_id}")
 
                     # Log successful processing
-                    await self._log_event_processing(
-                        db, event_data["id"], "session.cancelled", "success"
-                    )
+                    await self._log_event_processing(db, event_data["id"], "session.cancelled", "success")
                 else:
-                    logger.warning(
-                        f"Session not found for cancellation event: {session_id}"
-                    )
+                    logger.warning(f"Session not found for cancellation event: {session_id}")
             finally:
                 await db.close()
 
@@ -552,18 +499,14 @@ class EventConsumerService:
             db = db_manager.get_session()
             try:
                 # Extract booking data
-                session_id = event_data["object"]["id"].split("/")[-1]
-                learner_id = event_data["actor"]["account"]["name"]
+                event_data["object"]["id"].split("/")[-1]
+                event_data["actor"]["account"]["name"]
                 extensions = event_data["context"]["extensions"]
                 booking_id = extensions["http://nlj.platform/extensions/booking_id"]
-                cancellation_reason = extensions.get(
-                    "http://nlj.platform/extensions/cancellation_reason", ""
-                )
+                cancellation_reason = extensions.get("http://nlj.platform/extensions/cancellation_reason", "")
 
                 # Update booking status
-                stmt = select(TrainingBooking).where(
-                    TrainingBooking.id == UUID(booking_id)
-                )
+                stmt = select(TrainingBooking).where(TrainingBooking.id == UUID(booking_id))
                 result = await db.execute(stmt)
                 booking = result.scalar_one_or_none()
 
@@ -579,13 +522,9 @@ class EventConsumerService:
                     # If this was a confirmed booking, promote first waitlisted person
 
                     # Log successful processing
-                    await self._log_event_processing(
-                        db, event_data["id"], "booking.cancelled", "success"
-                    )
+                    await self._log_event_processing(db, event_data["id"], "booking.cancelled", "success")
                 else:
-                    logger.warning(
-                        f"Booking not found for cancellation event: {booking_id}"
-                    )
+                    logger.warning(f"Booking not found for cancellation event: {booking_id}")
             finally:
                 await db.close()
 
@@ -608,9 +547,7 @@ class EventConsumerService:
     # ATTENDANCE EVENT HANDLERS
     # =========================================================================
 
-    async def handle_attendance_checked_in_event(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def handle_attendance_checked_in_event(self, event_data: Dict[str, Any]) -> None:
         """Handle attendance.checked_in event via BackgroundTask."""
 
         await self._process_attendance_checked_in(event_data)
@@ -626,17 +563,11 @@ class EventConsumerService:
                 session_id = event_data["object"]["id"].split("/")[-1]
                 learner_id = event_data["actor"]["account"]["name"]
                 extensions = event_data["context"]["extensions"]
-                check_in_time_str = extensions[
-                    "http://nlj.platform/extensions/check_in_time"
-                ]
-                check_in_method = extensions.get(
-                    "http://nlj.platform/extensions/check_in_method", "manual"
-                )
+                check_in_time_str = extensions["http://nlj.platform/extensions/check_in_time"]
+                check_in_method = extensions.get("http://nlj.platform/extensions/check_in_method", "manual")
 
                 # Parse check-in time
-                check_in_time = datetime.fromisoformat(
-                    check_in_time_str.replace("Z", "+00:00")
-                )
+                check_in_time = datetime.fromisoformat(check_in_time_str.replace("Z", "+00:00"))
 
                 # Create or update attendance record
                 stmt = select(AttendanceRecord).where(
@@ -663,14 +594,10 @@ class EventConsumerService:
                     attendance.status = "checked_in"
 
                 await db.commit()
-                logger.info(
-                    f"Processed check-in for learner {learner_id} in session {session_id}"
-                )
+                logger.info(f"Processed check-in for learner {learner_id} in session {session_id}")
 
                 # Log successful processing
-                await self._log_event_processing(
-                    db, event_data["id"], "attendance.checked_in", "success"
-                )
+                await self._log_event_processing(db, event_data["id"], "attendance.checked_in", "success")
             finally:
                 await db.close()
 
@@ -689,9 +616,7 @@ class EventConsumerService:
             finally:
                 await db.close()
 
-    async def handle_attendance_completed_event(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def handle_attendance_completed_event(self, event_data: Dict[str, Any]) -> None:
         """Handle attendance.completed event via BackgroundTask."""
 
         await self._process_attendance_completed(event_data)
@@ -709,18 +634,10 @@ class EventConsumerService:
                 result_data = event_data.get("result", {})
                 extensions = event_data["context"]["extensions"]
 
-                completion_percentage = extensions.get(
-                    "http://nlj.platform/extensions/completion_percentage", 0.0
-                )
-                duration_minutes = extensions.get(
-                    "http://nlj.platform/extensions/duration_minutes", 0
-                )
+                completion_percentage = extensions.get("http://nlj.platform/extensions/completion_percentage", 0.0)
+                duration_minutes = extensions.get("http://nlj.platform/extensions/duration_minutes", 0)
                 completion = result_data.get("completion", False)
-                score = (
-                    result_data.get("score", {}).get("scaled")
-                    if result_data.get("score")
-                    else None
-                )
+                score = result_data.get("score", {}).get("scaled") if result_data.get("score") else None
 
                 # Update attendance record
                 stmt = select(AttendanceRecord).where(
@@ -746,13 +663,9 @@ class EventConsumerService:
                     )
 
                     # Log successful processing
-                    await self._log_event_processing(
-                        db, event_data["id"], "attendance.completed", "success"
-                    )
+                    await self._log_event_processing(db, event_data["id"], "attendance.completed", "success")
                 else:
-                    logger.warning(
-                        f"Attendance record not found for completion event: {session_id}:{learner_id}"
-                    )
+                    logger.warning(f"Attendance record not found for completion event: {session_id}:{learner_id}")
             finally:
                 await db.close()
 
@@ -775,16 +688,12 @@ class EventConsumerService:
     # CONTENT GENERATION EVENT HANDLERS
     # =========================================================================
 
-    async def handle_content_generation_requested_event(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def handle_content_generation_requested_event(self, event_data: Dict[str, Any]) -> None:
         """Handle content.generation.requested event directly."""
 
         await self._process_content_generation_requested(event_data)
 
-    async def _process_content_generation_requested(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def _process_content_generation_requested(self, event_data: Dict[str, Any]) -> None:
         """Process content generation requested event - update session status."""
 
         try:
@@ -795,30 +704,22 @@ class EventConsumerService:
                 session_id = event_data["object"]["id"].split("/")[-1]
 
                 # Update session status to PROCESSING
-                stmt = select(GenerationSession).where(
-                    GenerationSession.id == UUID(session_id)
-                )
+                stmt = select(GenerationSession).where(GenerationSession.id == UUID(session_id))
                 result = await db.execute(stmt)
                 session = result.scalar_one_or_none()
 
                 if session:
                     session.status = GenerationStatus.PROCESSING
                     await db.commit()
-                    logger.info(
-                        f"Updated generation session {session_id} to PROCESSING status"
-                    )
+                    logger.info(f"Updated generation session {session_id} to PROCESSING status")
 
                     # Trigger started event
-                    await self._publish_content_generation_started_event(
-                        session_id, session.user_id
-                    )
+                    await self._publish_content_generation_started_event(session_id, session.user_id)
                 else:
                     logger.warning(f"Generation session not found: {session_id}")
 
                 # Log successful processing
-                await self._log_event_processing(
-                    db, event_data["id"], "content.generation.requested", "success"
-                )
+                await self._log_event_processing(db, event_data["id"], "content.generation.requested", "success")
             finally:
                 await db.close()
 
@@ -837,16 +738,12 @@ class EventConsumerService:
             finally:
                 await db.close()
 
-    async def handle_content_generation_started_event(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def handle_content_generation_started_event(self, event_data: Dict[str, Any]) -> None:
         """Handle content.generation.started event directly."""
 
         await self._process_content_generation_started(event_data)
 
-    async def _process_content_generation_started(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def _process_content_generation_started(self, event_data: Dict[str, Any]) -> None:
         """Process content generation started event - begin Claude API generation."""
 
         try:
@@ -857,9 +754,7 @@ class EventConsumerService:
                 session_id = event_data["object"]["id"].split("/")[-1]
 
                 # Get session with source documents (using select to avoid joinedload issues)
-                stmt = select(GenerationSession).where(
-                    GenerationSession.id == UUID(session_id)
-                )
+                stmt = select(GenerationSession).where(GenerationSession.id == UUID(session_id))
                 result = await db.execute(stmt)
                 session = result.scalar_one_or_none()
 
@@ -874,27 +769,20 @@ class EventConsumerService:
                     select(SourceDocument)
                     .join(
                         generation_session_sources,
-                        SourceDocument.id
-                        == generation_session_sources.c.source_document_id,
+                        SourceDocument.id == generation_session_sources.c.source_document_id,
                     )
-                    .where(
-                        generation_session_sources.c.generation_session_id == session.id
-                    )
+                    .where(generation_session_sources.c.generation_session_id == session.id)
                 )
                 result = await db.execute(stmt)
                 source_docs = result.scalars().all()
 
-                logger.info(
-                    f"Starting content generation for session {session_id} with {len(source_docs)} documents"
-                )
+                logger.info(f"Starting content generation for session {session_id} with {len(source_docs)} documents")
 
                 # Begin actual content generation process
                 await self._perform_content_generation(session, source_docs, db)
 
                 # Log successful processing
-                await self._log_event_processing(
-                    db, event_data["id"], "content.generation.started", "success"
-                )
+                await self._log_event_processing(db, event_data["id"], "content.generation.started", "success")
             finally:
                 await db.close()
 
@@ -912,25 +800,19 @@ class EventConsumerService:
                 )
 
                 # Mark session as failed
-                session = await db.get(
-                    GenerationSession, UUID(event_data["object"]["id"].split("/")[-1])
-                )
+                session = await db.get(GenerationSession, UUID(event_data["object"]["id"].split("/")[-1]))
                 if session:
                     session.fail_with_error(f"Generation start failed: {str(e)}")
                     await db.commit()
             finally:
                 await db.close()
 
-    async def handle_content_generation_progress_event(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def handle_content_generation_progress_event(self, event_data: Dict[str, Any]) -> None:
         """Handle content.generation.progress event directly."""
 
         await self._process_content_generation_progress(event_data)
 
-    async def _process_content_generation_progress(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def _process_content_generation_progress(self, event_data: Dict[str, Any]) -> None:
         """Process content generation progress event - update progress tracking."""
 
         try:
@@ -940,21 +822,15 @@ class EventConsumerService:
                 # Extract progress data
                 session_id = event_data["object"]["id"].split("/")[-1]
                 extensions = event_data.get("result", {}).get("extensions", {})
-                progress_percentage = extensions.get(
-                    "http://nlj.platform/extensions/progress_percentage", 0
-                )
-                current_step = extensions.get(
-                    "http://nlj.platform/extensions/current_step", "Processing..."
-                )
+                progress_percentage = extensions.get("http://nlj.platform/extensions/progress_percentage", 0)
+                current_step = extensions.get("http://nlj.platform/extensions/current_step", "Processing...")
 
                 logger.info(
                     f"Content generation progress for session {session_id}: {progress_percentage}% - {current_step}"
                 )
 
                 # Log successful processing
-                await self._log_event_processing(
-                    db, event_data["id"], "content.generation.progress", "success"
-                )
+                await self._log_event_processing(db, event_data["id"], "content.generation.progress", "success")
             finally:
                 await db.close()
 
@@ -973,16 +849,12 @@ class EventConsumerService:
             finally:
                 await db.close()
 
-    async def handle_content_generation_completed_event(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def handle_content_generation_completed_event(self, event_data: Dict[str, Any]) -> None:
         """Handle content.generation.completed event directly."""
 
         await self._process_content_generation_completed(event_data)
 
-    async def _process_content_generation_completed(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def _process_content_generation_completed(self, event_data: Dict[str, Any]) -> None:
         """Process content generation completed event - finalize session."""
 
         try:
@@ -995,9 +867,7 @@ class EventConsumerService:
                 logger.info(f"Content generation completed for session {session_id}")
 
                 # Log successful processing
-                await self._log_event_processing(
-                    db, event_data["id"], "content.generation.completed", "success"
-                )
+                await self._log_event_processing(db, event_data["id"], "content.generation.completed", "success")
             finally:
                 await db.close()
 
@@ -1016,16 +886,12 @@ class EventConsumerService:
             finally:
                 await db.close()
 
-    async def handle_content_generation_failed_event(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def handle_content_generation_failed_event(self, event_data: Dict[str, Any]) -> None:
         """Handle content.generation.failed event directly."""
 
         await self._process_content_generation_failed(event_data)
 
-    async def _process_content_generation_failed(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def _process_content_generation_failed(self, event_data: Dict[str, Any]) -> None:
         """Process content generation failed event - handle failure cleanup."""
 
         try:
@@ -1035,18 +901,12 @@ class EventConsumerService:
                 # Extract failure data
                 session_id = event_data["object"]["id"].split("/")[-1]
                 extensions = event_data.get("context", {}).get("extensions", {})
-                error_message = extensions.get(
-                    "http://nlj.platform/extensions/error_message", "Unknown error"
-                )
+                error_message = extensions.get("http://nlj.platform/extensions/error_message", "Unknown error")
 
-                logger.error(
-                    f"Content generation failed for session {session_id}: {error_message}"
-                )
+                logger.error(f"Content generation failed for session {session_id}: {error_message}")
 
                 # Log successful processing
-                await self._log_event_processing(
-                    db, event_data["id"], "content.generation.failed", "success"
-                )
+                await self._log_event_processing(db, event_data["id"], "content.generation.failed", "success")
             finally:
                 await db.close()
 
@@ -1085,9 +945,7 @@ class EventConsumerService:
             for doc in source_docs:
                 if doc.claude_file_id:
                     file_ids.append(doc.claude_file_id)
-                    logger.info(
-                        f"Added source document {doc.original_filename} (Claude ID: {doc.claude_file_id})"
-                    )
+                    logger.info(f"Added source document {doc.original_filename} (Claude ID: {doc.claude_file_id})")
 
             if not file_ids:
                 raise ValueError("No Claude file IDs found in source documents")
@@ -1112,22 +970,18 @@ class EventConsumerService:
 
             start_time = time.time()
 
-            generated_content, error_message, tokens_used = (
-                await claude_service.generate_content(
-                    prompt_text=generated_prompt,
-                    file_ids=file_ids,
-                    model="claude-sonnet-4-20250514",
-                    max_tokens=8192,
-                    temperature=0.1,
-                )
+            generated_content, error_message, tokens_used = await claude_service.generate_content(
+                prompt_text=generated_prompt,
+                file_ids=file_ids,
+                model="claude-sonnet-4-20250514",
+                max_tokens=8192,
+                temperature=0.1,
             )
 
             generation_time = time.time() - start_time
 
             if error_message or not generated_content:
-                raise ValueError(
-                    f"Claude API generation failed: {error_message or 'No content generated'}"
-                )
+                raise ValueError(f"Claude API generation failed: {error_message or 'No content generated'}")
 
             # Publish progress event
             await self._publish_content_generation_progress_event(
@@ -1165,9 +1019,7 @@ class EventConsumerService:
                     import json
 
                     validated_nlj = (
-                        json.loads(generated_content)
-                        if isinstance(generated_content, str)
-                        else generated_content
+                        json.loads(generated_content) if isinstance(generated_content, str) else generated_content
                     )
                 except (json.JSONDecodeError, ValueError):
                     validated_nlj = {
@@ -1205,9 +1057,7 @@ class EventConsumerService:
             )
 
             # Publish completion event
-            await self._publish_content_generation_completed_event(
-                str(session.id), session.user_id
-            )
+            await self._publish_content_generation_completed_event(str(session.id), session.user_id)
 
         except Exception as e:
             logger.error(f"Content generation failed for session {session.id}: {e}")
@@ -1215,13 +1065,9 @@ class EventConsumerService:
             await db.commit()
 
             # Publish failure event
-            await self._publish_content_generation_failed_event(
-                str(session.id), session.user_id, str(e)
-            )
+            await self._publish_content_generation_failed_event(str(session.id), session.user_id, str(e))
 
-    async def _publish_content_generation_started_event(
-        self, session_id: str, user_id: UUID
-    ) -> None:
+    async def _publish_content_generation_started_event(self, session_id: str, user_id: UUID) -> None:
         """Publish content generation started event."""
         try:
             xapi_service = await self._get_xapi_service()
@@ -1240,9 +1086,7 @@ class EventConsumerService:
                         user_email=user.email,
                         user_name=user.full_name or user.username,
                     )
-                    logger.info(
-                        f"Published content.generation.started event for session {session_id}"
-                    )
+                    logger.info(f"Published content.generation.started event for session {session_id}")
                 else:
                     logger.warning(f"User not found for started event: {user_id}")
             finally:
@@ -1283,9 +1127,7 @@ class EventConsumerService:
         except Exception as e:
             logger.error(f"Failed to publish progress event: {e}")
 
-    async def _publish_content_generation_completed_event(
-        self, session_id: str, user_id: UUID
-    ) -> None:
+    async def _publish_content_generation_completed_event(self, session_id: str, user_id: UUID) -> None:
         """Publish content generation completed event."""
         try:
             xapi_service = await self._get_xapi_service()
@@ -1304,9 +1146,7 @@ class EventConsumerService:
                         user_email=user.email,
                         user_name=user.full_name or user.username,
                     )
-                    logger.info(
-                        f"Published content.generation.completed event for session {session_id}"
-                    )
+                    logger.info(f"Published content.generation.completed event for session {session_id}")
                 else:
                     logger.warning(f"User not found for completed event: {user_id}")
             finally:
@@ -1314,9 +1154,7 @@ class EventConsumerService:
         except Exception as e:
             logger.error(f"Failed to publish completed event: {e}")
 
-    async def _publish_content_generation_failed_event(
-        self, session_id: str, user_id: UUID, error: str
-    ) -> None:
+    async def _publish_content_generation_failed_event(self, session_id: str, user_id: UUID, error: str) -> None:
         """Publish content generation failed event."""
         try:
             xapi_service = await self._get_xapi_service()
@@ -1337,9 +1175,7 @@ class EventConsumerService:
                         error_message=error,
                         error_type="generation_error",
                     )
-                    logger.info(
-                        f"Published content.generation.failed event for session {session_id}: {error}"
-                    )
+                    logger.info(f"Published content.generation.failed event for session {session_id}: {error}")
                 else:
                     logger.warning(f"User not found for failed event: {user_id}")
             finally:
@@ -1351,16 +1187,12 @@ class EventConsumerService:
     # CONTENT LIFECYCLE EVENT HANDLERS (MODIFIED/IMPORTED/REVIEWED)
     # =========================================================================
 
-    async def handle_content_generation_modified_event(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def handle_content_generation_modified_event(self, event_data: Dict[str, Any]) -> None:
         """Handle content.generation.modified event via BackgroundTask."""
 
         await self._process_content_generation_modified(event_data)
 
-    async def _process_content_generation_modified(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def _process_content_generation_modified(self, event_data: Dict[str, Any]) -> None:
         """Process content generation modified event - track content modifications."""
 
         try:
@@ -1370,9 +1202,7 @@ class EventConsumerService:
                 # Extract modification data
                 session_id = event_data["object"]["id"].split("/")[-1]
                 extensions = event_data.get("context", {}).get("extensions", {})
-                modification_type = extensions.get(
-                    "http://nlj.platform/extensions/modification_type", "unknown"
-                )
+                modification_type = extensions.get("http://nlj.platform/extensions/modification_type", "unknown")
                 modified_by = event_data["actor"]["account"]["name"]
 
                 logger.info(
@@ -1380,9 +1210,7 @@ class EventConsumerService:
                 )
 
                 # Update session with modification tracking
-                stmt = select(GenerationSession).where(
-                    GenerationSession.id == UUID(session_id)
-                )
+                stmt = select(GenerationSession).where(GenerationSession.id == UUID(session_id))
                 result = await db.execute(stmt)
                 session = result.scalar_one_or_none()
 
@@ -1401,24 +1229,16 @@ class EventConsumerService:
                         }
                     )
                     session.metadata_["modifications"] = modifications
-                    session.metadata_["last_modified"] = datetime.now(
-                        timezone.utc
-                    ).isoformat()
+                    session.metadata_["last_modified"] = datetime.now(timezone.utc).isoformat()
                     session.metadata_["modification_count"] = len(modifications)
 
                     await db.commit()
-                    logger.info(
-                        f"Updated modification tracking for session {session_id}"
-                    )
+                    logger.info(f"Updated modification tracking for session {session_id}")
                 else:
-                    logger.warning(
-                        f"Generation session not found for modification: {session_id}"
-                    )
+                    logger.warning(f"Generation session not found for modification: {session_id}")
 
                 # Log successful processing
-                await self._log_event_processing(
-                    db, event_data["id"], "content.generation.modified", "success"
-                )
+                await self._log_event_processing(db, event_data["id"], "content.generation.modified", "success")
             finally:
                 await db.close()
 
@@ -1437,16 +1257,12 @@ class EventConsumerService:
             finally:
                 await db.close()
 
-    async def handle_content_generation_imported_event(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def handle_content_generation_imported_event(self, event_data: Dict[str, Any]) -> None:
         """Handle content.generation.imported event via BackgroundTask."""
 
         await self._process_content_generation_imported(event_data)
 
-    async def _process_content_generation_imported(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def _process_content_generation_imported(self, event_data: Dict[str, Any]) -> None:
         """Process content generation imported event - track content imports."""
 
         try:
@@ -1456,12 +1272,8 @@ class EventConsumerService:
                 # Extract import data
                 session_id = event_data["object"]["id"].split("/")[-1]
                 extensions = event_data.get("context", {}).get("extensions", {})
-                import_source = extensions.get(
-                    "http://nlj.platform/extensions/import_source", "unknown"
-                )
-                import_type = extensions.get(
-                    "http://nlj.platform/extensions/import_type", "unknown"
-                )
+                import_source = extensions.get("http://nlj.platform/extensions/import_source", "unknown")
+                import_type = extensions.get("http://nlj.platform/extensions/import_type", "unknown")
                 imported_by = event_data["actor"]["account"]["name"]
 
                 logger.info(
@@ -1469,9 +1281,7 @@ class EventConsumerService:
                 )
 
                 # Update session with import tracking
-                stmt = select(GenerationSession).where(
-                    GenerationSession.id == UUID(session_id)
-                )
+                stmt = select(GenerationSession).where(GenerationSession.id == UUID(session_id))
                 result = await db.execute(stmt)
                 session = result.scalar_one_or_none()
 
@@ -1491,22 +1301,16 @@ class EventConsumerService:
                         }
                     )
                     session.metadata_["imports"] = imports
-                    session.metadata_["last_imported"] = datetime.now(
-                        timezone.utc
-                    ).isoformat()
+                    session.metadata_["last_imported"] = datetime.now(timezone.utc).isoformat()
                     session.metadata_["import_count"] = len(imports)
 
                     await db.commit()
                     logger.info(f"Updated import tracking for session {session_id}")
                 else:
-                    logger.warning(
-                        f"Generation session not found for import: {session_id}"
-                    )
+                    logger.warning(f"Generation session not found for import: {session_id}")
 
                 # Log successful processing
-                await self._log_event_processing(
-                    db, event_data["id"], "content.generation.imported", "success"
-                )
+                await self._log_event_processing(db, event_data["id"], "content.generation.imported", "success")
             finally:
                 await db.close()
 
@@ -1525,16 +1329,12 @@ class EventConsumerService:
             finally:
                 await db.close()
 
-    async def handle_content_generation_reviewed_event(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def handle_content_generation_reviewed_event(self, event_data: Dict[str, Any]) -> None:
         """Handle content.generation.reviewed event via BackgroundTask."""
 
         await self._process_content_generation_reviewed(event_data)
 
-    async def _process_content_generation_reviewed(
-        self, event_data: Dict[str, Any]
-    ) -> None:
+    async def _process_content_generation_reviewed(self, event_data: Dict[str, Any]) -> None:
         """Process content generation reviewed event - track content reviews."""
 
         try:
@@ -1546,12 +1346,8 @@ class EventConsumerService:
                 result_extensions = event_data.get("result", {}).get("extensions", {})
                 context_extensions = event_data.get("context", {}).get("extensions", {})
 
-                review_status = result_extensions.get(
-                    "http://nlj.platform/extensions/review_status", "pending"
-                )
-                reviewer_comments = context_extensions.get(
-                    "http://nlj.platform/extensions/reviewer_comments", ""
-                )
+                review_status = result_extensions.get("http://nlj.platform/extensions/review_status", "pending")
+                reviewer_comments = context_extensions.get("http://nlj.platform/extensions/reviewer_comments", "")
                 reviewed_by = event_data["actor"]["account"]["name"]
 
                 logger.info(
@@ -1559,9 +1355,7 @@ class EventConsumerService:
                 )
 
                 # Update session with review tracking
-                stmt = select(GenerationSession).where(
-                    GenerationSession.id == UUID(session_id)
-                )
+                stmt = select(GenerationSession).where(GenerationSession.id == UUID(session_id))
                 result = await db.execute(stmt)
                 session = result.scalar_one_or_none()
 
@@ -1581,9 +1375,7 @@ class EventConsumerService:
                         }
                     )
                     session.metadata_["reviews"] = reviews
-                    session.metadata_["last_reviewed"] = datetime.now(
-                        timezone.utc
-                    ).isoformat()
+                    session.metadata_["last_reviewed"] = datetime.now(timezone.utc).isoformat()
                     session.metadata_["current_review_status"] = review_status
                     session.metadata_["review_count"] = len(reviews)
 
@@ -1597,18 +1389,12 @@ class EventConsumerService:
                             pass
 
                     await db.commit()
-                    logger.info(
-                        f"Updated review tracking for session {session_id} with status: {review_status}"
-                    )
+                    logger.info(f"Updated review tracking for session {session_id} with status: {review_status}")
                 else:
-                    logger.warning(
-                        f"Generation session not found for review: {session_id}"
-                    )
+                    logger.warning(f"Generation session not found for review: {session_id}")
 
                 # Log successful processing
-                await self._log_event_processing(
-                    db, event_data["id"], "content.generation.reviewed", "success"
-                )
+                await self._log_event_processing(db, event_data["id"], "content.generation.reviewed", "success")
             finally:
                 await db.close()
 
@@ -1766,9 +1552,7 @@ class ContentGenerationConsumer:
             logger.debug("About to call kafka.start_consumer")
 
             # Start Kafka consumer
-            await self.kafka.start_consumer(
-                topics=self.topics, group_id="nlj-content-generation-consumer"
-            )
+            await self.kafka.start_consumer(topics=self.topics, group_id="nlj-content-generation-consumer")
             logger.debug("kafka.start_consumer completed")
 
             self.is_running = True
@@ -1850,10 +1634,8 @@ class ContentGenerationConsumer:
         """Process a single event"""
         try:
             # Debug: Log the raw event structure
-            logger.debug(f"Raw event structure:")
-            logger.debug(
-                f"  Event keys: {list(event.keys()) if isinstance(event, dict) else 'Not a dict'}"
-            )
+            logger.debug("Raw event structure:")
+            logger.debug(f"  Event keys: {list(event.keys()) if isinstance(event, dict) else 'Not a dict'}")
 
             # Extract event type from topic and verb
             topic = event.get("topic", "")
@@ -1868,9 +1650,7 @@ class ContentGenerationConsumer:
             event_type = self._extract_event_type(topic, event_data)
 
             if not event_type:
-                logger.debug(
-                    f"Unknown event type for topic {topic}: {event_data.get('verb', {}).get('id')}"
-                )
+                logger.debug(f"Unknown event type for topic {topic}: {event_data.get('verb', {}).get('id')}")
                 return
 
             # Get handler for event type
@@ -1884,7 +1664,7 @@ class ContentGenerationConsumer:
             # Call event handler directly (no background tasks needed)
             logger.debug(f"About to call event handler: {handler}")
             await handler(event_data)
-            logger.debug(f"Event handler completed successfully")
+            logger.debug("Event handler completed successfully")
 
         except Exception as e:
             logger.error(f"Error processing event: {e}")
@@ -1942,29 +1722,21 @@ class ContentGenerationConsumer:
         verb_id = event.get("verb", {}).get("id")
         # Check both result.extensions and context.extensions for generation_status
         result_status = (
-            event.get("result", {})
-            .get("extensions", {})
-            .get("http://nlj.platform/extensions/generation_status")
+            event.get("result", {}).get("extensions", {}).get("http://nlj.platform/extensions/generation_status")
         )
         context_status = (
-            event.get("context", {})
-            .get("extensions", {})
-            .get("http://nlj.platform/extensions/generation_status")
+            event.get("context", {}).get("extensions", {}).get("http://nlj.platform/extensions/generation_status")
         )
         status = result_status or context_status
 
-        logger.debug(
-            f"Event processing: topic={topic}, verb={verb_id}, status={status}"
-        )
+        logger.debug(f"Event processing: topic={topic}, verb={verb_id}, status={status}")
 
         if verb_id and status:
             event_type = topic_verb_status_mapping.get((topic, verb_id, status))
             logger.debug(f"Mapped to event type: {event_type}")
             return event_type
         else:
-            logger.debug(
-                f"Missing verb_id ({verb_id}) or status ({status}) - event keys: {list(event.keys())}"
-            )
+            logger.debug(f"Missing verb_id ({verb_id}) or status ({status}) - event keys: {list(event.keys())}")
 
         return None
 

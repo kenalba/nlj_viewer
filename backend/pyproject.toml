@@ -56,6 +56,7 @@ dev = [
     "isort",
     "mypy",
     "ruff",
+    "autoflake",
 ]
 
 [build-system]
@@ -66,12 +67,12 @@ build-backend = "hatchling.build"
 packages = ["app"]
 
 [tool.black]
-line-length = 88
+line-length = 120
 target-version = ['py311']
 
 [tool.isort]
 profile = "black"
-line_length = 88
+line_length = 120
 
 [tool.mypy]
 python_version = "3.11"
@@ -81,4 +82,17 @@ warn_unused_configs = true
 
 [tool.ruff]
 target-version = "py311"
-line-length = 88
+line-length = 120
+
+[tool.autoflake]
+remove-all-unused-imports = true
+remove-unused-variables = true
+remove-duplicate-keys = true
+in-place = true
+
+[dependency-groups]
+dev = [
+    "autoflake>=2.3.1",
+    "isort>=6.0.1",
+    "ruff>=0.12.5",
+]

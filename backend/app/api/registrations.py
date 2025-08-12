@@ -8,14 +8,14 @@ from typing import Annotated, Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database_manager import get_db
 from app.core.deps import get_current_user
-from app.models.training_program import TrainingProgram, TrainingSession, TrainingBooking
+from app.models.training_program import TrainingBooking
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
@@ -25,6 +25,7 @@ router = APIRouter()
 
 class RegistrationResponse(BaseModel):
     """Schema for user registration responses."""
+
     id: str
     program_id: str
     session_id: str
@@ -47,25 +48,26 @@ async def get_my_registrations(
     current_user: Annotated[User, Depends(get_current_user)],
     status_filter: Optional[str] = None,
     skip: int = 0,
-    limit: int = 100
+    limit: int = 100,
 ) -> List[RegistrationResponse]:
     """Get the current user's training registrations."""
-    
+
     # Build query to get user's bookings
-    stmt = select(TrainingBooking).options(
-        selectinload(TrainingBooking.session),
-        selectinload(TrainingBooking.program)
-    ).where(TrainingBooking.learner_id == current_user.id)
-    
+    stmt = (
+        select(TrainingBooking)
+        .options(selectinload(TrainingBooking.session), selectinload(TrainingBooking.program))
+        .where(TrainingBooking.learner_id == current_user.id)
+    )
+
     # Apply status filter if provided
     if status_filter:
         stmt = stmt.where(TrainingBooking.booking_status == status_filter)
-    
+
     stmt = stmt.offset(skip).limit(limit).order_by(TrainingBooking.registered_at.desc())
-    
+
     result = await db.execute(stmt)
     bookings = result.scalars().all()
-    
+
     # Convert to response format
     registrations = []
     for booking in bookings:
@@ -80,10 +82,10 @@ async def get_my_registrations(
             waitlist_position=booking.waitlist_position,
             confirmation_sent=booking.confirmation_sent,
             registered_at=booking.registered_at.isoformat(),
-            updated_at=booking.updated_at.isoformat()
+            updated_at=booking.updated_at.isoformat(),
         )
         registrations.append(registration)
-    
+
     return registrations
 
 
@@ -91,37 +93,30 @@ async def get_my_registrations(
 async def cancel_registration(
     booking_id: UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)]
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> Dict[str, str]:
     """Cancel a user's training registration."""
-    
+
     # Get the booking
     stmt = select(TrainingBooking).where(
-        TrainingBooking.id == booking_id,
-        TrainingBooking.learner_id == current_user.id
+        TrainingBooking.id == booking_id, TrainingBooking.learner_id == current_user.id
     )
     result = await db.execute(stmt)
     booking = result.scalar_one_or_none()
-    
+
     if not booking:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Registration not found"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Registration not found")
+
     if booking.booking_status == "cancelled":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Registration is already cancelled"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Registration is already cancelled")
+
     # Cancel the booking
     booking.booking_status = "cancelled"
     booking.cancelled_by_id = current_user.id
     booking.cancellation_reason = "learner"
-    
+
     await db.commit()
-    
+
     logger.info(f"User {current_user.id} cancelled registration {booking_id}")
-    
+
     return {"message": "Registration cancelled successfully"}

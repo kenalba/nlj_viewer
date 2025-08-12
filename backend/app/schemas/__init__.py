@@ -3,31 +3,22 @@ Pydantic schemas for API request/response models.
 Uses modern Pydantic v2 syntax with Python 3.11+ typing.
 """
 
-from .user import (
-    UserCreate,
-    UserUpdate,
-    UserResponse,
-    UserList,
-    TokenResponse,
-    LoginRequest,
-    PasswordChangeRequest
-)
-
 from .content import (
     ContentBase,
     ContentCreate,
-    ContentUpdate,
-    ContentResponse,
-    ContentSummary,
+    ContentFilters,
     ContentListResponse,
+    ContentResponse,
     ContentStateUpdate,
-    ContentFilters
+    ContentSummary,
+    ContentUpdate,
 )
+from .user import LoginRequest, PasswordChangeRequest, TokenResponse, UserCreate, UserList, UserResponse, UserUpdate
 
 __all__ = [
     # User schemas
     "UserCreate",
-    "UserUpdate", 
+    "UserUpdate",
     "UserResponse",
     "UserList",
     "TokenResponse",
@@ -38,8 +29,8 @@ __all__ = [
     "ContentCreate",
     "ContentUpdate",
     "ContentResponse",
-    "ContentSummary", 
+    "ContentSummary",
     "ContentListResponse",
     "ContentStateUpdate",
-    "ContentFilters"
+    "ContentFilters",
 ]

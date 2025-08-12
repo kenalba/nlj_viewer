@@ -4,20 +4,20 @@ Handles CRUD operations, filtering, and business logic.
 """
 
 import uuid
-from typing import List, Optional, Tuple
 from datetime import datetime
+from typing import List, Optional, Tuple
 
-from sqlalchemy import select, func, or_, and_
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from app.models.content import ContentItem, ContentState, ContentType, LearningStyle
-from app.models.user import User, UserRole
+from app.models.content import ContentItem, ContentState
+from app.models.user import UserRole
 from app.schemas.content import (
     ContentCreate,
-    ContentUpdate,
     ContentFilters,
     ContentStateUpdate,
+    ContentUpdate,
 )
 
 
@@ -27,9 +27,7 @@ class ContentService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create_content(
-        self, content_data: ContentCreate, creator_id: uuid.UUID
-    ) -> ContentItem:
+    async def create_content(self, content_data: ContentCreate, creator_id: uuid.UUID) -> ContentItem:
         """Create new content item."""
 
         content = ContentItem(
@@ -54,9 +52,7 @@ class ContentService:
 
         return content
 
-    async def get_content_by_id(
-        self, content_id: uuid.UUID, include_nlj_data: bool = True
-    ) -> Optional[ContentItem]:
+    async def get_content_by_id(self, content_id: uuid.UUID, include_nlj_data: bool = True) -> Optional[ContentItem]:
         """Get content by ID with optional NLJ data."""
 
         query = select(ContentItem).where(ContentItem.id == content_id)
@@ -125,9 +121,7 @@ class ContentService:
 
         # Template category filter
         if filters.template_category:
-            conditions.append(
-                ContentItem.template_category == filters.template_category
-            )
+            conditions.append(ContentItem.template_category == filters.template_category)
 
         # Creator filter
         if filters.created_by:
@@ -212,9 +206,7 @@ class ContentService:
 
         return content
 
-    async def delete_content(
-        self, content_id: uuid.UUID, user_id: uuid.UUID, user_role: UserRole
-    ) -> bool:
+    async def delete_content(self, content_id: uuid.UUID, user_id: uuid.UUID, user_role: UserRole) -> bool:
         """Delete content item with permission checks."""
 
         content = await self.get_content_by_id(content_id)
@@ -248,12 +240,8 @@ class ContentService:
             return None
 
         # Validate state transition based on user role
-        if not await self._can_change_state(
-            content, state_update.state, user_id, user_role
-        ):
-            raise PermissionError(
-                f"User cannot change content state to {state_update.state}"
-            )
+        if not await self._can_change_state(content, state_update.state, user_id, user_role):
+            raise PermissionError(f"User cannot change content state to {state_update.state}")
 
         # Update state and timestamp
         content.state = state_update.state
@@ -307,12 +295,8 @@ class ContentService:
         if content.created_by == user_id:
             if user_role == UserRole.CREATOR:
                 # Creators can submit drafts and withdrawn rejected content
-                return (
-                    content.state == ContentState.DRAFT
-                    and new_state == ContentState.SUBMITTED
-                ) or (
-                    content.state == ContentState.REJECTED
-                    and new_state == ContentState.DRAFT
+                return (content.state == ContentState.DRAFT and new_state == ContentState.SUBMITTED) or (
+                    content.state == ContentState.REJECTED and new_state == ContentState.DRAFT
                 )
 
         # Reviewer permissions
@@ -327,11 +311,7 @@ class ContentService:
         if user_role == UserRole.APPROVER:
             # Approvers can approve/reject reviewed content or publish approved content
             return (
-                content.state == ContentState.IN_REVIEW
-                and new_state in [ContentState.APPROVED, ContentState.REJECTED]
-            ) or (
-                content.state == ContentState.APPROVED
-                and new_state == ContentState.PUBLISHED
-            )
+                content.state == ContentState.IN_REVIEW and new_state in [ContentState.APPROVED, ContentState.REJECTED]
+            ) or (content.state == ContentState.APPROVED and new_state == ContentState.PUBLISHED)
 
         return False

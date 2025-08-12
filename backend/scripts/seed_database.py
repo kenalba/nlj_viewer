@@ -6,36 +6,37 @@ Creates basic users, sample content, and training programs for testing.
 
 import asyncio
 import json
-import os
 import sys
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Dict, List
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from passlib.context import CryptContext
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.database_manager import create_tables, db_manager
+from app.models.content import ContentItem
+from app.models.training_program import TrainingProgram, TrainingSession
 
 # Import all models
 from app.models.user import User, UserRole
-from app.models.content import ContentItem
-from app.models.training_program import TrainingProgram, TrainingSession
-from app.core.database_manager import db_manager, create_tables
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Database connection now handled by database_manager
 
+
 async def create_users(session: AsyncSession) -> Dict[str, User]:
     """Create basic users for all roles."""
     print("Creating users...")
-    
+
     users = {}
-    
+
     # Admin user
     admin_user = User(
         id=uuid.uuid4(),
@@ -47,8 +48,8 @@ async def create_users(session: AsyncSession) -> Dict[str, User]:
         is_active=True,
         is_verified=True,
     )
-    users['admin'] = admin_user
-    
+    users["admin"] = admin_user
+
     # Creator user
     creator_user = User(
         id=uuid.uuid4(),
@@ -60,8 +61,8 @@ async def create_users(session: AsyncSession) -> Dict[str, User]:
         is_active=True,
         is_verified=True,
     )
-    users['creator'] = creator_user
-    
+    users["creator"] = creator_user
+
     # Reviewer user
     reviewer_user = User(
         id=uuid.uuid4(),
@@ -73,8 +74,8 @@ async def create_users(session: AsyncSession) -> Dict[str, User]:
         is_active=True,
         is_verified=True,
     )
-    users['reviewer'] = reviewer_user
-    
+    users["reviewer"] = reviewer_user
+
     # Player/Learner user
     player_user = User(
         id=uuid.uuid4(),
@@ -86,8 +87,8 @@ async def create_users(session: AsyncSession) -> Dict[str, User]:
         is_active=True,
         is_verified=True,
     )
-    users['player'] = player_user
-    
+    users["player"] = player_user
+
     # Learner user (for training sessions)
     learner_user = User(
         id=uuid.uuid4(),
@@ -99,50 +100,51 @@ async def create_users(session: AsyncSession) -> Dict[str, User]:
         is_active=True,
         is_verified=True,
     )
-    users['learner'] = learner_user
-    
+    users["learner"] = learner_user
+
     for user in users.values():
         session.add(user)
-    
+
     await session.flush()
     print(f"Created {len(users)} users")
     return users
 
+
 async def load_static_content(session: AsyncSession, users: Dict[str, User]) -> List[ContentItem]:
     """Load sample NLJ content from static files."""
     print("Loading static content files...")
-    
+
     content_items = []
-    
+
     # Path to sample content - check multiple possible locations
     possible_paths = [
         Path(__file__).parent.parent.parent / "static" / "sample_nljs",
         Path(__file__).parent.parent.parent / "frontend" / "public" / "static" / "sample_nljs",
-        Path(__file__).parent.parent.parent / "frontend" / "static" / "sample_nljs"
+        Path(__file__).parent.parent.parent / "frontend" / "static" / "sample_nljs",
     ]
-    
+
     sample_dir = None
     for path in possible_paths:
         if path.exists():
             sample_dir = path
             break
-    
+
     if not sample_dir:
-        print(f"⚠️  Static content directory not found. Using hardcoded samples instead.")
+        print("⚠️  Static content directory not found. Using hardcoded samples instead.")
         return await create_sample_content(session, users)
-    
+
     print(f"📁 Loading content from: {sample_dir}")
-    
+
     try:
         for json_file in sample_dir.glob("*.json"):
             try:
-                with open(json_file, 'r', encoding='utf-8') as f:
+                with open(json_file, "r", encoding="utf-8") as f:
                     nlj_data = json.load(f)
-                
+
                 # Create content item from loaded NLJ data
                 content_item = ContentItem(
                     id=uuid.uuid4(),
-                    title=nlj_data.get('name', json_file.stem),
+                    title=nlj_data.get("name", json_file.stem),
                     description=f"Loaded from {json_file.name}",
                     content_type="scenario",
                     learning_style="interactive",
@@ -150,31 +152,32 @@ async def load_static_content(session: AsyncSession, users: Dict[str, User]) -> 
                     nlj_data=nlj_data,
                     state="published",
                     is_active=True,
-                    created_by_id=users['creator'].id,
-                    updated_by_id=users['creator'].id
+                    created_by_id=users["creator"].id,
+                    updated_by_id=users["creator"].id,
                 )
-                
+
                 content_items.append(content_item)
                 session.add(content_item)
                 print(f"  ✅ Loaded: {content_item.title}")
-                
+
             except Exception as e:
                 print(f"  ❌ Failed to load {json_file.name}: {e}")
-    
+
     except Exception as e:
         print(f"❌ Error loading static content: {e}")
         return await create_sample_content(session, users)
-    
+
     await session.flush()
     print(f"📚 Loaded {len(content_items)} content items from static files")
     return content_items
 
+
 async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -> List[ContentItem]:
     """Create sample content items from existing NLJ scenarios."""
     print("Creating sample content...")
-    
+
     content_items = []
-    
+
     # Sample NLJ scenarios to load
     sample_scenarios = [
         {
@@ -186,7 +189,7 @@ async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -
             "learning_objectives": [
                 "Identify key features of financial products",
                 "Demonstrate understanding of customer needs assessment",
-                "Apply product knowledge in customer scenarios"
+                "Apply product knowledge in customer scenarios",
             ],
             "nlj_data": {
                 "id": "fsa-product-knowledge",
@@ -199,8 +202,8 @@ async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -
                         "y": 100,
                         "data": {
                             "title": "Welcome to Product Knowledge Assessment",
-                            "content": "Test your knowledge of our financial products and customer service skills."
-                        }
+                            "content": "Test your knowledge of our financial products and customer service skills.",
+                        },
                     },
                     {
                         "id": "q1",
@@ -214,13 +217,13 @@ async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -
                                 {"id": "a", "text": "High-growth equity funds", "isCorrect": False},
                                 {"id": "b", "text": "Conservative bond portfolio", "isCorrect": True},
                                 {"id": "c", "text": "Cryptocurrency investments", "isCorrect": False},
-                                {"id": "d", "text": "Emerging market funds", "isCorrect": False}
+                                {"id": "d", "text": "Emerging market funds", "isCorrect": False},
                             ],
                             "feedback": {
                                 "correct": "Excellent! Conservative bond portfolios provide steady income with lower risk.",
-                                "incorrect": "Consider the client's risk tolerance and retirement timeline."
-                            }
-                        }
+                                "incorrect": "Consider the client's risk tolerance and retirement timeline.",
+                            },
+                        },
                     },
                     {
                         "id": "end",
@@ -229,15 +232,15 @@ async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -
                         "y": 100,
                         "data": {
                             "title": "Assessment Complete",
-                            "content": "Thank you for completing the product knowledge assessment."
-                        }
-                    }
+                            "content": "Thank you for completing the product knowledge assessment.",
+                        },
+                    },
                 ],
                 "links": [
                     {"id": "start-q1", "sourceNodeId": "start", "targetNodeId": "q1"},
-                    {"id": "q1-end", "sourceNodeId": "q1", "targetNodeId": "end"}
-                ]
-            }
+                    {"id": "q1-end", "sourceNodeId": "q1", "targetNodeId": "end"},
+                ],
+            },
         },
         {
             "title": "Customer Service Excellence Training",
@@ -248,7 +251,7 @@ async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -
             "learning_objectives": [
                 "Apply active listening techniques",
                 "Handle customer complaints professionally",
-                "Use de-escalation strategies effectively"
+                "Use de-escalation strategies effectively",
             ],
             "nlj_data": {
                 "id": "customer-service-training",
@@ -261,8 +264,8 @@ async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -
                         "y": 100,
                         "data": {
                             "title": "Customer Service Training",
-                            "content": "Learn essential skills for providing exceptional customer service."
-                        }
+                            "content": "Learn essential skills for providing exceptional customer service.",
+                        },
                     },
                     {
                         "id": "scenario1",
@@ -275,9 +278,9 @@ async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -
                             "correctAnswer": False,
                             "feedback": {
                                 "correct": "Correct! Listen first to fully understand the customer's concern before offering solutions.",
-                                "incorrect": "Actually, the best first step is to listen carefully and acknowledge their concern."
-                            }
-                        }
+                                "incorrect": "Actually, the best first step is to listen carefully and acknowledge their concern.",
+                            },
+                        },
                     },
                     {
                         "id": "end",
@@ -286,15 +289,15 @@ async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -
                         "y": 100,
                         "data": {
                             "title": "Training Complete",
-                            "content": "You've completed the customer service excellence training."
-                        }
-                    }
+                            "content": "You've completed the customer service excellence training.",
+                        },
+                    },
                 ],
                 "links": [
                     {"id": "start-scenario1", "sourceNodeId": "start", "targetNodeId": "scenario1"},
-                    {"id": "scenario1-end", "sourceNodeId": "scenario1", "targetNodeId": "end"}
-                ]
-            }
+                    {"id": "scenario1-end", "sourceNodeId": "scenario1", "targetNodeId": "end"},
+                ],
+            },
         },
         {
             "title": "Word Connections Game",
@@ -305,7 +308,7 @@ async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -
             "learning_objectives": [
                 "Identify word patterns and relationships",
                 "Develop analytical thinking skills",
-                "Improve vocabulary recognition"
+                "Improve vocabulary recognition",
             ],
             "nlj_data": {
                 "id": "word-connections-game",
@@ -318,8 +321,8 @@ async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -
                         "y": 100,
                         "data": {
                             "title": "Word Connections",
-                            "content": "Find groups of 4 related words. Each group has a specific theme or connection."
-                        }
+                            "content": "Find groups of 4 related words. Each group has a specific theme or connection.",
+                        },
                     },
                     {
                         "id": "game1",
@@ -330,51 +333,56 @@ async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -
                             "title": "Financial Terms Connections",
                             "content": "Group these financial terms by category:",
                             "words": [
-                                "BOND", "STOCK", "CASH", "FUND",
-                                "BULL", "BEAR", "STAG", "DOVE",
-                                "LOAN", "DEBT", "CREDIT", "MORTGAGE",
-                                "YIELD", "RETURN", "PROFIT", "GAIN"
+                                "BOND",
+                                "STOCK",
+                                "CASH",
+                                "FUND",
+                                "BULL",
+                                "BEAR",
+                                "STAG",
+                                "DOVE",
+                                "LOAN",
+                                "DEBT",
+                                "CREDIT",
+                                "MORTGAGE",
+                                "YIELD",
+                                "RETURN",
+                                "PROFIT",
+                                "GAIN",
                             ],
                             "categories": [
                                 {
                                     "name": "INVESTMENT TYPES",
                                     "words": ["BOND", "STOCK", "CASH", "FUND"],
-                                    "difficulty": 1
+                                    "difficulty": 1,
                                 },
-                                {
-                                    "name": "MARKET ANIMALS",
-                                    "words": ["BULL", "BEAR", "STAG", "DOVE"],
-                                    "difficulty": 2
-                                },
+                                {"name": "MARKET ANIMALS", "words": ["BULL", "BEAR", "STAG", "DOVE"], "difficulty": 2},
                                 {
                                     "name": "BORROWING TERMS",
                                     "words": ["LOAN", "DEBT", "CREDIT", "MORTGAGE"],
-                                    "difficulty": 3
+                                    "difficulty": 3,
                                 },
                                 {
                                     "name": "EARNINGS SYNONYMS",
                                     "words": ["YIELD", "RETURN", "PROFIT", "GAIN"],
-                                    "difficulty": 4
-                                }
-                            ]
-                        }
+                                    "difficulty": 4,
+                                },
+                            ],
+                        },
                     },
                     {
                         "id": "end",
                         "type": "end",
                         "x": 500,
                         "y": 100,
-                        "data": {
-                            "title": "Game Complete",
-                            "content": "Great job solving the word connections puzzle!"
-                        }
-                    }
+                        "data": {"title": "Game Complete", "content": "Great job solving the word connections puzzle!"},
+                    },
                 ],
                 "links": [
                     {"id": "start-game1", "sourceNodeId": "start", "targetNodeId": "game1"},
-                    {"id": "game1-end", "sourceNodeId": "game1", "targetNodeId": "end"}
-                ]
-            }
+                    {"id": "game1-end", "sourceNodeId": "game1", "targetNodeId": "end"},
+                ],
+            },
         },
         {
             "title": "Employee Satisfaction Survey",
@@ -385,7 +393,7 @@ async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -
             "learning_objectives": [
                 "Provide honest feedback about workplace experience",
                 "Identify areas for organizational improvement",
-                "Contribute to company culture assessment"
+                "Contribute to company culture assessment",
             ],
             "nlj_data": {
                 "id": "employee-satisfaction-survey",
@@ -398,8 +406,8 @@ async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -
                         "y": 100,
                         "data": {
                             "title": "Employee Satisfaction Survey",
-                            "content": "Your feedback helps us improve our workplace. All responses are confidential."
-                        }
+                            "content": "Your feedback helps us improve our workplace. All responses are confidential.",
+                        },
                     },
                     {
                         "id": "q1",
@@ -414,13 +422,13 @@ async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -
                                 "max": 5,
                                 "labels": {
                                     "1": "Very Dissatisfied",
-                                    "2": "Dissatisfied", 
+                                    "2": "Dissatisfied",
                                     "3": "Neutral",
                                     "4": "Satisfied",
-                                    "5": "Very Satisfied"
-                                }
-                            }
-                        }
+                                    "5": "Very Satisfied",
+                                },
+                            },
+                        },
                     },
                     {
                         "id": "q2",
@@ -431,29 +439,26 @@ async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -
                             "title": "Suggestions",
                             "content": "What suggestions do you have for improving our workplace?",
                             "placeholder": "Please share your thoughts and suggestions...",
-                            "maxLength": 500
-                        }
+                            "maxLength": 500,
+                        },
                     },
                     {
                         "id": "end",
                         "type": "end",
                         "x": 700,
                         "y": 100,
-                        "data": {
-                            "title": "Survey Complete",
-                            "content": "Thank you for your valuable feedback!"
-                        }
-                    }
+                        "data": {"title": "Survey Complete", "content": "Thank you for your valuable feedback!"},
+                    },
                 ],
                 "links": [
                     {"id": "start-q1", "sourceNodeId": "start", "targetNodeId": "q1"},
                     {"id": "q1-q2", "sourceNodeId": "q1", "targetNodeId": "q2"},
-                    {"id": "q2-end", "sourceNodeId": "q2", "targetNodeId": "end"}
-                ]
-            }
-        }
+                    {"id": "q2-end", "sourceNodeId": "q2", "targetNodeId": "end"},
+                ],
+            },
+        },
     ]
-    
+
     for i, scenario_data in enumerate(sample_scenarios):
         content_item = ContentItem(
             id=uuid.uuid4(),
@@ -471,21 +476,22 @@ async def create_sample_content(session: AsyncSession, users: Dict[str, User]) -
             state="published",
             version=1,
             creator_id=users["admin"].id,
-            published_at=datetime.utcnow()
+            published_at=datetime.utcnow(),
         )
         content_items.append(content_item)
         session.add(content_item)
-    
+
     await session.flush()
     print(f"Created {len(content_items)} sample content items")
     return content_items
 
+
 async def create_training_programs(session: AsyncSession, users: Dict[str, User]) -> List[TrainingProgram]:
     """Create sample training programs."""
     print("Creating training programs...")
-    
+
     programs = []
-    
+
     # Financial Services Training Program
     financial_program = TrainingProgram(
         id=uuid.uuid4(),
@@ -497,21 +503,21 @@ async def create_training_programs(session: AsyncSession, users: Dict[str, User]
             "Master financial product features and benefits",
             "Demonstrate professional customer interaction skills",
             "Apply regulatory compliance in daily activities",
-            "Develop effective sales presentation techniques"
+            "Develop effective sales presentation techniques",
         ],
         instructor_requirements={
             "certifications": ["CFP", "Series 7"],
             "experience_years": 5,
-            "specialties": ["Investment Planning", "Customer Relations"]
+            "specialties": ["Investment Planning", "Customer Relations"],
         },
         requires_approval=True,
         auto_approve=False,
         allow_waitlist=True,
         is_published=True,
-        created_by_id=users["admin"].id
+        created_by_id=users["admin"].id,
     )
     programs.append(financial_program)
-    
+
     # Customer Service Excellence Program
     service_program = TrainingProgram(
         id=uuid.uuid4(),
@@ -523,21 +529,21 @@ async def create_training_programs(session: AsyncSession, users: Dict[str, User]
             "Master active listening techniques",
             "Handle difficult customer situations with confidence",
             "Use de-escalation strategies effectively",
-            "Build long-term customer relationships"
+            "Build long-term customer relationships",
         ],
         instructor_requirements={
             "certifications": ["Customer Service Professional"],
             "experience_years": 3,
-            "specialties": ["Conflict Resolution", "Communication"]
+            "specialties": ["Conflict Resolution", "Communication"],
         },
         requires_approval=False,
         auto_approve=True,
         allow_waitlist=True,
         is_published=True,
-        created_by_id=users["creator"].id
+        created_by_id=users["creator"].id,
     )
     programs.append(service_program)
-    
+
     # Leadership Development Program
     leadership_program = TrainingProgram(
         id=uuid.uuid4(),
@@ -549,48 +555,51 @@ async def create_training_programs(session: AsyncSession, users: Dict[str, User]
             "Develop strategic thinking capabilities",
             "Build effective team management skills",
             "Learn to coach and mentor team members",
-            "Master change management principles"
+            "Master change management principles",
         ],
         instructor_requirements={
             "certifications": ["Leadership Development Specialist"],
             "experience_years": 7,
-            "specialties": ["Executive Coaching", "Team Development"]
+            "specialties": ["Executive Coaching", "Team Development"],
         },
         requires_approval=True,
         auto_approve=False,
         allow_waitlist=False,
         is_published=True,
-        created_by_id=users["admin"].id
+        created_by_id=users["admin"].id,
     )
     programs.append(leadership_program)
-    
+
     for program in programs:
         session.add(program)
-    
+
     await session.flush()
     print(f"Created {len(programs)} training programs")
     return programs
 
-async def create_training_sessions(session: AsyncSession, programs: List[TrainingProgram], users: Dict[str, User]) -> List[TrainingSession]:
+
+async def create_training_sessions(
+    session: AsyncSession, programs: List[TrainingProgram], users: Dict[str, User]
+) -> List[TrainingSession]:
     """Create sample training sessions."""
     print("Creating training sessions...")
-    
+
     sessions = []
     locations = [
         "Corporate Headquarters - Main Training Room",
         "Training Center North - Room 101",
-        "Virtual/Online Session"
+        "Virtual/Online Session",
     ]
-    
+
     # Create sessions for each program
     for i, program in enumerate(programs):
         # Create 2-3 sessions per program with different times
         base_date = datetime.utcnow() + timedelta(days=7 + (i * 3))
-        
+
         for j in range(2 if i == 2 else 3):  # Leadership program gets fewer sessions
             session_start = base_date + timedelta(days=j * 14, hours=9)  # Every 2 weeks at 9 AM
             session_end = session_start + timedelta(minutes=program.duration_minutes)
-            
+
             training_session = TrainingSession(
                 id=uuid.uuid4(),
                 program_id=program.id,
@@ -601,30 +610,31 @@ async def create_training_sessions(session: AsyncSession, programs: List[Trainin
                 buffer_time_minutes=15,
                 instructor_id=users["creator"].id if j % 2 == 0 else users["reviewer"].id,
                 status="scheduled",
-                notes=f"Session {j + 1} for {program.title}"
+                notes=f"Session {j + 1} for {program.title}",
             )
             sessions.append(training_session)
             session.add(training_session)
-    
+
     await session.flush()
     print(f"Created {len(sessions)} training sessions")
     return sessions
+
 
 async def seed_database():
     """Main function to seed the database with all sample data."""
     print("Starting database seeding...")
     print("🔍 Detecting database configuration...")
-    
+
     # Initialize database manager (handles both RDS and direct PostgreSQL)
     await db_manager.initialize()
-    
+
     # Create tables if they don't exist
     await create_tables()
-    
+
     connection_info = db_manager.get_connection_info()
     print(f"📊 Connected to: {'RDS' if connection_info.get('use_rds') else 'Direct PostgreSQL'}")
     print(f"🔗 Database: {connection_info.get('url', 'Unknown')}")
-    
+
     async with db_manager.get_session() as session:
         try:
             # Create all sample data
@@ -632,25 +642,25 @@ async def seed_database():
             content_items = await load_static_content(session, users)
             programs = await create_training_programs(session, users)
             training_sessions = await create_training_sessions(session, programs, users)
-            
+
             # Commit all changes
             await session.commit()
-            
-            print("\n" + "="*50)
+
+            print("\n" + "=" * 50)
             print("DATABASE SEEDING COMPLETE!")
-            print("="*50)
+            print("=" * 50)
             print("\nCreated Users:")
             for role, user in users.items():
                 print(f"  • {user.full_name} ({role}) - {user.username} / {role}123{'456' if role == 'admin' else ''}")
-            
+
             print(f"\nCreated Content Items: {len(content_items)}")
             for item in content_items:
                 print(f"  • {item.title} ({item.content_type})")
-            
+
             print(f"\nCreated Training Programs: {len(programs)}")
             for program in programs:
                 print(f"  • {program.title} ({program.duration_minutes} min)")
-            
+
             print(f"\nCreated Training Sessions: {len(training_sessions)}")
             print("\nDevelopment environment is ready!")
             print("\nLogin credentials:")
@@ -659,13 +669,14 @@ async def seed_database():
             print("  Reviewer: reviewer / reviewer123")
             print("  Player: player / player123")
             print("  Learner: learner / learner123")
-            
+
         except Exception as e:
             print(f"Error seeding database: {e}")
             await session.rollback()
             raise
         finally:
             await db_manager.close()
+
 
 if __name__ == "__main__":
     asyncio.run(seed_database())

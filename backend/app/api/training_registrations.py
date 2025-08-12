@@ -4,21 +4,19 @@ Handles learner registration for training sessions via event-driven architecture
 """
 
 import logging
-from typing import Annotated, Any, Dict, List, Optional
+from typing import Annotated, Any, Dict, Optional
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.core.database_manager import get_db
 from app.core.deps import get_current_user
-from app.models.training_program import TrainingProgram, TrainingSession, TrainingBooking
+from app.models.training_program import TrainingProgram, TrainingSession
 from app.models.user import User
-from app.services.kafka_service import get_xapi_event_service, XAPIEventService
-from app.services.event_consumers import consume_booking_requested_event
+from app.services.kafka_service import XAPIEventService, get_xapi_event_service
 
 logger = logging.getLogger(__name__)
 
@@ -28,18 +26,16 @@ router = APIRouter()
 # Pydantic schemas
 class BookingRequest(BaseModel):
     """Schema for booking registration requests."""
+
     session_id: UUID = Field(..., description="Training session UUID")
     registration_method: str = Field(default="online", description="Registration method")
-    special_requirements: Optional[Dict[str, Any]] = Field(
-        None, description="Special accommodations or requirements"
-    )
-    registration_notes: Optional[str] = Field(
-        None, max_length=500, description="Optional notes from learner"
-    )
+    special_requirements: Optional[Dict[str, Any]] = Field(None, description="Special accommodations or requirements")
+    registration_notes: Optional[str] = Field(None, max_length=500, description="Optional notes from learner")
 
 
 class BookingResponse(BaseModel):
     """Schema for event-driven booking responses."""
+
     message: str = Field(..., description="Registration status message")
     event_id: str = Field(..., description="Event ID for tracking")
     booking_id: str = Field(..., description="Booking ID")
@@ -49,6 +45,7 @@ class BookingResponse(BaseModel):
 
 class RegistrationResponse(BaseModel):
     """Schema for user registration responses."""
+
     id: str
     program_id: str
     session_id: str
@@ -70,49 +67,39 @@ async def register_for_training(
     booking_data: BookingRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-    xapi_service: Annotated[XAPIEventService, Depends(get_xapi_event_service)]
+    xapi_service: Annotated[XAPIEventService, Depends(get_xapi_event_service)],
 ) -> BookingResponse:
     """
     Register a learner for a training session via event-driven architecture.
     Publishes booking.requested event which will be processed asynchronously.
     """
-    
+
     try:
         # Verify session exists and is available for registration
-        stmt = select(TrainingSession).where(
-            TrainingSession.id == booking_data.session_id
-        )
+        stmt = select(TrainingSession).where(TrainingSession.id == booking_data.session_id)
         result = await db.execute(stmt)
         session = result.scalar_one_or_none()
-        
+
         if not session:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Training session not found"
-            )
-        
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Training session not found")
+
         if session.status != "scheduled":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Cannot register for session with status: {session.status}"
+                detail=f"Cannot register for session with status: {session.status}",
             )
-        
+
         # Get session program for event context
-        program_stmt = select(TrainingProgram).where(
-            TrainingProgram.id == session.program_id
-        )
+        program_stmt = select(TrainingProgram).where(TrainingProgram.id == session.program_id)
         program_result = await db.execute(program_stmt)
         program = program_result.scalar_one_or_none()
-        
+
         if not program:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Session program not found"
-            )
-        
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Session program not found")
+
         # Generate booking ID
         booking_id = str(uuid4())
-        
+
         # Publish booking.requested event
         await xapi_service.publish_booking_requested(
             booking_id=booking_id,
@@ -122,36 +109,34 @@ async def register_for_training(
             learner_email=current_user.email,
             learner_name=current_user.full_name or current_user.email,
             registration_method=booking_data.registration_method,
-            special_requirements=booking_data.special_requirements
+            special_requirements=booking_data.special_requirements,
         )
-        
+
         # The event consumer will handle the booking processing asynchronously via Kafka
         # No need to directly call the consumer function - the published event above will trigger it
-        
+
         # Generate event ID for tracking
         event_id = str(uuid4())
-        
+
         logger.info(
-            f"Published booking.requested event for learner {current_user.id} "
-            f"in session {booking_data.session_id}"
+            f"Published booking.requested event for learner {current_user.id} " f"in session {booking_data.session_id}"
         )
-        
+
         return BookingResponse(
             message="Registration request submitted",
             event_id=event_id,
             booking_id=booking_id,
             session_id=str(booking_data.session_id),
-            status_endpoint=f"/api/bookings/{booking_id}/status"
+            status_endpoint=f"/api/bookings/{booking_id}/status",
         )
-        
+
     except HTTPException:
         # Re-raise HTTP exceptions
         raise
     except Exception as e:
         logger.error(f"Error processing training registration: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to process registration request"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to process registration request"
         )
 
 
@@ -159,16 +144,10 @@ async def register_for_training(
 async def get_booking_status(
     booking_id: UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)]
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> Dict[str, Any]:
     """Get the current status of a booking registration."""
-    
+
     # This would query the database to get current booking status
     # For now, returning a placeholder response
-    return {
-        "booking_id": str(booking_id),
-        "status": "processing",
-        "message": "Registration is being processed"
-    }
-
-
+    return {"booking_id": str(booking_id), "status": "processing", "message": "Registration is being processed"}
