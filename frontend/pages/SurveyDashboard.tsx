@@ -49,6 +49,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { canEditContent, canReviewContent } from '../utils/permissions';
 import { CreateActivityModal } from '../shared/CreateActivityModal';
 import { ShareModal } from '../components/ShareModal';
+import type { ActivityTemplate } from '../utils/activityTemplates';
 import { formatDistanceToNow } from 'date-fns';
 
 interface SurveyStats {
@@ -410,6 +411,17 @@ export const SurveyDashboard: React.FC = () => {
     setShareModalOpen(true);
   };
 
+  const handleActivityCreated = (template: ActivityTemplate, name: string, description?: string) => {
+    // Navigate to Flow Editor with the new survey template
+    navigate('/app/flow/new', { 
+      state: { 
+        template: template.template, 
+        name, 
+        description 
+      } 
+    });
+  };
+
   const getTabCounts = () => {
     // TODO: Implement real-time tab counts
     return {
@@ -605,6 +617,7 @@ export const SurveyDashboard: React.FC = () => {
       <CreateActivityModal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
+        onActivityCreated={handleActivityCreated}
         defaultTemplate="survey"
       />
 

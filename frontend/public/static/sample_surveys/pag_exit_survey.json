@@ -1,0 +1,507 @@
+{
+  "id": "pag-exit-survey-2025",
+  "name": "Penske Automotive Group - Exit Survey",
+  "orientation": "vertical",
+  "activityType": "survey",
+  "surveyMetadata": {
+    "anonymous": false,
+    "allowSkip": false,
+    "showProgress": true,
+    "allowReview": true,
+    "collectDemographics": true,
+    "surveyType": "exit",
+    "enableAnalytics": true,
+    "defaultSemanticMapping": "satisfaction",
+    "benchmarkCategory": "automotive",
+    "targetAudience": "Terminated Employees",
+    "industry": "Automotive",
+    "department": "All Departments",
+    "waitingPeriod": "30-60 days post-termination",
+    "deliveryMethod": ["email", "text"],
+    "reminderFrequency": "2-3 days",
+    "responseWindow": "14 days"
+  },
+  "activityMetadata": {
+    "category": "exit-survey",
+    "estimatedDuration": 8,
+    "language": "en-US",
+    "author": "Penske Automotive Group HR",
+    "tags": ["exit-survey", "automotive", "employee-feedback", "turnover-analysis", "penske"],
+    "description": "Comprehensive 16-question exit survey to understand reasons behind employee departures and improve retention strategies."
+  },
+  "sections": [
+    {
+      "id": "job-expectations-growth",
+      "title": "Job Expectations & Growth",
+      "description": "Questions about job expectations and career development opportunities",
+      "type": "survey",
+      "nodeIds": ["q1", "q2", "q3", "q4"]
+    },
+    {
+      "id": "overall-experience",
+      "title": "Overall Experience & Future Intent",
+      "description": "Questions about overall experience and willingness to return",
+      "type": "survey", 
+      "nodeIds": ["q5", "q6", "q7"]
+    },
+    {
+      "id": "departure-factors",
+      "title": "Factors Influencing Departure Decision",
+      "description": "Impact assessment of various workplace factors on decision to leave",
+      "type": "survey",
+      "nodeIds": ["q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15"]
+    },
+    {
+      "id": "future-expectations",
+      "title": "Future Job Expectations",
+      "description": "Open-ended feedback about expectations for new employment",
+      "type": "survey",
+      "nodeIds": ["q16"]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "x": 100,
+      "y": 100,
+      "width": 200,
+      "height": 100
+    },
+    {
+      "id": "intro-panel",
+      "type": "panel",
+      "x": 100,
+      "y": 250,
+      "width": 700,
+      "height": 200,
+      "title": "Penske Automotive Group - Exit Survey",
+      "text": "Thank you for taking the time to complete this exit survey. Your honest feedback will help us understand the reasons behind employee departures and improve our workplace for current and future employees.\n\nThis survey takes approximately 8 minutes to complete. Your responses will be shared with designated members of corporate management and SVPs to drive meaningful improvements.\n\nAll responses are confidential and will be used solely for organizational improvement purposes.",
+      "showContinueButton": true,
+      "tags": ["introduction", "confidentiality"]
+    },
+    {
+      "id": "q1",
+      "type": "likert_scale", 
+      "x": 100,
+      "y": 500,
+      "width": 700,
+      "height": 300,
+      "text": "The realities of my job matched what I was told to expect when I was first hired",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "Strongly Disagree",
+          "max": "Strongly Agree",
+          "middle": "Neutral"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "section": "job-expectations-growth",
+      "tags": ["job-expectations", "hiring-process", "reality-check"]
+    },
+    {
+      "id": "q2",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 650,
+      "width": 700,
+      "height": 300,
+      "text": "I had adequate opportunities for career growth",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "Strongly Disagree",
+          "max": "Strongly Agree",
+          "middle": "Neutral"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "section": "job-expectations-growth",
+      "tags": ["career-growth", "advancement", "development"]
+    },
+    {
+      "id": "q3",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 800,
+      "width": 700,
+      "height": 300,
+      "text": "My manager(s) clearly explained what was expected of me",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "Strongly Disagree",
+          "max": "Strongly Agree",
+          "middle": "Neutral"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "section": "job-expectations-growth",
+      "tags": ["management", "expectations", "communication", "clarity"]
+    },
+    {
+      "id": "q4",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 950,
+      "width": 700,
+      "height": 300,
+      "text": "My manager(s) recognized and appreciated my efforts",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "Strongly Disagree",
+          "max": "Strongly Agree",
+          "middle": "Neutral"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "section": "job-expectations-growth",
+      "tags": ["management", "recognition", "appreciation", "feedback"]
+    },
+    {
+      "id": "q5",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 1100,
+      "width": 700,
+      "height": 300,
+      "text": "Looking back, how would you describe your overall experience working at this location?",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "Very Negative",
+          "max": "Very Positive",
+          "middle": "Neutral"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "section": "overall-experience",
+      "tags": ["overall-experience", "satisfaction", "workplace", "location"]
+    },
+    {
+      "id": "q6",
+      "type": "true_false",
+      "x": 100,
+      "y": 1250,
+      "width": 700,
+      "height": 250,
+      "text": "If you were eligible for rehire, would you be willing to work for this location again in the future?",
+      "required": true,
+      "trueLabel": "Yes",
+      "falseLabel": "No",
+      "section": "overall-experience",
+      "tags": ["rehire-willingness", "future-intent", "loyalty", "recommendation"]
+    },
+    {
+      "id": "q7",
+      "type": "true_false",
+      "x": 100,
+      "y": 1400,
+      "width": 700,
+      "height": 250,
+      "text": "Prior to leaving the company, did you ask about other open positions available within the company?",
+      "required": true,
+      "trueLabel": "Yes",
+      "falseLabel": "No",
+      "section": "overall-experience",
+      "tags": ["internal-mobility", "career-exploration", "retention-opportunity"]
+    },
+    {
+      "id": "factors-intro",
+      "type": "panel",
+      "x": 100,
+      "y": 1550,
+      "width": 700,
+      "height": 150,
+      "title": "Factors Influencing Your Decision",
+      "text": "The next questions ask about how much impact various workplace factors had on your decision to leave. Please rate each factor honestly to help us understand areas for improvement.",
+      "showContinueButton": true,
+      "section": "departure-factors",
+      "tags": ["instruction", "departure-factors"]
+    },
+    {
+      "id": "q8",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 1750,
+      "width": 700,
+      "height": 300,
+      "text": "How much impact did THE WORK ENVIRONMENT (rules, stress, frustration, hostility, etc.) have on your decision to leave?",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "No Impact",
+          "max": "Significant Impact",
+          "middle": "Neutral"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "section": "departure-factors",
+      "tags": ["work-environment", "workplace-culture", "stress", "hostility"]
+    },
+    {
+      "id": "q9",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 1900,
+      "width": 700,
+      "height": 300,
+      "text": "How much impact did TOTAL PAY, INCENTIVES AND PAY PLAN ISSUES have on your decision to leave?",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "No Impact",
+          "max": "Significant Impact",
+          "middle": "Neutral"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "section": "departure-factors",
+      "tags": ["compensation", "pay-plan", "incentives", "salary"]
+    },
+    {
+      "id": "q10",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 2050,
+      "width": 700,
+      "height": 300,
+      "text": "How much impact did HEALTH CARE AND INSURANCE BENEFITS have on your decision to leave?",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "No Impact",
+          "max": "Significant Impact",
+          "middle": "Neutral"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "section": "departure-factors",
+      "tags": ["healthcare", "insurance", "benefits", "medical-coverage"]
+    },
+    {
+      "id": "q11",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 2200,
+      "width": 700,
+      "height": 300,
+      "text": "How much impact did OTHER BENEFITS (vacations, holidays, sick leave) have on your decision to leave?",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "No Impact",
+          "max": "Significant Impact",
+          "middle": "Neutral"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "section": "departure-factors",
+      "tags": ["benefits", "vacation", "holidays", "sick-leave", "pto"]
+    },
+    {
+      "id": "q12",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 2350,
+      "width": 700,
+      "height": 300,
+      "text": "How much impact did PROPER TRAINING AND PERSONAL DEVELOPMENT have on your decision to leave?",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "No Impact",
+          "max": "Significant Impact",
+          "middle": "Neutral"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "section": "departure-factors",
+      "tags": ["training", "development", "learning", "skill-building", "growth"]
+    },
+    {
+      "id": "q13",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 2500,
+      "width": 700,
+      "height": 300,
+      "text": "How much impact did PROBLEMS WITH COWORKERS have on your decision to leave?",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "No Impact",
+          "max": "Significant Impact",
+          "middle": "Neutral"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "section": "departure-factors",
+      "tags": ["coworkers", "relationships", "teamwork", "interpersonal-issues"]
+    },
+    {
+      "id": "q14",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 2650,
+      "width": 700,
+      "height": 300,
+      "text": "How much impact did TREATMENT WITH SUPERVISOR(S) OR MANAGER(S) have on your decision to leave?",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "No Impact",
+          "max": "Significant Impact",
+          "middle": "Neutral"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "section": "departure-factors",
+      "tags": ["management", "supervision", "leadership", "treatment", "respect"]
+    },
+    {
+      "id": "q15",
+      "type": "likert_scale",
+      "x": 100,
+      "y": 2800,
+      "width": 700,
+      "height": 300,
+      "text": "How much impact did BUSINESS REPUTATION OR TREATMENT OF CUSTOMERS have on your decision to leave?",
+      "scale": {
+        "min": 1,
+        "max": 5,
+        "labels": {
+          "min": "No Impact",
+          "max": "Significant Impact",
+          "middle": "Neutral"
+        }
+      },
+      "required": true,
+      "showNumbers": true,
+      "showLabels": true,
+      "section": "departure-factors",
+      "tags": ["business-reputation", "customer-treatment", "ethics", "company-values"]
+    },
+    {
+      "id": "q16",
+      "type": "text_area",
+      "x": 100,
+      "y": 2950,
+      "width": 700,
+      "height": 400,
+      "text": "In what ways do you expect your new job or employer to be better? Please provide specific details about what improvements you're seeking.",
+      "required": false,
+      "minLength": 10,
+      "maxLength": 1000,
+      "placeholder": "Please share your thoughts about what improvements you're looking for in your new role or employer. This feedback helps us understand areas where we can improve to retain talented employees like yourself.",
+      "section": "future-expectations",
+      "tags": ["future-expectations", "improvement-areas", "open-feedback", "retention-insights"]
+    },
+    {
+      "id": "thank-you",
+      "type": "panel",
+      "x": 100,
+      "y": 3400,
+      "width": 700,
+      "height": 200,
+      "title": "Thank You",
+      "text": "Thank you for taking the time to complete this exit survey. Your honest feedback is valuable and will be used to improve the workplace experience for current and future employees at Penske Automotive Group.\n\nYour responses will remain confidential and will be shared only with designated corporate management and SVPs for the purpose of organizational improvement.\n\nWe wish you success in your future endeavors.",
+      "showContinueButton": true,
+      "tags": ["conclusion", "appreciation", "confidentiality-reminder"]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "x": 100,
+      "y": 3650,
+      "width": 200,
+      "height": 100
+    }
+  ],
+  "links": [
+    {"id": "start-intro", "source": "start", "target": "intro-panel"},
+    {"id": "intro-q1", "source": "intro-panel", "target": "q1"},
+    {"id": "q1-q2", "source": "q1", "target": "q2"},
+    {"id": "q2-q3", "source": "q2", "target": "q3"},
+    {"id": "q3-q4", "source": "q3", "target": "q4"},
+    {"id": "q4-q5", "source": "q4", "target": "q5"},
+    {"id": "q5-q6", "source": "q5", "target": "q6"},
+    {"id": "q6-q7", "source": "q6", "target": "q7"},
+    {"id": "q7-factors-intro", "source": "q7", "target": "factors-intro"},
+    {"id": "factors-intro-q8", "source": "factors-intro", "target": "q8"},
+    {"id": "q8-q9", "source": "q8", "target": "q9"},
+    {"id": "q9-q10", "source": "q9", "target": "q10"},
+    {"id": "q10-q11", "source": "q10", "target": "q11"},
+    {"id": "q11-q12", "source": "q11", "target": "q12"},
+    {"id": "q12-q13", "source": "q12", "target": "q13"},
+    {"id": "q13-q14", "source": "q13", "target": "q14"},
+    {"id": "q14-q15", "source": "q14", "target": "q15"},
+    {"id": "q15-q16", "source": "q15", "target": "q16"},
+    {"id": "q16-thank-you", "source": "q16", "target": "thank-you"},
+    {"id": "thank-you-end", "source": "thank-you", "target": "end"}
+  ],
+  "variableDefinitions": [
+    {
+      "name": "completion_time",
+      "type": "number",
+      "initialValue": 0,
+      "description": "Time spent completing the survey in minutes"
+    },
+    {
+      "name": "overall_satisfaction",
+      "type": "number", 
+      "initialValue": 0,
+      "description": "Overall experience rating from question 5"
+    },
+    {
+      "name": "rehire_willingness",
+      "type": "boolean",
+      "initialValue": false,
+      "description": "Willingness to be rehired from question 6"
+    },
+    {
+      "name": "explored_internal_options",
+      "type": "boolean",
+      "initialValue": false,
+      "description": "Whether employee explored internal positions from question 7"
+    }
+  ]
+}

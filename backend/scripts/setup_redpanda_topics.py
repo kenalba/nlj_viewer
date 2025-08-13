@@ -83,6 +83,17 @@ TRAINING_TOPICS = {
             "compression.type": "gzip",
         },
     },
+    # Survey response events
+    "nlj.survey.responses": {
+        "description": "Survey response events (started, question answered, completed)",
+        "partitions": 8,  # High throughput for survey interactions
+        "replication_factor": 1,
+        "config": {
+            "retention.ms": "7776000000",  # 90 days - longer retention for analytics
+            "cleanup.policy": "delete",
+            "compression.type": "gzip",
+        },
+    },
     # Content workflow events
     "nlj.content.workflow": {
         "description": "Content creation and approval workflow events",

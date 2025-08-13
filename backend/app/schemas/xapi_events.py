@@ -28,6 +28,9 @@ class XAPIVerb(str, Enum):
     PROGRESSED = "http://adlnet.gov/expapi/verbs/progressed"
     FAILED = "http://adlnet.gov/expapi/verbs/failed"
     IMPORTED = "http://adlnet.gov/expapi/verbs/imported"
+    ANSWERED = "http://adlnet.gov/expapi/verbs/answered"
+    RESPONDED = "http://adlnet.gov/expapi/verbs/responded"
+    STARTED = "http://activitystrea.ms/schema/1.0/start"
     # Custom verbs (REVIEWED may be custom if not in ADL spec)
     REVIEWED = "http://adlnet.gov/expapi/verbs/reviewed"
     WAITLISTED = "http://nlj.platform/verbs/waitlisted"
@@ -41,7 +44,9 @@ class XAPIActivityType(str, Enum):
     COURSE = "http://adlnet.gov/expapi/activities/course"
     MEETING = "http://adlnet.gov/expapi/activities/meeting"
     BADGE = "http://adlnet.gov/expapi/activities/badge"
-    # Content generation activity type
+    QUESTION = "http://adlnet.gov/expapi/activities/question"
+    INTERACTION = "http://adlnet.gov/expapi/activities/cmi.interaction"
+    # Custom activity types
     CONTENT_GENERATION = "http://nlj.platform/activities/content-generation"
 
 

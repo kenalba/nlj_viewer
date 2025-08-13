@@ -38,6 +38,7 @@ class KafkaRalphConsumer:
             "nlj.training.conflicts",
             "nlj.activity.events",  # Frontend activity events
             "nlj.review.workflow",  # Review workflow events
+            "nlj.survey.responses",  # Survey response events (already xAPI formatted)
         ]
 
     async def start_consuming(self) -> None:
@@ -74,6 +75,22 @@ class KafkaRalphConsumer:
 
         await self.kafka.stop()
         logger.info("Stopped Kafka Ralph consumer")
+
+    async def process_xapi_statement(self, statement: Dict[str, Any]) -> None:
+        """
+        Process a single xAPI statement directly.
+        This method allows direct submission of xAPI statements for processing.
+        """
+        try:
+            if self._is_xapi_statement(statement):
+                await self._forward_xapi_statement(statement)
+                logger.debug(f"Processed xAPI statement: {statement.get('id', 'unknown')}")
+            else:
+                logger.error(f"Invalid xAPI statement format: missing required fields")
+                raise ValueError("Statement must contain actor, verb, and object fields")
+        except Exception as e:
+            logger.error(f"Error processing xAPI statement: {e}")
+            raise
 
     async def _consume_events(self) -> None:
         """Main event consumption loop"""
@@ -179,6 +196,13 @@ class KafkaRalphConsumer:
         # Review workflow events
         elif topic == "nlj.review.workflow":
             return self._convert_review_event(event)
+
+        # Survey response events (should already be xAPI formatted)
+        elif topic == "nlj.survey.responses":
+            # Survey events are generated as proper xAPI statements, no conversion needed
+            # They should be handled by _is_xapi_statement() check above
+            logger.debug(f"Survey response event should already be xAPI formatted: {event.get('id', 'unknown')}")
+            return None
 
         else:
             logger.debug(f"No converter available for topic: {topic}")

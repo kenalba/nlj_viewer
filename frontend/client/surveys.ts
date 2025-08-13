@@ -135,6 +135,137 @@ export interface SurveyInsightsResponse {
 }
 
 // ============================================================================
+// SURVEY ANALYTICS TYPES - Phase 2B Integration
+// ============================================================================
+
+export interface SurveyAnalyticsResponse {
+  success: boolean;
+  survey_id: string;
+  survey_name: string;
+  survey_type: string;
+  total_responses: number;
+  data: {
+    overview: {
+      total_responses: number;
+      unique_respondents: number;
+      completion_rate: number;
+      response_timeframe: any;
+      top_demographics: any[];
+      key_metrics: {
+        avg_completion_time: number;
+        response_rate: number;
+        satisfaction_score: number;
+        engagement_score: number;
+      };
+    };
+    questions: Record<string, {
+      question_id: string;
+      question_title: string;
+      question_text: string;
+      question_type: string;
+      response_count: number;
+      skip_rate: number;
+      scale_info: {
+        type: string;
+        labels: string[];
+        color_scheme: string;
+        semantic_mapping: string;
+      };
+      distribution?: any[];
+      semantic_summary?: any;
+      average_score?: number;
+      statistics?: any;
+      nps_score?: number;
+      nps_category?: string;
+      yes_percentage?: number;
+      no_percentage?: number;
+      top_response?: any;
+    }>;
+    demographics: Record<string, any>;
+    trends: Array<{
+      question_id: string;
+      timeframe: string;
+      current_score: number;
+      previous_score: number | null;
+      change_amount: number;
+      change_percentage: number;
+      trend_classification: string;
+      confidence: string;
+      trend_description: string;
+      statistical_significance: boolean;
+      data_points: any[];
+    }>;
+  };
+  metadata: {
+    generated_at: string;
+    anonymization_threshold: number;
+    configuration: any;
+  };
+}
+
+export interface SurveyConfigurationResponse {
+  success: boolean;
+  data: {
+    surveyId: string;
+    name: string;
+    type: string;
+    questions: Array<{
+      id: string;
+      nodeId: string;
+      nodeType: string;
+      title: string;
+      text: string;
+      scale: {
+        id: string;
+        type: string;
+        labels: string[];
+        values: (string | number)[];
+        colorScheme: string;
+        semanticMapping: string;
+      };
+      isRequired: boolean;
+      hasFollowUp: boolean;
+      analyticsEnabled: boolean;
+      order: number;
+    }>;
+    demographics: {
+      primary: string[];
+      secondary: string[];
+      hierarchical: boolean;
+      anonymizationThreshold: number;
+      availableGroupings: string[];
+    };
+    totalQuestions: number;
+    analyticsQuestions: number;
+    displayConfig: {
+      defaultGroupBy: string;
+      showTrends: boolean;
+      showBenchmarks: boolean;
+      compactMode: boolean;
+    };
+  };
+}
+
+export interface SurveyDemographicsResponse {
+  success: boolean;
+  data: {
+    available_fields: string[];
+    field_details: Record<string, {
+      values: string[];
+      sample_count: number;
+      response_distribution: Record<string, number>;
+    }>;
+    recommendations: {
+      primary_groupings: string[];
+      secondary_groupings: string[];
+      hierarchical_supported: boolean;
+    };
+  };
+  survey_id: string;
+  generated_at: string;
+}
+
+// ============================================================================
 // API CLIENT
 // ============================================================================
 
@@ -185,6 +316,38 @@ export const surveysApi = {
   // Get AI-generated survey insights (placeholder)
   async getInsights(surveyId: string): Promise<SurveyInsightsResponse> {
     const response = await apiClient.get(`/api/surveys/${surveyId}/insights`);
+    return response.data;
+  },
+
+  // Get survey configuration for analytics components
+  async getConfiguration(surveyId: string): Promise<SurveyConfigurationResponse> {
+    const response = await apiClient.get(`/api/surveys/${surveyId}/configuration`);
+    return response.data;
+  },
+
+  // Get comprehensive survey analytics data (Phase 2B integration)
+  async getAnalytics(
+    surveyId: string, 
+    options: {
+      questionId?: string;
+      groupBy?: string;
+      cohort?: string;
+      timeframe?: string;
+    } = {}
+  ): Promise<SurveyAnalyticsResponse> {
+    const params = new URLSearchParams();
+    if (options.questionId) params.append('question_id', options.questionId);
+    if (options.groupBy) params.append('group_by', options.groupBy);
+    if (options.cohort) params.append('cohort', options.cohort);
+    if (options.timeframe) params.append('timeframe', options.timeframe);
+    
+    const response = await apiClient.get(`/api/surveys/${surveyId}/analytics?${params.toString()}`);
+    return response.data;
+  },
+
+  // Get demographic information for a survey
+  async getDemographics(surveyId: string): Promise<SurveyDemographicsResponse> {
+    const response = await apiClient.get(`/api/surveys/${surveyId}/demographics`);
     return response.data;
   },
 };

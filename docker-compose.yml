@@ -249,6 +249,48 @@ services:
     profiles:
       - analytics
 
+  # Unified xAPI Consumer - Single Container for ALL xAPI Event Processing
+  xapi-consumer:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.consumer
+    container_name: nlj_xapi_consumer
+    environment:
+      # Kafka Configuration
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:29092
+      
+      # Ralph LRS Configuration
+      - RALPH_LRS_URL=http://ralph-lrs:8100
+      - RALPH_LRS_USERNAME=nlj-platform
+      - RALPH_LRS_SECRET=nlj-secure-secret-2024
+      
+      # Elasticsearch Configuration
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ELASTICSEARCH_INDEX=statements
+      
+      # Database Configuration (for training events)
+      - DATABASE_URL=postgresql+asyncpg://nlj_user:nlj_pass@nlj-db:5432/nlj_platform
+      
+      # Claude API (for content generation events)
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY:-}
+      
+    volumes:
+      - ./backend/app:/app/app  # For development hot-reload
+    depends_on:
+      nlj-db:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      ralph-lrs:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - nlj_network
+    restart: unless-stopped
+    profiles:
+      - analytics
+
 
 volumes:
   nlj_db_data:

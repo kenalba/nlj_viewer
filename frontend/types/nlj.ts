@@ -705,6 +705,12 @@ export interface ActivityMetadata {
 }
 
 export interface SurveyMetadata {
+  // Survey type for analytics configuration
+  surveyType?: 'exit' | 'engagement' | 'satisfaction' | 'pulse' | 'performance' | 'onboarding' | 'feedback' | 'custom';
+  // Analytics configuration
+  enableAnalytics?: boolean;
+  benchmarkCategory?: string; // For comparison against industry/regional benchmarks
+  // Behavioral settings
   anonymous?: boolean;
   allowSkip?: boolean;
   showProgress?: boolean;
@@ -712,9 +718,12 @@ export interface SurveyMetadata {
   collectDemographics?: boolean;
   responseLimit?: number;
   expirationDate?: Date;
+  // Context metadata
   targetAudience?: string;
   department?: string;
   industry?: string;
+  // Semantic mapping overrides for questions
+  defaultSemanticMapping?: 'satisfaction' | 'agreement' | 'performance' | 'frequency' | 'positive-negative' | 'custom';
 }
 
 export interface AssessmentMetadata {

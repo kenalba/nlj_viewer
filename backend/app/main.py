@@ -56,8 +56,7 @@ configure_logging()
 logger = logging.getLogger(__name__)
 
 from app.core.database_manager import db_manager
-from app.services.event_consumers import start_content_generation_consumer, stop_content_generation_consumer
-from app.services.kafka_ralph_consumer import start_kafka_ralph_consumer, stop_kafka_ralph_consumer
+# Consumer logic moved to dedicated unified_consumer.py container
 from app.services.kafka_service import kafka_service
 
 
@@ -75,58 +74,47 @@ async def lifespan(app: FastAPI):
         # Log error but don't fail startup - Kafka may not be available in all environments
         logger.warning(f"Failed to initialize Kafka producer: {e}")
 
-    # Start Kafka Ralph LRS consumer for analytics
-    try:
-        logger.info("🚀 Starting Kafka Ralph LRS consumer for analytics...")
-        await start_kafka_ralph_consumer()
-        logger.info("✅ Kafka Ralph LRS consumer started successfully")
-    except Exception as e:
-        # Log error but don't fail startup - Ralph LRS may not be available in all environments
-        logger.warning(f"⚠️  Failed to start Kafka Ralph consumer: {e}")
-
-    # Start Content Generation event consumer
-    try:
-        logger.info("🚀 Starting Content Generation event consumer...")
-        await start_content_generation_consumer()
-        logger.info("✅ Content Generation event consumer started successfully")
-    except Exception as e:
-        # Log error but don't fail startup - Kafka may not be available in all environments
-        logger.warning(f"⚠️  Failed to start Content Generation consumer: {e}")
-
-    logger.info("🎉 All event consumers initialized!")
+    logger.info("🚀 FastAPI Application initialized!")
 
     yield
 
-    # Shutdown
+    # Shutdown - Clean shutdown of remaining services
+    import asyncio
+    
+    # Add Kafka connections shutdown with timeout
+    async def shutdown_kafka_connections():
+        try:
+            logger.info("🔌 Shutting down Kafka connections...")
+            await kafka_service.stop()
+            logger.info("✅ Kafka connections closed")
+        except Exception as e:
+            logger.warning(f"⚠️  Error shutting down Kafka connections: {e}")
+    
+    # Add database shutdown with timeout
+    async def shutdown_database():
+        try:
+            logger.info("🔌 Shutting down database connections...")
+            await db_manager.close()
+            logger.info("✅ Database connections closed")
+        except Exception as e:
+            logger.warning(f"⚠️  Error shutting down database connections: {e}")
+    
+    # Run shutdown tasks concurrently with timeout
+    shutdown_tasks = [
+        shutdown_kafka_connections(),
+        shutdown_database()
+    ]
+    
     try:
-        logger.info("🔌 Shutting down Content Generation consumer...")
-        await stop_content_generation_consumer()
-        logger.info("✅ Content Generation consumer stopped")
+        # Give 10 seconds max for graceful shutdown
+        await asyncio.wait_for(asyncio.gather(*shutdown_tasks), timeout=10.0)
+        logger.info("👋 Graceful shutdown complete!")
+    except asyncio.TimeoutError:
+        logger.warning("⏰ Shutdown timeout reached, forcing exit")
     except Exception as e:
-        logger.warning(f"⚠️  Error shutting down Content Generation consumer: {e}")
-
-    try:
-        logger.info("🔌 Shutting down Kafka Ralph consumer...")
-        await stop_kafka_ralph_consumer()
-        logger.info("✅ Kafka Ralph consumer stopped")
-    except Exception as e:
-        logger.warning(f"⚠️  Error shutting down Kafka Ralph consumer: {e}")
-
-    try:
-        logger.info("🔌 Shutting down Kafka connections...")
-        await kafka_service.stop()
-        logger.info("✅ Kafka connections closed")
-    except Exception as e:
-        logger.warning(f"⚠️  Error shutting down Kafka connections: {e}")
-
-    try:
-        logger.info("🔌 Shutting down database connections...")
-        await db_manager.close()
-        logger.info("✅ Database connections closed")
-    except Exception as e:
-        logger.warning(f"⚠️  Error shutting down database connections: {e}")
-
-    logger.info("👋 Graceful shutdown complete!")
+        logger.error(f"❌ Error during shutdown: {e}")
+        
+    logger.info("🏁 Application shutdown finished")
 
 
 # Create FastAPI application with modern configuration

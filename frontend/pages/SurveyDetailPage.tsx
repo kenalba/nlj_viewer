@@ -59,6 +59,7 @@ import { contentApi, type ContentItem } from '../client/content';
 import { surveysApi, type SurveyStats, type SurveyLink, formatCompletionRate, formatCompletionTime, getLinkStatus } from '../client/surveys';
 import { useAuth } from '../contexts/AuthContext';
 import { canEditContent, canReviewContent } from '../utils/permissions';
+import { SurveyAnalyticsSection } from '../components/survey/SurveyAnalyticsSection';
 
 // Using types from surveys API client
 
@@ -224,71 +225,10 @@ export const SurveyDetailPage: React.FC = () => {
             <Box sx={{ p: 3 }}>
               {/* Analytics Tab */}
               {currentTab === 0 && (
-                <Box>
-                  <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
-                    Survey Analytics
-                  </Typography>
-                  
-                  {/* Overview Metrics */}
-                  {isStatsLoading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-                      <CircularProgress />
-                    </Box>
-                  ) : statsError ? (
-                    <Alert severity="error" sx={{ mb: 3 }}>
-                      Failed to load survey statistics
-                    </Alert>
-                  ) : surveyStats ? (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 4 }}>
-                      <Paper sx={{ flex: '1 1 200px', p: 2, textAlign: 'center' }}>
-                        <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                          {surveyStats.total_questions}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Questions
-                        </Typography>
-                      </Paper>
-                      
-                      <Paper sx={{ flex: '1 1 200px', p: 2, textAlign: 'center' }}>
-                        <Typography variant="h5" sx={{ fontWeight: 600, color: 'success.main' }}>
-                          {surveyStats.unique_respondents}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Unique Respondents
-                        </Typography>
-                      </Paper>
-                      
-                      <Paper sx={{ flex: '1 1 200px', p: 2, textAlign: 'center' }}>
-                        <Typography variant="h5" sx={{ fontWeight: 600, color: 'info.main' }}>
-                          {formatCompletionTime(surveyStats.average_completion_time)}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Avg. Completion Time
-                        </Typography>
-                      </Paper>
-                      
-                      <Paper sx={{ flex: '1 1 200px', p: 2, textAlign: 'center' }}>
-                        <Typography variant="h5" sx={{ fontWeight: 600, color: 'warning.main' }}>
-                          {formatCompletionRate(surveyStats.completion_rate)}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Completion Rate
-                        </Typography>
-                      </Paper>
-                    </Box>
-                  ) : null}
-
-                  {/* Placeholder for charts */}
-                  <Paper sx={{ p: 3, textAlign: 'center', bgcolor: 'action.hover' }}>
-                    <TrendingUpIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-                    <Typography variant="h6" color="text.secondary">
-                      Analytics Charts Coming Soon
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Response timeline, question breakdown, and insights will be displayed here
-                    </Typography>
-                  </Paper>
-                </Box>
+                <SurveyAnalyticsSection
+                  surveyId={surveyId!}
+                  surveyName={survey.title}
+                />
               )}
 
               {/* Generated Links Tab */}
