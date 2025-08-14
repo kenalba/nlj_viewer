@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
 """
+DEFUNCT - OLD CONSUMER SERVICE
+
+⚠️  THIS FILE IS NO LONGER USED ⚠️
+
+This consumer has been replaced by unified_consumer.py which runs in the nlj_xapi_consumer container.
+The unified consumer handles ALL event types including content generation, training, and surveys.
+
+DO NOT USE THIS FILE - it only handles xAPI events, not content generation.
+
+See: unified_consumer.py for the current implementation
+Container: nlj_xapi_consumer (running unified_consumer.py)
+
+---
+
+OLD DESCRIPTION (for reference only):
 Dedicated Kafka Consumer Service
 Runs as a separate container to process xAPI events from RedPanda → Ralph LRS → ElasticSearch
 """

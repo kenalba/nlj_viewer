@@ -298,22 +298,101 @@ interface DemographicConfiguration {
 - **Safe Data Access**: Defensive programming with safe data transformation functions and graceful handling of missing/malformed data
 - **Performance Optimized**: React Query caching, retry logic, and efficient re-rendering with proper loading states
 
-### Phase 3: Advanced Analytics Features 🔄 NEXT
-**Goals**: Enhanced analytics capabilities and user experience improvements
+## ⚠️ CRITICAL ARCHITECTURAL ISSUE: Question Identity Problem
 
-**Tasks**:
-1. Implement demographic cross-tabulation queries and cohort comparisons
-2. Add benchmark calculation engine with industry/regional comparisons
-3. Build export functionality (PDF, CSV, Excel reports)
-4. Create automated insight generation and recommendations
-5. Add question-by-question navigation and deep-linking
+### Root Cause Analysis 
+**ISSUE**: Questions exist only as embedded nodes within activities/surveys, lacking stable identities for cross-system analytics referencing.
 
-**Deliverables**:
-- Demographic cross-tabulation views
-- Benchmark comparison system
-- Export functionality with professional formatting
-- AI-powered insights and recommendations
-- Enhanced navigation and filtering
+**Current State (❌ Problematic)**:
+- Questions are JSON nodes within activity definitions (`activity.nodes[].id`)
+- xAPI statements reference questions as `"http://nlj.platform/content/{activity_id}/question/{node_id}"`
+- ElasticSearch aggregations attempt to group by these dynamic URIs
+- No standalone Question entities in database schema
+- Analytics cannot reliably identify same question across different surveys
+- Cross-survey comparisons impossible due to unstable question identities
+
+**Impact**:
+- ElasticSearch field mapping errors (`result.response` vs `result.response.keyword`)
+- Inconsistent question URI patterns breaking aggregation queries  
+- Cannot build question-centric analytics (same question across surveys)
+- Demographic analysis limited by question identity fragmentation
+- Benchmark comparisons fail due to unstable question references
+
+### Solution: Question Entity Architecture
+
+**PHASE 3A: Question Entity Refactor 🚨 HIGH PRIORITY**
+
+**Database Schema Changes**:
+```sql
+-- Standalone Question entities with stable UUIDs
+CREATE TABLE questions (
+  id UUID PRIMARY KEY,
+  title VARCHAR(500) NOT NULL,
+  question_type VARCHAR(50) NOT NULL,
+  scale_definition JSONB,
+  semantic_category VARCHAR(100),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Junction table linking Questions to Activities
+CREATE TABLE activity_questions (
+  activity_id UUID REFERENCES content_items(id),
+  question_id UUID REFERENCES questions(id),
+  node_id VARCHAR(100), -- Original node reference
+  order_index INTEGER,
+  PRIMARY KEY (activity_id, question_id)
+);
+```
+
+**xAPI Statement Changes**:
+```typescript
+// OLD: "object": {"id": "http://nlj.platform/content/{activity_id}/question/{node_id}"}
+// NEW: "object": {"id": "http://nlj.platform/questions/{question_uuid}"}
+```
+
+**Benefits**:
+- ✅ Stable question identities across surveys
+- ✅ Cross-survey question comparisons  
+- ✅ Consistent ElasticSearch aggregation queries
+- ✅ Question-centric analytics and benchmarking
+- ✅ Demographic analysis by specific questions
+- ✅ Question library and reuse capabilities
+
+### Phase 3: Current Status & Immediate Priorities
+
+**Current Status**: ⚠️ **BLOCKED ON QUESTION IDENTITY**
+
+**Problems Identified**:
+1. **ElasticSearch Field Mapping**: `result.response.keyword` aggregation errors (partially fixed)
+2. **Question URI Inconsistency**: Current pattern breaks aggregation grouping 
+3. **No Question Entities**: Cannot reference questions outside activity context
+4. **Analytics Data Transformation**: `_transform_survey_aggregations()` function fails due to unstable question IDs
+5. **Frontend Validation**: "No question data available" due to backend aggregation failures
+
+**Realistic Survey Data Generation**: ✅ **COMPLETED**
+- ✅ 6,304 realistic xAPI events with proper temporal distribution
+- ✅ Unified consumer processing all event types (started/answered/completed)
+- ✅ ElasticSearch contains survey response data
+- ✅ Proper drop-off rates and respondent uniqueness
+
+**Remaining Technical Debt**:
+```bash
+# Current field mapping issues in ralph_lrs_service.py:
+Line 468: "field": "result.response"          # Should be .keyword
+Line 760: "field": "result.response"          # Should be .keyword
+
+# Analytics API returns BadRequestError:
+# "Fielddata is disabled on [result.response] in [statements]"
+```
+
+**Next Priority Tasks**:
+1. 🚨 **Fix remaining ElasticSearch field mappings** (30 minutes)
+2. 🚨 **Test analytics API functionality** (1 hour) 
+3. 📋 **Assess scope of Question Entity refactor** (2 hours)
+4. 🎯 **Prototype Question Entity schema** (1 day)
+
+### Phase 3B: Enhanced Analytics Features (POST-REFACTOR)
+**Goals**: Advanced capabilities after Question Entity architecture is stable
 
 ### Phase 4: Mobile Optimization & Performance (Week 4)  
 **Goals**: Production-ready performance and mobile experience

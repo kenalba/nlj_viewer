@@ -46,11 +46,10 @@ sudo cp -r $REACT_PROJECT_PATH/dist/* $WEB_ROOT/
 sudo chown -R www-data:www-data $WEB_ROOT
 sudo chmod -R 755 $WEB_ROOT
 
-# Install FastAPI service
-echo "🐍 Installing FastAPI service..."
-sudo cp $PROJECT_ROOT/callcoach-api.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable callcoach-api
+# Start Docker backend
+echo "🐍 Starting Docker backend..."
+cd $PROJECT_ROOT
+docker compose up -d nlj-api
 
 # Install nginx configuration
 echo "🌐 Installing nginx configuration..."
@@ -62,7 +61,6 @@ sudo nginx -t
 
 # Restart services
 echo "🔄 Restarting services..."
-sudo systemctl restart callcoach-api
 sudo systemctl reload nginx
 
 # Verify deployment
@@ -77,12 +75,12 @@ else
     exit 1
 fi
 
-# Check FastAPI service
-if sudo systemctl is-active --quiet callcoach-api; then
-    echo "✅ FastAPI service is running"
+# Check FastAPI Docker service
+if docker ps | grep -q nlj_api; then
+    echo "✅ FastAPI Docker service is running"
 else
-    echo "❌ FastAPI service failed to start"
-    sudo systemctl status callcoach-api
+    echo "❌ FastAPI Docker service failed to start"
+    docker ps -a | grep nlj_api
     exit 1
 fi
 

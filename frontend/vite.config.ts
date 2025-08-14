@@ -27,6 +27,7 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    allowedHosts: ['callcoach.training', 'www.callcoach.training', 'localhost'],
     watch: {
       usePolling: true,
       interval: 1000,

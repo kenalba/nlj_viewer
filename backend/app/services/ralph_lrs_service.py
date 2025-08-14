@@ -465,7 +465,7 @@ class RalphLRSService:
                 # Response value distribution
                 "response_distribution": {
                     "terms": {
-                        "field": "result.response",
+                        "field": "result.response.keyword",
                         "size": 50,
                         "missing": "no_response"
                     }
@@ -757,7 +757,7 @@ class RalphLRSService:
         base_aggs = {
             "response_distribution": {
                 "terms": {
-                    "field": "result.response",
+                    "field": "result.response.keyword",
                     "size": 50
                 }
             },
