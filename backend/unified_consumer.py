@@ -19,6 +19,7 @@ sys.path.append(str(Path(__file__).parent))
 
 from aiokafka import AIOKafkaConsumer
 from app.services.ralph_lrs_service import RalphLRSService
+from app.services.kafka_service import kafka_service
 
 # Import all event handlers
 from app.services.event_consumers import (
@@ -115,6 +116,11 @@ class UnifiedXAPIConsumer:
         logger.info("=" * 50)
         
         try:
+            # Initialize Kafka producer for event publishing
+            logger.info("🔧 Initializing Kafka producer for event publishing...")
+            await kafka_service.start_producer()
+            logger.info("✅ Kafka producer initialized successfully")
+            
             # Create consumer for all xAPI topics
             self.consumer = AIOKafkaConsumer(
                 *self.topics,
