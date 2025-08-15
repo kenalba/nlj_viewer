@@ -317,10 +317,11 @@ class NodeInteraction(Base):
         index=True
     )
     
-    activity_id: Mapped[uuid.UUID] = mapped_column(
+    activity_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), 
         ForeignKey("content_items.id"), 
-        nullable=False
+        nullable=True,
+        index=True
     )
 
     # Session tracking

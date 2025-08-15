@@ -104,10 +104,14 @@ class ElasticsearchService:
     # xAPI STATEMENT STORAGE (NEW - REPLACES RALPH LRS)
     # ========================================================================
 
-    async def store_xapi_statement(self, statement: Dict[str, Any]) -> Dict[str, Any]:
+    async def store_xapi_statement(self, statement: Dict[str, Any], index_suffix: Optional[str] = None) -> Dict[str, Any]:
         """
-        Store xAPI statement with validation.
+        Store xAPI statement with validation and optional node-specific indexing.
         Replaces Ralph LRS storage with direct Elasticsearch integration.
+        
+        Args:
+            statement: xAPI statement dictionary
+            index_suffix: Optional suffix for node-specific indexing (e.g., 'node-123')
         """
         client = await self._get_client()
         if not client:
@@ -127,19 +131,27 @@ class ElasticsearchService:
             # Add stored timestamp for Ralph LRS compatibility
             statement["stored"] = datetime.now(timezone.utc).isoformat()
 
+            # Determine target index
+            target_index = self.index_name
+            if index_suffix:
+                target_index = f"{self.index_name}-{index_suffix}"
+                # Ensure node-specific index exists
+                await self._ensure_node_index(target_index)
+
             # Store in Elasticsearch
             response = await client.index(
-                index=self.index_name,
+                index=target_index,
                 id=statement["id"],
                 body=statement
             )
 
-            logger.info(f"Stored xAPI statement {statement['id']} in Elasticsearch")
+            logger.info(f"Stored xAPI statement {statement['id']} in Elasticsearch index {target_index}")
 
             return {
                 "success": True,
                 "statement_id": statement["id"],
                 "stored_at": statement["stored"],
+                "target_index": target_index,
                 "response": response,
             }
 
@@ -863,6 +875,386 @@ class ElasticsearchService:
                 break
 
         return streak
+
+    # ========================================================================
+    # NODE-SPECIFIC ANALYTICS METHODS
+    # ========================================================================
+
+    async def create_node_performance_index(self) -> Dict[str, Any]:
+        """Create specialized index for node performance analytics"""
+        client = await self._get_client()
+        if not client:
+            raise Exception("Elasticsearch client not available")
+
+        index_name = "node-performance-daily"
+        
+        # Node performance mapping optimized for time-series analytics
+        mapping = {
+            "mappings": {
+                "properties": {
+                    "node_id": {"type": "keyword"},
+                    "date": {"type": "date"},
+                    "node_type": {"type": "keyword"}, 
+                    "content_hash": {"type": "keyword"},
+                    "title": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
+                    
+                    # Learning concepts
+                    "learning_objectives": {"type": "keyword"},
+                    "keywords": {"type": "keyword"},
+                    "domain": {"type": "keyword"},
+                    
+                    # Performance metrics
+                    "total_interactions": {"type": "integer"},
+                    "success_rate": {"type": "float"},
+                    "avg_completion_time_ms": {"type": "integer"},
+                    "difficulty_score": {"type": "float"},
+                    "engagement_score": {"type": "float"},
+                    "unique_users": {"type": "integer"},
+                    
+                    # Activity context
+                    "activities_used_in": {"type": "keyword"},
+                    "activity_contexts": {
+                        "type": "nested",
+                        "properties": {
+                            "activity_id": {"type": "keyword"},
+                            "activity_title": {"type": "keyword"},
+                            "success_rate_in_activity": {"type": "float"},
+                            "avg_time_in_activity": {"type": "integer"}
+                        }
+                    },
+                    
+                    # Aggregation metadata
+                    "aggregated_at": {"type": "date"},
+                    "data_points": {"type": "integer"}
+                }
+            },
+            "settings": {
+                "number_of_shards": 1,
+                "number_of_replicas": 0,
+                "index": {"refresh_interval": "60s"}
+            }
+        }
+
+        try:
+            response = await client.indices.create(
+                index=index_name, body=mapping, ignore=400
+            )
+            logger.info(f"Created/verified node performance index: {index_name}")
+            return {"success": True, "index": index_name, "response": response}
+
+        except Exception as e:
+            logger.error(f"Error creating node performance index: {str(e)}")
+            raise
+
+    async def _ensure_node_index(self, index_name: str) -> None:
+        """Ensure node-specific index exists with proper mapping"""
+        client = await self._get_client()
+        if not client:
+            return
+
+        try:
+            # Check if index exists
+            exists = await client.indices.exists(index=index_name)
+            if exists:
+                return
+
+            # Create index with node-enhanced mapping
+            mapping = await self._get_node_enhanced_mapping()
+            await client.indices.create(
+                index=index_name, body=mapping, ignore=400
+            )
+            logger.info(f"Created node-specific index: {index_name}")
+
+        except Exception as e:
+            logger.warning(f"Failed to ensure node index {index_name}: {e}")
+
+    async def _get_node_enhanced_mapping(self) -> Dict[str, Any]:
+        """Get enhanced mapping for node-specific indexes"""
+        return {
+            "mappings": {
+                "properties": {
+                    "id": {"type": "keyword"},
+                    "timestamp": {"type": "date"},
+                    "stored": {"type": "date"},
+                    "version": {"type": "keyword"},
+                    
+                    # Enhanced actor mapping
+                    "actor": {
+                        "type": "object",
+                        "enabled": True,
+                        "properties": {
+                            "objectType": {"type": "keyword"},
+                            "name": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
+                            "mbox": {"type": "keyword"},
+                            "account": {
+                                "properties": {
+                                    "name": {"type": "keyword"}, 
+                                    "homePage": {"type": "keyword"}
+                                }
+                            },
+                        },
+                    },
+                    
+                    # Enhanced verb mapping
+                    "verb": {
+                        "type": "object",
+                        "enabled": True,
+                        "properties": {
+                            "id": {"type": "keyword"}, 
+                            "display": {"type": "object", "enabled": False}
+                        },
+                    },
+                    
+                    # Enhanced object mapping with node metadata
+                    "object": {
+                        "type": "object",
+                        "enabled": True,
+                        "properties": {
+                            "objectType": {"type": "keyword"},
+                            "id": {"type": "keyword"},
+                            "definition": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "object", "enabled": False},
+                                    "description": {"type": "object", "enabled": False},
+                                    "type": {"type": "keyword"},
+                                    "interactionType": {"type": "keyword"},
+                                    "extensions": {
+                                        "type": "object",
+                                        "properties": {
+                                            # Node metadata
+                                            "http://nlj.platform/extensions/node_metadata": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "node_id": {"type": "keyword"},
+                                                    "node_type": {"type": "keyword"},
+                                                    "content_hash": {"type": "keyword"},
+                                                    "title": {"type": "text"},
+                                                    "difficulty_level": {"type": "integer"},
+                                                    "created_at": {"type": "date"},
+                                                    "updated_at": {"type": "date"}
+                                                }
+                                            },
+                                            # Performance context
+                                            "http://nlj.platform/extensions/performance_context": {
+                                                "type": "object", 
+                                                "properties": {
+                                                    "node_historical_success_rate": {"type": "float"},
+                                                    "node_difficulty_score": {"type": "float"},
+                                                    "node_engagement_score": {"type": "float"}
+                                                }
+                                            },
+                                            # Learning concepts
+                                            "http://nlj.platform/extensions/learning_concepts": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "learning_objectives": {
+                                                        "type": "nested",
+                                                        "properties": {
+                                                            "id": {"type": "keyword"},
+                                                            "text": {"type": "text"},
+                                                            "domain": {"type": "keyword"},
+                                                            "cognitive_level": {"type": "keyword"}
+                                                        }
+                                                    },
+                                                    "keywords": {
+                                                        "type": "nested", 
+                                                        "properties": {
+                                                            "id": {"type": "keyword"},
+                                                            "text": {"type": "keyword"},
+                                                            "domain": {"type": "keyword"},
+                                                            "category": {"type": "keyword"}
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                            },
+                        },
+                    },
+                    
+                    # Enhanced result mapping
+                    "result": {
+                        "type": "object",
+                        "enabled": True,
+                        "properties": {
+                            "completion": {"type": "boolean"},
+                            "success": {"type": "boolean"},
+                            "score": {
+                                "type": "object",
+                                "properties": {
+                                    "scaled": {"type": "float"},
+                                    "raw": {"type": "float"},
+                                    "min": {"type": "float"},
+                                    "max": {"type": "float"},
+                                },
+                            },
+                            "duration": {"type": "keyword"},
+                            "response": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
+                        },
+                    },
+                    
+                    # Enhanced context mapping
+                    "context": {
+                        "type": "object",
+                        "enabled": True,
+                        "properties": {
+                            "platform": {"type": "keyword"},
+                            "language": {"type": "keyword"},
+                            "registration": {"type": "keyword"},
+                            "extensions": {
+                                "type": "object",
+                                "properties": {
+                                    "http://nlj.platform/extensions/session_id": {"type": "keyword"},
+                                    "http://nlj.platform/extensions/activity_id": {"type": "keyword"},
+                                    "http://nlj.platform/extensions/response_time_ms": {"type": "integer"},
+                                    "http://nlj.platform/extensions/attempts": {"type": "integer"},
+                                    "http://nlj.platform/extensions/sequence_context": {
+                                        "type": "object",
+                                        "properties": {
+                                            "current_position": {"type": "integer"},
+                                            "total_nodes": {"type": "integer"}, 
+                                            "progress_percentage": {"type": "float"}
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    },
+                }
+            },
+            "settings": {
+                "number_of_shards": 1,
+                "number_of_replicas": 0,
+                "index": {"refresh_interval": "30s"}
+            }
+        }
+
+    async def get_node_performance_analytics(
+        self, 
+        node_id: str,
+        since: Optional[str] = None,
+        include_activity_breakdown: bool = False
+    ) -> Dict[str, Any]:
+        """Get comprehensive performance analytics for a specific node"""
+        client = await self._get_client()
+        if not client:
+            raise Exception("Elasticsearch client not available")
+
+        # Build query for node-specific statements
+        query = {
+            "bool": {
+                "must": [
+                    {
+                        "bool": {
+                            "should": [
+                                {"term": {"object.id.keyword": f"node://{node_id}"}},
+                                {"term": {"object.definition.extensions.http://nlj.platform/extensions/node_metadata.node_id.keyword": node_id}}
+                            ],
+                            "minimum_should_match": 1
+                        }
+                    }
+                ]
+            }
+        }
+
+        # Add time filter if specified
+        if since:
+            query["bool"]["filter"] = [{"range": {"timestamp": {"gte": since}}}]
+
+        # Build aggregations for analytics
+        aggregations = {
+            "total_interactions": {"value_count": {"field": "id.keyword"}},
+            "unique_users": {"cardinality": {"field": "actor.account.name.keyword"}},
+            "success_rate": {"avg": {"field": "result.success"}},
+            "avg_response_time": {"avg": {"field": "context.extensions.http://nlj.platform/extensions/response_time_ms"}},
+            "completion_rate": {"avg": {"field": "result.completion"}},
+            "daily_activity": {
+                "date_histogram": {
+                    "field": "timestamp",
+                    "calendar_interval": "day",
+                    "format": "yyyy-MM-dd"
+                },
+                "aggs": {
+                    "interactions": {"value_count": {"field": "id.keyword"}},
+                    "success_rate": {"avg": {"field": "result.success"}}
+                }
+            }
+        }
+
+        # Add activity breakdown if requested
+        if include_activity_breakdown:
+            aggregations["by_activity"] = {
+                "terms": {
+                    "field": "context.extensions.http://nlj.platform/extensions/activity_id.keyword",
+                    "size": 50
+                },
+                "aggs": {
+                    "interactions": {"value_count": {"field": "id.keyword"}},
+                    "success_rate": {"avg": {"field": "result.success"}},
+                    "avg_response_time": {"avg": {"field": "context.extensions.http://nlj.platform/extensions/response_time_ms"}}
+                }
+            }
+
+        search_body = {
+            "query": query,
+            "aggs": aggregations,
+            "size": 0  # Only return aggregations
+        }
+
+        try:
+            response = await client.search(index=self.index_name, body=search_body)
+            aggs = response["aggregations"]
+            
+            result = {
+                "node_id": node_id,
+                "total_interactions": aggs["total_interactions"]["value"],
+                "unique_users": aggs["unique_users"]["value"], 
+                "success_rate": round(aggs["success_rate"]["value"] * 100, 1) if aggs["success_rate"]["value"] else 0,
+                "avg_response_time_ms": round(aggs["avg_response_time"]["value"]) if aggs["avg_response_time"]["value"] else None,
+                "completion_rate": round(aggs["completion_rate"]["value"] * 100, 1) if aggs["completion_rate"]["value"] else 0,
+                "daily_activity": [
+                    {
+                        "date": bucket["key_as_string"],
+                        "interactions": bucket["interactions"]["value"],
+                        "success_rate": round(bucket["success_rate"]["value"] * 100, 1) if bucket["success_rate"]["value"] else 0
+                    }
+                    for bucket in aggs["daily_activity"]["buckets"]
+                ],
+                "generated_at": datetime.now(timezone.utc).isoformat()
+            }
+
+            if include_activity_breakdown:
+                result["activity_breakdown"] = [
+                    {
+                        "activity_id": bucket["key"],
+                        "interactions": bucket["interactions"]["value"],
+                        "success_rate": round(bucket["success_rate"]["value"] * 100, 1) if bucket["success_rate"]["value"] else 0,
+                        "avg_response_time_ms": round(bucket["avg_response_time"]["value"]) if bucket["avg_response_time"]["value"] else None
+                    }
+                    for bucket in aggs["by_activity"]["buckets"]
+                ]
+
+            return result
+
+        except NotFoundError:
+            logger.info(f"No data found for node {node_id}")
+            return {
+                "node_id": node_id,
+                "total_interactions": 0,
+                "unique_users": 0,
+                "success_rate": 0,
+                "avg_response_time_ms": None,
+                "completion_rate": 0,
+                "daily_activity": [],
+                "generated_at": datetime.now(timezone.utc).isoformat()
+            }
+
+        except Exception as e:
+            logger.error(f"Error getting node analytics for {node_id}: {str(e)}")
+            raise
 
 
 # Global Elasticsearch service instance
