@@ -79,9 +79,8 @@ class ComplianceRisk:
 class PerformanceAnalysisService:
     """Advanced ML-powered performance analysis service"""
 
-    def __init__(self, es_service: ElasticsearchService, ralph_service: RalphLRSService):
+    def __init__(self, es_service: ElasticsearchService):
         self.es_service = es_service
-        self.ralph_service = ralph_service
 
         # Performance scoring weights
         self.scoring_weights = {
@@ -411,15 +410,8 @@ class PerformanceAnalysisService:
         except Exception as e:
             logger.debug(f"Could not get user name from ES for {email}: {str(e)}")
 
-        # Try to get from Ralph LRS as backup
-        try:
-            statements = await self.ralph_service.get_learner_statements(email, limit=1)
-            if statements:
-                actor = statements[0].get("actor", {})
-                if actor.get("name"):
-                    return actor["name"]
-        except Exception:
-            pass
+        # Ralph LRS removed - using FastStream + direct Elasticsearch only
+        # Could implement additional name lookup logic here if needed
 
         # Fallback to email username
         return email.split("@")[0].replace(".", " ").title()
@@ -602,8 +594,8 @@ class PerformanceAnalysisService:
             # Try to get user email from user_id (reverse lookup)
             user_email = await self._get_user_email_from_id(user_id)
 
-            # Get statements from Ralph LRS
-            statements = await self.ralph_service.get_learner_statements(user_email, since=since, limit=500)
+            # Get learner analytics directly from Elasticsearch (Ralph LRS removed)
+            learner_analytics = await self.es_service.get_learner_analytics(user_email, since=since)
 
             # Get additional analytics from Elasticsearch
             client = await self.es_service._get_client()
@@ -831,5 +823,5 @@ def get_performance_analysis_service() -> PerformanceAnalysisService:
     """Dependency provider for PerformanceAnalysisService"""
     from app.services.elasticsearch_service import elasticsearch_service
 
-    # Use the enhanced elasticsearch service (Ralph LRS removed in FastStream migration)
-    return PerformanceAnalysisService(es_service=elasticsearch_service, ralph_service=None)
+    # Use the elasticsearch service (Ralph LRS removed in FastStream migration)
+    return PerformanceAnalysisService(es_service=elasticsearch_service)

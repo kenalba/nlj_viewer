@@ -85,11 +85,14 @@ async def _check_kafka_health() -> Dict[str, Any]:
 async def _check_database_health() -> Dict[str, Any]:
     """Check database connectivity"""
     try:
+        # Ensure database manager is initialized first
+        await db_manager.ensure_initialized()
+        
         # Test database connection
         health_info = await db_manager.health_check()
         
         return {
-            "status": "healthy" if health_info.get("healthy") else "unhealthy",
+            "status": "healthy" if health_info.get("status") == "healthy" else "unhealthy",
             "connection_info": health_info
         }
         
@@ -128,8 +131,12 @@ def _check_validation_middleware_health() -> Dict[str, Any]:
         
         # Determine health based on validation success rate
         success_rate = validation_stats.get("success_rate", 100)
+        total_validations = validation_stats.get("total_validations", 0)
         
-        if success_rate >= 95:
+        # If no validations have occurred yet, consider it healthy
+        if total_validations == 0:
+            status = "healthy"
+        elif success_rate >= 95:
             status = "healthy"
         elif success_rate >= 80:
             status = "degraded"
