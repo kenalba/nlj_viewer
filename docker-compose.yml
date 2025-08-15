@@ -126,7 +126,7 @@ services:
       
       # Elasticsearch Configuration  
       - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - ELASTICSEARCH_INDEX=statements
+      - ELASTICSEARCH_INDEX=xapi-statements
       
     volumes:
       - ./backend/uploads:/app/uploads
@@ -266,7 +266,7 @@ services:
       
       # Elasticsearch Configuration
       - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - ELASTICSEARCH_INDEX=statements
+      - ELASTICSEARCH_INDEX=xapi-statements
       
       # Database Configuration (for training events)
       - DATABASE_URL=postgresql+asyncpg://nlj_user:nlj_pass@nlj-db:5432/nlj_platform

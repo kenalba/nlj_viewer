@@ -29,9 +29,10 @@ export interface PlatformMetrics {
 export interface AnalyticsData {
   platformOverview: PlatformMetrics;
   healthStatus: {
-    ralph_lrs: { success: boolean };
+    faststream: { success: boolean; status: string; system: string; architecture: string };
     elasticsearch: { success: boolean };
     analytics_system: string;
+    migration_status?: string;
   };
   trends: {
     daily_activity: Array<{

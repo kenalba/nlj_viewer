@@ -130,7 +130,7 @@ const AnalyticsPage: React.FC = () => {
             Learning Analytics Dashboard
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Real-time insights from Ralph LRS and Elasticsearch
+            Real-time insights from FastStream event processing and direct Elasticsearch integration
             {lastRefresh && (
               <Typography component="span" variant="caption" color="textSecondary" sx={{ ml: 2 }}>
                 • Last updated: {lastRefresh.toLocaleTimeString()}
@@ -179,7 +179,7 @@ const AnalyticsPage: React.FC = () => {
         >
           <Typography variant="body2">
             <strong>Analytics System:</strong> {analyticsData.healthStatus.analytics_system} | 
-            <strong> Ralph LRS:</strong> {analyticsData.healthStatus.ralph_lrs.success ? 'Connected' : 'Disconnected'} | 
+            <strong> FastStream:</strong> {analyticsData.healthStatus.faststream?.success ? 'Operational' : 'Degraded'} | 
             <strong> Elasticsearch:</strong> {analyticsData.healthStatus.elasticsearch.success ? 'Connected' : 'Disconnected'}
           </Typography>
         </Alert>

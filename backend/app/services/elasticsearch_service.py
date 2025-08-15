@@ -468,7 +468,7 @@ class ElasticsearchService:
             "size": 0,
             "query": ({"bool": {"filter": query_filter}} if query_filter else {"match_all": {}}),
             "aggs": {
-                "total_statements": {"value_count": {"field": "id"}},
+                "total_statements": {"value_count": {"field": "id.keyword"}},
                 "unique_learners": {"cardinality": {"field": "actor.mbox.keyword"}},
                 "unique_activities": {"cardinality": {"field": "object.id.keyword"}},
                 "completion_rate": {
