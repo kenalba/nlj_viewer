@@ -530,7 +530,7 @@ async def generate_fake_survey_responses(num_responses_per_survey: int = 50):
                     await kafka_service.send_xapi_statement(statement)
                     
                     # Send directly to Elasticsearch for immediate availability
-                    await elasticsearch_service.index_statement(statement)
+                    await elasticsearch_service.store_xapi_statement(statement)
                     
                 except Exception as e:
                     print(f"❌ Error sending statement: {e}")

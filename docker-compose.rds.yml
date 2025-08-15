@@ -43,8 +43,8 @@ services:
       retries: 5
       start_period: 60s  # Give time for RDS to initialize
 
-  # Override xAPI Consumer service for RDS connection
-  xapi-consumer:
+  # Override FastStream Consumer service for RDS connection
+  nlj-faststream-consumer:
     environment:
       # RDS Configuration (same as API)
       - USE_RDS=true

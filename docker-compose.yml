@@ -85,7 +85,7 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - backend/.env
+      - .env
     environment:
       # Database Configuration
       - DATABASE_URL=postgresql+asyncpg://nlj_user:nlj_pass@nlj-db:5432/nlj_platform
@@ -118,11 +118,6 @@ services:
       
       # Frontend URL
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
-      
-      # Ralph LRS Configuration
-      - RALPH_LRS_URL=http://ralph-lrs:8100
-      - RALPH_LRS_USERNAME=nlj-platform
-      - RALPH_LRS_SECRET=nlj-secure-secret-2024
       
       # Elasticsearch Configuration  
       - ELASTICSEARCH_URL=http://elasticsearch:9200
@@ -202,94 +197,6 @@ services:
     profiles:
       - analytics
 
-  # Ralph LRS - Standards-Compliant xAPI Learning Record Store
-  ralph-lrs:
-    image: fundocker/ralph:latest
-    container_name: nlj_ralph_lrs
-    user: root
-    entrypoint: ["/app/config/init.sh"]
-    environment:
-      # Elasticsearch backend configuration
-      - RALPH_BACKENDS__LRS__ES__HOSTS=http://elasticsearch:9200
-      - RALPH_BACKENDS__LRS__ES__INDEX=statements
-      - RALPH_BACKENDS__LRS__ES__TEST_INDEX=test-statements
-      
-      # LRS server configuration
-      - RALPH_RUNSERVER_HOST=0.0.0.0
-      - RALPH_RUNSERVER_PORT=8100
-      - RALPH_RUNSERVER_BACKEND=es
-      
-      # Authentication configuration file path
-      - RALPH_AUTH__BACKENDS=basic
-      - RALPH_AUTH__BASIC__FILE=/app/config/auth.json
-      
-      # Performance settings
-      - RALPH_BACKENDS__LRS__ES__WRITE_CHUNK_SIZE=500
-      - RALPH_BACKENDS__LRS__ES__READ_CHUNK_SIZE=500
-      
-      # Accept yellow cluster status for single-node setup
-      - RALPH_BACKENDS__LRS__ES__ALLOW_YELLOW_STATUS=true
-      
-    ports:
-      - "8100:8100"
-    volumes:
-      - ./config/ralph:/app/config:ro
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - nlj_network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8100/__heartbeat__ || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    restart: unless-stopped
-    profiles:
-      - analytics
-
-  # Unified xAPI Consumer - Single Container for ALL xAPI Event Processing
-  xapi-consumer:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.consumer
-    container_name: nlj_xapi_consumer
-    environment:
-      # Kafka Configuration
-      - KAFKA_BOOTSTRAP_SERVERS=redpanda:29092
-      
-      # Ralph LRS Configuration
-      - RALPH_LRS_URL=http://ralph-lrs:8100
-      - RALPH_LRS_USERNAME=nlj-platform
-      - RALPH_LRS_SECRET=nlj-secure-secret-2024
-      
-      # Elasticsearch Configuration
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - ELASTICSEARCH_INDEX=xapi-statements
-      
-      # Database Configuration (for training events)
-      - DATABASE_URL=postgresql+asyncpg://nlj_user:nlj_pass@nlj-db:5432/nlj_platform
-      
-      # Claude API (for content generation events)
-      - CLAUDE_API_KEY=${CLAUDE_API_KEY:-}
-      
-    volumes:
-      - ./backend/app:/app/app  # For development hot-reload
-    depends_on:
-      nlj-db:
-        condition: service_healthy
-      redpanda:
-        condition: service_healthy
-      ralph-lrs:
-        condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - nlj_network
-    restart: unless-stopped
-    profiles:
-      - analytics
 
   # FastStream xAPI Consumer - Modern Event Processing (NEW)
   nlj-faststream-consumer:

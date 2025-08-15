@@ -12,7 +12,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from app.services.elasticsearch_service import ElasticsearchService
-from app.services.ralph_lrs_service import RalphLRSService
 
 logger = logging.getLogger(__name__)
 
@@ -831,7 +830,6 @@ class PerformanceAnalysisService:
 def get_performance_analysis_service() -> PerformanceAnalysisService:
     """Dependency provider for PerformanceAnalysisService"""
     from app.services.elasticsearch_service import elasticsearch_service
-    from app.services.ralph_lrs_service import ralph_lrs_service
 
-    # Use the global service instances directly
-    return PerformanceAnalysisService(es_service=elasticsearch_service, ralph_service=ralph_lrs_service)
+    # Use the enhanced elasticsearch service (Ralph LRS removed in FastStream migration)
+    return PerformanceAnalysisService(es_service=elasticsearch_service, ralph_service=None)

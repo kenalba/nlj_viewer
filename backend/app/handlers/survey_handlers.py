@@ -11,7 +11,7 @@ from faststream import Depends
 from pydantic import BaseModel, Field
 
 from app.brokers.kafka_broker import broker
-from app.services.enhanced_elasticsearch_service import get_elasticsearch_service, ElasticsearchService
+from app.services.elasticsearch_service import get_elasticsearch_service, ElasticsearchService
 from app.middleware.xapi_subscriber_middleware import xapi_validation_middleware
 
 logger = logging.getLogger(__name__)

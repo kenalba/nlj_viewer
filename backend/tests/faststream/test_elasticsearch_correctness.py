@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 from typing import Dict, Any
 
-from app.services.enhanced_elasticsearch_service import ElasticsearchService
+from app.services.elasticsearch_service import ElasticsearchService
 
 
 class TestElasticsearchCorrectness:

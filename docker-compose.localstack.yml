@@ -8,7 +8,7 @@ services:
     # Use Pro image for RDS support - using stable version
     image: localstack/localstack-pro:2.3
     env_file:
-      - backend/.env
+      - .env
     ports:
       - "4566:4566"            # LocalStack Gateway
       - "4510-4559:4510-4559"  # External services port range

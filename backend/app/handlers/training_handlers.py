@@ -20,7 +20,7 @@ from app.models.training_program import (
     TrainingProgram,
     TrainingSession,
 )
-from app.services.enhanced_elasticsearch_service import get_elasticsearch_service, ElasticsearchService
+from app.services.elasticsearch_service import get_elasticsearch_service, ElasticsearchService
 
 logger = logging.getLogger(__name__)
 

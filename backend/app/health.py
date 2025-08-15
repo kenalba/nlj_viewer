@@ -10,7 +10,7 @@ from typing import Dict, Any
 
 from app.brokers.kafka_broker import broker
 from app.core.database_manager import db_manager
-from app.services.enhanced_elasticsearch_service import elasticsearch_service
+from app.services.elasticsearch_service import elasticsearch_service
 from app.middleware.xapi_validation import xapi_validation_middleware
 
 logger = logging.getLogger(__name__)

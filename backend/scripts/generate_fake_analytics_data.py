@@ -29,7 +29,7 @@ from app.models.content import ContentItem
 
 # Import models and services
 from app.models.user import User, UserRole
-from app.services.enhanced_elasticsearch_service import enhanced_elasticsearch_service as elasticsearch_service
+from app.services.elasticsearch_service import elasticsearch_service
 from app.services.kafka_service import kafka_service
 
 # Password hashing
