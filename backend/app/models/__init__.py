@@ -3,7 +3,15 @@
 from .activity_source import ActivitySource
 from .content import ContentItem, ContentState, ContentType, LearningStyle
 from .generation_session import GenerationSession
+from .learning_objective import (
+    Keyword,
+    LearningObjective,
+    NodeKeyword,
+    NodeLearningObjective,
+    ObjectivePrerequisite,
+)
 from .media import MediaItem, MediaState, MediaStyle, MediaType, VoiceType
+from .node import ActivityNode, Node, NodeInteraction
 from .shared_token import SharedToken
 from .source_document import SourceDocument
 from .training_program import AttendanceRecord, TrainingBooking, TrainingProgram, TrainingSession
@@ -54,4 +62,13 @@ __all__ = [
     "ReviewDecision",
     "WorkflowTemplateType",
     "StageType",
+    # Node-level models
+    "Node",
+    "ActivityNode",
+    "NodeInteraction",
+    "LearningObjective",
+    "Keyword",
+    "NodeLearningObjective",
+    "NodeKeyword",
+    "ObjectivePrerequisite",
 ]

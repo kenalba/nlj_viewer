@@ -57,6 +57,14 @@ async def create_tables() -> None:
         # Import all models here to ensure they're registered
         from app.models.content import ContentItem  # noqa: F401
         from app.models.user import User  # noqa: F401
+        from app.models.node import Node, ActivityNode, NodeInteraction  # noqa: F401
+        from app.models.learning_objective import (  # noqa: F401
+            LearningObjective, 
+            Keyword, 
+            NodeLearningObjective, 
+            NodeKeyword, 
+            ObjectivePrerequisite
+        )
 
         # TODO: Uncomment when approval workflow is implemented
         # from app.models.workflow import ApprovalWorkflow, ApprovalStep  # noqa: F401

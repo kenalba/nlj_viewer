@@ -21,6 +21,15 @@ from app.models.workflow import ContentVersion, ApprovalWorkflow, WorkflowReview
 from app.models.source_document import SourceDocument  # noqa: F401
 from app.models.generation_session import GenerationSession  # noqa: F401
 from app.models.activity_source import ActivitySource  # noqa: F401
+# Import new node models
+from app.models.node import Node, ActivityNode, NodeInteraction  # noqa: F401
+from app.models.learning_objective import (  # noqa: F401
+    LearningObjective, 
+    Keyword, 
+    NodeLearningObjective, 
+    NodeKeyword, 
+    ObjectivePrerequisite
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -78,9 +87,15 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
     """Run migrations in 'online' mode with async support."""
-    # Create async engine
+    # Use database manager for proper RDS/LocalStack connection handling
+    from app.core.database_manager import db_manager
+    
+    # Initialize database manager to get proper connection URL
+    await db_manager.initialize()
+    
+    # Create async engine using the database manager's connection URL
     connectable = create_async_engine(
-        settings.DATABASE_URL,
+        str(db_manager._connection_url),
         poolclass=pool.NullPool,
     )
 
