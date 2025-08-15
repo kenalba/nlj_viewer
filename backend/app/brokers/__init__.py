@@ -1,0 +1,1 @@
+"""FastStream broker configurations for NLJ Platform"""

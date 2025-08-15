@@ -291,6 +291,76 @@ services:
     profiles:
       - analytics
 
+  # FastStream xAPI Consumer - Modern Event Processing (NEW)
+  nlj-faststream-consumer:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.faststream
+    container_name: nlj_faststream_consumer
+    command: [".venv/bin/python", "-c", "import asyncio; from app.brokers.kafka_broker import app; asyncio.run(app.run())"]
+    environment:
+      # Core FastStream settings
+      - FASTSTREAM_WORKERS=4
+      - FASTSTREAM_LOG_LEVEL=INFO
+      
+      # Kafka Configuration
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:29092
+      - KAFKA_CLIENT_ID=nlj-faststream-platform
+      - KAFKA_GROUP_ID=nlj-faststream-consumer
+      
+      # Database Configuration
+      - DATABASE_URL=postgresql+asyncpg://nlj_user:nlj_pass@nlj-db:5432/nlj_platform
+      - DATABASE_POOL_SIZE=10
+      - DATABASE_MAX_OVERFLOW=20
+      
+      # Elasticsearch Configuration (Direct - No Ralph LRS)
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ELASTICSEARCH_INDEX=xapi-statements
+      - ELASTICSEARCH_TIMEOUT=30
+      
+      # Claude API Configuration
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY:-}
+      
+      # Application Settings
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      
+    volumes:
+      - ./backend/app:/app/app  # Development hot-reload
+    depends_on:
+      nlj-db:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      # NOTE: No ralph-lrs dependency - direct Elasticsearch integration
+    networks:
+      - nlj_network
+    restart: unless-stopped
+    
+    # Resource limits for FastStream container
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+    
+    # Health check using FastStream health module
+    healthcheck:
+      test: ["CMD-SHELL", ".venv/bin/python -c 'import asyncio; from app.health import health_check; health = asyncio.run(health_check()); exit(0 if health[\"status\"] != \"unhealthy\" else 1)'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    profiles:
+      - faststream
+      - analytics
+
 
 volumes:
   nlj_db_data:

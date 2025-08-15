@@ -1,0 +1,87 @@
+# FastStream Event Processor Dockerfile
+# Optimized container with virtual environment for isolation
+
+FROM python:3.11-slim
+
+LABEL maintainer="NLJ Platform Team"
+LABEL description="FastStream-based xAPI event processor for NLJ Platform"
+
+# Set working directory
+WORKDIR /app
+
+# Set environment variables for Python optimization
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONPATH=/app
+
+# Install system dependencies including compression libraries for Kafka
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    libsnappy-dev \
+    liblz4-dev \
+    libzstd-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment with standard Python
+RUN python -m venv .venv
+
+# Copy dependency file
+COPY pyproject.toml ./
+
+# Install dependencies in virtual environment using pip
+RUN . .venv/bin/activate && \
+    pip install --upgrade pip && \
+    pip install "faststream[kafka,cli]" \
+    typer \
+    rich \
+    watchfiles \
+    shellingham \
+    fastapi \
+    uvicorn[standard] \
+    sqlalchemy \
+    asyncpg \
+    elasticsearch[async] \
+    pydantic[email] \
+    email-validator \
+    pydantic-settings \
+    python-jose[cryptography] \
+    passlib[bcrypt] \
+    httpx \
+    aiohttp \
+    openpyxl \
+    python-dotenv \
+    anthropic \
+    python-docx \
+    pypdf \
+    python-magic \
+    aiofiles \
+    aiokafka \
+    kafka-python \
+    bcrypt \
+    boto3 \
+    uvloop \
+    python-snappy \
+    lz4
+
+# Copy application code
+COPY app/ ./app/
+
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash faststream && \
+    chown -R faststream:faststream /app
+USER faststream
+
+# Expose health check port (optional)
+EXPOSE 8080
+
+# Health check endpoint using virtual environment
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD .venv/bin/python -c "import sys; print('FastStream healthy:', sys.executable)" || exit 1
+
+# Set resource limits (can be overridden in docker-compose)
+ENV FASTSTREAM_WORKERS=4
+ENV FASTSTREAM_LOG_LEVEL=INFO
+
+# Run FastStream application using direct import (CLI has container issues)
+CMD [".venv/bin/python", "-c", "import asyncio; from app.brokers.kafka_broker import app; asyncio.run(app.run())"]

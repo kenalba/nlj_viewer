@@ -8,6 +8,7 @@ the analytics dashboard with meaningful data.
 """
 
 import asyncio
+import json
 import random
 import sys
 import uuid
@@ -28,7 +29,7 @@ from app.models.content import ContentItem
 
 # Import models and services
 from app.models.user import User, UserRole
-from app.services.elasticsearch_service import elasticsearch_service
+from app.services.enhanced_elasticsearch_service import enhanced_elasticsearch_service as elasticsearch_service
 from app.services.kafka_service import kafka_service
 
 # Password hashing
@@ -156,14 +157,82 @@ class FakeDataGenerator:
         print(f"📚 Found {len(self.activities)} published activities")
 
         if not self.activities:
-            print("⚠️  No published activities found! Run seed_database.py first.")
-            return False
+            print("⚠️  No published activities found! Creating sample activities...")
+            await self.create_sample_activities()
+            
+            # Reload activities after creating samples
+            result = await self.session.execute(select(ContentItem).where(ContentItem.state == "published"))
+            self.activities = result.scalars().all()
+            print(f"📚 Created {len(self.activities)} sample activities")
 
         if len(self.users) < 5:
             print("⚠️  Insufficient users found! Run seed_database.py first.")
             return False
 
         return True
+
+    async def create_sample_activities(self):
+        """Create sample activities from static/sample_nljs directory."""
+        # Try multiple possible paths for sample NLJs
+        possible_paths = [
+            Path(__file__).parent.parent.parent / "static" / "sample_nljs",  # From repository root
+            Path("/app") / "static" / "sample_nljs",  # Container path
+            Path("/static") / "sample_nljs",  # Alternative container path
+        ]
+        
+        sample_nljs_dir = None
+        for path in possible_paths:
+            if path.exists():
+                sample_nljs_dir = path
+                break
+        
+        if not sample_nljs_dir:
+            print(f"⚠️  Sample NLJs directory not found in any of: {[str(p) for p in possible_paths]}")
+            return
+        
+        # Find JSON files in the sample directory
+        json_files = list(sample_nljs_dir.glob("*.json"))
+        if not json_files:
+            print(f"⚠️  No JSON files found in: {sample_nljs_dir}")
+            return
+        
+        print(f"📚 Loading {len(json_files)} sample activities...")
+        
+        # Get admin user for creating activities
+        admin_result = await self.session.execute(select(User).where(User.role == UserRole.ADMIN).limit(1))
+        admin_user = admin_result.scalar_one_or_none()
+        
+        if not admin_user:
+            print("⚠️  No admin user found to create activities")
+            return
+        
+        created_count = 0
+        
+        for json_file in json_files:
+            try:
+                with open(json_file, 'r', encoding='utf-8') as f:
+                    nlj_data = json.load(f)
+                
+                # Create ContentItem from NLJ data
+                activity = ContentItem(
+                    title=nlj_data.get("name", json_file.stem.replace("_", " ").title()),
+                    description=nlj_data.get("description", f"Sample activity from {json_file.name}"),
+                    content_type=nlj_data.get("activityType", "training"),
+                    nlj_data=nlj_data,
+                    state="published",  # Publish immediately for testing
+                    created_by=admin_user.id
+                )
+                
+                self.session.add(activity)
+                created_count += 1
+                print(f"  ✅ Created activity: {activity.title}")
+                
+            except Exception as e:
+                print(f"  ❌ Failed to load {json_file.name}: {e}")
+                continue
+        
+        await self.session.commit()
+        print(f"🎉 Successfully created {created_count} sample activities!")
 
     async def create_additional_fake_users(self, count: int = 50) -> List[User]:
         """Create additional fake users with diverse personas."""
@@ -315,16 +384,16 @@ class FakeDataGenerator:
         statement = {
             "id": str(uuid.uuid4()),
             "version": "1.0.3",
-            "timestamp": timestamp.isoformat(),
+            "timestamp": timestamp.isoformat().replace("+00:00", "Z"),  # Ensure Z format
             "actor": {"objectType": "Agent", "name": user.full_name, "mbox": f"mailto:{user.email}"},
             "verb": {"id": XAPI_VERBS[verb], "display": {"en-US": verb.title()}},
             "object": {
                 "objectType": "Activity",
-                "id": f"http://nlj-platform.com/activities/{activity.id}",
+                "id": f"http://nlj.platform/activities/{activity.id}",  # Updated to match platform URLs
                 "definition": {
                     "name": {"en-US": activity.title},
                     "description": {"en-US": activity.description or ""},
-                    "type": f"http://nlj-platform.com/activitytypes/{activity.content_type}",
+                    "type": f"http://nlj.platform/activitytypes/{activity.content_type}",  # content_type is already a string
                     "interactionType": self.get_interaction_type(activity),
                 },
             },
@@ -616,7 +685,13 @@ class FakeDataGenerator:
                 batch = self.generated_events[i : i + batch_size]
 
                 for event in batch:
-                    await kafka_service.publish_event("xapi-events", event)
+                    # Send to appropriate topic based on event type
+                    if event.get("verb", {}).get("id") == XAPI_VERBS["answered"]:
+                        await kafka_service.publish_event("nlj.survey.responses", event)
+                    elif event.get("verb", {}).get("id") in [XAPI_VERBS["completed"], XAPI_VERBS["experienced"]]:
+                        await kafka_service.publish_event("nlj.learning.activities", event)
+                    else:
+                        await kafka_service.publish_event("xapi-events", event)
 
                 # Small delay between batches to avoid overwhelming
                 if delay_ms > 0:

@@ -104,7 +104,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Verify token is still valid with a shorter timeout for UX
           const verifyPromise = authAPI.verifyToken();
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Token verification timeout')), 10000) // 10 second timeout
+            setTimeout(() => reject(new Error('Token verification timeout')), 3000) // 3 second timeout
           );
           
           await Promise.race([verifyPromise, timeoutPromise]);

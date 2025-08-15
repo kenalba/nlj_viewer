@@ -2,7 +2,6 @@
 name = "nlj-platform-backend"
 version = "0.1.0"
 description = "FastAPI backend for NLJ Platform"
-readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     # Core FastAPI dependencies
@@ -37,9 +36,11 @@ dependencies = [
     "python-magic",
     # File handling
     "aiofiles",
-    # Kafka integration
+    # Kafka integration - Legacy (will be replaced by FastStream)
     "aiokafka",
     "kafka-python",
+    # FastStream for modern event-driven architecture
+    "faststream[kafka]>=0.5.0",
     # Elasticsearch for analytics
     "elasticsearch[async]",
     "bcrypt>=4.3.0",
@@ -57,6 +58,9 @@ dev = [
     "mypy",
     "ruff",
     "autoflake",
+    # FastStream testing support
+    "faststream[testing]",
+    "pytest-mock",
 ]
 
 [build-system]
