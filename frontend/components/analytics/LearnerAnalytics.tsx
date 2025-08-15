@@ -163,11 +163,11 @@ export const LearnerAnalytics: React.FC = () => {
                     py: 4, 
                     textAlign: 'center',
                     border: '2px dashed',
-                    borderColor: 'grey.300',
+                    borderColor: 'divider',
                     borderRadius: 2,
-                    bgcolor: 'grey.50'
+                    bgcolor: 'action.hover'
                   }}>
-                    <Typography variant="h6" color="grey.600" gutterBottom>
+                    <Typography variant="h6" color="text.secondary" gutterBottom>
                       No Learner Data Available
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -180,7 +180,7 @@ export const LearnerAnalytics: React.FC = () => {
                     {topPerformers.slice(0, 5).map((learner, index) => (
                       <ListItem key={learner.email} divider>
                         <ListItemIcon>
-                          <Avatar sx={{ bgcolor: index < 3 ? 'gold' : 'grey.300', width: 32, height: 32 }}>
+                          <Avatar sx={{ bgcolor: index < 3 ? 'warning.main' : 'action.disabled', width: 32, height: 32 }}>
                             {index + 1}
                           </Avatar>
                         </ListItemIcon>
@@ -214,11 +214,11 @@ export const LearnerAnalytics: React.FC = () => {
                     py: 4, 
                     textAlign: 'center',
                     border: '2px dashed',
-                    borderColor: 'grey.300',
+                    borderColor: 'divider',
                     borderRadius: 2,
-                    bgcolor: 'grey.50'
+                    bgcolor: 'action.hover'
                   }}>
-                    <Typography variant="h6" color="grey.600" gutterBottom>
+                    <Typography variant="h6" color="text.secondary" gutterBottom>
                       No Streak Data Available
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -231,7 +231,7 @@ export const LearnerAnalytics: React.FC = () => {
                     {activeStreaks.slice(0, 5).map((learner, index) => (
                       <ListItem key={learner.email} divider>
                         <ListItemIcon>
-                          <Avatar sx={{ bgcolor: 'orange.main', width: 32, height: 32 }}>
+                          <Avatar sx={{ bgcolor: 'warning.main', width: 32, height: 32 }}>
                             🔥
                           </Avatar>
                         </ListItemIcon>

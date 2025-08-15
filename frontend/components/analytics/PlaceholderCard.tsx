@@ -22,7 +22,7 @@ interface PlaceholderCardProps {
 }
 
 export const PlaceholderCard: React.FC<PlaceholderCardProps> = ({ title, description, features }) => (
-  <Card sx={{ border: '2px dashed', borderColor: 'grey.300', bgcolor: 'grey.50' }}>
+  <Card sx={{ border: '2px dashed', borderColor: 'divider', bgcolor: 'action.hover' }}>
     <CardContent>
       <Typography variant="h6" gutterBottom color="text.secondary">
         {title}
@@ -37,7 +37,7 @@ export const PlaceholderCard: React.FC<PlaceholderCardProps> = ({ title, descrip
         {features.map((feature, index) => (
           <ListItem key={index} sx={{ py: 0 }}>
             <ListItemIcon sx={{ minWidth: 20 }}>
-              <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: 'grey.400' }} />
+              <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: 'text.secondary' }} />
             </ListItemIcon>
             <ListItemText 
               primary={feature} 

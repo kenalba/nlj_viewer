@@ -146,8 +146,8 @@ export const TopPerformersAnalysis: React.FC<TopPerformersAnalysisProps> = ({
 
   const getRankColor = (rank: number) => {
     if (rank === 1) return theme.palette.warning.main; // Gold
-    if (rank === 2) return theme.palette.grey[400]; // Silver
-    if (rank === 3) return '#CD7F32'; // Bronze
+    if (rank === 2) return theme.palette.action.disabled; // Silver
+    if (rank === 3) return theme.palette.secondary.main; // Bronze
     return theme.palette.primary.main;
   };
 

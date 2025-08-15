@@ -61,16 +61,16 @@ export const TrendsInsights: React.FC<TrendsInsightsProps> = ({ data }) => {
               flexDirection: 'column',
               alignItems: 'center', 
               justifyContent: 'center',
-              bgcolor: 'grey.50',
+              bgcolor: 'action.hover',
               borderRadius: 1,
               border: '1px dashed',
-              borderColor: 'grey.300'
+              borderColor: 'divider'
             }}>
-              <BarChartIcon sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
-              <Typography variant="h6" color="grey.600" gutterBottom>
+              <BarChartIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
                 No Trend Data Available
               </Typography>
-              <Typography variant="body2" color="grey.500" textAlign="center" maxWidth={400}>
+              <Typography variant="body2" color="text.secondary" textAlign="center" maxWidth={400}>
                 Once users complete more learning activities, trend analysis will appear here.
                 Generate sample data to see charts in action.
               </Typography>

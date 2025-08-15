@@ -266,7 +266,7 @@ export const AuditTrail: React.FC = () => {
       case 'attempted': return theme.palette.info.main;
       case 'experienced': return theme.palette.primary.main;
       case 'answered': return theme.palette.warning.main;
-      default: return theme.palette.grey[500];
+      default: return theme.palette.text.secondary;
     }
   };
   
@@ -518,12 +518,12 @@ export const AuditTrail: React.FC = () => {
               py: 6, 
               textAlign: 'center',
               border: '2px dashed',
-              borderColor: 'grey.300',
+              borderColor: 'divider',
               borderRadius: 2,
-              bgcolor: 'grey.50'
+              bgcolor: 'action.hover'
             }}>
-              <TimelineIcon sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
-              <Typography variant="h6" color="grey.600" gutterBottom>
+              <TimelineIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
                 No xAPI Statements Found
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -631,7 +631,7 @@ export const AuditTrail: React.FC = () => {
                         <TableRow>
                           <TableCell colSpan={7} sx={{ py: 0 }}>
                             <Collapse in={expandedStatement === statement.id}>
-                              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                              <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
                                 <Box sx={{ 
                                   display: 'flex', 
                                   gap: 2,
@@ -717,7 +717,7 @@ export const AuditTrail: React.FC = () => {
                 Raw JSON
               </Typography>
               <Box sx={{ 
-                bgcolor: 'grey.100', 
+                bgcolor: 'action.selected', 
                 p: 2, 
                 borderRadius: 1, 
                 fontFamily: 'monospace',

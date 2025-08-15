@@ -189,7 +189,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
       case 'COMPLIANT': return theme.palette.success.main;
       case 'AT_RISK': return theme.palette.warning.main;
       case 'EXPIRED': return theme.palette.error.main;
-      case 'MISSING': return theme.palette.grey[500];
+      case 'MISSING': return theme.palette.text.secondary;
       default: return theme.palette.text.secondary;
     }
   };

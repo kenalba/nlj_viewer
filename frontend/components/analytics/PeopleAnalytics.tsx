@@ -235,7 +235,7 @@ export const PeopleAnalytics: React.FC<PeopleAnalyticsProps> = ({
       case 'high': return theme.palette.success.main;
       case 'medium': return theme.palette.warning.main;
       case 'low': return theme.palette.error.main;
-      default: return theme.palette.grey[500];
+      default: return theme.palette.text.secondary;
     }
   };
 
@@ -243,7 +243,7 @@ export const PeopleAnalytics: React.FC<PeopleAnalyticsProps> = ({
     switch (trend) {
       case 'improving': return <TrendingUpIcon color="success" />;
       case 'stable': return <TrendIcon color="info" />;
-      case 'declining': return <TrendingUpIcon sx={{ transform: 'scaleY(-1)', color: theme.palette.error.main }} />;
+      case 'declining': return <TrendingUpIcon sx={{ transform: 'scaleY(-1)', color: 'error.main' }} />;
       default: return <TrendIcon />;
     }
   };
@@ -415,11 +415,11 @@ export const PeopleAnalytics: React.FC<PeopleAnalyticsProps> = ({
                   py: 4, 
                   textAlign: 'center',
                   border: '2px dashed',
-                  borderColor: 'grey.300',
+                  borderColor: 'divider',
                   borderRadius: 2,
-                  bgcolor: 'grey.50'
+                  bgcolor: 'action.hover'
                 }}>
-                  <Typography variant="h6" color="grey.600" gutterBottom>
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
                     No Performance Data Available
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -583,11 +583,11 @@ export const PeopleAnalytics: React.FC<PeopleAnalyticsProps> = ({
                   py: 4, 
                   textAlign: 'center',
                   border: '2px dashed',
-                  borderColor: 'grey.300',
+                  borderColor: 'divider',
                   borderRadius: 2,
-                  bgcolor: 'grey.50'
+                  bgcolor: 'action.hover'
                 }}>
-                  <Typography variant="h6" color="grey.600" gutterBottom>
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
                     No Engagement Data Available
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -633,7 +633,7 @@ export const PeopleAnalytics: React.FC<PeopleAnalyticsProps> = ({
                             size="small"
                             sx={{ 
                               bgcolor: getEngagementColor(insight.engagement_level),
-                              color: 'white',
+                              color: 'primary.contrastText',
                               fontWeight: 'bold'
                             }}
                           />

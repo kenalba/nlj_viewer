@@ -19,6 +19,7 @@ import {
   TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import { LineChart } from '@mui/x-charts';
+import { useTheme } from '@mui/material/styles';
 import { AnalyticsData } from '../../hooks/useAnalyticsData';
 
 interface AnalyticsOverviewProps {
@@ -34,7 +35,9 @@ interface MetricCardProps {
   trend?: string;
 }
 
-const MetricCard: React.FC<MetricCardProps> = ({ icon, title, value, subtitle, color, trend }) => (
+const MetricCard: React.FC<MetricCardProps> = ({ icon, title, value, subtitle, color, trend }) => {
+  const theme = useTheme();
+  return (
   <Card sx={{ height: '100%' }}>
     <CardContent>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -63,7 +66,8 @@ const MetricCard: React.FC<MetricCardProps> = ({ icon, title, value, subtitle, c
       )}
     </CardContent>
   </Card>
-);
+  );
+};
 
 const StatItem: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
@@ -73,6 +77,8 @@ const StatItem: React.FC<{ label: string; value: string }> = ({ label, value }) 
 );
 
 export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ data }) => {
+  const theme = useTheme();
+  
   if (!data) return null;
 
   // Debug: Log the data to see what we're getting
@@ -94,7 +100,7 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ data }) =>
             title="Total Learners"
             value={data.platformOverview.unique_learners.toLocaleString()}
             subtitle="Active learners"
-            color="success.main"
+            color={theme.palette.success.main}
             trend="+12% this month"
           />
         </Box>
@@ -104,7 +110,7 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ data }) =>
             title="Activities"
             value={data.platformOverview.unique_activities.toLocaleString()}
             subtitle="Available content"
-            color="primary.main"
+            color={theme.palette.primary.main}
             trend="+3 new this week"
           />
         </Box>
@@ -114,7 +120,7 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ data }) =>
             title="Completion Rate"
             value={`${data.platformOverview.completion_rate}%`}
             subtitle="Overall completion"
-            color="warning.main"
+            color={theme.palette.warning.main}
             trend="+5.2% improvement"
           />
         </Box>
@@ -124,7 +130,7 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ data }) =>
             title="xAPI Events"
             value={data.platformOverview.total_statements.toLocaleString()}
             subtitle="Learning interactions"
-            color="info.main"
+            color={theme.palette.info.main}
             trend="+847 this week"
           />
         </Box>
@@ -161,12 +167,12 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ data }) =>
                         flexDirection: 'column',
                         alignItems: 'center', 
                         justifyContent: 'center',
-                        bgcolor: 'grey.50',
+                        bgcolor: 'action.hover',
                         borderRadius: 1,
                         border: '1px dashed',
-                        borderColor: 'grey.300'
+                        borderColor: 'divider'
                       }}>
-                        <Typography variant="h6" color="grey.600" gutterBottom>
+                        <Typography variant="h6" color="text.secondary" gutterBottom>
                           Invalid Chart Data
                         </Typography>
                         <Typography color="text.secondary" textAlign="center">
@@ -188,7 +194,7 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ data }) =>
                         series={[{
                           dataKey: 'y',
                           label: 'Daily Events',
-                          color: '#2563eb',
+                          color: theme.palette.primary.main,
                         }]}
                         height={300}
                       />
@@ -203,12 +209,12 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ data }) =>
                     flexDirection: 'column',
                     alignItems: 'center', 
                     justifyContent: 'center',
-                    bgcolor: 'grey.50',
+                    bgcolor: 'action.hover',
                     borderRadius: 1,
                     border: '1px dashed',
-                    borderColor: 'grey.300'
+                    borderColor: 'divider'
                   }}>
-                    <Typography variant="h6" color="grey.600" gutterBottom>
+                    <Typography variant="h6" color="text.secondary" gutterBottom>
                       No Activity Data Available
                     </Typography>
                     <Typography color="text.secondary" textAlign="center">
