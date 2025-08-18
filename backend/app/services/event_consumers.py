@@ -25,7 +25,7 @@ from app.models.training_program import (
     TrainingSession,
 )
 from app.services.claude_service import claude_service
-from app.services.kafka_service import XAPIEventService, get_xapi_event_service
+from app.services.events.event_registry import UnifiedEventService, get_event_service
 
 logger = logging.getLogger(__name__)
 
@@ -37,12 +37,12 @@ class EventConsumerService:
     """
 
     def __init__(self):
-        self.xapi_service: Optional[XAPIEventService] = None
+        self.xapi_service: Optional[UnifiedEventService] = None
 
-    async def _get_xapi_service(self) -> XAPIEventService:
-        """Get xAPI service instance."""
+    async def _get_xapi_service(self) -> UnifiedEventService:
+        """Get unified event service instance."""
         if not self.xapi_service:
-            self.xapi_service = await get_xapi_event_service()
+            self.xapi_service = await get_event_service()
         return self.xapi_service
 
     # =========================================================================
@@ -1516,10 +1516,10 @@ class ContentGenerationConsumer:
     Handles the pipeline: Kafka Topics → Event Processing → Database Updates
     """
 
-    def __init__(self, kafka_service):
-        from app.services.kafka_service import KafkaService
+    def __init__(self, event_service):
+        from app.services.events.event_registry import UnifiedEventService
 
-        self.kafka: KafkaService = kafka_service
+        self.event_service: UnifiedEventService = event_service
         self.is_running = False
         self.consumer_task = None
 
@@ -1750,10 +1750,8 @@ async def get_content_generation_consumer() -> ContentGenerationConsumer:
     global content_generation_consumer
 
     if content_generation_consumer is None:
-        from app.services.kafka_service import get_kafka_service
-
-        kafka_service = await get_kafka_service()
-        content_generation_consumer = ContentGenerationConsumer(kafka_service)
+        event_service = await get_event_service()
+        content_generation_consumer = ContentGenerationConsumer(event_service)
 
     return content_generation_consumer
 

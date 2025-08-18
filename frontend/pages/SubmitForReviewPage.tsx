@@ -109,8 +109,16 @@ export const SubmitForReviewPage: React.FC = () => {
   const loadReviewers = async () => {
     try {
       setLoadingReviewers(true);
+      // Convert frontend role strings to backend UserRole enum values
+      const roleMapping: Record<string, string> = {
+        'admin': 'ADMIN',
+        'reviewer': 'REVIEWER', 
+        'approver': 'APPROVER'
+      };
+      const backendRole = roleMapping[reviewerType];
+      
       const response = await usersAPI.getUsers({
-        role: reviewerType,
+        role: backendRole,
         is_active: true,
         per_page: 100
       });

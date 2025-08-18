@@ -11,6 +11,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from app.services.events import get_event_service
+
 from app.models import (
     ApprovalWorkflow,
     ContentItem,
@@ -39,6 +41,29 @@ class WorkflowService:
 
     def __init__(self, db: AsyncSession):
         self.db = db
+        self._event_service = None
+
+    async def _get_event_service(self):
+        """Get event service instance."""
+        if not self._event_service:
+            self._event_service = await get_event_service()
+        return self._event_service
+
+    async def _get_user_info(self, user_id: uuid.UUID):
+        """Get user information for event publishing."""
+        result = await self.db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if user:
+            return {
+                'id': str(user.id),
+                'name': user.full_name or user.username,
+                'email': user.email,
+            }
+        return {
+            'id': str(user_id),
+            'name': 'Unknown User',
+            'email': 'unknown@nlj.platform',
+        }
 
     async def create_content_version(
         self,
@@ -55,7 +80,7 @@ class WorkflowService:
         result = await self.db.execute(
             select(ContentItem).options(joinedload(ContentItem.versions)).where(ContentItem.id == content_id)
         )
-        content = result.scalar_one_or_none()
+        content = result.unique().scalar_one_or_none()
 
         if not content:
             raise WorkflowError(f"Content with ID {content_id} not found")
@@ -123,7 +148,7 @@ class WorkflowService:
             .options(joinedload(ApprovalWorkflow.content_version).joinedload(ContentVersion.content))
             .where(ApprovalWorkflow.content_version_id == version_id)
         )
-        workflow = result.scalar_one_or_none()
+        workflow = result.unique().scalar_one_or_none()
 
         if not workflow:
             raise WorkflowError(f"No workflow found for version {version_id}")
@@ -159,6 +184,30 @@ class WorkflowService:
             comments="Submitted for review",
         )
 
+        # Publish workflow submitted event
+        try:
+            event_service = await self._get_event_service()
+            submitter_info = await self._get_user_info(workflow.content_version.created_by)
+            reviewer_info = None
+            if reviewer_id:
+                reviewer_info = await self._get_user_info(reviewer_id)
+            
+            await event_service.publish_workflow_submitted(
+                workflow_id=str(workflow.id),
+                content_id=str(workflow.content_version.content.id),
+                content_title=workflow.content_version.content.title or 'Untitled Content',
+                submitter_id=submitter_info['id'],
+                submitter_name=submitter_info['name'],
+                submitter_email=submitter_info['email'],
+                reviewer_id=reviewer_info['id'] if reviewer_info else None,
+                reviewer_name=reviewer_info['name'] if reviewer_info else None,
+            )
+        except Exception as e:
+            # Don't fail the workflow if event publishing fails
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to publish workflow submitted event: {e}")
+
         return workflow
 
     async def assign_reviewer(
@@ -171,7 +220,7 @@ class WorkflowService:
             .options(joinedload(ApprovalWorkflow.content_version).joinedload(ContentVersion.content))
             .where(ApprovalWorkflow.id == workflow_id)
         )
-        workflow = result.scalar_one_or_none()
+        workflow = result.unique().scalar_one_or_none()
 
         if not workflow:
             raise WorkflowError(f"Workflow {workflow_id} not found")
@@ -217,7 +266,7 @@ class WorkflowService:
             .options(joinedload(ApprovalWorkflow.content_version).joinedload(ContentVersion.content))
             .where(ApprovalWorkflow.id == workflow_id)
         )
-        workflow = result.scalar_one_or_none()
+        workflow = result.unique().scalar_one_or_none()
 
         if not workflow:
             raise WorkflowError(f"Workflow {workflow_id} not found")
@@ -264,7 +313,7 @@ class WorkflowService:
             .options(joinedload(ApprovalWorkflow.content_version).joinedload(ContentVersion.content))
             .where(ApprovalWorkflow.id == workflow_id)
         )
-        workflow = result.scalar_one_or_none()
+        workflow = result.unique().scalar_one_or_none()
 
         if not workflow:
             raise WorkflowError(f"Workflow {workflow_id} not found")
@@ -306,7 +355,7 @@ class WorkflowService:
             .options(joinedload(ApprovalWorkflow.content_version).joinedload(ContentVersion.content))
             .where(ApprovalWorkflow.id == workflow_id)
         )
-        workflow = result.scalar_one_or_none()
+        workflow = result.unique().scalar_one_or_none()
 
         if not workflow:
             raise WorkflowError(f"Workflow {workflow_id} not found")
@@ -349,7 +398,7 @@ class WorkflowService:
             )
             .where(ContentVersion.id == version_id)
         )
-        version = result.scalar_one_or_none()
+        version = result.unique().scalar_one_or_none()
 
         if not version:
             raise WorkflowError(f"Version {version_id} not found")
@@ -398,7 +447,7 @@ class WorkflowService:
             .options(joinedload(ApprovalWorkflow.content_version).joinedload(ContentVersion.content))
             .where(ApprovalWorkflow.id == workflow_id)
         )
-        workflow = result.scalar_one_or_none()
+        workflow = result.unique().scalar_one_or_none()
 
         if not workflow:
             raise WorkflowError(f"Workflow {workflow_id} not found")
@@ -617,7 +666,7 @@ class WorkflowService:
             .options(joinedload(WorkflowTemplate.stages))
             .where(WorkflowTemplate.id == template_id)
         )
-        template = result.scalar_one_or_none()
+        template = result.unique().scalar_one_or_none()
 
         if not template:
             raise WorkflowError(f"Template {template_id} not found")
@@ -665,7 +714,7 @@ class WorkflowService:
             .options(joinedload(WorkflowStageInstance.template_stage))
             .where(WorkflowStageInstance.id == stage_instance_id)
         )
-        stage_instance = result.scalar_one_or_none()
+        stage_instance = result.unique().scalar_one_or_none()
 
         if not stage_instance:
             raise WorkflowError(f"Stage instance {stage_instance_id} not found")

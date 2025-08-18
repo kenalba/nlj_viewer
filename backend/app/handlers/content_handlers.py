@@ -92,52 +92,111 @@ async def handle_content_generation_events(
 
 
 async def _process_generation_requested(event: XAPIEvent, db: AsyncSession) -> None:
-    """Process content.generation.requested event - create generation session"""
+    """Process content.generation.requested event - ensure generation session exists and start processing"""
     
     extensions = event.context.get("extensions", {})
     session_id = UUID(extensions["http://nlj.platform/extensions/session_id"])
     user_id = UUID(event.actor["account"]["name"])
     
-    # Get source documents from extensions
-    source_doc_ids = extensions.get("http://nlj.platform/extensions/source_documents", [])
-    source_documents = []
+    # Check if session already exists (created by the API)
+    session = await db.get(GenerationSession, session_id)
     
-    if source_doc_ids:
-        for doc_id in source_doc_ids:
-            doc = await db.get(SourceDocument, UUID(doc_id))
-            if doc:
-                source_documents.append(doc)
+    if not session:
+        # Create session if it doesn't exist (fallback case)
+        logger.info(f"Creating new generation session: {session_id}")
+        
+        # Get source documents from extensions
+        source_doc_ids = extensions.get("http://nlj.platform/extensions/source_documents", [])
+        source_documents = []
+        
+        if source_doc_ids:
+            for doc_id in source_doc_ids:
+                doc = await db.get(SourceDocument, UUID(doc_id))
+                if doc:
+                    source_documents.append(doc)
+        
+        # Create generation session with proper field mapping
+        prompt_config = {
+            "generated_prompt_text": extensions.get("http://nlj.platform/extensions/prompt_text", ""),
+            "generation_type": extensions.get("http://nlj.platform/extensions/generation_type", "scenario"),
+            "source_documents": source_documents or [],
+        }
+        
+        session = GenerationSession(
+            id=session_id,
+            user_id=user_id,
+            status=GenerationStatus.PENDING,
+            prompt_config=prompt_config,
+        )
+        
+        # Associate source documents with the session
+        if source_documents:
+            session.source_documents = source_documents
+        
+        db.add(session)
+        await db.commit()
+        logger.info(f"Created generation session: {session_id}")
+    else:
+        logger.info(f"Generation session already exists: {session_id}")
     
-    # Create generation session
-    generation_session = GenerationSession(
-        id=session_id,
-        user_id=user_id,
-        status=GenerationStatus.REQUESTED,
-        prompt_text=extensions.get("http://nlj.platform/extensions/prompt_text", ""),
-        generation_type=extensions.get("http://nlj.platform/extensions/generation_type", "scenario"),
-        source_documents=source_documents,
-        created_at=datetime.now(timezone.utc),
-    )
+    # Now publish the "started" event to begin actual generation
+    from app.services.events import get_event_service
+    from app.models.user import User
     
-    db.add(generation_session)
-    await db.commit()
+    event_service = await get_event_service()
+    user = await db.get(User, user_id)
     
-    logger.info(f"Created generation session: {session_id}")
+    if user:
+        await event_service.publish_content_generation_started(
+            session_id=str(session_id),
+            user_id=str(user_id),
+            user_email=user.email,
+            user_name=user.full_name or user.username,
+            content_type=session.prompt_config.get("generation_type", "scenario"),
+        )
 
 
 async def _process_generation_started(event: XAPIEvent, db: AsyncSession) -> None:
-    """Process content.generation.started event - update session status"""
+    """Process content.generation.started event - begin actual Claude API generation"""
     
     extensions = event.context.get("extensions", {})
     session_id = UUID(extensions["http://nlj.platform/extensions/session_id"])
     
-    # Update session status
+    # Update session status and begin actual generation
     session = await db.get(GenerationSession, session_id)
     if session:
-        session.status = GenerationStatus.IN_PROGRESS
+        session.status = GenerationStatus.PROCESSING
         session.started_at = datetime.now(timezone.utc)
         await db.commit()
-        logger.info(f"Started generation session: {session_id}")
+        
+        logger.info(f"Starting actual content generation for session: {session_id}")
+        
+        # Perform the actual Claude API generation (from event_consumers.py logic)
+        try:
+            await _perform_claude_content_generation(session, db)
+        except Exception as e:
+            logger.error(f"Content generation failed for session {session_id}: {e}")
+            session.status = GenerationStatus.FAILED
+            session.error_message = str(e)
+            await db.commit()
+            
+            # Publish failure event
+            from app.services.events import get_event_service
+            event_service = await get_event_service()
+            
+            # Get user details for the event
+            from app.models.user import User
+            user = await db.get(User, session.user_id)
+            if user:
+                await event_service.publish_content_generation_failed(
+                    session_id=str(session.id),
+                    user_id=str(user.id),
+                    user_email=user.email,
+                    user_name=user.full_name or user.username,
+                    error_message=str(e),
+                    error_type="generation_error"
+                )
+        
     else:
         logger.error(f"Generation session not found: {session_id}")
 
@@ -302,6 +361,212 @@ async def _process_generation_reviewed(event: XAPIEvent, db: AsyncSession) -> No
         logger.info(f"Tracked review: {session_id} - {review_action}")
     else:
         logger.error(f"Generation session not found: {session_id}")
+
+
+async def _perform_claude_content_generation(session: GenerationSession, db: AsyncSession) -> None:
+    """Perform the actual content generation using Claude API (ported from event_consumers.py)"""
+    
+    try:
+        # Publish progress event
+        await _publish_progress_event(str(session.id), session.user_id, 25, "Preparing documents...", db)
+
+        # Get source documents through the relationship
+        from app.models.generation_session import generation_session_sources
+        from sqlalchemy import select
+
+        stmt = (
+            select(SourceDocument)
+            .join(
+                generation_session_sources,
+                SourceDocument.id == generation_session_sources.c.source_document_id,
+            )
+            .where(generation_session_sources.c.generation_session_id == session.id)
+        )
+        result = await db.execute(stmt)
+        source_docs = result.scalars().all()
+
+        # Prepare Claude API call with source documents
+        file_ids = []
+        for doc in source_docs:
+            if doc.claude_file_id:
+                file_ids.append(doc.claude_file_id)
+                logger.info(f"Added source document {doc.original_filename} (Claude ID: {doc.claude_file_id})")
+
+        if not file_ids:
+            raise ValueError("No Claude file IDs found in source documents")
+
+        # Publish progress event
+        await _publish_progress_event(str(session.id), session.user_id, 50, "Generating content with Claude API...", db)
+
+        # Extract prompt from session config
+        prompt_config = session.prompt_config or {}
+        generated_prompt = prompt_config.get("generated_prompt_text", "")
+
+        if not generated_prompt:
+            raise ValueError("No generated prompt text found in session config")
+
+        # Call Claude API for content generation
+        import time
+        start_time = time.time()
+
+        generated_content, error_message, tokens_used = await claude_service.generate_content(
+            prompt_text=generated_prompt,
+            file_ids=file_ids,
+            model="claude-sonnet-4-20250514",
+            max_tokens=8192,
+            temperature=0.1,
+        )
+
+        generation_time = time.time() - start_time
+
+        if error_message or not generated_content:
+            raise ValueError(f"Claude API generation failed: {error_message or 'No content generated'}")
+
+        # Publish progress event
+        await _publish_progress_event(str(session.id), session.user_id, 75, "Validating generated content...", db)
+
+        # Extract and validate NLJ content from Claude response
+        validated_nlj = None
+        if isinstance(generated_content, dict):
+            if "raw_response" in generated_content:
+                # Try to parse JSON from raw response
+                try:
+                    import json
+                    response_text = generated_content["raw_response"]
+                    # Look for JSON content in the response
+                    if "{" in response_text and "}" in response_text:
+                        start_idx = response_text.find("{")
+                        end_idx = response_text.rfind("}") + 1
+                        json_content = response_text[start_idx:end_idx]
+                        validated_nlj = json.loads(json_content)
+                except (json.JSONDecodeError, ValueError) as e:
+                    logger.warning(f"Could not parse JSON from response: {e}")
+                    validated_nlj = {
+                        "nodes": [],
+                        "links": [],
+                        "error": "Failed to parse JSON",
+                        "raw": response_text,
+                    }
+            else:
+                validated_nlj = generated_content
+        else:
+            # If it's just a string, try to parse as JSON
+            try:
+                import json
+                validated_nlj = (
+                    json.loads(generated_content) if isinstance(generated_content, str) else generated_content
+                )
+            except (json.JSONDecodeError, ValueError):
+                validated_nlj = {
+                    "nodes": [],
+                    "links": [],
+                    "error": "Invalid JSON response",
+                    "raw": str(generated_content),
+                }
+
+        # Update session with completed status and real data
+        session.status = GenerationStatus.COMPLETED
+        session.completed_at = datetime.now(timezone.utc)
+        session.generated_content = {
+            "generated_json": validated_nlj,
+            "raw_response": (
+                generated_content.get("raw_response", str(generated_content))
+                if isinstance(generated_content, dict)
+                else str(generated_content)
+            ),
+            "generation_metadata": {
+                "model": "claude-sonnet-4-20250514",
+                "tokens_used": tokens_used,
+                "generation_time_seconds": generation_time,
+                "file_ids": file_ids,
+            },
+        }
+        session.validated_nlj = validated_nlj
+        session.total_tokens_used = tokens_used
+        session.generation_time_seconds = generation_time
+
+        await db.commit()
+
+        logger.info(
+            f"Content generation completed for session {session.id}: {tokens_used} tokens, {generation_time:.2f}s"
+        )
+
+        # Publish completion event
+        await _publish_completion_event(str(session.id), session.user_id, db)
+
+    except Exception as e:
+        logger.error(f"Content generation failed for session {session.id}: {e}")
+        session.status = GenerationStatus.FAILED
+        session.error_message = str(e)
+        await db.commit()
+        
+        # Publish failure event
+        await _publish_failure_event(str(session.id), session.user_id, str(e), db)
+        raise
+
+
+async def _publish_progress_event(session_id: str, user_id: UUID, progress: int, step: str, db: AsyncSession) -> None:
+    """Publish content generation progress event"""
+    try:
+        from app.services.events import get_event_service
+        from app.models.user import User
+        
+        event_service = await get_event_service()
+        user = await db.get(User, user_id)
+        
+        if user:
+            await event_service.publish_content_generation_progress(
+                session_id=session_id,
+                user_id=str(user_id),
+                user_email=user.email,
+                user_name=user.full_name or user.username,
+                progress_percentage=progress,
+                current_step=step,
+            )
+    except Exception as e:
+        logger.error(f"Failed to publish progress event: {e}")
+
+
+async def _publish_completion_event(session_id: str, user_id: UUID, db: AsyncSession) -> None:
+    """Publish content generation completed event"""
+    try:
+        from app.services.events import get_event_service
+        from app.models.user import User
+        
+        event_service = await get_event_service()
+        user = await db.get(User, user_id)
+        
+        if user:
+            await event_service.publish_content_generation_completed(
+                session_id=session_id,
+                user_id=str(user_id),
+                user_email=user.email,
+                user_name=user.full_name or user.username,
+            )
+    except Exception as e:
+        logger.error(f"Failed to publish completion event: {e}")
+
+
+async def _publish_failure_event(session_id: str, user_id: UUID, error: str, db: AsyncSession) -> None:
+    """Publish content generation failed event"""
+    try:
+        from app.services.events import get_event_service
+        from app.models.user import User
+        
+        event_service = await get_event_service()
+        user = await db.get(User, user_id)
+        
+        if user:
+            await event_service.publish_content_generation_failed(
+                session_id=session_id,
+                user_id=str(user_id),
+                user_email=user.email,
+                user_name=user.full_name or user.username,
+                error_message=error,
+                error_type="generation_error",
+            )
+    except Exception as e:
+        logger.error(f"Failed to publish failure event: {e}")
 
 
 logger.info("Content generation event handlers registered with FastStream")

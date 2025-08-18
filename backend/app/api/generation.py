@@ -23,7 +23,7 @@ from app.schemas.generation import (
     GenerationStatisticsResponse,
 )
 from app.services.generation_service import GenerationService
-from app.services.kafka_service import get_xapi_event_service
+from app.services.events import get_event_service
 
 router = APIRouter(prefix="/generation", tags=["generation"])
 
@@ -114,14 +114,14 @@ async def start_generation(
 
     # Publish content generation requested event instead of background task
     try:
-        xapi_service = await get_xapi_event_service()
+        event_service = await get_event_service()
 
         # Get source document IDs for the event
         source_doc_ids = (
             [str(source.source_document_id) for source in session.activity_sources] if session.activity_sources else []
         )
 
-        await xapi_service.publish_content_generation_requested(
+        await event_service.publish_content_generation_requested(
             session_id=str(session_id),
             user_id=str(current_user.id),
             user_email=current_user.email,
@@ -252,14 +252,14 @@ async def retry_generation_session(
 
     # Publish content generation requested event for retry instead of background task
     try:
-        xapi_service = await get_xapi_event_service()
+        event_service = await get_event_service()
 
         # Get source document IDs for the event
         source_doc_ids = (
             [str(source.source_document_id) for source in session.activity_sources] if session.activity_sources else []
         )
 
-        await xapi_service.publish_content_generation_requested(
+        await event_service.publish_content_generation_requested(
             session_id=str(session_id),
             user_id=str(current_user.id),
             user_email=current_user.email,
@@ -365,12 +365,12 @@ async def content_studio_generate(
         )
 
         # Publish content generation requested event instead of background task
-        xapi_service = await get_xapi_event_service()
+        event_service = await get_event_service()
 
         # Get source document IDs for the event
         source_doc_ids = [str(doc_id) for doc_id in request.source_document_ids]
 
-        await xapi_service.publish_content_generation_requested(
+        await event_service.publish_content_generation_requested(
             session_id=str(session.id),
             user_id=str(current_user.id),
             user_email=current_user.email,
