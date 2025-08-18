@@ -63,6 +63,7 @@ import { type SourceDocument, getSourceDocument } from '../client/sources';
 import { generateContent, pollGenerationStatus, type PromptConfiguration as ApiPromptConfiguration } from '../client/generation';
 import { generatePodcastScript, generatePodcast, getGenerationStatus, type PodcastScriptRequest, type MediaGenerationRequest } from '../client/media';
 import { generateUnifiedPrompt, type ContentStudioConfig } from '../utils/promptGenerator';
+import { analyzeDocumentContent } from '../services/autoTaggingService';
 import type { NLJScenario } from '../types/nlj';
 
 interface ContentGenerationState {
@@ -95,6 +96,8 @@ interface ContentGenerationState {
   audioGenerationProgress: string | null;
   error: string | null;
   sessionId: string | null;
+  smartAnalysisApplied: boolean;
+  analyzingDocuments: boolean;
 }
 
 // Podcast template options with icons
@@ -171,7 +174,9 @@ export const ContentGenerationPage: React.FC = () => {
     generatedMediaId: null,
     audioGenerationProgress: null,
     error: null,
-    sessionId: null
+    sessionId: null,
+    smartAnalysisApplied: false,
+    analyzingDocuments: false
   });
 
   // Handle URL parameters for pre-selecting documents

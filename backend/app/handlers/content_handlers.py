@@ -6,7 +6,7 @@ Converts existing content generation event handlers to FastStream subscribers.
 import logging
 from datetime import datetime, timezone
 from typing import Any, Dict
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from faststream import Depends
 from pydantic import BaseModel, Field
@@ -18,6 +18,9 @@ from app.models.generation_session import GenerationSession, GenerationStatus
 from app.models.source_document import SourceDocument
 from app.services.claude_service import claude_service
 from app.services.elasticsearch_service import get_elasticsearch_service, ElasticsearchService
+from app.services.node_service import NodeService
+from app.models.content_item import ContentItem
+from app.utils.node_extractor import NodeExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -491,6 +494,9 @@ async def _perform_claude_content_generation(session: GenerationSession, db: Asy
             f"Content generation completed for session {session.id}: {tokens_used} tokens, {generation_time:.2f}s"
         )
 
+        # Extract nodes from generated content and create activity
+        await _extract_nodes_and_create_activity(session, db)
+
         # Publish completion event
         await _publish_completion_event(str(session.id), session.user_id, db)
 
@@ -567,6 +573,169 @@ async def _publish_failure_event(session_id: str, user_id: UUID, error: str, db:
             )
     except Exception as e:
         logger.error(f"Failed to publish failure event: {e}")
+
+
+async def _extract_nodes_and_create_activity(session: GenerationSession, db: AsyncSession) -> None:
+    """Extract nodes from generated content and create activity with auto-tagging."""
+    try:
+        if not session.validated_nlj or not isinstance(session.validated_nlj, dict):
+            logger.warning(f"No valid NLJ content to extract nodes from for session {session.id}")
+            return
+
+        nlj_data = session.validated_nlj
+        
+        # Create content item (activity) from the generation session
+        content_item = ContentItem(
+            title=f"Generated Activity - {session.created_at.strftime('%m/%d/%Y')}",
+            description="AI-generated learning activity",
+            nlj_data=nlj_data,
+            created_by=session.user_id,
+            workflow_status="DRAFT"  # Generated content starts as draft
+        )
+        
+        db.add(content_item)
+        await db.flush()  # Get the ID
+        
+        logger.info(f"Created content item {content_item.id} for generation session {session.id}")
+        
+        # Extract nodes using NodeExtractor
+        node_extractor = NodeExtractor(db)
+        
+        extracted_pairs = await node_extractor.extract_from_activity(
+            activity=content_item,
+            default_creator=session.user_id
+        )
+        
+        logger.info(f"Extracted {len(extracted_pairs)} nodes from generated content")
+        
+        await db.commit()
+        
+        # Trigger auto-tagging for the newly created nodes
+        if extracted_pairs:
+            node_ids = [str(node.id) for node, _ in extracted_pairs]
+            await _trigger_auto_tagging_for_nodes(
+                node_ids=node_ids,
+                session=session,
+                db=db
+            )
+            
+    except Exception as e:
+        logger.error(f"Failed to extract nodes and create activity for session {session.id}: {e}")
+        # Don't re-raise - we don't want to fail the entire generation process
+        # if node extraction fails
+
+
+async def _trigger_auto_tagging_for_nodes(
+    node_ids: list[str], 
+    session: GenerationSession, 
+    db: AsyncSession
+) -> None:
+    """Trigger auto-tagging for newly created nodes using generation context."""
+    try:
+        from app.services.events import get_event_service
+        from app.models.user import User
+        
+        # Get user details for event publishing
+        user = await db.get(User, session.user_id)
+        if not user:
+            logger.warning(f"User {session.user_id} not found for auto-tagging")
+            return
+            
+        # Get event service to publish auto-tagging events
+        event_service = await get_event_service()
+        
+        # Trigger auto-tagging for each node
+        for node_id in node_ids:
+            tagging_id = str(uuid4())
+            
+            # Use generation context to inform tagging strategy
+            # If source documents were used, use comprehensive strategy
+            # If generation has custom keywords/objectives, use balanced strategy  
+            strategy = "COMPREHENSIVE" if session.source_documents else "BALANCED"
+            
+            # Extract candidate tags from source documents and generation context
+            candidate_tags = await _extract_candidate_tags_from_session(session, db)
+            
+            await event_service.publish_auto_tagging_started(
+                tagging_id=tagging_id,
+                node_id=node_id,
+                user_id=str(user.id),
+                user_email=user.email,
+                user_name=user.full_name or user.username,
+                strategy=strategy,
+                candidate_keywords=candidate_tags.get("keywords", []),
+                candidate_objectives=candidate_tags.get("objectives", [])
+            )
+            
+        logger.info(f"Triggered auto-tagging for {len(node_ids)} nodes with {strategy} strategy")
+        
+    except Exception as e:
+        logger.error(f"Failed to trigger auto-tagging for nodes: {e}")
+        # Don't re-raise - auto-tagging failure shouldn't break content generation
+
+
+async def _extract_candidate_tags_from_session(session: GenerationSession, db: AsyncSession) -> dict[str, list[str]]:
+    """Extract candidate tags from generation session context for auto-tagging disambiguation."""
+    candidate_tags = {"keywords": [], "objectives": []}
+    
+    try:
+        # Extract from source document metadata  
+        for source_doc in session.source_documents:
+            if source_doc.metadata:
+                # Extract keywords from source document metadata
+                doc_keywords = source_doc.metadata.get("keywords", [])
+                if isinstance(doc_keywords, list):
+                    candidate_tags["keywords"].extend(doc_keywords)
+                
+                # Extract learning objectives from source document metadata
+                doc_objectives = source_doc.metadata.get("learning_objectives", [])
+                if isinstance(doc_objectives, list):
+                    candidate_tags["objectives"].extend(doc_objectives)
+                
+                # Extract from summary or description
+                summary = source_doc.metadata.get("summary", "")
+                if summary:
+                    # Simple keyword extraction from summary
+                    import re
+                    words = re.findall(r'\b[a-zA-Z]{4,}\b', summary.lower())
+                    # Filter out common words and keep domain-specific terms
+                    domain_words = [w for w in words if w not in {
+                        'that', 'this', 'with', 'will', 'from', 'they', 'have', 
+                        'been', 'were', 'said', 'each', 'which', 'their', 'time',
+                        'would', 'there', 'could', 'other', 'after', 'first',
+                        'well', 'also', 'some', 'what', 'then', 'them', 'into'
+                    }]
+                    candidate_tags["keywords"].extend(domain_words[:5])  # Top 5 terms
+        
+        # Extract from generation prompt configuration
+        prompt_config = session.prompt_config or {}
+        
+        # Look for explicit keywords in the prompt config
+        if "keywords" in prompt_config:
+            keywords = prompt_config["keywords"]
+            if isinstance(keywords, list):
+                candidate_tags["keywords"].extend(keywords)
+            elif isinstance(keywords, str):
+                candidate_tags["keywords"].extend(keywords.split(","))
+        
+        # Look for learning objectives in the prompt config  
+        if "learning_objectives" in prompt_config:
+            objectives = prompt_config["learning_objectives"]
+            if isinstance(objectives, list):
+                candidate_tags["objectives"].extend(objectives)
+            elif isinstance(objectives, str):
+                candidate_tags["objectives"].extend([obj.strip() for obj in objectives.split(";")])
+        
+        # Remove duplicates and empty strings
+        candidate_tags["keywords"] = list(set(tag.strip() for tag in candidate_tags["keywords"] if tag.strip()))
+        candidate_tags["objectives"] = list(set(tag.strip() for tag in candidate_tags["objectives"] if tag.strip()))
+        
+        logger.info(f"Extracted {len(candidate_tags['keywords'])} candidate keywords and {len(candidate_tags['objectives'])} candidate objectives from session {session.id}")
+        
+    except Exception as e:
+        logger.error(f"Failed to extract candidate tags from session {session.id}: {e}")
+    
+    return candidate_tags
 
 
 logger.info("Content generation event handlers registered with FastStream")

@@ -478,19 +478,27 @@ objective_prerequisites (
 - **Production-Ready Processing**: Background worker with graceful shutdown, health checks, and comprehensive error handling
 - **Comprehensive xAPI Events**: Full event lifecycle tracking for analytics and monitoring integration
 
-**2.3 Content Studio Integration (Week 7)**
-- Enhance existing `ContentGenerationPage.tsx` with auto-tagging
-- Real-time node analysis during content generation
-- Smart suggestions for keywords/objectives during creation
-- Integration with existing document analysis workflow
+**2.3 Content Studio Integration (Week 7)** ✅ **COMPLETED**
+- ✅ **Event-Driven Node Extraction**: Complete node extraction from generated content using NodeExtractor class
+- ✅ **Auto-Tagging Pipeline Integration**: Triggered auto-tagging for newly created nodes with generation context
+- ✅ **Candidate Tag Enhancement**: Source document keywords/objectives become candidate tags for disambiguation
+- ✅ **Content Generation Flow**: Full integration from generation completion to node creation and auto-tagging
 
-**Files to Create/Modify:**
+**Files Created/Modified:**
 ```
-frontend/components/content-studio/NodeTaggingPreview.tsx  # Tag suggestions
-frontend/services/autoTaggingService.ts                   # API integration
-frontend/pages/ContentGenerationPage.tsx                  # Enhanced workflow
-backend/app/services/content_generation_service.py        # Auto-tag integration
+✅ backend/app/handlers/content_handlers.py        # Enhanced with node extraction and auto-tagging
+✅ backend/app/utils/node_extractor.py             # Node extraction with deduplication  
+✅ frontend/services/autoTaggingService.ts         # Complete auto-tagging API integration
+❌ frontend/components/content-studio/NodeTaggingPreview.tsx  # Removed - unnecessary complexity
 ```
+
+**Implementation Notes:**
+- **Node Extraction Integration**: Updated `_extract_nodes_and_create_activity()` to use NodeExtractor instead of non-existent NodeService method
+- **Smart Deduplication**: NodeExtractor uses SHA-256 content hashing to prevent duplicate node creation across activities
+- **Generation Context Auto-Tagging**: Triggers auto-tagging with COMPREHENSIVE/BALANCED strategy based on source document availability
+- **Candidate Tag Enhancement**: Extracts keywords, objectives, and domain terms from source documents and prompt configuration
+- **Robust Error Handling**: Node extraction or auto-tagging failures don't break content generation workflow
+- **ActivityNode Relationships**: Proper linking between ContentItem (activities) and Node entities with position tracking
 
 **2.4 Smart Recommendations Engine (Week 8)**
 - Basic "related content" based on keyword/objective overlap
