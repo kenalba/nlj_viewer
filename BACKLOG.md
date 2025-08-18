@@ -90,6 +90,82 @@ frontend/components/PerformanceBenchmarks.tsx         # Comparative performance 
 backend/app/api/content_intelligence.py               # Intelligence REST API
 ```
 
+## Flow Editor Node Intelligence Integration (Next Sprint Priority)
+
+### **Smart Node Palette with Performance Insights**
+**Objectives:**
+- Replace static node palette with intelligent, performance-aware node suggestions
+- Show real-time performance metrics for each node type
+- Implement node reusability recommendations based on success rates
+- Add concept-aware node filtering and search capabilities
+
+**Key Deliverables:**
+- **Performance-Aware Node Browser**: Smart palette showing success rates, completion times, and usage frequency
+- **Node Recommendation Integration**: Use existing recommendation service to suggest relevant nodes
+- **Real-Time Performance Overlay**: Live metrics display for each node in palette
+- **Search and Filter Enhancement**: Concept-based node discovery with keyword/objective filtering
+
+**Technical Implementation:**
+```
+frontend/editor/components/flow/SmartNodePalette.tsx          # Performance-aware node browser with metrics
+frontend/editor/components/flow/NodePerformanceOverlay.tsx   # Real-time success rate/time display
+frontend/editor/components/flow/NodeRecommendationPanel.tsx  # Contextual node suggestions
+frontend/hooks/useSmartNodePalette.ts                        # Integrated recommendation + performance data
+frontend/editor/components/flow/ConceptNodeSearch.tsx        # Advanced search with concept filtering
+```
+
+**User Experience Goals:**
+- Content creators can easily discover high-performing nodes for reuse
+- Visual performance indicators help optimize content creation decisions  
+- Contextual recommendations suggest related nodes based on current flow content
+- Search functionality enables concept-driven node discovery
+
+### **Enhanced Node Editor Intelligence**
+**Objectives:**  
+- Integrate performance insights directly into node editing experience
+- Add AI-powered content suggestions within individual node editors
+- Provide difficulty prediction and optimization recommendations
+- Enable smart choice generation for question-based nodes
+
+**Key Deliverables:**
+- **Performance Context in Editors**: Show how similar nodes perform while editing
+- **Content Optimization Suggestions**: AI recommendations for improving node content
+- **Smart Choice Generator**: Automated multiple choice option generation
+- **Difficulty Prediction**: Real-time complexity scoring with optimization tips
+
+**Technical Implementation:**
+```  
+frontend/editor/components/node-editors/IntelligentQuestionEditor.tsx  # AI-enhanced question editing with suggestions
+frontend/editor/components/node-editors/PerformanceContextPanel.tsx   # Similar node performance insights
+frontend/editor/components/node-editors/SmartChoiceGenerator.tsx       # Automated choice option generation
+frontend/editor/components/node-editors/DifficultyPredictor.tsx        # Real-time complexity analysis
+frontend/services/nodeIntelligenceService.ts                           # AI editing support API integration
+backend/app/services/node_intelligence_service.py                      # Node optimization and content suggestions
+backend/app/api/node_intelligence.py                                   # Intelligence API endpoints
+```
+
+### **Flow-Level Intelligence Features**
+**Objectives:**
+- Analyze entire flow for concept coverage and optimization opportunities
+- Provide learning path recommendations and prerequisite validation
+- Suggest content gaps and redundancy elimination
+- Enable concept-driven flow validation and optimization
+
+**Key Deliverables:**
+- **Flow Concept Analysis**: Comprehensive learning objective and keyword coverage analysis
+- **Learning Path Optimization**: Suggested node ordering based on concept prerequisites  
+- **Content Gap Detection**: Identify missing concepts and suggest additions
+- **Redundancy Analysis**: Highlight duplicate or overlapping content for consolidation
+
+**Technical Implementation:**
+```
+frontend/editor/components/flow/FlowConceptAnalyzer.tsx       # Concept coverage visualization
+frontend/editor/components/flow/LearningPathOptimizer.tsx    # Path optimization suggestions  
+frontend/editor/components/flow/ConceptGapDetector.tsx       # Missing concept identification
+frontend/editor/components/flow/FlowOptimizationPanel.tsx    # Comprehensive optimization dashboard
+backend/app/services/flow_intelligence_service.py            # Flow analysis and optimization
+```
+
 ## Flow Editor Enhancements (High Priority)
 
 ### **Node-Aware Flow Editor Integration**
