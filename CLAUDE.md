@@ -76,16 +76,16 @@ A full-stack TypeScript application for creating, managing, and delivering inter
 1. **Docker & Docker Compose**: Install Docker Desktop or Docker Engine with Compose V2
 2. **LocalStack Pro API Key**: Required for RDS/S3/SES services
    - Sign up at https://localstack.cloud and get your API key
-   - Add to `backend/.env`: `LOCALSTACK_API_KEY=your_api_key_here`
+   - Add to `.env`: `LOCALSTACK_API_KEY=your_api_key_here`
 
 ### Development Environment Setup
 
 #### Step 1: Environment Configuration
 ```bash
-# Create backend/.env with required configuration
-cp backend/.env.example backend/.env
+# Create .env with required configuration
+cp .env.example .env
 
-# Edit backend/.env and add:
+# Edit .env and ensure these settings:
 # LOCALSTACK_API_KEY=your_localstack_pro_api_key
 # USE_RDS=true
 # (other settings as needed)
@@ -99,7 +99,7 @@ docker compose --profile analytics \
   -f docker-compose.dev.yml \
   -f docker-compose.localstack.yml \
   -f docker-compose.rds.yml \
-  --env-file backend/.env \
+  --env-file .env \
   up -d
 
 # This starts:
@@ -158,17 +158,21 @@ sudo nginx -s reload
 
 1. **LocalStack License Error (exit code 55)**
    ```bash
-   # Ensure LOCALSTACK_API_KEY is set in backend/.env
-   echo "LOCALSTACK_API_KEY=your_key_here" >> backend/.env
+   # Ensure LOCALSTACK_API_KEY is set in .env
+   echo "LOCALSTACK_API_KEY=your_key_here" >> .env
    
    # Pass env file to docker compose
-   docker compose --env-file backend/.env -f ... up
+   docker compose --env-file .env -f ... up
    ```
 
-2. **Database Connection Issues**
+2. **Database Connection Issues / API Startup Timing**
    ```bash
    # Check RDS instance status
    curl http://localhost:4566/_localstack/health
+   
+   # If API fails to connect on first start, restart the API container
+   # This is due to RDS initialization timing in LocalStack
+   docker compose restart nlj-api
    
    # Verify RDS endpoint
    docker compose exec nlj-api python -c "
@@ -194,7 +198,7 @@ sudo nginx -s reload
    # If Activities tab hangs or times out, likely database performance issue
    # Solution: Clear database and reload sample data
    docker compose down --volumes
-   docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.localstack.yml -f docker-compose.rds.yml --env-file backend/.env up -d
+   docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.localstack.yml -f docker-compose.rds.yml --env-file .env up -d
    
    # Wait for services to be healthy, then load sample surveys
    cd backend && source .venv/bin/activate && python scripts/load_sample_surveys.py

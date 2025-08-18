@@ -1031,6 +1031,216 @@ class XAPIEventService:
         await self.kafka.publish_event(topic="nlj.content.generation", event=event, key=session_id)
 
     # =========================================================================
+    # KNOWLEDGE EXTRACTION EVENTS
+    # =========================================================================
+
+    async def publish_knowledge_extraction_started(
+        self,
+        extraction_id: str,
+        user_id: str,
+        user_email: str,
+        user_name: str,
+        extraction_type: str,  # "node", "activity", "bulk"
+        target_id: Optional[str] = None,  # node_id or activity_id
+        target_count: Optional[int] = None  # for bulk operations
+    ) -> None:
+        """Publish a knowledge extraction started event."""
+
+        event = {
+            "id": str(uuid4()),
+            "event_type": "knowledge_extraction_started",
+            "actor": {
+                "mbox": f"mailto:{user_email}",
+                "name": user_name,
+                "objectType": "Agent",
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/launched",
+                "display": {"en-US": "launched"},
+            },
+            "object": {
+                "id": f"nlj://knowledge-extraction/{extraction_id}",
+                "definition": {
+                    "name": {"en-US": f"Knowledge Extraction - {extraction_type}"},
+                    "description": {"en-US": f"LLM-powered metadata extraction from {extraction_type}"},
+                    "type": "http://nlj-platform.com/activitytype/knowledge-extraction",
+                    "extensions": {
+                        "extraction_type": extraction_type,
+                        "target_id": target_id,
+                        "target_count": target_count,
+                        "extraction_id": extraction_id
+                    }
+                }
+            },
+            "context": {
+                "instructor": {"name": user_name, "mbox": f"mailto:{user_email}"},
+                "platform": "NLJ Knowledge Extraction System",
+                "language": "en-US"
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+        await self.kafka.publish_event(topic="nlj.knowledge.extraction", event=event, key=extraction_id)
+
+    async def publish_knowledge_extraction_progress(
+        self,
+        extraction_id: str,
+        user_id: str,
+        progress_percentage: int,
+        current_step: str,
+        items_processed: int = 0,
+        items_total: int = 0,
+        objectives_extracted: int = 0,
+        keywords_extracted: int = 0
+    ) -> None:
+        """Publish knowledge extraction progress event."""
+
+        event = {
+            "id": str(uuid4()),
+            "event_type": "knowledge_extraction_progress",
+            "actor": {
+                "account": {"homePage": "http://nlj-platform.com", "name": user_id},
+                "objectType": "Agent",
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/progressed",
+                "display": {"en-US": "progressed"},
+            },
+            "object": {
+                "id": f"nlj://knowledge-extraction/{extraction_id}",
+                "definition": {
+                    "name": {"en-US": "Knowledge Extraction Progress"},
+                    "type": "http://nlj-platform.com/activitytype/knowledge-extraction",
+                }
+            },
+            "result": {
+                "score": {"scaled": progress_percentage / 100.0},
+                "extensions": {
+                    "progress_percentage": progress_percentage,
+                    "current_step": current_step,
+                    "items_processed": items_processed,
+                    "items_total": items_total,
+                    "objectives_extracted": objectives_extracted,
+                    "keywords_extracted": keywords_extracted
+                }
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+        await self.kafka.publish_event(topic="nlj.knowledge.extraction", event=event, key=extraction_id)
+
+    async def publish_knowledge_extraction_completed(
+        self,
+        extraction_id: str,
+        user_id: str,
+        user_email: str,
+        user_name: str,
+        extraction_type: str,
+        total_objectives_extracted: int,
+        total_keywords_extracted: int,
+        objectives_created: int,
+        keywords_created: int,
+        objectives_matched: int,
+        keywords_matched: int,
+        items_processed: int,
+        duration_seconds: int
+    ) -> None:
+        """Publish knowledge extraction completion event."""
+
+        event = {
+            "id": str(uuid4()),
+            "event_type": "knowledge_extraction_completed",
+            "actor": {
+                "mbox": f"mailto:{user_email}",
+                "name": user_name,
+                "objectType": "Agent",
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/completed",
+                "display": {"en-US": "completed"},
+            },
+            "object": {
+                "id": f"nlj://knowledge-extraction/{extraction_id}",
+                "definition": {
+                    "name": {"en-US": f"Knowledge Extraction - {extraction_type}"},
+                    "type": "http://nlj-platform.com/activitytype/knowledge-extraction",
+                }
+            },
+            "result": {
+                "completion": True,
+                "success": True,
+                "duration": f"PT{duration_seconds}S",
+                "extensions": {
+                    "extraction_type": extraction_type,
+                    "total_objectives_extracted": total_objectives_extracted,
+                    "total_keywords_extracted": total_keywords_extracted,
+                    "objectives_created": objectives_created,
+                    "keywords_created": keywords_created,
+                    "objectives_matched": objectives_matched,
+                    "keywords_matched": keywords_matched,
+                    "items_processed": items_processed,
+                    "extraction_efficiency": {
+                        "objectives_per_item": total_objectives_extracted / max(items_processed, 1),
+                        "keywords_per_item": total_keywords_extracted / max(items_processed, 1),
+                        "match_rate_objectives": objectives_matched / max(total_objectives_extracted, 1),
+                        "match_rate_keywords": keywords_matched / max(total_keywords_extracted, 1)
+                    }
+                }
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+        await self.kafka.publish_event(topic="nlj.knowledge.extraction", event=event, key=extraction_id)
+
+    async def publish_knowledge_extraction_failed(
+        self,
+        extraction_id: str,
+        user_id: str,
+        user_email: str,
+        user_name: str,
+        extraction_type: str,
+        error_message: str,
+        items_processed: int = 0,
+        duration_seconds: int = 0
+    ) -> None:
+        """Publish knowledge extraction failure event."""
+
+        event = {
+            "id": str(uuid4()),
+            "event_type": "knowledge_extraction_failed",
+            "actor": {
+                "mbox": f"mailto:{user_email}",
+                "name": user_name,
+                "objectType": "Agent",
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/failed",
+                "display": {"en-US": "failed"},
+            },
+            "object": {
+                "id": f"nlj://knowledge-extraction/{extraction_id}",
+                "definition": {
+                    "name": {"en-US": f"Knowledge Extraction - {extraction_type}"},
+                    "type": "http://nlj-platform.com/activitytype/knowledge-extraction",
+                }
+            },
+            "result": {
+                "completion": False,
+                "success": False,
+                "duration": f"PT{duration_seconds}S" if duration_seconds > 0 else None,
+                "response": error_message,
+                "extensions": {
+                    "extraction_type": extraction_type,
+                    "error_message": error_message,
+                    "items_processed": items_processed
+                }
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+        await self.kafka.publish_event(topic="nlj.knowledge.extraction", event=event, key=extraction_id)
+
+    # =========================================================================
     # CONFLICT DETECTION EVENTS
     # =========================================================================
 
