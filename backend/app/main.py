@@ -166,6 +166,7 @@ from app.api.registrations import router as registrations_router
 from app.api.shared_tokens import auth_router as sharing_router
 from app.api.shared_tokens import public_router as public_sharing_router
 from app.api.sources import router as sources_router
+from app.api.recommendations import router as recommendations_router
 # from app.api.survey_analytics import router as survey_analytics_router  # Deprecated - functionality moved to main analytics
 
 # Cal.com integration removed - migrating to our own system
@@ -187,6 +188,7 @@ app.include_router(node_tagging_router, tags=["node-tagging"])
 app.include_router(knowledge_extraction_router, tags=["knowledge-extraction"])
 app.include_router(sharing_router, prefix="/api", tags=["sharing"])
 app.include_router(public_sharing_router, tags=["public"])
+app.include_router(recommendations_router, tags=["recommendations"])
 # Cal.com router removed - migrating to our own training session system
 app.include_router(training_programs_router, prefix="/api/training-programs", tags=["training-programs"])
 app.include_router(training_sessions_router, prefix="/api/training-sessions", tags=["training-sessions"])
