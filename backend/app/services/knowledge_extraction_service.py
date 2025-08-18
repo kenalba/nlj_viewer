@@ -33,9 +33,9 @@ from app.core.database_manager import db_manager
 from app.models.content import ContentItem
 from app.models.learning_objective import LearningObjective, Keyword, NodeLearningObjective, NodeKeyword
 from app.models.node import Node
-from app.utils.logging_config import get_logger
+import logging
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @dataclass

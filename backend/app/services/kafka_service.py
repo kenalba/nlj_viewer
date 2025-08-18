@@ -1241,6 +1241,323 @@ class XAPIEventService:
         await self.kafka.publish_event(topic="nlj.knowledge.extraction", event=event, key=extraction_id)
 
     # =========================================================================
+    # AUTO-TAGGING EVENTS
+    # =========================================================================
+
+    async def publish_auto_tagging_started(
+        self,
+        tagging_id: str,
+        node_id: str,
+        user_id: str,
+        user_email: str,
+        user_name: str,
+        strategy: str,  # "conservative", "balanced", "comprehensive"
+        batch_size: Optional[int] = None
+    ) -> None:
+        """Publish an auto-tagging started event."""
+
+        event = {
+            "id": str(uuid4()),
+            "event_type": "auto_tagging_started",
+            "actor": {
+                "mbox": f"mailto:{user_email}",
+                "name": user_name,
+                "objectType": "Agent",
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/launched",
+                "display": {"en-US": "launched"},
+            },
+            "object": {
+                "id": f"nlj://auto-tagging/{tagging_id}",
+                "definition": {
+                    "name": {"en-US": f"Auto-Tagging - {strategy}"},
+                    "description": {"en-US": f"Automated tagging of node content using {strategy} strategy"},
+                    "type": "http://nlj-platform.com/activitytype/auto-tagging",
+                    "extensions": {
+                        "tagging_strategy": strategy,
+                        "target_node_id": node_id,
+                        "tagging_id": tagging_id,
+                        "batch_size": batch_size
+                    }
+                }
+            },
+            "context": {
+                "instructor": {"name": user_name, "mbox": f"mailto:{user_email}"},
+                "platform": "NLJ Auto-Tagging System",
+                "language": "en-US"
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+        await self.kafka.publish_event(topic="nlj.auto.tagging", event=event, key=tagging_id)
+
+    async def publish_auto_tagging_completed(
+        self,
+        node_id: str,
+        user_id: str,
+        strategy: str,
+        quality: str,  # "high", "medium", "low", "uncertain"
+        objectives_added: int,
+        keywords_added: int,
+        confidence_score: float,
+        processing_time_seconds: Optional[float] = None
+    ) -> None:
+        """Publish auto-tagging completion event."""
+
+        event = {
+            "id": str(uuid4()),
+            "event_type": "auto_tagging_completed",
+            "actor": {
+                "account": {"homePage": "http://nlj-platform.com", "name": user_id},
+                "objectType": "Agent",
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/completed",
+                "display": {"en-US": "completed"},
+            },
+            "object": {
+                "id": f"nlj://node/{node_id}",
+                "definition": {
+                    "name": {"en-US": f"Node Auto-Tagged"},
+                    "type": "http://nlj-platform.com/activitytype/node",
+                }
+            },
+            "result": {
+                "completion": True,
+                "success": True,
+                "score": {"scaled": confidence_score},
+                "duration": f"PT{processing_time_seconds}S" if processing_time_seconds else None,
+                "extensions": {
+                    "tagging_strategy": strategy,
+                    "tagging_quality": quality,
+                    "objectives_added": objectives_added,
+                    "keywords_added": keywords_added,
+                    "confidence_score": confidence_score,
+                    "auto_tagging_efficiency": {
+                        "tags_per_second": (objectives_added + keywords_added) / max(processing_time_seconds, 0.1) if processing_time_seconds else 0,
+                        "confidence_level": quality
+                    }
+                }
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+        await self.kafka.publish_event(topic="nlj.auto.tagging", event=event, key=node_id)
+
+    async def publish_batch_auto_tagging_started(
+        self,
+        batch_id: str,
+        user_id: str,
+        user_email: str,
+        user_name: str,
+        node_count: int,
+        strategy: str
+    ) -> None:
+        """Publish batch auto-tagging started event."""
+
+        event = {
+            "id": str(uuid4()),
+            "event_type": "batch_auto_tagging_started",
+            "actor": {
+                "mbox": f"mailto:{user_email}",
+                "name": user_name,
+                "objectType": "Agent",
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/launched",
+                "display": {"en-US": "launched"},
+            },
+            "object": {
+                "id": f"nlj://batch-auto-tagging/{batch_id}",
+                "definition": {
+                    "name": {"en-US": f"Batch Auto-Tagging - {node_count} nodes"},
+                    "description": {"en-US": f"Batch automated tagging of {node_count} nodes using {strategy} strategy"},
+                    "type": "http://nlj-platform.com/activitytype/batch-auto-tagging",
+                    "extensions": {
+                        "batch_id": batch_id,
+                        "node_count": node_count,
+                        "tagging_strategy": strategy
+                    }
+                }
+            },
+            "context": {
+                "instructor": {"name": user_name, "mbox": f"mailto:{user_email}"},
+                "platform": "NLJ Auto-Tagging System",
+                "language": "en-US"
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+        await self.kafka.publish_event(topic="nlj.auto.tagging", event=event, key=batch_id)
+
+    async def publish_batch_auto_tagging_progress(
+        self,
+        batch_id: str,
+        user_id: str,
+        progress_percentage: int,
+        nodes_processed: int,
+        nodes_total: int,
+        current_node_id: Optional[str] = None,
+        total_objectives_added: int = 0,
+        total_keywords_added: int = 0
+    ) -> None:
+        """Publish batch auto-tagging progress event."""
+
+        event = {
+            "id": str(uuid4()),
+            "event_type": "batch_auto_tagging_progress",
+            "actor": {
+                "account": {"homePage": "http://nlj-platform.com", "name": user_id},
+                "objectType": "Agent",
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/progressed",
+                "display": {"en-US": "progressed"},
+            },
+            "object": {
+                "id": f"nlj://batch-auto-tagging/{batch_id}",
+                "definition": {
+                    "name": {"en-US": "Batch Auto-Tagging Progress"},
+                    "type": "http://nlj-platform.com/activitytype/batch-auto-tagging",
+                }
+            },
+            "result": {
+                "score": {"scaled": progress_percentage / 100.0},
+                "extensions": {
+                    "progress_percentage": progress_percentage,
+                    "nodes_processed": nodes_processed,
+                    "nodes_total": nodes_total,
+                    "current_node_id": current_node_id,
+                    "total_objectives_added": total_objectives_added,
+                    "total_keywords_added": total_keywords_added,
+                    "processing_rate": {
+                        "nodes_per_minute": nodes_processed / max((datetime.now().timestamp() % 3600) / 60, 1),
+                        "tags_per_node": (total_objectives_added + total_keywords_added) / max(nodes_processed, 1)
+                    }
+                }
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+        await self.kafka.publish_event(topic="nlj.auto.tagging", event=event, key=batch_id)
+
+    async def publish_batch_auto_tagging_completed(
+        self,
+        batch_id: str,
+        user_id: str,
+        user_email: str,
+        user_name: str,
+        nodes_processed: int,
+        total_objectives_added: int,
+        total_keywords_added: int,
+        average_confidence: float,
+        duration_seconds: int,
+        success_rate: float
+    ) -> None:
+        """Publish batch auto-tagging completion event."""
+
+        event = {
+            "id": str(uuid4()),
+            "event_type": "batch_auto_tagging_completed",
+            "actor": {
+                "mbox": f"mailto:{user_email}",
+                "name": user_name,
+                "objectType": "Agent",
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/completed",
+                "display": {"en-US": "completed"},
+            },
+            "object": {
+                "id": f"nlj://batch-auto-tagging/{batch_id}",
+                "definition": {
+                    "name": {"en-US": f"Batch Auto-Tagging - {nodes_processed} nodes"},
+                    "type": "http://nlj-platform.com/activitytype/batch-auto-tagging",
+                }
+            },
+            "result": {
+                "completion": True,
+                "success": success_rate >= 0.8,  # 80% success threshold
+                "score": {"scaled": average_confidence},
+                "duration": f"PT{duration_seconds}S",
+                "extensions": {
+                    "batch_id": batch_id,
+                    "nodes_processed": nodes_processed,
+                    "total_objectives_added": total_objectives_added,
+                    "total_keywords_added": total_keywords_added,
+                    "average_confidence": average_confidence,
+                    "success_rate": success_rate,
+                    "batch_efficiency": {
+                        "nodes_per_minute": nodes_processed / max(duration_seconds / 60, 1),
+                        "tags_per_node": (total_objectives_added + total_keywords_added) / max(nodes_processed, 1),
+                        "processing_speed": nodes_processed / max(duration_seconds, 1)
+                    }
+                }
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+        await self.kafka.publish_event(topic="nlj.auto.tagging", event=event, key=batch_id)
+
+    async def publish_tag_suggestion_approved(
+        self,
+        node_id: str,
+        user_id: str,
+        user_email: str,
+        user_name: str,
+        approved_objectives: int,
+        approved_keywords: int,
+        rejected_suggestions: int,
+        approval_confidence: float
+    ) -> None:
+        """Publish tag suggestion approval event."""
+
+        event = {
+            "id": str(uuid4()),
+            "event_type": "tag_suggestion_approved",
+            "actor": {
+                "mbox": f"mailto:{user_email}",
+                "name": user_name,
+                "objectType": "Agent",
+            },
+            "verb": {
+                "id": "http://adlnet.gov/expapi/verbs/approved",
+                "display": {"en-US": "approved"},
+            },
+            "object": {
+                "id": f"nlj://node/{node_id}/tag-suggestions",
+                "definition": {
+                    "name": {"en-US": "Tag Suggestions"},
+                    "type": "http://nlj-platform.com/activitytype/tag-suggestions",
+                }
+            },
+            "result": {
+                "completion": True,
+                "success": True,
+                "score": {"scaled": approval_confidence},
+                "extensions": {
+                    "approved_objectives": approved_objectives,
+                    "approved_keywords": approved_keywords,
+                    "rejected_suggestions": rejected_suggestions,
+                    "approval_confidence": approval_confidence,
+                    "approval_ratio": (approved_objectives + approved_keywords) / max(approved_objectives + approved_keywords + rejected_suggestions, 1)
+                }
+            },
+            "context": {
+                "instructor": {"name": user_name, "mbox": f"mailto:{user_email}"},
+                "platform": "NLJ Auto-Tagging System",
+                "extensions": {
+                    "approval_workflow": "manual_review",
+                    "quality_assurance": True
+                }
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+        await self.kafka.publish_event(topic="nlj.auto.tagging", event=event, key=node_id)
+
+    # =========================================================================
     # CONFLICT DETECTION EVENTS
     # =========================================================================
 

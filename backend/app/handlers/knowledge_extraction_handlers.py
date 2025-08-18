@@ -16,11 +16,11 @@ from app.models.content import ContentItem
 from app.models.node import Node
 from app.services.knowledge_extraction_service import KnowledgeExtractionService
 from app.services.kafka_service import get_xapi_event_service
-from app.utils.logging_config import get_logger
+import logging
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @broker.subscriber("nlj.knowledge.extraction")

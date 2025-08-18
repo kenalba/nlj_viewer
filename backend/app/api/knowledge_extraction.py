@@ -13,7 +13,8 @@ from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel, Field
 
-from app.core.deps import get_current_user, get_db_session
+from app.core.deps import get_current_user
+from app.core.database_manager import get_db
 from app.models.user import User
 from app.models.learning_objective import LearningObjective, Keyword, NodeLearningObjective, NodeKeyword
 from app.models.node import Node
@@ -189,7 +190,7 @@ async def list_learning_objectives(
     min_usage: Optional[int] = Query(None, description="Minimum usage count"),
     limit: int = Query(100, le=1000, description="Maximum results"),
     offset: int = Query(0, ge=0, description="Results offset"),
-    session: AsyncSession = Depends(get_db_session)
+    session: AsyncSession = Depends(get_db)
 ):
     """List learning objectives with optional filtering."""
     try:
@@ -233,7 +234,7 @@ async def list_keywords(
     min_usage: Optional[int] = Query(None, description="Minimum usage count"),
     limit: int = Query(100, le=1000, description="Maximum results"),
     offset: int = Query(0, ge=0, description="Results offset"),
-    session: AsyncSession = Depends(get_db_session)
+    session: AsyncSession = Depends(get_db)
 ):
     """List keywords with optional filtering."""
     try:
@@ -270,7 +271,7 @@ async def list_keywords(
 
 
 @router.get("/taxonomy/stats", response_model=TaxonomyStatsResponse)
-async def get_taxonomy_stats(session: AsyncSession = Depends(get_db_session)):
+async def get_taxonomy_stats(session: AsyncSession = Depends(get_db)):
     """Get statistics about the knowledge taxonomy."""
     try:
         # Count objectives
@@ -338,7 +339,7 @@ async def get_taxonomy_stats(session: AsyncSession = Depends(get_db_session)):
 async def extract_node_metadata(
     node_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db_session)
+    session: AsyncSession = Depends(get_db)
 ):
     """Extract and normalize metadata for a specific node using event-driven processing."""
     if not can_edit_content(current_user):
@@ -383,7 +384,7 @@ async def extract_node_metadata(
 async def extract_activity_metadata(
     activity_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db_session)
+    session: AsyncSession = Depends(get_db)
 ):
     """Extract and normalize metadata for an entire activity using event-driven processing."""
     if not can_edit_content(current_user):
