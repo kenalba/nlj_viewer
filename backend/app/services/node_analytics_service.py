@@ -577,6 +577,92 @@ class NodeAnalyticsService:
         
         return (interaction_weight * 0.4 + user_weight * 0.4 + score_weight * 0.2)
 
+    async def get_node_performance_trends(
+        self, 
+        node_id: UUID, 
+        time_window_days: int = 30
+    ) -> Optional[Dict[str, Any]]:
+        """Get performance trends for a node over time."""
+        try:
+            # Calculate the time window
+            end_date = datetime.now(timezone.utc)
+            start_date = end_date - timedelta(days=time_window_days)
+            midpoint_date = start_date + timedelta(days=time_window_days // 2)
+            
+            # Get interactions for first half and second half to compare trends
+            first_half_query = select(NodeInteraction).where(
+                and_(
+                    NodeInteraction.node_id == node_id,
+                    NodeInteraction.created_at >= start_date,
+                    NodeInteraction.created_at < midpoint_date
+                )
+            )
+            
+            second_half_query = select(NodeInteraction).where(
+                and_(
+                    NodeInteraction.node_id == node_id,
+                    NodeInteraction.created_at >= midpoint_date,
+                    NodeInteraction.created_at <= end_date
+                )
+            )
+            
+            first_half_result = await self.session.execute(first_half_query)
+            first_half_interactions = first_half_result.scalars().all()
+            
+            second_half_result = await self.session.execute(second_half_query)
+            second_half_interactions = second_half_result.scalars().all()
+            
+            # Calculate metrics for each period
+            def calculate_period_metrics(interactions):
+                if not interactions:
+                    return {"success_rate": 0.0, "avg_completion_time": 0.0}
+                
+                total_interactions = len(interactions)
+                successful = sum(1 for i in interactions if i.is_correct)
+                success_rate = successful / total_interactions if total_interactions > 0 else 0.0
+                
+                completion_times = [i.time_to_respond for i in interactions if i.time_to_respond]
+                avg_completion_time = sum(completion_times) / len(completion_times) if completion_times else 0.0
+                
+                return {
+                    "success_rate": success_rate,
+                    "avg_completion_time": avg_completion_time
+                }
+            
+            first_half_metrics = calculate_period_metrics(first_half_interactions)
+            second_half_metrics = calculate_period_metrics(second_half_interactions)
+            
+            # Calculate changes
+            success_rate_change = (second_half_metrics["success_rate"] - first_half_metrics["success_rate"]) * 100
+            completion_time_change = (second_half_metrics["avg_completion_time"] - first_half_metrics["avg_completion_time"])
+            
+            # Determine trend direction
+            if success_rate_change > 5.0:  # More than 5% improvement
+                trend_direction = "improving"
+            elif success_rate_change < -5.0:  # More than 5% decline
+                trend_direction = "declining"  
+            else:
+                trend_direction = "stable"
+            
+            return {
+                "time_range": f"{time_window_days}d",
+                "summary": {
+                    "trend_direction": trend_direction,
+                    "period_comparison": {
+                        "success_rate_change": round(success_rate_change, 1),
+                        "completion_time_change": round(completion_time_change, 1)
+                    }
+                },
+                "first_half": first_half_metrics,
+                "second_half": second_half_metrics,
+                "data_points": [],  # Could be enhanced with daily data points
+                "generated_at": datetime.utcnow()
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting performance trends for node {node_id}: {e}")
+            return None
+
 
 # Convenience functions
 

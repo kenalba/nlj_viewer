@@ -31,6 +31,8 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import SurveyDashboard from './pages/SurveyDashboard';
 import SurveyDistributionPage from './pages/SurveyDistributionPage';
 import SurveyDetailPage from './pages/SurveyDetailPage';
+import NodesPage from './pages/NodesPage';
+import NodeDetailPage from './pages/NodeDetailPage';
 import { useAuth } from './contexts/AuthContext';
 import { contentApi, type ContentItem } from './client/content';
 // import { HomePage } from './components/HomePage';
@@ -309,6 +311,15 @@ const AppContent: React.FC = () => {
     }
     // Main sources page: /app/sources
     return <SourceLibraryPage />;
+  }
+
+  if (path.includes('/nodes')) {
+    // Node detail page: /app/nodes/[id]
+    if (path.includes('/app/nodes/') && path.split('/').length > 3) {
+      return <NodeDetailPage />;
+    }
+    // Main nodes page: /app/nodes
+    return <NodesPage />;
   }
 
   if (path.includes('/media')) {

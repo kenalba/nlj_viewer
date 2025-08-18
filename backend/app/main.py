@@ -158,6 +158,7 @@ from app.api.content import router as content_router
 from app.api.database import router as database_router
 from app.api.generation import router as generation_router
 from app.api.media import router as media_router
+from app.api.nodes import router as nodes_router
 from app.api.notifications import router as notifications_router
 from app.api.registrations import router as registrations_router
 from app.api.shared_tokens import auth_router as sharing_router
@@ -179,6 +180,7 @@ app.include_router(workflow_router, tags=["workflow"])
 app.include_router(sources_router, prefix="/api", tags=["sources"])
 app.include_router(generation_router, prefix="/api", tags=["generation"])
 app.include_router(media_router, prefix="/api", tags=["media"])
+app.include_router(nodes_router, tags=["nodes"])
 app.include_router(sharing_router, prefix="/api", tags=["sharing"])
 app.include_router(public_sharing_router, tags=["public"])
 # Cal.com router removed - migrating to our own training session system

@@ -250,6 +250,179 @@ class NodeService:
         )
         return result.scalars().all()
 
+    async def list_nodes(
+        self,
+        limit: int = 20,
+        offset: int = 0,
+        filters: Optional[Dict[str, Any]] = None,
+        sort_by: str = "updated_at",
+        sort_order: str = "desc"
+    ) -> Tuple[List[Node], int]:
+        """
+        List nodes with pagination, filtering, and sorting.
+        
+        Args:
+            limit: Maximum number of nodes to return
+            offset: Number of nodes to skip
+            filters: Dictionary of filters to apply
+            sort_by: Column to sort by
+            sort_order: Sort direction ('asc' or 'desc')
+            
+        Returns:
+            Tuple of (nodes list, total count)
+        """
+        try:
+            # Build base query
+            query = select(Node)
+            
+            # Apply filters
+            if filters:
+                if filters.get('node_type'):
+                    query = query.where(Node.node_type == filters['node_type'])
+                
+                if filters.get('search'):
+                    search_term = f"%{filters['search']}%"
+                    query = query.where(
+                        or_(
+                            Node.title.ilike(search_term),
+                            Node.description.ilike(search_term),
+                            Node.content.astext.ilike(search_term)
+                        )
+                    )
+            
+            # Add ordering
+            sort_column = getattr(Node, sort_by, Node.updated_at)
+            if sort_order == "desc":
+                query = query.order_by(sort_column.desc())
+            else:
+                query = query.order_by(sort_column.asc())
+            
+            # Get total count (before pagination)
+            count_query = select(func.count()).select_from(query.subquery())
+            total_result = await self.session.execute(count_query)
+            total = total_result.scalar()
+            
+            # Apply pagination
+            query = query.offset(offset).limit(limit)
+            
+            # Execute query
+            result = await self.session.execute(query)
+            nodes = result.scalars().all()
+            
+            logger.info(f"Listed {len(nodes)} nodes (offset: {offset}, limit: {limit}, total: {total})")
+            return nodes, total
+            
+        except Exception as e:
+            logger.error(f"Error listing nodes: {e}")
+            return [], 0
+
+    async def search_nodes(
+        self,
+        query: str,
+        filters: Optional[Dict[str, Any]] = None,
+        limit: int = 20
+    ) -> Tuple[List[Node], int]:
+        """
+        Search nodes by content or metadata.
+        
+        Args:
+            query: Search query string
+            filters: Additional filters to apply
+            limit: Maximum number of results
+            
+        Returns:
+            Tuple of (matching nodes, total count)
+        """
+        try:
+            # Build search query
+            search_term = f"%{query}%"
+            search_query = select(Node).where(
+                or_(
+                    Node.title.ilike(search_term),
+                    Node.description.ilike(search_term),
+                    Node.content.astext.ilike(search_term)
+                )
+            )
+            
+            # Apply additional filters
+            if filters:
+                if filters.get('node_types'):
+                    search_query = search_query.where(Node.node_type.in_(filters['node_types']))
+                if filters.get('min_success_rate') is not None:
+                    search_query = search_query.where(Node.success_rate >= filters['min_success_rate'])
+                if filters.get('max_difficulty') is not None:
+                    search_query = search_query.where(Node.difficulty_level <= filters['max_difficulty'])
+            
+            # Get total count
+            count_query = select(func.count()).select_from(search_query.subquery())
+            total_result = await self.session.execute(count_query)
+            total = total_result.scalar()
+            
+            # Apply limit and execute
+            search_query = search_query.limit(limit)
+            result = await self.session.execute(search_query)
+            nodes = result.scalars().all()
+            
+            logger.info(f"Search for '{query}' returned {len(nodes)} nodes (total: {total})")
+            return nodes, total
+            
+        except Exception as e:
+            logger.error(f"Error searching nodes with query '{query}': {e}")
+            return [], 0
+
+    async def get_node_interactions(
+        self,
+        node_id: UUID,
+        limit: int = 20,
+        offset: int = 0,
+        filters: Optional[Dict[str, Any]] = None
+    ) -> Tuple[List[NodeInteraction], int]:
+        """
+        Get node interactions with pagination and filtering.
+        
+        Args:
+            node_id: Node ID to get interactions for
+            limit: Maximum number of interactions to return
+            offset: Number of interactions to skip
+            filters: Dictionary of filters to apply
+            
+        Returns:
+            Tuple of (interactions list, total count)
+        """
+        try:
+            # Build base query
+            query = select(NodeInteraction).where(NodeInteraction.node_id == node_id)
+            
+            # Apply filters
+            if filters:
+                if filters.get('activity_id'):
+                    query = query.where(NodeInteraction.activity_id == filters['activity_id'])
+                if filters.get('user_id'):
+                    query = query.where(NodeInteraction.user_id == filters['user_id'])
+                if filters.get('start_date'):
+                    query = query.where(NodeInteraction.created_at >= filters['start_date'])
+                if filters.get('end_date'):
+                    query = query.where(NodeInteraction.created_at <= filters['end_date'])
+            
+            # Get total count
+            count_query = select(func.count()).select_from(query.subquery())
+            total_result = await self.session.execute(count_query)
+            total = total_result.scalar()
+            
+            # Apply pagination and ordering
+            query = query.order_by(NodeInteraction.created_at.desc()).offset(offset).limit(limit)
+            
+            # Execute query
+            result = await self.session.execute(query)
+            interactions = result.scalars().all()
+            
+            logger.info(f"Retrieved {len(interactions)} interactions for node {node_id}")
+            return interactions, total
+            
+        except Exception as e:
+            logger.error(f"Error getting node interactions for {node_id}: {e}")
+            return [], 0
+
     async def add_node_to_activity(
         self, 
         activity_id: UUID, 

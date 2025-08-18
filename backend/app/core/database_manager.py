@@ -58,8 +58,9 @@ class DatabaseConnectionManager:
                 echo=False,  # Disable verbose SQL logging
                 pool_pre_ping=True,  # Important for RDS connections
                 pool_recycle=3600,  # Recycle connections every hour
-                pool_size=5,  # Smaller pool for RDS
-                max_overflow=10,
+                pool_size=15,  # Increased pool for concurrent requests
+                max_overflow=25,  # Increased overflow
+                pool_timeout=60,  # Increased timeout
             )
 
             self.async_session_local = async_sessionmaker(bind=self.engine, class_=AsyncSession, expire_on_commit=False)

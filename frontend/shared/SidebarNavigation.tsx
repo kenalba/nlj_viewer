@@ -39,6 +39,7 @@ import {
   School as TrainingIcon,
   Analytics as AnalyticsIcon,
   Poll as PollIcon,
+  AccountTree as NodesIcon,
   ExpandLess,
   ExpandMore,
   ChevronLeft as ChevronLeftIcon,
@@ -136,12 +137,18 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
         icon: <></>,
         path: undefined
       },
-      // Section 2: ACTIVITIES, SURVEYS, SOURCES, MEDIA, GENERATION
+      // Section 2: ACTIVITIES, NODES, SURVEYS, SOURCES, MEDIA, GENERATION
       {
         id: 'activities',
         label: 'Activities',
         icon: <FolderIcon />,
         path: '/app/activities'
+      },
+      {
+        id: 'nodes',
+        label: 'Nodes',
+        icon: <NodesIcon />,
+        path: '/app/nodes'
       },
       {
         id: 'surveys',

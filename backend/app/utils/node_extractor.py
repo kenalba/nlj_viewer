@@ -80,6 +80,12 @@ class NodeExtractor:
 
         for node_data in nodes_data:
             try:
+                # Skip structural nodes (start/end) as they don't contain semantic content
+                node_type = node_data.get('type', '').lower()
+                if node_type in ['start', 'end']:
+                    logger.debug(f"Skipping structural node of type '{node_type}' from activity {activity.id}")
+                    continue
+                
                 # Extract or find existing node
                 node = await self.extract_single_node(
                     node_data=node_data,
