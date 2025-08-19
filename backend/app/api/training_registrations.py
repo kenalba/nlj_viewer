@@ -8,7 +8,7 @@ from typing import Annotated, Any, Dict, Optional
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -58,8 +58,7 @@ class RegistrationResponse(BaseModel):
     registered_at: str
     updated_at: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 @router.post("/register", response_model=BookingResponse)

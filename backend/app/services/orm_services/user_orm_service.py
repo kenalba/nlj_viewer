@@ -351,7 +351,6 @@ class UserOrmService(BaseOrmService[User, UserRepository]):
         role_filter: UserRole | None = None,
         active_only: bool = True,
         limit: int = 50,
-        offset: int = 0,
     ) -> list[User]:
         """Search users by username, email, or full name."""
         try:
@@ -360,7 +359,6 @@ class UserOrmService(BaseOrmService[User, UserRepository]):
                 role_filter=role_filter,
                 active_only=active_only,
                 limit=limit,
-                offset=offset,
             )
         except SQLAlchemyError as e:
             await self.session.rollback()
@@ -369,10 +367,52 @@ class UserOrmService(BaseOrmService[User, UserRepository]):
     async def get_active_users(self, limit: int = 100, offset: int = 0) -> list[User]:
         """Get active users with pagination."""
         try:
-            return await self.find_by_field("is_active", True)
+            return await self.repository.get_users_with_filters(
+                skip=offset,
+                limit=limit,
+                active_only=True
+            )
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise RuntimeError(f"Failed to get active users: {e}") from e
+    
+    async def get_users_with_pagination(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        role_filter: UserRole | None = None,
+        active_only: bool = False,
+        search: str | None = None,
+    ) -> list[User]:
+        """Get users with pagination and filtering (matches UserService.get_users)."""
+        try:
+            return await self.repository.get_users_with_filters(
+                skip=skip,
+                limit=limit,
+                role_filter=role_filter,
+                active_only=active_only,
+                search=search,
+            )
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise RuntimeError(f"Failed to get users with pagination: {e}") from e
+    
+    async def get_user_count(
+        self,
+        role_filter: UserRole | None = None,
+        active_only: bool = False,
+        search: str | None = None,
+    ) -> int:
+        """Get total count of users with filtering (matches UserService.get_user_count)."""
+        try:
+            return await self.repository.get_user_count_with_filters(
+                role_filter=role_filter,
+                active_only=active_only,
+                search=search,
+            )
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise RuntimeError(f"Failed to get user count: {e}") from e
 
     # Validation Methods
 
@@ -422,13 +462,13 @@ class UserOrmService(BaseOrmService[User, UserRepository]):
 
     # Abstract Method Implementations
 
-    async def validate_entity_data(self, **kwargs) -> dict[str, Any]:
+    async def validate_entity_data(self, **kwargs: Any) -> dict[str, Any]:
         """
         Validate user data before persistence.
 
         Validates required fields, formats, and business rules.
         """
-        validated = {}
+        validated: dict[str, Any] = {}
 
         # Username validation
         if "username" in kwargs:

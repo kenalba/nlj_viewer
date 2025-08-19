@@ -59,7 +59,7 @@ class MediaRepository(BaseRepository[MediaItem]):
         offset: int | None = None
     ) -> list[MediaItem]:
         """Get media items by processing state."""
-        query = select(MediaItem).where(MediaItem.state == state)
+        query = select(MediaItem).where(MediaItem.media_state == state)
         
         if offset is not None:
             query = query.offset(offset)
@@ -83,7 +83,7 @@ class MediaRepository(BaseRepository[MediaItem]):
         if media_type is not None:
             conditions.append(MediaItem.media_type == media_type)
         if state is not None:
-            conditions.append(MediaItem.state == state)
+            conditions.append(MediaItem.media_state == state)
         
         query = select(MediaItem).where(and_(*conditions))
         
@@ -125,7 +125,7 @@ class MediaRepository(BaseRepository[MediaItem]):
         offset: int | None = None
     ) -> list[MediaItem]:
         """Get all completed media items."""
-        query = select(MediaItem).where(MediaItem.state == MediaState.COMPLETED)
+        query = select(MediaItem).where(MediaItem.media_state == MediaState.COMPLETED)
         
         if offset is not None:
             query = query.offset(offset)
@@ -141,7 +141,7 @@ class MediaRepository(BaseRepository[MediaItem]):
         offset: int | None = None
     ) -> list[MediaItem]:
         """Get media items that failed processing."""
-        query = select(MediaItem).where(MediaItem.state == MediaState.FAILED)
+        query = select(MediaItem).where(MediaItem.media_state == MediaState.FAILED)
         
         if offset is not None:
             query = query.offset(offset)
@@ -151,16 +151,17 @@ class MediaRepository(BaseRepository[MediaItem]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
     
-    async def get_by_voice_type(
+    async def get_by_voice_config(
         self,
         voice_type: VoiceType,
         limit: int | None = None
     ) -> list[MediaItem]:
         """Get media items by voice type (for podcasts/audio)."""
+        # Voice type is stored in voice_config JSON, not as a separate field
         query = select(MediaItem).where(
             and_(
-                MediaItem.voice_type == voice_type,
-                MediaItem.media_type.in_([MediaType.PODCAST])
+                MediaItem.voice_config.op('->>')('voice_type') == voice_type.value,
+                MediaItem.media_type.in_([MediaType.PODCAST, MediaType.AUDIO_SUMMARY])
             )
         )
         
@@ -181,6 +182,18 @@ class MediaRepository(BaseRepository[MediaItem]):
         if limit is not None:
             query = query.limit(limit)
             
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+    
+    async def get_processing_queue(self, limit: int = 10) -> list[MediaItem]:
+        """Get media items currently being processed (GENERATING state)."""
+        query = (
+            select(MediaItem)
+            .where(MediaItem.media_state == MediaState.GENERATING)
+            .order_by(MediaItem.generation_start_time.asc())
+            .limit(limit)
+        )
+        
         result = await self.session.execute(query)
         return list(result.scalars().all())
     
@@ -214,15 +227,15 @@ class MediaRepository(BaseRepository[MediaItem]):
         
         # Count by state
         state_counts = await self.session.execute(
-            select(MediaItem.state, func.count(MediaItem.id))
-            .group_by(MediaItem.state)
+            select(MediaItem.media_state, func.count(MediaItem.id))
+            .group_by(MediaItem.media_state)
         )
         
-        # Count by voice type for audio content
+        # Count by voice type for audio content (from voice_config JSON)
         voice_counts = await self.session.execute(
-            select(MediaItem.voice_type, func.count(MediaItem.id))
-            .where(MediaItem.voice_type.is_not(None))
-            .group_by(MediaItem.voice_type)
+            select(MediaItem.voice_config.op('->>')('voice_type'), func.count(MediaItem.id))
+            .where(MediaItem.voice_config.op('->>')('voice_type').is_not(None))
+            .group_by(MediaItem.voice_config.op('->>')('voice_type'))
         )
         
         # Total counts
@@ -256,11 +269,11 @@ class MediaRepository(BaseRepository[MediaItem]):
         error_message: str | None = None
     ) -> bool:
         """Update media processing state with optional error message."""
-        update_data = {"state": new_state}
+        update_data = {"media_state": new_state}
         if error_message is not None:
-            update_data["error_message"] = error_message
+            update_data["generation_error"] = error_message
         if new_state == MediaState.COMPLETED:
-            update_data["completed_at"] = func.now()
+            update_data["generation_end_time"] = func.now()
             
         return await self.update_by_id(media_id, **update_data) is not None
     
@@ -268,12 +281,16 @@ class MediaRepository(BaseRepository[MediaItem]):
         """Mark media item as failed with error message."""
         return await self.update_processing_state(media_id, MediaState.FAILED, error_message)
     
-    async def mark_as_completed(self, media_id: UUID, file_url: str, file_size: int) -> bool:
+    async def mark_as_completed(self, media_id: UUID, file_path: str, file_size: int, mime_type: str, duration: int | None = None) -> bool:
         """Mark media item as completed with file details."""
         update_data = {
-            "state": MediaState.COMPLETED,
-            "file_url": file_url,
+            "media_state": MediaState.COMPLETED,
+            "file_path": file_path,
             "file_size": file_size,
-            "completed_at": func.now()
+            "mime_type": mime_type,
+            "generation_end_time": func.now()
         }
+        if duration is not None:
+            update_data["duration"] = duration
+            
         return await self.update_by_id(media_id, **update_data) is not None

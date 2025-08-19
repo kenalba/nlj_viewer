@@ -11,7 +11,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from app.models.media import MediaItem, MediaState, MediaType, VoiceType
+from app.models.media import MediaItem, MediaState, MediaType
 from app.services.orm_repositories.media_repository import MediaRepository
 from .base_orm_service import BaseOrmService
 
@@ -42,10 +42,10 @@ class MediaOrmService(BaseOrmService[MediaItem, MediaRepository]):
         file_path: str,
         media_type: MediaType,
         creator_id: uuid.UUID,
-        content_id: uuid.UUID | None = None,
+        source_document_id: uuid.UUID,
         file_size: int | None = None,
         duration: float | None = None,
-        voice_type: VoiceType | None = None,
+        voice_config: dict[str, Any] | None = None,
         generation_prompt: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> MediaItem:
@@ -77,10 +77,10 @@ class MediaOrmService(BaseOrmService[MediaItem, MediaRepository]):
             file_path=file_path,
             media_type=media_type,
             creator_id=creator_id,
-            content_id=content_id,
+            source_document_id=source_document_id,
             file_size=file_size,
             duration=duration,
-            voice_type=voice_type,
+            voice_config=voice_config,
             generation_prompt=generation_prompt,
             metadata=metadata or {},
             media_state=MediaState.GENERATING,  # Default state
@@ -94,10 +94,10 @@ class MediaOrmService(BaseOrmService[MediaItem, MediaRepository]):
 
         except IntegrityError as e:
             await self.session.rollback()
-            if "creator" in str(e):
+            if "created_by" in str(e) or "creator" in str(e):
                 raise ValueError("Invalid creator ID provided") from e
-            elif "content" in str(e):
-                raise ValueError("Invalid content ID provided") from e
+            elif "source_document_id" in str(e):
+                raise ValueError("Invalid source document ID provided") from e
             else:
                 raise RuntimeError(f"Media creation failed: {e}") from e
         except SQLAlchemyError as e:
@@ -268,37 +268,33 @@ class MediaOrmService(BaseOrmService[MediaItem, MediaRepository]):
             await self.session.rollback()
             raise RuntimeError(f"Failed to get user media: {e}") from e
 
-    async def get_content_media(
+    async def get_source_document_media(
         self,
-        content_id: uuid.UUID,
+        source_document_id: uuid.UUID,
         limit: int = 50,
-        offset: int = 0,
     ) -> list[MediaItem]:
-        """Get media associated with specific content."""
+        """Get media associated with specific source document."""
         try:
-            return await self.repository.get_content_media(
-                content_id=content_id,
+            return await self.repository.get_media_by_source_document(
+                source_document_id=source_document_id,
                 limit=limit,
-                offset=offset,
             )
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise RuntimeError(f"Failed to get content media: {e}") from e
+            raise RuntimeError(f"Failed to get source document media: {e}") from e
 
     async def search_media(
         self,
         search_term: str,
         media_type: MediaType | None = None,
         limit: int = 50,
-        offset: int = 0,
     ) -> list[MediaItem]:
-        """Search media by title and metadata."""
+        """Search media by title and description."""
         try:
             return await self.repository.search_media(
                 search_term=search_term,
                 media_type=media_type,
                 limit=limit,
-                offset=offset,
             )
         except SQLAlchemyError as e:
             await self.session.rollback()
@@ -354,10 +350,11 @@ class MediaOrmService(BaseOrmService[MediaItem, MediaRepository]):
                 raise ValueError("Media state must be a valid MediaState enum")
             validated["media_state"] = kwargs["media_state"]
 
-        if "voice_type" in kwargs and kwargs["voice_type"] is not None:
-            if not isinstance(kwargs["voice_type"], VoiceType):
-                raise ValueError("Voice type must be a valid VoiceType enum")
-            validated["voice_type"] = kwargs["voice_type"]
+        if "voice_config" in kwargs and kwargs["voice_config"] is not None:
+            voice_config = kwargs["voice_config"]
+            if not isinstance(voice_config, dict):
+                raise ValueError("Voice config must be a dictionary")
+            validated["voice_config"] = voice_config
 
         # UUID validations
         if "creator_id" in kwargs:
@@ -365,10 +362,10 @@ class MediaOrmService(BaseOrmService[MediaItem, MediaRepository]):
                 raise ValueError("Creator ID must be a valid UUID")
             validated["created_by"] = kwargs["creator_id"]  # Map to model field name
 
-        if "content_id" in kwargs and kwargs["content_id"] is not None:
-            if not isinstance(kwargs["content_id"], uuid.UUID):
-                raise ValueError("Content ID must be a valid UUID")
-            validated["content_id"] = kwargs["content_id"]
+        if "source_document_id" in kwargs and kwargs["source_document_id"] is not None:
+            if not isinstance(kwargs["source_document_id"], uuid.UUID):
+                raise ValueError("Source document ID must be a valid UUID")
+            validated["source_document_id"] = kwargs["source_document_id"]
 
         # Numeric validations
         if "file_size" in kwargs and kwargs["file_size"] is not None:
@@ -396,12 +393,39 @@ class MediaOrmService(BaseOrmService[MediaItem, MediaRepository]):
                 raise ValueError("Error message must be a string")
             validated["error_message"] = error.strip() if error.strip() else None
 
-        # Dictionary validation
-        if "metadata" in kwargs:
-            metadata = kwargs["metadata"]
-            if not isinstance(metadata, dict):
-                raise ValueError("Metadata must be a dictionary")
-            validated["metadata"] = metadata
+        # Dictionary validations
+        if "generation_config" in kwargs and kwargs["generation_config"] is not None:
+            generation_config = kwargs["generation_config"]
+            if not isinstance(generation_config, dict):
+                raise ValueError("Generation config must be a dictionary")
+            validated["generation_config"] = generation_config
+            
+        # String field validations
+        if "description" in kwargs and kwargs["description"] is not None:
+            description = kwargs["description"]
+            if not isinstance(description, str):
+                raise ValueError("Description must be a string")
+            validated["description"] = description.strip() if description.strip() else None
+            
+        if "transcript" in kwargs and kwargs["transcript"] is not None:
+            transcript = kwargs["transcript"]
+            if not isinstance(transcript, str):
+                raise ValueError("Transcript must be a string")
+            validated["transcript"] = transcript.strip() if transcript.strip() else None
+            
+        if "mime_type" in kwargs and kwargs["mime_type"] is not None:
+            mime_type = kwargs["mime_type"]
+            if not isinstance(mime_type, str):
+                raise ValueError("MIME type must be a string")
+            validated["mime_type"] = mime_type.strip()
+            
+        # Array validations
+        for array_field in ["selected_keywords", "selected_objectives"]:
+            if array_field in kwargs and kwargs[array_field] is not None:
+                array_value = kwargs[array_field]
+                if not isinstance(array_value, list):
+                    raise ValueError(f"{array_field} must be a list")
+                validated[array_field] = array_value
 
         return validated
 
@@ -419,8 +443,8 @@ class MediaOrmService(BaseOrmService[MediaItem, MediaRepository]):
             if not entity.creator:
                 await self.session.refresh(entity, ["creator"])
 
-            if entity.content_id and not entity.content:
-                await self.session.refresh(entity, ["content"])
+            if entity.source_document_id and not entity.source_document:
+                await self.session.refresh(entity, ["source_document"])
 
             return entity
 

@@ -17,9 +17,10 @@ from app.services.orm_repositories.node_repository import (
     ActivityNodeRepository,
     NodeInteractionRepository,
 )
+from .base_orm_service import BaseOrmService
 
 
-class NodeOrmService:
+class NodeOrmService(BaseOrmService[Node, NodeRepository]):
     """
     Node ORM Service managing Node-related entities with Clean Architecture.
 
@@ -39,37 +40,14 @@ class NodeOrmService:
     def __init__(
         self,
         session: AsyncSession,
-        node_repository: NodeRepository,
+        repository: NodeRepository,
         activity_node_repository: ActivityNodeRepository,
         node_interaction_repository: NodeInteractionRepository,
     ):
         """Initialize Node ORM Service with session and repositories."""
-        self.session = session
-        self.node_repo = node_repository
+        super().__init__(session, repository)
         self.activity_node_repo = activity_node_repository
         self.interaction_repo = node_interaction_repository
-
-    # Transaction Management
-
-    async def begin_transaction(self):
-        """Begin a new transaction if not already in one."""
-        if not self.session.in_transaction():
-            await self.session.begin()
-
-    async def commit_transaction(self):
-        """Commit the current transaction."""
-        try:
-            await self.session.commit()
-        except SQLAlchemyError as e:
-            await self.session.rollback()
-            raise RuntimeError(f"Failed to commit transaction: {e}") from e
-
-    async def rollback_transaction(self):
-        """Rollback the current transaction."""
-        try:
-            await self.session.rollback()
-        except SQLAlchemyError as e:
-            raise RuntimeError(f"Failed to rollback transaction: {e}") from e
 
     # Node Operations
 
@@ -113,7 +91,7 @@ class NodeOrmService:
         )
 
         try:
-            node = await self.node_repo.create(**node_data)
+            node = await self.repository.create(**node_data)
             await self.session.commit()
             return node
 
@@ -130,7 +108,7 @@ class NodeOrmService:
     async def get_node_by_id(self, node_id: uuid.UUID) -> Node | None:
         """Get node by ID."""
         try:
-            return await self.node_repo.get_by_id(node_id)
+            return await self.repository.get_by_id(node_id)
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise RuntimeError(f"Failed to get node: {e}") from e
@@ -138,7 +116,7 @@ class NodeOrmService:
     async def get_node_with_relationships(self, node_id: uuid.UUID) -> Node | None:
         """Get node by ID with all relationships loaded."""
         try:
-            return await self.node_repo.get_by_id_with_relationships(node_id)
+            return await self.repository.get_by_id_with_relationships(node_id)
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise RuntimeError(f"Failed to get node with relationships: {e}") from e
@@ -146,7 +124,7 @@ class NodeOrmService:
     async def get_nodes_by_content(self, content_id: uuid.UUID, limit: int = 100, offset: int = 0) -> list[Node]:
         """Get all nodes belonging to a specific content item."""
         try:
-            return await self.node_repo.get_nodes_by_content(content_id=content_id, limit=limit, offset=offset)
+            return await self.repository.get_nodes_by_content(content_id=content_id, limit=limit, offset=offset)
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise RuntimeError(f"Failed to get nodes by content: {e}") from e
@@ -161,12 +139,10 @@ class NodeOrmService:
     ) -> list[Node]:
         """Search nodes by title and content."""
         try:
-            return await self.node_repo.search_nodes(
+            return await self.repository.search_nodes(
                 search_term=search_term,
                 content_id=content_id,
-                node_type=node_type,
                 limit=limit,
-                offset=offset,
             )
         except SQLAlchemyError as e:
             await self.session.rollback()
@@ -176,7 +152,7 @@ class NodeOrmService:
         """Update node with validation."""
         try:
             validated_data = await self.validate_node_data(**update_data)
-            updated_node = await self.node_repo.update_by_id(node_id, **validated_data)
+            updated_node = await self.repository.update_by_id(node_id, **validated_data)
             if updated_node:
                 await self.session.commit()
             return updated_node
@@ -189,7 +165,7 @@ class NodeOrmService:
     async def delete_node(self, node_id: uuid.UUID) -> bool:
         """Delete node."""
         try:
-            deleted = await self.node_repo.delete_by_id(node_id)
+            deleted = await self.repository.delete_by_id(node_id)
             if deleted:
                 await self.session.commit()
             return deleted
@@ -273,7 +249,7 @@ class NodeOrmService:
     ) -> list[NodeInteraction]:
         """Get interactions for a specific node."""
         try:
-            return await self.interaction_repo.get_by_node_id(node_id=node_id, limit=limit, offset=offset)
+            return await self.interaction_repo.get_interactions_by_node(node_id=node_id, limit=limit, offset=offset)
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise RuntimeError(f"Failed to get node interactions: {e}") from e
@@ -287,8 +263,8 @@ class NodeOrmService:
     ) -> list[NodeInteraction]:
         """Get interactions for a specific user."""
         try:
-            return await self.interaction_repo.get_by_user_id(
-                user_id=user_id, node_id=node_id, limit=limit, offset=offset
+            return await self.interaction_repo.get_interactions_by_user(
+                user_id=user_id, limit=limit, offset=offset
             )
         except SQLAlchemyError as e:
             await self.session.rollback()
@@ -296,21 +272,42 @@ class NodeOrmService:
 
     # Analytics Operations
 
-    async def get_node_analytics(self, node_id: uuid.UUID) -> dict[str, Any]:
-        """Get analytics for a specific node."""
+    async def get_node_statistics(self, node_id: uuid.UUID) -> dict[str, Any]:
+        """Get statistics for a specific node."""
         try:
-            return await self.node_repo.get_node_analytics(node_id)
+            return await self.repository.get_node_statistics(activity_id=None)
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise RuntimeError(f"Failed to get node analytics: {e}") from e
+            raise RuntimeError(f"Failed to get node statistics: {e}") from e
 
-    async def get_content_node_analytics(self, content_id: uuid.UUID) -> dict[str, Any]:
-        """Get analytics for all nodes in content."""
+    async def get_activity_node_statistics(self, activity_id: uuid.UUID) -> dict[str, Any]:
+        """Get statistics for all nodes in an activity."""
         try:
-            return await self.node_repo.get_content_analytics(content_id)
+            return await self.repository.get_node_statistics(activity_id=activity_id)
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise RuntimeError(f"Failed to get content analytics: {e}") from e
+            raise RuntimeError(f"Failed to get activity node statistics: {e}") from e
+
+    # Abstract Method Implementations
+    
+    async def validate_entity_data(self, **kwargs) -> dict[str, Any]:
+        """Validate node data before persistence (implements BaseOrmService method)."""
+        return await self.validate_node_data(**kwargs)
+    
+    async def handle_entity_relationships(self, entity: Node) -> Node:
+        """Handle node entity relationships after persistence."""
+        try:
+            # Refresh entity to get latest data
+            await self.session.refresh(entity)
+            
+            # Load creator relationship if not already loaded
+            if not entity.creator:
+                await self.session.refresh(entity, ["creator"])
+            
+            return entity
+            
+        except SQLAlchemyError as e:
+            raise RuntimeError(f"Failed to handle node relationships: {e}") from e
 
     # Validation Methods
 

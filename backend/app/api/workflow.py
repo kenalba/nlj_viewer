@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
@@ -112,8 +112,7 @@ class ContentVersionResponse(BaseModel):
     published_at: Optional[datetime]
     archived_at: Optional[datetime]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WorkflowResponse(BaseModel):
@@ -131,8 +130,7 @@ class WorkflowResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ReviewResponse(BaseModel):
@@ -148,8 +146,7 @@ class ReviewResponse(BaseModel):
     new_state: WorkflowState
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PendingReviewResponse(BaseModel):
@@ -163,8 +160,7 @@ class PendingReviewResponse(BaseModel):
     creator_name: str
     submitted_at: Optional[datetime]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Multi-stage workflow request models
@@ -224,8 +220,7 @@ class WorkflowTemplateStageResponse(BaseModel):
     reviewer_selection_criteria: Optional[Dict[str, Any]]
     estimated_duration_hours: Optional[int]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WorkflowTemplateResponse(BaseModel):
@@ -243,8 +238,7 @@ class WorkflowTemplateResponse(BaseModel):
     updated_at: datetime
     stages: List[WorkflowTemplateStageResponse]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class StageReviewerAssignmentResponse(BaseModel):
@@ -262,8 +256,7 @@ class StageReviewerAssignmentResponse(BaseModel):
     assigned_by: uuid.UUID
     assigned_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WorkflowStageInstanceResponse(BaseModel):
@@ -283,8 +276,7 @@ class WorkflowStageInstanceResponse(BaseModel):
     template_stage: WorkflowTemplateStageResponse
     reviewer_assignments: List[StageReviewerAssignmentResponse]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MultiStageWorkflowResponse(WorkflowResponse):
@@ -294,8 +286,7 @@ class MultiStageWorkflowResponse(WorkflowResponse):
     current_stage_order: Optional[int]
     stage_instances: List[WorkflowStageInstanceResponse]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # API Endpoints

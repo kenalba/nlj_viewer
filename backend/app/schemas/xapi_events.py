@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class XAPIVerb(str, Enum):
@@ -58,7 +58,8 @@ class XAPIActor(BaseModel):
     mbox: str = Field(..., pattern=r"^mailto:[^@]+@[^@]+\.[^@]+$")
     account: Optional[Dict[str, str]] = None
 
-    @validator("account")
+    @field_validator("account")
+    @classmethod
     def validate_account(cls, v):
         if v is not None:
             required_keys = {"name", "homePage"}
@@ -73,7 +74,8 @@ class XAPIVerbSchema(BaseModel):
     id: str = Field(..., pattern=r"^https?://")
     display: Dict[str, str] = Field(...)
 
-    @validator("display")
+    @field_validator("display")
+    @classmethod
     def validate_display(cls, v):
         if "en-US" not in v:
             raise ValueError("Display must contain 'en-US' language")
@@ -87,7 +89,8 @@ class XAPIActivityDefinition(BaseModel):
     description: Optional[Dict[str, str]] = None
     type: XAPIActivityType = Field(...)
 
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def validate_name(cls, v):
         if "en-US" not in v:
             raise ValueError("Name must contain 'en-US' language")
@@ -108,7 +111,8 @@ class XAPIContext(BaseModel):
     platform: str = Field(default="NLJ Platform")
     extensions: Optional[Dict[str, Any]] = None
 
-    @validator("extensions")
+    @field_validator("extensions")
+    @classmethod
     def validate_extensions(cls, v):
         if v is not None:
             # All extension keys must be URIs
@@ -132,7 +136,7 @@ class BaseXAPIEvent(BaseModel):
     """Base xAPI Event schema."""
 
     id: str = Field(..., pattern=r"^[a-f0-9\-]{36}$")  # UUID format
-    version: str = Field(default="1.0.3", pattern="^1\.0\.3$")
+    version: str = Field(default="1.0.3", pattern=r"^1\.0\.3$")
     actor: XAPIActor = Field(...)
     verb: XAPIVerbSchema = Field(...)
     object: XAPIActivity = Field(...)
@@ -149,13 +153,15 @@ class BaseXAPIEvent(BaseModel):
 class ProgramCreatedEvent(BaseXAPIEvent):
     """Schema for program.created events."""
 
-    @validator("verb")
+    @field_validator("verb")
+    @classmethod
     def validate_verb(cls, v):
         if v.id != XAPIVerb.AUTHORED:
             raise ValueError("Program created events must use 'authored' verb")
         return v
 
-    @validator("object")
+    @field_validator("object")
+    @classmethod
     def validate_object(cls, v):
         if not v.id.startswith("http://nlj.platform/training-programs/"):
             raise ValueError("Object ID must be training program URI")
@@ -163,7 +169,8 @@ class ProgramCreatedEvent(BaseXAPIEvent):
             raise ValueError("Activity type must be course")
         return v
 
-    @validator("context")
+    @field_validator("context")
+    @classmethod
     def validate_context(cls, v):
         if v.extensions:
             pass
@@ -174,7 +181,8 @@ class ProgramCreatedEvent(BaseXAPIEvent):
 class ProgramPublishedEvent(BaseXAPIEvent):
     """Schema for program.published events."""
 
-    @validator("verb")
+    @field_validator("verb")
+    @classmethod
     def validate_verb(cls, v):
         if v.id != XAPIVerb.SHARED:
             raise ValueError("Program published events must use 'shared' verb")
@@ -189,13 +197,15 @@ class ProgramPublishedEvent(BaseXAPIEvent):
 class SessionScheduledEvent(BaseXAPIEvent):
     """Schema for session.scheduled events."""
 
-    @validator("verb")
+    @field_validator("verb")
+    @classmethod
     def validate_verb(cls, v):
         if v.id != XAPIVerb.SCHEDULED:
             raise ValueError("Session scheduled events must use 'schedule' verb")
         return v
 
-    @validator("object")
+    @field_validator("object")
+    @classmethod
     def validate_object(cls, v):
         if not v.id.startswith("http://nlj.platform/training-sessions/"):
             raise ValueError("Object ID must be training session URI")
@@ -203,7 +213,8 @@ class SessionScheduledEvent(BaseXAPIEvent):
             raise ValueError("Activity type must be meeting")
         return v
 
-    @validator("context")
+    @field_validator("context")
+    @classmethod
     def validate_context(cls, v):
         if not v.extensions:
             raise ValueError("Session scheduled events require extensions")
@@ -242,13 +253,15 @@ class SessionScheduledEvent(BaseXAPIEvent):
 class BookingRequestedEvent(BaseXAPIEvent):
     """Schema for booking.requested events."""
 
-    @validator("verb")
+    @field_validator("verb")
+    @classmethod
     def validate_verb(cls, v):
         if v.id != XAPIVerb.ASKED:
             raise ValueError("Booking requested events must use 'asked' verb")
         return v
 
-    @validator("context")
+    @field_validator("context")
+    @classmethod
     def validate_context(cls, v):
         if not v.extensions:
             raise ValueError("Booking requested events require extensions")
@@ -268,7 +281,8 @@ class BookingRequestedEvent(BaseXAPIEvent):
 class BookingConfirmedEvent(BaseXAPIEvent):
     """Schema for booking.confirmed events."""
 
-    @validator("verb")
+    @field_validator("verb")
+    @classmethod
     def validate_verb(cls, v):
         if v.id != XAPIVerb.REGISTERED:
             raise ValueError("Booking confirmed events must use 'registered' verb")
@@ -278,13 +292,15 @@ class BookingConfirmedEvent(BaseXAPIEvent):
 class BookingWaitlistedEvent(BaseXAPIEvent):
     """Schema for booking.waitlisted events."""
 
-    @validator("verb")
+    @field_validator("verb")
+    @classmethod
     def validate_verb(cls, v):
         if v.id != XAPIVerb.WAITLISTED:
             raise ValueError("Booking waitlisted events must use 'waitlisted' verb")
         return v
 
-    @validator("context")
+    @field_validator("context")
+    @classmethod
     def validate_context(cls, v):
         if not v.extensions:
             raise ValueError("Booking waitlisted events require extensions")
@@ -308,13 +324,15 @@ class BookingWaitlistedEvent(BaseXAPIEvent):
 class ContentGenerationRequestedEvent(BaseXAPIEvent):
     """Schema for content.generation.requested events."""
 
-    @validator("verb")
+    @field_validator("verb")
+    @classmethod
     def validate_verb(cls, v):
         if v.id != XAPIVerb.AUTHORED:
             raise ValueError("Content generation requested events must use 'authored' verb")
         return v
 
-    @validator("result")
+    @field_validator("result")
+    @classmethod
     def validate_result(cls, v):
         if v is None:
             raise ValueError("Content generation requested events must have a result")
@@ -326,7 +344,8 @@ class ContentGenerationRequestedEvent(BaseXAPIEvent):
             raise ValueError("Generation status must be 'requested' for requested events")
         return v
 
-    @validator("object")
+    @field_validator("object")
+    @classmethod
     def validate_object(cls, v):
         if not v.id.startswith("http://nlj.platform/content-generation-sessions/"):
             raise ValueError("Object ID must be content generation session URI")
@@ -334,7 +353,8 @@ class ContentGenerationRequestedEvent(BaseXAPIEvent):
             raise ValueError("Activity type must be content-generation")
         return v
 
-    @validator("context")
+    @field_validator("context")
+    @classmethod
     def validate_context(cls, v):
         if not v.extensions:
             raise ValueError("Content generation requested events require extensions")
@@ -359,13 +379,15 @@ class ContentGenerationRequestedEvent(BaseXAPIEvent):
 class ContentGenerationStartedEvent(BaseXAPIEvent):
     """Schema for content.generation.started events."""
 
-    @validator("verb")
+    @field_validator("verb")
+    @classmethod
     def validate_verb(cls, v):
         if v.id != XAPIVerb.AUTHORED:
             raise ValueError("Content generation started events must use 'authored' verb")
         return v
 
-    @validator("result")
+    @field_validator("result")
+    @classmethod
     def validate_result(cls, v):
         if v is None:
             raise ValueError("Content generation started events must have a result")
@@ -377,7 +399,8 @@ class ContentGenerationStartedEvent(BaseXAPIEvent):
             raise ValueError("Generation status must be 'started' for started events")
         return v
 
-    @validator("object")
+    @field_validator("object")
+    @classmethod
     def validate_object(cls, v):
         if not v.id.startswith("http://nlj.platform/content-generation-sessions/"):
             raise ValueError("Object ID must be content generation session URI")
@@ -389,13 +412,15 @@ class ContentGenerationStartedEvent(BaseXAPIEvent):
 class ContentGenerationProgressEvent(BaseXAPIEvent):
     """Schema for content.generation.progress events."""
 
-    @validator("verb")
+    @field_validator("verb")
+    @classmethod
     def validate_verb(cls, v):
         if v.id != XAPIVerb.AUTHORED:
             raise ValueError("Content generation progress events must use 'authored' verb")
         return v
 
-    @validator("result")
+    @field_validator("result")
+    @classmethod
     def validate_result(cls, v):
         if v is None:
             raise ValueError("Content generation progress events must have a result")
@@ -407,7 +432,8 @@ class ContentGenerationProgressEvent(BaseXAPIEvent):
             raise ValueError("Generation status must be 'progressing' for progress events")
         return v
 
-    @validator("object")
+    @field_validator("object")
+    @classmethod
     def validate_object(cls, v):
         if not v.id.startswith("http://nlj.platform/content-generation-sessions/"):
             raise ValueError("Object ID must be content generation session URI")
@@ -415,7 +441,8 @@ class ContentGenerationProgressEvent(BaseXAPIEvent):
             raise ValueError("Activity type must be content-generation")
         return v
 
-    @validator("context")
+    @field_validator("context")
+    @classmethod
     def validate_context(cls, v):
         if v.extensions:
             # Validate progress percentage if present
@@ -430,13 +457,15 @@ class ContentGenerationProgressEvent(BaseXAPIEvent):
 class ContentGenerationCompletedEvent(BaseXAPIEvent):
     """Schema for content.generation.completed events."""
 
-    @validator("verb")
+    @field_validator("verb")
+    @classmethod
     def validate_verb(cls, v):
         if v.id != XAPIVerb.AUTHORED:
             raise ValueError("Content generation completed events must use 'authored' verb")
         return v
 
-    @validator("object")
+    @field_validator("object")
+    @classmethod
     def validate_object(cls, v):
         if not v.id.startswith("http://nlj.platform/content-generation-sessions/"):
             raise ValueError("Object ID must be content generation session URI")
@@ -444,7 +473,8 @@ class ContentGenerationCompletedEvent(BaseXAPIEvent):
             raise ValueError("Activity type must be content-generation")
         return v
 
-    @validator("result")
+    @field_validator("result")
+    @classmethod
     def validate_result(cls, v):
         if v is None:
             raise ValueError("Content generation completed events must have a result")
@@ -462,13 +492,15 @@ class ContentGenerationCompletedEvent(BaseXAPIEvent):
 class ContentGenerationFailedEvent(BaseXAPIEvent):
     """Schema for content.generation.failed events."""
 
-    @validator("verb")
+    @field_validator("verb")
+    @classmethod
     def validate_verb(cls, v):
         if v.id != XAPIVerb.AUTHORED:
             raise ValueError("Content generation failed events must use 'authored' verb")
         return v
 
-    @validator("result")
+    @field_validator("result")
+    @classmethod
     def validate_result(cls, v):
         if v is None:
             raise ValueError("Content generation failed events must have a result")
@@ -480,7 +512,8 @@ class ContentGenerationFailedEvent(BaseXAPIEvent):
             raise ValueError("Generation status must be 'failed' for failed events")
         return v
 
-    @validator("object")
+    @field_validator("object")
+    @classmethod
     def validate_object(cls, v):
         if not v.id.startswith("http://nlj.platform/content-generation-sessions/"):
             raise ValueError("Object ID must be content generation session URI")
@@ -488,7 +521,8 @@ class ContentGenerationFailedEvent(BaseXAPIEvent):
             raise ValueError("Activity type must be content-generation")
         return v
 
-    @validator("context")
+    @field_validator("context")
+    @classmethod
     def validate_context(cls, v):
         if not v.extensions:
             raise ValueError("Content generation failed events require extensions")
@@ -507,13 +541,15 @@ class ContentGenerationFailedEvent(BaseXAPIEvent):
 class ContentGenerationModifiedEvent(BaseXAPIEvent):
     """Schema for content.generation.modified events."""
 
-    @validator("verb")
+    @field_validator("verb")
+    @classmethod
     def validate_verb(cls, v):
         if v.id != XAPIVerb.MODIFIED:
             raise ValueError("Content generation modified events must use 'modified' verb")
         return v
 
-    @validator("object")
+    @field_validator("object")
+    @classmethod
     def validate_object(cls, v):
         if not v.id.startswith("http://nlj.platform/content-generation-sessions/"):
             raise ValueError("Object ID must be content generation session URI")
@@ -521,7 +557,8 @@ class ContentGenerationModifiedEvent(BaseXAPIEvent):
             raise ValueError("Activity type must be content-generation")
         return v
 
-    @validator("context")
+    @field_validator("context")
+    @classmethod
     def validate_context(cls, v):
         if not v.extensions:
             raise ValueError("Content generation modified events require extensions")
@@ -541,13 +578,15 @@ class ContentGenerationModifiedEvent(BaseXAPIEvent):
 class ContentGenerationImportedEvent(BaseXAPIEvent):
     """Schema for content.generation.imported events."""
 
-    @validator("verb")
+    @field_validator("verb")
+    @classmethod
     def validate_verb(cls, v):
         if v.id != XAPIVerb.IMPORTED:
             raise ValueError("Content generation imported events must use 'imported' verb")
         return v
 
-    @validator("object")
+    @field_validator("object")
+    @classmethod
     def validate_object(cls, v):
         if not v.id.startswith("http://nlj.platform/content-generation-sessions/"):
             raise ValueError("Object ID must be content generation session URI")
@@ -555,7 +594,8 @@ class ContentGenerationImportedEvent(BaseXAPIEvent):
             raise ValueError("Activity type must be content-generation")
         return v
 
-    @validator("context")
+    @field_validator("context")
+    @classmethod
     def validate_context(cls, v):
         if not v.extensions:
             raise ValueError("Content generation imported events require extensions")
@@ -581,13 +621,15 @@ class ContentGenerationImportedEvent(BaseXAPIEvent):
 class ContentGenerationReviewedEvent(BaseXAPIEvent):
     """Schema for content.generation.reviewed events."""
 
-    @validator("verb")
+    @field_validator("verb")
+    @classmethod
     def validate_verb(cls, v):
         if v.id != XAPIVerb.REVIEWED:
             raise ValueError("Content generation reviewed events must use 'reviewed' verb")
         return v
 
-    @validator("object")
+    @field_validator("object")
+    @classmethod
     def validate_object(cls, v):
         if not v.id.startswith("http://nlj.platform/content-generation-sessions/"):
             raise ValueError("Object ID must be content generation session URI")
@@ -595,7 +637,8 @@ class ContentGenerationReviewedEvent(BaseXAPIEvent):
             raise ValueError("Activity type must be content-generation")
         return v
 
-    @validator("result")
+    @field_validator("result")
+    @classmethod
     def validate_result(cls, v):
         if v is None:
             raise ValueError("Content generation reviewed events must have a result")
@@ -613,7 +656,8 @@ class ContentGenerationReviewedEvent(BaseXAPIEvent):
 
         return v
 
-    @validator("context")
+    @field_validator("context")
+    @classmethod
     def validate_context(cls, v):
         if v.extensions:
             # Optional reviewer comments

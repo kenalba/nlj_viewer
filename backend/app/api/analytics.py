@@ -322,9 +322,9 @@ async def get_activity_statements(
 
 @router.get("/trends", summary="Analytics trends over time")
 async def get_analytics_trends(
-    period: str = Query("7d", regex="^(1d|7d|30d|90d|1y)$", description="Time period for trends"),
+    period: str = Query("7d", pattern="^(1d|7d|30d|90d|1y)$", description="Time period for trends"),
     metric: str = Query(
-        "completion", regex="^(completion|engagement|scores|activity)$", description="Metric to analyze"
+        "completion", pattern="^(completion|engagement|scores|activity)$", description="Metric to analyze"
     ),
     es_service: ElasticsearchService = Depends(get_elasticsearch_service),
     current_user: User = Depends(get_current_user),
@@ -383,7 +383,7 @@ async def get_analytics_trends(
 
 @router.get("/dashboard", summary="Complete analytics dashboard data")
 async def get_dashboard_data(
-    role: str = Query("learner", regex="^(learner|instructor|admin)$", description="Dashboard role perspective"),
+    role: str = Query("learner", pattern="^(learner|instructor|admin)$", description="Dashboard role perspective"),
     since: Optional[str] = Query(None, description="Start date in ISO format"),
     es_service: ElasticsearchService = Depends(get_elasticsearch_service),
     current_user: User = Depends(get_current_user),
@@ -464,7 +464,7 @@ async def get_dashboard_data(
 async def export_analytics(
     format: str,
     data_type: str = Query(
-        "overview", regex="^(overview|learners|activities|statements)$", description="Data type to export"
+        "overview", pattern="^(overview|learners|activities|statements)$", description="Data type to export"
     ),
     since: Optional[str] = Query(None, description="Start date in ISO format"),
     until: Optional[str] = Query(None, description="End date in ISO format"),
@@ -531,7 +531,7 @@ async def export_analytics(
 async def get_top_performers(
     category: str,
     limit: int = Query(50, ge=1, le=100, description="Maximum number of top performers"),
-    time_period: str = Query("90d", regex="^(30d|90d|180d|1y)$", description="Analysis time period"),
+    time_period: str = Query("90d", pattern="^(30d|90d|180d|1y)$", description="Analysis time period"),
     include_characteristics: bool = Query(True, description="Include behavioral characteristics"),
     performance_service: PerformanceAnalysisService = Depends(get_performance_analysis_service),
     current_user: User = Depends(get_current_user),
@@ -689,7 +689,7 @@ async def get_training_recommendations(
 @router.get("/learner-performance/{user_id}", summary="Get comprehensive learner performance analysis")
 async def get_learner_performance_analysis(
     user_id: str,
-    time_period: str = Query("90d", regex="^(30d|90d|180d|1y)$", description="Analysis time period"),
+    time_period: str = Query("90d", pattern="^(30d|90d|180d|1y)$", description="Analysis time period"),
     include_benchmarks: bool = Query(True, description="Include comparison with top performers"),
     performance_service: PerformanceAnalysisService = Depends(get_performance_analysis_service),
     current_user: User = Depends(get_current_user),

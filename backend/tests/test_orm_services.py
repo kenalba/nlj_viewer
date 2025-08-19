@@ -394,11 +394,13 @@ class TestMediaOrmService:
         mock_repository.create.return_value = mock_media
         
         # Execute
+        source_document_id = uuid.uuid4()
         result = await media_service.create_media(
             title="test.jpg",
             file_path="/uploads/test.jpg",
             media_type=MediaType.IMAGE,
-            creator_id=uploader_id
+            creator_id=uploader_id,
+            source_document_id=source_document_id
         )
         
         # Verify
@@ -834,7 +836,8 @@ class TestTransactionManagement:
         with pytest.raises(RuntimeError):
             await service.create_media(
                 title="test.jpg", file_path="/test",
-                media_type=MediaType.IMAGE, creator_id=uuid.uuid4()
+                media_type=MediaType.IMAGE, creator_id=uuid.uuid4(),
+                source_document_id=uuid.uuid4()
             )
         
         # Verify rollback was called

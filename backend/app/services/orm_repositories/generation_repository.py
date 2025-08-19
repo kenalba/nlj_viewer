@@ -28,8 +28,8 @@ class GenerationSessionRepository(BaseRepository[GenerationSession]):
         result = await self.session.execute(
             select(GenerationSession)
             .options(
-                selectinload(GenerationSession.user),
-                selectinload(GenerationSession.activity_sources),
+                selectinload(GenerationSession.creator),
+                selectinload(GenerationSession.source_documents),
                 selectinload(GenerationSession.created_activities)
             )
             .where(GenerationSession.id == session_id)
@@ -42,7 +42,7 @@ class GenerationSessionRepository(BaseRepository[GenerationSession]):
         status: GenerationStatus | None = None,
         limit: int | None = None,
         offset: int | None = None
-    ) -> tuple[list[GenerationSession], int]:
+    ) -> list[GenerationSession]:
         """Get generation sessions for a user with pagination."""
         # Build conditions
         conditions = [GenerationSession.user_id == user_id]
@@ -65,14 +65,26 @@ class GenerationSessionRepository(BaseRepository[GenerationSession]):
         if limit is not None:
             query = query.limit(limit)
         
-        # Execute queries
+        # Execute query
         sessions_result = await self.session.execute(query)
+        sessions = list(sessions_result.scalars().all())
+        
+        return sessions
+    
+    async def get_user_sessions_count(
+        self,
+        user_id: UUID,
+        status: GenerationStatus | None = None
+    ) -> int:
+        """Get count of generation sessions for a user."""
+        conditions = [GenerationSession.user_id == user_id]
+        if status is not None:
+            conditions.append(GenerationSession.status == status)
+        
+        count_query = select(func.count(GenerationSession.id)).where(and_(*conditions))
         count_result = await self.session.execute(count_query)
         
-        sessions = list(sessions_result.scalars().all())
-        total_count = count_result.scalar()
-        
-        return sessions, total_count
+        return count_result.scalar() or 0
     
     async def get_by_status(
         self,
@@ -108,7 +120,7 @@ class GenerationSessionRepository(BaseRepository[GenerationSession]):
         result = await self.session.execute(
             select(GenerationSession)
             .where(GenerationSession.status == GenerationStatus.PROCESSING)
-            .order_by(GenerationSession.updated_at)
+            .order_by(GenerationSession.started_at.desc().nulls_last(), GenerationSession.created_at)
         )
         return list(result.scalars().all())
     
@@ -121,7 +133,7 @@ class GenerationSessionRepository(BaseRepository[GenerationSession]):
         query = (
             select(GenerationSession)
             .where(GenerationSession.status == GenerationStatus.FAILED)
-            .order_by(desc(GenerationSession.updated_at))
+            .order_by(desc(GenerationSession.completed_at.nulls_last()), desc(GenerationSession.created_at))
         )
         
         if offset is not None:
@@ -178,12 +190,12 @@ class GenerationSessionRepository(BaseRepository[GenerationSession]):
         limit: int | None = None
     ) -> list[GenerationSession]:
         """Get generation sessions that used specific source documents."""
-        from app.models.activity_source import ActivitySource
+        from app.models.generation_session import generation_session_sources
         
         query = (
             select(GenerationSession)
-            .join(ActivitySource, GenerationSession.id == ActivitySource.generation_session_id)
-            .where(ActivitySource.source_document_id.in_(source_document_ids))
+            .join(generation_session_sources, GenerationSession.id == generation_session_sources.c.generation_session_id)
+            .where(generation_session_sources.c.source_document_id.in_(source_document_ids))
             .distinct()
         )
         
@@ -331,3 +343,37 @@ class GenerationSessionRepository(BaseRepository[GenerationSession]):
         )
         
         return result.rowcount
+    
+    async def search_sessions(
+        self,
+        search_term: str,
+        user_id: UUID | None = None,
+        limit: int | None = None,
+        offset: int | None = None
+    ) -> list[GenerationSession]:
+        """Search generation sessions by content in prompt_config or error messages."""
+        from sqlalchemy import or_
+        
+        # Since there's no direct title field, search in prompt_config and error_message
+        search_condition = or_(
+            GenerationSession.prompt_config.op('::text').ilike(f"%{search_term}%"),
+            GenerationSession.error_message.ilike(f"%{search_term}%") if GenerationSession.error_message else None
+        )
+        
+        conditions = [search_condition]
+        if user_id is not None:
+            conditions.append(GenerationSession.user_id == user_id)
+        
+        query = (
+            select(GenerationSession)
+            .where(and_(*conditions))
+            .order_by(desc(GenerationSession.created_at))
+        )
+        
+        if offset is not None:
+            query = query.offset(offset)
+        if limit is not None:
+            query = query.limit(limit)
+            
+        result = await self.session.execute(query)
+        return list(result.scalars().all())

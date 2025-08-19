@@ -180,7 +180,7 @@ class GenerationSessionOrmService(BaseOrmService[GenerationSession, GenerationSe
     async def start_session(self, session_id: uuid.UUID) -> GenerationSession | None:
         """Start a pending generation session."""
         return await self.update_session_status(
-            session_id, GenerationStatus.IN_PROGRESS, progress=0, current_step="Starting generation process"
+            session_id, GenerationStatus.PROCESSING, progress=0, current_step="Starting generation process"
         )
 
     async def complete_session(
@@ -219,6 +219,21 @@ class GenerationSessionOrmService(BaseOrmService[GenerationSession, GenerationSe
             await self.session.rollback()
             raise RuntimeError(f"Failed to get user sessions: {e}") from e
 
+    async def get_user_sessions_count(
+        self,
+        user_id: uuid.UUID,
+        status: GenerationStatus | None = None,
+    ) -> int:
+        """Get count of generation sessions for a specific user."""
+        try:
+            return await self.repository.get_user_sessions_count(
+                user_id=user_id,
+                status=status,
+            )
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise RuntimeError(f"Failed to get user sessions count: {e}") from e
+
     async def get_by_status(
         self,
         status: GenerationStatus,
@@ -238,7 +253,7 @@ class GenerationSessionOrmService(BaseOrmService[GenerationSession, GenerationSe
 
     async def get_active_sessions(self, limit: int = 20) -> list[GenerationSession]:
         """Get currently active (in-progress) generation sessions."""
-        return await self.get_by_status(GenerationStatus.IN_PROGRESS, limit=limit)
+        return await self.get_by_status(GenerationStatus.PROCESSING, limit=limit)
 
     async def get_pending_sessions(self, limit: int = 10) -> list[GenerationSession]:
         """Get pending generation sessions ready to be processed."""
@@ -246,7 +261,7 @@ class GenerationSessionOrmService(BaseOrmService[GenerationSession, GenerationSe
 
     async def get_failed_sessions(self, limit: int = 50, offset: int = 0) -> list[GenerationSession]:
         """Get failed generation sessions for debugging."""
-        return await self.get_by_status(GenerationStatus.FAILED, limit=limit)
+        return await self.get_by_status(GenerationStatus.FAILED, limit=limit, offset=offset)
 
     async def get_session_statistics(self) -> dict[str, Any]:
         """Get generation session analytics and statistics."""
@@ -399,12 +414,12 @@ class GenerationSessionOrmService(BaseOrmService[GenerationSession, GenerationSe
             await self.session.refresh(entity)
 
             # Load user relationship if not already loaded
-            if not entity.user:
-                await self.session.refresh(entity, ["user"])
+            if not entity.creator:
+                await self.session.refresh(entity, ["creator"])
 
-            # Load activity sources and created activities if available
-            if hasattr(entity, "activity_sources") and not entity.activity_sources:
-                await self.session.refresh(entity, ["activity_sources"])
+            # Load source documents and created activities if available
+            if hasattr(entity, "source_documents") and not entity.source_documents:
+                await self.session.refresh(entity, ["source_documents"])
 
             if hasattr(entity, "created_activities") and not entity.created_activities:
                 await self.session.refresh(entity, ["created_activities"])

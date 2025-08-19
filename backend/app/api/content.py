@@ -129,7 +129,7 @@ async def list_content(
     search: str = Query(None, min_length=1, max_length=100, description="Search in title/description"),
     # Sorting
     sort_by: str = Query("created_at", description="Sort field"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$", description="Sort order"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$", description="Sort order"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ContentListResponse:

@@ -41,28 +41,34 @@ class ContentOrmService(BaseOrmService[ContentItem, ContentRepository]):
     async def create_content(
         self,
         title: str,
-        description: str,
         nlj_data: dict[str, Any],
-        content_type: ContentType,
-        learning_style: LearningStyle,
         creator_id: uuid.UUID,
+        description: str | None = None,
+        content_type: ContentType = ContentType.TRAINING,
+        learning_style: LearningStyle | None = None,
         is_template: bool = False,
         template_category: str | None = None,
         parent_content_id: uuid.UUID | None = None,
+        generation_session_id: uuid.UUID | None = None,
+        import_source: str | None = None,
+        import_filename: str | None = None,
     ) -> ContentItem:
         """
         Create new content item with validation.
 
         Args:
             title: Content title
-            description: Content description
             nlj_data: NLJ scenario data
-            content_type: Type of content (TRAINING, SURVEY, etc.)
-            learning_style: Learning style (VISUAL, AUDITORY, etc.)
             creator_id: ID of the user creating the content
+            description: Content description (optional)
+            content_type: Type of content (defaults to TRAINING)
+            learning_style: Learning style (optional)
             is_template: Whether this is a template
             template_category: Category if this is a template
             parent_content_id: ID of parent content if this is a copy
+            generation_session_id: ID of generation session if AI-generated
+            import_source: Source type if imported (e.g., 'trivie_xlsx')
+            import_filename: Original filename if imported
 
         Returns:
             Created ContentItem
@@ -82,6 +88,9 @@ class ContentOrmService(BaseOrmService[ContentItem, ContentRepository]):
             is_template=is_template,
             template_category=template_category,
             parent_content_id=parent_content_id,
+            generation_session_id=generation_session_id,
+            import_source=import_source,
+            import_filename=import_filename,
             state=ContentState.DRAFT,  # All content starts as draft
         )
 
@@ -233,11 +242,11 @@ class ContentOrmService(BaseOrmService[ContentItem, ContentRepository]):
             if not content:
                 return None
 
-            # Validate state transition (delegated to domain model)
+            # Validate state transition using entity method
             if not content.can_transition_to(new_state):
                 raise ValueError(f"Cannot transition from {content.state} to {new_state}")
 
-            update_data = {"state": new_state}
+            update_data: dict[str, Any] = {"state": new_state}
 
             # Set published timestamp if transitioning to PUBLISHED
             if new_state == ContentState.PUBLISHED:
@@ -314,7 +323,6 @@ class ContentOrmService(BaseOrmService[ContentItem, ContentRepository]):
         search_term: str,
         content_type: ContentType | None = None,
         limit: int = 50,
-        offset: int = 0,
     ) -> list[ContentItem]:
         """Search content by title and description."""
         try:
@@ -322,7 +330,6 @@ class ContentOrmService(BaseOrmService[ContentItem, ContentRepository]):
                 search_term=search_term,
                 content_type=content_type,
                 limit=limit,
-                offset=offset,
             )
         except SQLAlchemyError as e:
             await self.session.rollback()
@@ -368,8 +375,10 @@ class ContentOrmService(BaseOrmService[ContentItem, ContentRepository]):
         learning_style: LearningStyle | None = None,
         state: ContentState | None = None,
         is_template: bool | None = None,
-        creator_id: uuid.UUID | None = None,
+        created_by: uuid.UUID | None = None,
         search: str | None = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[ContentItem], int]:
@@ -380,8 +389,10 @@ class ContentOrmService(BaseOrmService[ContentItem, ContentRepository]):
                 learning_style=learning_style,
                 state=state,
                 is_template=is_template,
-                creator_id=creator_id,
+                created_by=created_by,
                 search=search,
+                sort_by=sort_by,
+                sort_order=sort_order,
                 limit=limit,
                 offset=offset,
             )
@@ -391,13 +402,13 @@ class ContentOrmService(BaseOrmService[ContentItem, ContentRepository]):
 
     # Abstract Method Implementations
 
-    async def validate_entity_data(self, **kwargs) -> dict[str, Any]:
+    async def validate_entity_data(self, **kwargs: Any) -> dict[str, Any]:
         """
         Validate content data before persistence.
 
         Validates required fields, data types, and business rules.
         """
-        validated = {}
+        validated: dict[str, Any] = {}
 
         # Required fields for creation
         if "title" in kwargs:
@@ -417,11 +428,12 @@ class ContentOrmService(BaseOrmService[ContentItem, ContentRepository]):
             nlj_data = kwargs["nlj_data"]
             if not isinstance(nlj_data, dict):
                 raise ValueError("NLJ data must be a dictionary")
-            # Basic structure validation
-            if "nodes" not in nlj_data or "edges" not in nlj_data:
-                validated["nlj_data"] = {"nodes": [], "edges": []}
-            else:
-                validated["nlj_data"] = nlj_data
+            # Basic structure validation - ensure required fields exist
+            if not isinstance(nlj_data.get("nodes"), list):
+                nlj_data["nodes"] = []
+            if not isinstance(nlj_data.get("edges"), list):
+                nlj_data["edges"] = []
+            validated["nlj_data"] = nlj_data
 
         # Enum validations
         if "content_type" in kwargs:
@@ -450,6 +462,11 @@ class ContentOrmService(BaseOrmService[ContentItem, ContentRepository]):
                 raise ValueError("Parent content ID must be a valid UUID")
             validated["parent_content_id"] = kwargs["parent_content_id"]
 
+        if "generation_session_id" in kwargs and kwargs["generation_session_id"] is not None:
+            if not isinstance(kwargs["generation_session_id"], uuid.UUID):
+                raise ValueError("Generation session ID must be a valid UUID")
+            validated["generation_session_id"] = kwargs["generation_session_id"]
+
         # Boolean validations
         if "is_template" in kwargs:
             validated["is_template"] = bool(kwargs["is_template"])
@@ -459,6 +476,16 @@ class ContentOrmService(BaseOrmService[ContentItem, ContentRepository]):
             if not isinstance(kwargs["template_category"], str):
                 raise ValueError("Template category must be a string")
             validated["template_category"] = kwargs["template_category"].strip()
+
+        if "import_source" in kwargs and kwargs["import_source"] is not None:
+            if not isinstance(kwargs["import_source"], str):
+                raise ValueError("Import source must be a string")
+            validated["import_source"] = kwargs["import_source"].strip()
+
+        if "import_filename" in kwargs and kwargs["import_filename"] is not None:
+            if not isinstance(kwargs["import_filename"], str):
+                raise ValueError("Import filename must be a string")
+            validated["import_filename"] = kwargs["import_filename"].strip()
 
         # Numeric validations
         for field in ["version", "view_count", "completion_count"]:
@@ -494,3 +521,29 @@ class ContentOrmService(BaseOrmService[ContentItem, ContentRepository]):
 
         except SQLAlchemyError as e:
             raise RuntimeError(f"Failed to handle content relationships: {e}") from e
+    
+    def _can_transition_to_state(self, current_state: ContentState, new_state: ContentState) -> bool:
+        """
+        Validate content state transitions based on business rules.
+        
+        Valid transitions based on actual ContentState enum:
+        - DRAFT -> SUBMITTED, PUBLISHED, ARCHIVED
+        - SUBMITTED -> DRAFT, IN_REVIEW, REJECTED
+        - IN_REVIEW -> APPROVED, REJECTED, DRAFT
+        - APPROVED -> PUBLISHED, DRAFT
+        - PUBLISHED -> ARCHIVED, DRAFT  
+        - REJECTED -> DRAFT, SUBMITTED
+        - ARCHIVED -> DRAFT
+        """
+        valid_transitions = {
+            ContentState.DRAFT: [ContentState.SUBMITTED, ContentState.PUBLISHED, ContentState.ARCHIVED],
+            ContentState.SUBMITTED: [ContentState.DRAFT, ContentState.IN_REVIEW, ContentState.REJECTED], 
+            ContentState.IN_REVIEW: [ContentState.APPROVED, ContentState.REJECTED, ContentState.DRAFT],
+            ContentState.APPROVED: [ContentState.PUBLISHED, ContentState.DRAFT],
+            ContentState.PUBLISHED: [ContentState.ARCHIVED, ContentState.DRAFT], 
+            ContentState.REJECTED: [ContentState.DRAFT, ContentState.SUBMITTED],
+            ContentState.ARCHIVED: [ContentState.DRAFT],
+        }
+        
+        allowed_states = valid_transitions.get(current_state, [])
+        return new_state in allowed_states

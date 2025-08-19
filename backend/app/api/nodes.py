@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database_manager import db_manager
@@ -63,8 +63,7 @@ class NodeResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NodesListResponse(BaseModel):
@@ -96,8 +95,8 @@ async def list_nodes(
     offset: int = Query(0, ge=0),
     node_type: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    sort_by: str = Query("updated_at", regex="^(created_at|updated_at|success_rate|usage_count)$"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    sort_by: str = Query("updated_at", pattern="^(created_at|updated_at|success_rate|usage_count)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     node_service: NodeService = Depends(get_node_service),
     user: User = Depends(get_current_user)
 ):
@@ -495,7 +494,7 @@ async def get_node_optimization(
 @router.get("/{node_id}/trends", response_model=Dict[str, Any])
 async def get_node_trends(
     node_id: str,
-    time_range: str = Query("30d", regex="^(7d|30d|90d|1y)$"),
+    time_range: str = Query("30d", pattern="^(7d|30d|90d|1y)$"),
     analytics_service: NodeAnalyticsService = Depends(get_node_analytics_service),
     user: User = Depends(get_current_user)
 ):

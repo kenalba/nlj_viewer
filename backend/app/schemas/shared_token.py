@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
 class SharedTokenCreate(BaseModel):
@@ -16,7 +16,8 @@ class SharedTokenCreate(BaseModel):
     description: Optional[str] = Field(None, max_length=500, description="Optional description for the share")
     expires_at: Optional[datetime] = Field(None, description="Optional expiration date (null = permanent)")
 
-    @validator("expires_at")
+    @field_validator("expires_at")
+    @classmethod
     def validate_expiration(cls, v):
         if v is not None and v <= datetime.now():
             raise ValueError("Expiration date must be in the future")
@@ -30,7 +31,8 @@ class SharedTokenUpdate(BaseModel):
     expires_at: Optional[datetime] = None
     is_active: Optional[bool] = None
 
-    @validator("expires_at")
+    @field_validator("expires_at")
+    @classmethod
     def validate_expiration(cls, v):
         if v is not None and v <= datetime.now():
             raise ValueError("Expiration date must be in the future")
@@ -57,8 +59,7 @@ class SharedTokenResponse(BaseModel):
     public_url: str
     qr_code_url: Optional[str] = None  # Will be generated on demand
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PublicActivityResponse(BaseModel):
@@ -75,8 +76,7 @@ class PublicActivityResponse(BaseModel):
     view_count: int = 0
     completion_count: int = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ShareAnalytics(BaseModel):

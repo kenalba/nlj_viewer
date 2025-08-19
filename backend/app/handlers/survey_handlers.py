@@ -7,7 +7,7 @@ import logging
 from typing import Any, Dict
 
 from faststream import Depends
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from app.brokers.kafka_broker import broker
 from app.services.elasticsearch_service import get_elasticsearch_service, ElasticsearchService
@@ -32,8 +32,7 @@ class XAPIEvent(BaseModel):
     producer_id: str = Field(default="", description="Event producer identifier")
     producer_timestamp: str = Field(default="", description="Producer timestamp")
     
-    class Config:
-        extra = "allow"  # Allow additional fields not defined in the model
+    model_config = ConfigDict(extra="allow")  # Allow additional fields not defined in the model
 
 
 # =========================================================================

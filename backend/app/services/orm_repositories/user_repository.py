@@ -3,6 +3,7 @@ User repository for user-related database operations.
 Handles user queries, authentication, and role management.
 """
 
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import and_, func, or_, select
@@ -172,7 +173,100 @@ class UserRepository(BaseRepository[User]):
         """Update user's password hash."""
         return await self.update_by_id(user_id, hashed_password=hashed_password) is not None
     
-    async def get_user_statistics(self) -> dict:
+    async def get_users_with_filters(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        role_filter: UserRole | None = None,
+        active_only: bool = False,
+        search: str | None = None
+    ) -> list[User]:
+        """
+        Get users with filtering, pagination, and search.
+        
+        Args:
+            skip: Number of users to skip (for pagination)
+            limit: Maximum number of users to return
+            role_filter: Filter by user role  
+            active_only: Only return active users
+            search: Search users by username, email, or full name
+            
+        Returns:
+            List of users matching the criteria
+        """
+        query = select(User)
+        
+        # Apply filters
+        conditions = []
+        
+        if active_only:
+            conditions.append(User.is_active)
+            
+        if role_filter:
+            conditions.append(User.role == role_filter)
+            
+        if search:
+            search_term = f"%{search.lower()}%"
+            search_condition = or_(
+                User.username.ilike(search_term),
+                User.email.ilike(search_term), 
+                User.full_name.ilike(search_term)
+            )
+            conditions.append(search_condition)
+            
+        if conditions:
+            query = query.where(and_(*conditions))
+            
+        # Apply pagination and ordering
+        query = query.offset(skip).limit(limit).order_by(User.created_at.desc())
+        
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+    
+    async def get_user_count_with_filters(
+        self,
+        role_filter: UserRole | None = None,
+        active_only: bool = False,
+        search: str | None = None
+    ) -> int:
+        """
+        Get count of users with filtering and search.
+        
+        Args:
+            role_filter: Filter by user role
+            active_only: Only count active users  
+            search: Search users by username, email, or full name
+            
+        Returns:
+            Total count of users matching the criteria
+        """
+        query = select(func.count(User.id))
+        
+        # Apply same filters as get_users_with_filters
+        conditions = []
+        
+        if active_only:
+            conditions.append(User.is_active)
+            
+        if role_filter:
+            conditions.append(User.role == role_filter)
+            
+        if search:
+            search_term = f"%{search.lower()}%"
+            search_condition = or_(
+                User.username.ilike(search_term),
+                User.email.ilike(search_term),
+                User.full_name.ilike(search_term)
+            )
+            conditions.append(search_condition)
+            
+        if conditions:
+            query = query.where(and_(*conditions))
+            
+        result = await self.session.execute(query)
+        return result.scalar() or 0
+
+    async def get_user_statistics(self) -> dict[str, Any]:
         """Get user statistics for analytics."""
         # Count by role
         role_counts = await self.session.execute(
@@ -207,5 +301,5 @@ class UserRepository(BaseRepository[User]):
             "inactive_users": inactive_count.scalar(),
             "verified_users": verified_count.scalar(),
             "unverified_users": unverified_count.scalar(),
-            "by_role": dict(role_counts.all())
+            "by_role": {role.value: count for role, count in role_counts.all()}
         }

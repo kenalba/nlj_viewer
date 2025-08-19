@@ -9,7 +9,7 @@ from typing import Annotated, Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -81,8 +81,7 @@ class TrainingProgramResponse(BaseModel):
     upcoming_sessions: int = 0
     total_bookings: int = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TrainingSessionCreate(BaseModel):
@@ -126,8 +125,7 @@ class TrainingSessionResponse(BaseModel):
     confirmed_bookings: int = 0
     waitlist_count: int = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EventResponse(BaseModel):

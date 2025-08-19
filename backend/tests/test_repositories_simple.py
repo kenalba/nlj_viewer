@@ -327,8 +327,8 @@ class TestMediaRepositoryCore:
             assert result is True
             mock_update.assert_called_once_with(
                 media_id, 
-                state=MediaState.FAILED, 
-                error_message=error_message
+                media_state=MediaState.FAILED, 
+                generation_error=error_message
             )
 
 

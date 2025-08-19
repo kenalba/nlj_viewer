@@ -28,8 +28,8 @@ class NodeRepository(BaseRepository[Node]):
         result = await self.session.execute(
             select(Node)
             .options(
-                selectinload(Node.learning_objectives),
-                selectinload(Node.keywords),
+                selectinload(Node.objective_relationships),
+                selectinload(Node.keyword_relationships),
                 selectinload(Node.interactions)
             )
             .where(Node.id == node_id)
@@ -42,8 +42,14 @@ class NodeRepository(BaseRepository[Node]):
         limit: int | None = None,
         offset: int | None = None
     ) -> list[Node]:
-        """Get all nodes belonging to a specific content item."""
-        query = select(Node).where(Node.content_id == content_id)
+        """Get all nodes belonging to a specific activity through activity_nodes relationship."""
+        from app.models.node import ActivityNode
+        
+        query = (
+            select(Node)
+            .join(ActivityNode, Node.id == ActivityNode.node_id)
+            .where(ActivityNode.activity_id == content_id)
+        )
         
         if offset is not None:
             query = query.offset(offset)
@@ -84,7 +90,19 @@ class NodeRepository(BaseRepository[Node]):
         
         conditions = [search_condition]
         if content_id is not None:
-            conditions.append(Node.content_id == content_id)
+            from app.models.node import ActivityNode
+            # Join through activity_nodes to filter by activity/content
+            query = (
+                select(Node)
+                .join(ActivityNode, Node.id == ActivityNode.node_id)
+                .where(and_(search_condition, ActivityNode.activity_id == content_id))
+            )
+            
+            if limit is not None:
+                query = query.limit(limit)
+                
+            result = await self.session.execute(query)
+            return list(result.scalars().all())
         
         query = select(Node).where(and_(*conditions))
         
@@ -104,12 +122,9 @@ class NodeRepository(BaseRepository[Node]):
         query = (
             select(Node)
             .where(
-                and_(
-                    Node.success_rate >= min_success_rate,
-                    Node.total_interactions >= min_interactions
-                )
+                Node.success_rate >= min_success_rate
             )
-            .order_by(desc(Node.success_rate), desc(Node.total_interactions))
+            .order_by(desc(Node.success_rate))
             .limit(limit)
         )
         
@@ -126,12 +141,9 @@ class NodeRepository(BaseRepository[Node]):
         query = (
             select(Node)
             .where(
-                and_(
-                    Node.success_rate <= max_success_rate,
-                    Node.total_interactions >= min_interactions
-                )
+                Node.success_rate <= max_success_rate
             )
-            .order_by(Node.success_rate, desc(Node.total_interactions))
+            .order_by(Node.success_rate)
             .limit(limit)
         )
         
@@ -221,11 +233,16 @@ class NodeRepository(BaseRepository[Node]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
     
-    async def get_node_statistics(self, content_id: UUID | None = None) -> dict:
+    async def get_node_statistics(self, activity_id: UUID | None = None) -> dict:
         """Get node statistics for analytics."""
         base_query = select(Node)
-        if content_id is not None:
-            base_query = base_query.where(Node.content_id == content_id)
+        if activity_id is not None:
+            from app.models.node import ActivityNode
+            base_query = (
+                select(Node)
+                .join(ActivityNode, Node.id == ActivityNode.node_id)
+                .where(ActivityNode.activity_id == activity_id)
+            )
         
         # Count by type
         type_counts = await self.session.execute(
@@ -241,15 +258,22 @@ class NodeRepository(BaseRepository[Node]):
                 func.min(Node.success_rate),
                 func.max(Node.success_rate),
                 func.avg(Node.difficulty_score),
-                func.sum(Node.total_interactions)
+                # Calculate total interactions via subquery
+                (
+                    select(func.count(NodeInteraction.id))
+                    .where(NodeInteraction.node_id == Node.id)
+                ).scalar_subquery()
             )
             .select_from(base_query.subquery())
         )
         
         # Total count
-        if content_id is not None:
+        if activity_id is not None:
+            from app.models.node import ActivityNode
             total_nodes = await self.session.execute(
-                select(func.count(Node.id)).where(Node.content_id == content_id)
+                select(func.count(Node.id))
+                .join(ActivityNode, Node.id == ActivityNode.node_id)
+                .where(ActivityNode.activity_id == activity_id)
             )
         else:
             total_nodes = await self.count_all()
@@ -257,13 +281,13 @@ class NodeRepository(BaseRepository[Node]):
         perf_result = performance_stats.first()
         
         return {
-            "total_nodes": total_nodes.scalar() if content_id else total_nodes,
+            "total_nodes": total_nodes.scalar() if activity_id else total_nodes,
             "by_type": dict(type_counts.all()),
             "average_success_rate": float(perf_result[0] or 0),
             "min_success_rate": float(perf_result[1] or 0),
             "max_success_rate": float(perf_result[2] or 0),
             "average_difficulty": float(perf_result[3] or 0),
-            "total_interactions": perf_result[4] or 0
+            "total_interactions": int(perf_result[4] or 0)
         }
     
     async def update_node_performance(
@@ -365,7 +389,7 @@ class NodeInteractionRepository(BaseRepository[NodeInteraction]):
         query = (
             select(NodeInteraction)
             .where(NodeInteraction.node_id == node_id)
-            .order_by(desc(NodeInteraction.timestamp))
+            .order_by(desc(NodeInteraction.created_at))
         )
         
         if offset is not None:
@@ -386,7 +410,7 @@ class NodeInteractionRepository(BaseRepository[NodeInteraction]):
         query = (
             select(NodeInteraction)
             .where(NodeInteraction.user_id == user_id)
-            .order_by(desc(NodeInteraction.timestamp))
+            .order_by(desc(NodeInteraction.created_at))
         )
         
         if offset is not None:
@@ -409,8 +433,8 @@ class NodeInteractionRepository(BaseRepository[NodeInteraction]):
         
         query = (
             select(NodeInteraction)
-            .where(NodeInteraction.timestamp >= cutoff_time)
-            .order_by(desc(NodeInteraction.timestamp))
+            .where(NodeInteraction.created_at >= cutoff_time)
+            .order_by(desc(NodeInteraction.created_at))
             .limit(limit)
         )
         
@@ -425,17 +449,17 @@ class NodeInteractionRepository(BaseRepository[NodeInteraction]):
         
         # Success/failure counts
         outcome_counts = await self.session.execute(
-            select(NodeInteraction.was_successful, func.count(NodeInteraction.id))
+            select(NodeInteraction.is_correct, func.count(NodeInteraction.id))
             .select_from(base_query.subquery())
-            .group_by(NodeInteraction.was_successful)
+            .group_by(NodeInteraction.is_correct)
         )
         
         # Time statistics
         time_stats = await self.session.execute(
             select(
-                func.avg(NodeInteraction.time_spent),
-                func.min(NodeInteraction.time_spent),
-                func.max(NodeInteraction.time_spent)
+                func.avg(NodeInteraction.time_to_respond),
+                func.min(NodeInteraction.time_to_respond),
+                func.max(NodeInteraction.time_to_respond)
             )
             .select_from(base_query.subquery())
         )
