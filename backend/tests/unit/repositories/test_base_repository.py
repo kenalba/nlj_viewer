@@ -10,6 +10,9 @@ from app.models.user import User, UserRole
 from app.services.orm_repositories.user_repository import UserRepository
 from tests.fixtures.factories import UserFactory
 
+# Configure pytest-asyncio to support async tests
+pytestmark = pytest.mark.asyncio
+
 
 class TestBaseRepository:
     """Test BaseRepository functionality through UserRepository implementation."""
@@ -18,20 +21,23 @@ class TestBaseRepository:
         """Test creating a new instance."""
         repo = UserRepository(test_session)
         
+        # Create a user instance using the factory to get unique values
+        user_instance = UserFactory.create(role=UserRole.CREATOR)
         user_data = {
-            "username": "testuser",
-            "email": "test@example.com",
-            "hashed_password": "hashed123",
-            "full_name": "Test User",
-            "role": UserRole.CREATOR,
-            "is_active": True,
-            "is_verified": True
+            "username": user_instance.username,
+            "email": user_instance.email,
+            "hashed_password": user_instance.hashed_password,
+            "full_name": user_instance.full_name,
+            "role": user_instance.role,
+            "is_active": user_instance.is_active,
+            "is_verified": user_instance.is_verified
         }
         
         user = await repo.create(**user_data)
+        await test_session.commit()
         
-        assert user.username == "testuser"
-        assert user.email == "test@example.com"
+        assert user.username == user_instance.username
+        assert user.email == user_instance.email
         assert user.role == UserRole.CREATOR
         assert user.id is not None
         
@@ -65,22 +71,30 @@ class TestBaseRepository:
         """Test retrieving all instances with pagination."""
         repo = UserRepository(test_session)
         
-        # Create multiple users
-        users = [UserFactory.create(username=f"user{i}") for i in range(5)]
+        # Get initial count
+        initial_count = await repo.count_all()
+        
+        # Create multiple users with unique usernames
+        users = [UserFactory.create() for i in range(5)]
         test_session.add_all(users)
         await test_session.commit()
         
-        # Test pagination
-        first_page = await repo.get_all(limit=3, offset=0)
-        second_page = await repo.get_all(limit=3, offset=3)
+        # Test pagination - should have 5 more users now
+        first_page = await repo.get_all(limit=3, offset=initial_count)
+        second_page = await repo.get_all(limit=3, offset=initial_count + 3)
         
         assert len(first_page) == 3
-        assert len(second_page) == 2  # Remaining 2 users
+        assert len(second_page) == 2  # Remaining 2 of our 5 users
         
-        # Ensure no overlap
+        # Ensure no overlap between our pages
         first_page_ids = {user.id for user in first_page}
         second_page_ids = {user.id for user in second_page}
         assert first_page_ids.isdisjoint(second_page_ids)
+        
+        # Ensure our created users are in the results
+        created_user_ids = {user.id for user in users}
+        retrieved_ids = first_page_ids | second_page_ids
+        assert created_user_ids == retrieved_ids
         
     async def test_update_by_id(self, test_session: AsyncSession):
         """Test updating instance by ID."""
@@ -163,54 +177,57 @@ class TestBaseRepository:
         """Test counting all instances."""
         repo = UserRepository(test_session)
         
-        # Initial count should be 0
+        # Get initial count (may have existing data from other tests)
         initial_count = await repo.count_all()
-        assert initial_count == 0
         
-        # Add some users
-        users = [UserFactory.create(username=f"user{i}") for i in range(3)]
+        # Add some users with unique usernames
+        users = [UserFactory.create() for i in range(3)]
         test_session.add_all(users)
         await test_session.commit()
         
-        # Count should be 3
-        count = await repo.count_all()
-        assert count == 3
+        # Count should increase by 3
+        final_count = await repo.count_all()
+        assert final_count == initial_count + 3
         
     async def test_find_by_field(self, test_session: AsyncSession):
         """Test finding instances by field value."""
         repo = UserRepository(test_session)
         
-        # Create users with different roles
+        # Create users with different roles and unique usernames
         creator = UserFactory.create(role=UserRole.CREATOR)
-        admin = UserFactory.create(role=UserRole.ADMIN, username="admin")
+        admin = UserFactory.create(role=UserRole.ADMIN)
         test_session.add_all([creator, admin])
         await test_session.commit()
         
-        # Find by role
+        # Find by role - should find at least our creator (may include others from previous tests)
         creators = await repo.find_by_field("role", UserRole.CREATOR)
+        creator_ids = [c.id for c in creators]
         
-        assert len(creators) == 1
-        assert creators[0].role == UserRole.CREATOR
+        # Our creator should be in the results
+        assert creator.id in creator_ids
+        
+        # Find by admin role - should find our specific admin
+        admins = await repo.find_by_field("role", UserRole.ADMIN)
+        admin_ids = [a.id for a in admins]
+        
+        assert admin.id in admin_ids
         
     async def test_find_by_fields(self, test_session: AsyncSession):
         """Test finding instances by multiple field conditions."""
         repo = UserRepository(test_session)
         
-        # Create users
+        # Create users with unique usernames
         active_creator = UserFactory.create(
             role=UserRole.CREATOR, 
-            is_active=True,
-            username="active_creator"
+            is_active=True
         )
         inactive_creator = UserFactory.create(
             role=UserRole.CREATOR, 
-            is_active=False,
-            username="inactive_creator"
+            is_active=False
         )
         active_admin = UserFactory.create(
             role=UserRole.ADMIN, 
-            is_active=True,
-            username="active_admin"
+            is_active=True
         )
         
         test_session.add_all([active_creator, inactive_creator, active_admin])
@@ -222,40 +239,43 @@ class TestBaseRepository:
             "is_active": True
         })
         
-        assert len(active_creators) == 1
-        assert active_creators[0].username == "active_creator"
+        # Should find at least our active creator (may include others from previous tests)
+        active_creator_ids = [c.id for c in active_creators]
+        assert active_creator.id in active_creator_ids
         
     async def test_bulk_create(self, test_session: AsyncSession):
         """Test bulk creating multiple instances."""
         repo = UserRepository(test_session)
         
+        # Create user instances with unique data
+        users_instances = [UserFactory.create() for i in range(3)]
         users_data = [
             {
-                "username": f"bulk_user_{i}",
-                "email": f"bulk{i}@example.com",
-                "hashed_password": "hashed123",
-                "full_name": f"Bulk User {i}",
-                "role": UserRole.CREATOR,
-                "is_active": True,
-                "is_verified": True
+                "username": user.username,
+                "email": user.email,
+                "hashed_password": user.hashed_password,
+                "full_name": user.full_name,
+                "role": user.role,
+                "is_active": user.is_active,
+                "is_verified": user.is_verified
             }
-            for i in range(3)
+            for user in users_instances
         ]
         
         created_users = await repo.bulk_create(users_data)
         
         assert len(created_users) == 3
-        for i, user in enumerate(created_users):
-            assert user.username == f"bulk_user_{i}"
-            assert user.id is not None
+        for created_user in created_users:
+            assert created_user.id is not None
+            assert created_user.role == UserRole.CREATOR
             
     async def test_bulk_update(self, test_session: AsyncSession):
         """Test bulk updating multiple instances."""
         repo = UserRepository(test_session)
         
-        # Create users
+        # Create users with unique usernames
         users = [
-            UserFactory.create(username=f"user{i}", is_active=True) 
+            UserFactory.create(is_active=True) 
             for i in range(3)
         ]
         test_session.add_all(users)

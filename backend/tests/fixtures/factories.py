@@ -11,11 +11,18 @@ class UserFactory:
     
     @staticmethod
     def create(
-        username: str = "testuser",
-        email: str = "test@example.com",
+        username: str = None,
+        email: str = None,
         role: UserRole = UserRole.CREATOR,
         **kwargs
     ) -> User:
+        # Generate unique values if not provided
+        unique_id = str(uuid.uuid4())[:8]
+        if username is None:
+            username = f"testuser_{unique_id}"
+        if email is None:
+            email = f"test_{unique_id}@example.com"
+            
         defaults = {
             "id": uuid.uuid4(),
             "username": username,
@@ -75,11 +82,8 @@ class TestDataBuilder:
     def with_users(self, count: int = 1, role: UserRole = UserRole.CREATOR) -> "TestDataBuilder":
         """Add users to the test data."""
         for i in range(count):
-            user = UserFactory.create(
-                username=f"user{i+1}",
-                email=f"user{i+1}@example.com", 
-                role=role
-            )
+            # Let UserFactory generate unique usernames and emails
+            user = UserFactory.create(role=role)
             self.users.append(user)
         return self
     

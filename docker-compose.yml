@@ -20,6 +20,29 @@ services:
     networks:
       - nlj_network
 
+  # Test Database - PostgreSQL for running tests with production-like environment
+  nlj-test-db:
+    image: postgres:15-alpine
+    container_name: nlj_test_postgres
+    environment:
+      POSTGRES_DB: nlj_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_pass
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    tmpfs:
+      - /var/lib/postgresql/data  # In-memory for faster tests
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d nlj_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    networks:
+      - nlj_network
+    profiles:
+      - testing
+
   # Event Infrastructure - RedPanda (Kafka API Compatible)
   redpanda:
     image: redpandadata/redpanda:latest

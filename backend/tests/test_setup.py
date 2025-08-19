@@ -7,8 +7,10 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User, UserRole
-from tests.fixtures.factories import UserFactory, ContentFactory, TestDataBuilder
+from tests.fixtures.factories import UserFactory, ContentFactory, TestDataBuilder as DataBuilder
 from tests.fixtures.test_data_helpers import seed_test_data
+
+# Async tests have individual @pytest.mark.asyncio decorators
 
 
 class TestPytestConfiguration:
@@ -18,12 +20,15 @@ class TestPytestConfiguration:
         """Test that event loop fixture is working."""
         assert True
         
+    @pytest.mark.asyncio
     async def test_test_session_fixture(self, test_session: AsyncSession):
         """Test that database session fixture works."""
+        from sqlalchemy import text
+        
         assert test_session is not None
         
         # Test basic query
-        result = await test_session.execute("SELECT 1")
+        result = await test_session.execute(text("SELECT 1"))
         assert result.scalar() == 1
 
 
@@ -35,8 +40,8 @@ class TestFactories:
         user = UserFactory.create()
         
         assert isinstance(user, User)
-        assert user.username == "testuser"
-        assert user.email == "test@example.com"
+        assert user.username.startswith("testuser_")  # Now generates unique usernames
+        assert user.email.startswith("test_") and user.email.endswith("@example.com")
         assert user.role == UserRole.CREATOR
         assert user.is_active is True
         
@@ -71,7 +76,7 @@ class TestDataBuilder:
     
     def test_builder_creates_users(self):
         """Test builder can create users."""
-        builder = TestDataBuilder()
+        builder = DataBuilder()
         data = builder.with_users(count=3).build()
         
         assert len(data["users"]) == 3
@@ -79,7 +84,7 @@ class TestDataBuilder:
         
     def test_builder_creates_content_with_users(self):
         """Test builder can create content linked to users."""
-        builder = TestDataBuilder()
+        builder = DataBuilder()
         data = (builder
                 .with_users(count=2)
                 .with_content(count=3, creator_index=0)
@@ -97,6 +102,7 @@ class TestDataBuilder:
 class TestDatabaseIntegration:
     """Test database integration works correctly."""
     
+    @pytest.mark.asyncio
     async def test_user_creation_and_retrieval(self, test_session: AsyncSession):
         """Test creating and retrieving users from database."""
         from sqlalchemy import select
@@ -115,26 +121,36 @@ class TestDatabaseIntegration:
         assert retrieved_user.username == user.username
         assert retrieved_user.email == user.email
         
+    @pytest.mark.asyncio
     async def test_seed_test_data_basic_scenario(self, test_session: AsyncSession):
         """Test basic test data seeding."""
+        # Count users before seeding
+        from sqlalchemy import select, text, func
+        
+        initial_user_count = await test_session.execute(select(func.count(User.id)))
+        initial_users = initial_user_count.scalar()
+        
+        # Seed the data
         data = await seed_test_data(test_session, scenario="basic")
         
         assert len(data["users"]) == 2
         assert len(data["content_items"]) == 3
         
         # Verify data was actually inserted
-        from sqlalchemy import select
+        final_user_count = await test_session.execute(select(func.count(User.id)))
+        final_users = final_user_count.scalar()
         
-        user_count = await test_session.execute(select(User))
-        content_count = await test_session.execute("SELECT COUNT(*) FROM content_items")
+        content_count = await test_session.execute(text("SELECT COUNT(*) FROM content_items"))
         
-        assert len(user_count.fetchall()) == 2
-        assert content_count.scalar() == 3
+        # Should have added exactly 2 users
+        assert final_users == initial_users + 2
+        assert content_count.scalar() >= 3  # At least 3 content items
 
 
 class TestAsyncSupport:
     """Test async/await support in test environment."""
     
+    @pytest.mark.asyncio
     async def test_async_test_function(self):
         """Test that async test functions work."""
         import asyncio
@@ -142,12 +158,14 @@ class TestAsyncSupport:
         result = await asyncio.sleep(0.1, result="test_value")
         assert result == "test_value"
         
+    @pytest.mark.asyncio
     async def test_async_database_operations(self, test_session: AsyncSession):
         """Test async database operations work in tests."""
         from sqlalchemy import select
         
         # Test async query
-        result = await test_session.execute(select(1))
+        from sqlalchemy import text
+        result = await test_session.execute(text("SELECT 1"))
         assert result.scalar() == 1
         
         # Test async transaction

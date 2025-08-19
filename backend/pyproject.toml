@@ -98,6 +98,7 @@ in-place = true
 [dependency-groups]
 dev = [
     "aiosqlite>=0.21.0",
+    "asyncpg>=0.30.0",
     "autoflake>=2.3.1",
     "isort>=6.0.1",
     "pytest>=8.4.1",

@@ -7,44 +7,52 @@ from typing import AsyncGenerator, Generator
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
 
 from app.core.database import Base
 from app.models.user import User, UserRole
 
 
-@pytest.fixture(scope="session")
-def event_loop() -> Generator:
-    """Create an instance of the default event loop for the test session."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+# Remove custom event_loop fixture - let pytest-asyncio handle it
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture
 async def test_engine():
-    """Create test database engine with SQLite in-memory for fast tests."""
-    engine = create_async_engine(
-        "sqlite+aiosqlite:///:memory:",
-        echo=False,
-        poolclass=StaticPool,
-        connect_args={
-            "check_same_thread": False,
-        },
+    """Create test database engine with PostgreSQL for each test function."""
+    # Use PostgreSQL test database instead of SQLite
+    database_url = os.getenv(
+        "TEST_DATABASE_URL", 
+        "postgresql+asyncpg://test_user:test_pass@localhost:5433/nlj_test"
     )
     
-    # Create all tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Configure asyncpg to handle connections properly  
+    engine = create_async_engine(
+        database_url,
+        echo=False,
+        pool_size=1,  # Single connection per test
+        max_overflow=0,
+        connect_args={
+            "command_timeout": 30,
+            "server_settings": {
+                "jit": "off",  # Disable JIT for tests
+            }
+        },
+        pool_pre_ping=False,  # Disable pre-ping to avoid event loop issues
+        pool_recycle=-1,      # Don't recycle connections in tests
+    )
     
     yield engine
     
+    # Proper cleanup
     await engine.dispose()
 
 
 @pytest_asyncio.fixture
 async def test_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
-    """Create a test database session."""
+    """Create a test database session with tables created."""
+    # Ensure all tables exist
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
     async_session_local = async_sessionmaker(
         bind=test_engine, 
         class_=AsyncSession, 
