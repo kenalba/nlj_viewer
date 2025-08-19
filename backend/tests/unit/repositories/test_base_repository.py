@@ -6,7 +6,7 @@ Tests common CRUD operations and repository patterns.
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user import User, UserRole
+from app.models.user import UserRole
 from app.services.orm_repositories.user_repository import UserRepository
 from tests.fixtures.factories import UserFactory
 

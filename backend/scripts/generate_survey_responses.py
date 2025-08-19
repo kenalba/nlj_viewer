@@ -16,7 +16,6 @@ from typing import Any, Dict, List
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database_manager import db_manager
 from app.models.content import ContentItem, ContentType

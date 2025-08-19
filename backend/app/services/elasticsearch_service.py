@@ -22,7 +22,6 @@ except ImportError:
     RequestError = Exception
 
 from app.core.config import settings
-from app.schemas.xapi_events import BaseXAPIEvent
 
 logger = logging.getLogger(__name__)
 

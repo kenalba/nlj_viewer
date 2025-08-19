@@ -20,15 +20,14 @@ import argparse
 import asyncio
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.database_manager import db_manager
 from app.models.content import ContentItem
 from app.models.node import Node
-from app.models.learning_objective import LearningObjective, Keyword
 from app.services.knowledge_extraction_service import KnowledgeExtractionService, LLMConfig
 from app.utils.logging_config import get_logger
 
@@ -56,16 +55,16 @@ class ContentNormalizationReport:
         duration = datetime.now() - self.start_time
         
         print(f"\n{'='*60}")
-        print(f"Content Normalization Complete")
+        print("Content Normalization Complete")
         print(f"{'='*60}")
         print(f"Duration: {duration.total_seconds():.1f} seconds")
         print(f"Activities Processed: {self.activities_processed}")
         print(f"Nodes Processed: {self.nodes_processed}")
-        print(f"\nLearning Objectives:")
+        print("\nLearning Objectives:")
         print(f"  Created: {self.objectives_created}")
         print(f"  Matched: {self.objectives_matched}")
         print(f"  Total: {self.objectives_created + self.objectives_matched}")
-        print(f"\nKeywords:")
+        print("\nKeywords:")
         print(f"  Created: {self.keywords_created}")
         print(f"  Matched: {self.keywords_matched}")
         print(f"  Total: {self.keywords_created + self.keywords_matched}")
@@ -378,7 +377,7 @@ async def main():
         
         # Process extracted nodes
         if not args.skip_nodes:
-            print(f"Processing extracted nodes...")
+            print("Processing extracted nodes...")
             await normalize_extracted_nodes(extraction_service, report, args.dry_run, args.limit)
         
     except KeyboardInterrupt:

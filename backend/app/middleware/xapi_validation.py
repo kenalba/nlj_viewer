@@ -197,12 +197,12 @@ class XAPIValidationMiddleware(BaseMiddleware):
         
         try:
             # Use Pydantic model for comprehensive validation
-            logger.info(f"✅ Attempting Pydantic validation...")
+            logger.info("✅ Attempting Pydantic validation...")
             validated_statement = XAPIStatement(**data)
             logger.info(f"✅ Pydantic validation PASSED for ID: {validated_statement.id}")
             
             # Additional custom validations
-            logger.info(f"🔍 Running custom validation checks...")
+            logger.info("🔍 Running custom validation checks...")
             verb_errors = self._validate_verb_id(data.get('verb', {}))
             actor_errors = self._validate_actor_format(data.get('actor', {}))
             timestamp_errors = self._validate_timestamp_format(data.get('timestamp', ''))

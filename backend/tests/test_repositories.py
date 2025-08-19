@@ -20,9 +20,7 @@ from app.services.orm_repositories.node_repository import (
 )
 from app.services.orm_repositories.training_repository import (
     TrainingProgramRepository,
-    TrainingSessionRepository,
 )
-from app.services.orm_repositories.source_document_repository import SourceDocumentRepository
 from app.services.orm_repositories.learning_objective_repository import (
     LearningObjectiveRepository,
     KeywordRepository,
@@ -35,10 +33,8 @@ from app.models.content import ContentItem, ContentState, ContentType
 from app.models.user import User, UserRole
 from app.models.media import MediaItem, MediaState, MediaType
 from app.models.generation_session import GenerationSession, GenerationStatus
-from app.models.node import Node
-from app.models.training_program import TrainingProgram, TrainingSession
-from app.models.source_document import SourceDocument
-from app.models.learning_objective import LearningObjective, Keyword
+from app.models.training_program import TrainingProgram
+from app.models.learning_objective import LearningObjective
 
 # Most tests are async, but some are not - we'll mark individually
 

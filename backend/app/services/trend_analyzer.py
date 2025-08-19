@@ -6,8 +6,7 @@ Analyzes response patterns over time to identify trends and changes.
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
-from collections import defaultdict
+from typing import Any, Dict, List, Optional
 import statistics
 
 logger = logging.getLogger(__name__)
@@ -275,9 +274,9 @@ class TrendAnalyzer:
         
         descriptions = {
             "skyrocketing": f"dramatically {direction}",
-            "trending_up": f"improved",
+            "trending_up": "improved",
             "steady": "remained stable", 
-            "trending_down": f"declined",
+            "trending_down": "declined",
             "plummeting": f"sharply {direction}"
         }
         

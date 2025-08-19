@@ -36,7 +36,7 @@ class DebugMiddleware(BaseMiddleware):
             logger.info(f"🐛 Message body type: {type(message.body)}")
             logger.info(f"🐛 Message body: {message.body}")
         
-        logger.info(f"🐛 Calling next handler...")
+        logger.info("🐛 Calling next handler...")
         result = await call_next(message)
         logger.info(f"🐛 Handler returned: {result}")
         

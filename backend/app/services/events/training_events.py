@@ -5,7 +5,7 @@ Handles events for the complete training lifecycle.
 
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 from uuid import uuid4
 
 from .base_event_service import get_kafka_service

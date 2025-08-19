@@ -6,8 +6,6 @@ metadata in statements, enabling granular analytics and cross-activity
 content intelligence.
 """
 
-import hashlib
-import json
 import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -16,7 +14,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.node import Node, ActivityNode
+from app.models.node import Node
 from app.models.content import ContentItem
 from app.models.learning_objective import LearningObjective, Keyword
 from app.services.node_service import NodeService

@@ -7,7 +7,6 @@ Handles training programs, sessions, bookings, and attendance tracking.
 
 import uuid
 from datetime import datetime
-from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError

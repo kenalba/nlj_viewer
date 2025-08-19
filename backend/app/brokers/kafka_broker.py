@@ -24,15 +24,14 @@ broker = KafkaBroker(
 )
 
 # Import xAPI validation subscriber middleware  
-from app.middleware.xapi_subscriber_middleware import xapi_validation_middleware
 
-logger.info(f"🔧 xAPI validation subscriber middleware imported")
-logger.info(f"🔧 Middleware will be applied at subscriber level")
+logger.info("🔧 xAPI validation subscriber middleware imported")
+logger.info("🔧 Middleware will be applied at subscriber level")
 
 # Create FastStream application
 app = FastStream(broker, title="NLJ Platform Event Processor")
 
-logger.info(f"FastStream broker initialized:")
+logger.info("FastStream broker initialized:")
 logger.info(f"  Bootstrap servers: {KAFKA_BOOTSTRAP_SERVERS}")
 logger.info(f"  Client ID: {KAFKA_CLIENT_ID}")
 logger.info(f"  Consumer group: {KAFKA_GROUP_ID}")
@@ -45,7 +44,6 @@ async def startup():
     logger.info("=" * 50)
     
     # Import handlers to register subscribers
-    from app.handlers import training_handlers, content_handlers, survey_handlers
     
     logger.info("✅ All event handlers registered")
 

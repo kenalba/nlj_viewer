@@ -17,7 +17,6 @@ from app.services.orm_repositories.node_repository import (
     ActivityNodeRepository,
     NodeInteractionRepository,
 )
-from .base_orm_service import BaseOrmService
 
 
 class NodeOrmService:

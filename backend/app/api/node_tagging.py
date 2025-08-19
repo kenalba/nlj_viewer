@@ -19,11 +19,11 @@ from app.core.database_manager import get_db
 from app.models.user import User
 from app.models.learning_objective import LearningObjective, Keyword, NodeLearningObjective, NodeKeyword
 from app.models.node import Node
-from app.services.node_auto_tagger import NodeAutoTaggerService, TaggingStrategy, TaggingQuality, AutoTaggingConfig
+from app.services.node_auto_tagger import NodeAutoTaggerService, TaggingStrategy, AutoTaggingConfig
 from app.utils.concept_analyzer import ConceptAnalyzer
 from app.utils.permissions import can_edit_content, can_review_content
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, or_, func
+from sqlalchemy import select, and_
 from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/api/nodes", tags=["node-tagging"])

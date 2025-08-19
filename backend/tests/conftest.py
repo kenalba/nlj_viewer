@@ -1,8 +1,7 @@
-import asyncio
 import os
 import uuid
 from datetime import datetime
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator
 
 import pytest
 import pytest_asyncio

@@ -10,16 +10,16 @@ Provides REST endpoints for:
 
 import uuid
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.core.deps import get_current_user
 from app.core.database_manager import get_db
 from app.models.user import User
-from app.models.learning_objective import LearningObjective, Keyword, NodeLearningObjective, NodeKeyword
+from app.models.learning_objective import LearningObjective, Keyword
 from app.models.node import Node
 from app.models.content import ContentItem
-from app.services.knowledge_extraction_service import KnowledgeExtractionService, ExtractedMetadata, NormalizedTerm
+from app.services.knowledge_extraction_service import KnowledgeExtractionService, ExtractedMetadata
 from app.utils.permissions import can_edit_content
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func

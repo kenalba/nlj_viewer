@@ -6,8 +6,7 @@ and performing quality assessments for auto-tagging workflows.
 """
 
 import re
-import hashlib
-from typing import Dict, List, Any, Optional, Tuple, Set
+from typing import Dict, List, Optional, Set
 from dataclasses import dataclass
 from enum import Enum
 

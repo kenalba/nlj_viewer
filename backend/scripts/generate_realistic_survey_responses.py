@@ -12,7 +12,6 @@ This script creates a complete, realistic dataset with:
 """
 
 import asyncio
-import json
 import logging
 import random
 import sys

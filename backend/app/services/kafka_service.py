@@ -1319,7 +1319,7 @@ class XAPIEventService:
             "object": {
                 "id": f"nlj://node/{node_id}",
                 "definition": {
-                    "name": {"en-US": f"Node Auto-Tagged"},
+                    "name": {"en-US": "Node Auto-Tagged"},
                     "type": "http://nlj-platform.com/activitytype/node",
                 }
             },

@@ -7,7 +7,7 @@ backward compatibility with existing activity-based tracking.
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Dict, Optional
 from uuid import UUID
 
@@ -18,7 +18,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.brokers.kafka_broker import broker
 from app.core.database_manager import db_manager
 from app.models.node import Node, NodeInteraction
-from app.models.user import User
 from app.services.elasticsearch_service import get_elasticsearch_service, ElasticsearchService
 from app.services.node_service import get_node_service, NodeService
 

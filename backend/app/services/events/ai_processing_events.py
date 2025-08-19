@@ -5,7 +5,7 @@ Handles events for LLM-powered content analysis and AI-driven learning optimizat
 
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Dict, Optional
 from uuid import uuid4
 
 from .base_event_service import get_kafka_service
@@ -112,7 +112,7 @@ class AIProcessingEventService:
                 "id": f"nlj://knowledge-extraction/{extraction_id}",
                 "definition": {
                     "name": {"en-US": f"Knowledge Extraction - {extraction_type}"},
-                    "description": {"en-US": f"LLM-powered metadata extraction completed"},
+                    "description": {"en-US": "LLM-powered metadata extraction completed"},
                     "type": "http://nlj-platform.com/activitytype/knowledge-extraction",
                 }
             },
@@ -172,7 +172,7 @@ class AIProcessingEventService:
                 "id": f"nlj://knowledge-extraction/{extraction_id}",
                 "definition": {
                     "name": {"en-US": f"Knowledge Extraction - {extraction_type}"},
-                    "description": {"en-US": f"LLM-powered metadata extraction failed"},
+                    "description": {"en-US": "LLM-powered metadata extraction failed"},
                     "type": "http://nlj-platform.com/activitytype/knowledge-extraction",
                 }
             },

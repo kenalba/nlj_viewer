@@ -9,16 +9,13 @@ import asyncio
 import logging
 import signal
 import sys
-from contextlib import asynccontextmanager
-from typing import Optional
 
 from app.core.database_manager import db_manager
-from app.services.kafka_service import get_kafka_service, get_xapi_event_service
+from app.services.kafka_service import get_kafka_service
 from app.handlers.auto_tagging_handlers import (
     handle_auto_tagging_event,
     handle_manual_tagging_event
 )
-import logging
 
 logger = logging.getLogger(__name__)
 

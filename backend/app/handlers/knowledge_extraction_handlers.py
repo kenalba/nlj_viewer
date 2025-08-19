@@ -18,7 +18,6 @@ from app.services.knowledge_extraction_service import KnowledgeExtractionService
 from app.services.kafka_service import get_xapi_event_service
 import logging
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 
 logger = logging.getLogger(__name__)
 

@@ -8,22 +8,21 @@ with learning objectives and keywords, providing confidence scoring and quality 
 import asyncio
 import uuid
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
 
-from sqlalchemy import select, func, and_, or_
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database_manager import db_manager
 from app.models.node import Node
 from app.models.learning_objective import (
-    LearningObjective, Keyword, NodeLearningObjective, NodeKeyword
+    NodeLearningObjective, NodeKeyword
 )
 from app.services.knowledge_extraction_service import KnowledgeExtractionService
 from app.services.kafka_service import get_xapi_event_service
-from app.core.config import settings
 import os
 import logging
 

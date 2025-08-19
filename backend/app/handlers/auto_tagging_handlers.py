@@ -5,10 +5,9 @@ Event-driven handlers that process auto-tagging requests following the same
 pattern as knowledge extraction. Integrates with the existing Kafka/FastStream architecture.
 """
 
-import asyncio
 import uuid
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 from app.brokers.kafka_broker import broker
 from app.core.database_manager import db_manager
@@ -245,7 +244,7 @@ async def handle_manual_tagging_event(event: Dict[str, Any]):
         event_type = event.get("event_type")
         
         if not event_type:
-            logger.debug(f"No event_type in manual tagging event, skipping")
+            logger.debug("No event_type in manual tagging event, skipping")
             return
         
         logger.info(f"Processing manual tagging event: {event_type}")

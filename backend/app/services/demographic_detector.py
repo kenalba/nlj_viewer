@@ -6,8 +6,8 @@ Provides intelligent extraction and categorization of demographic information.
 
 import logging
 from collections import Counter, defaultdict
-from typing import Any, Dict, List, Optional, Set, Tuple
-from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+from datetime import datetime
 import re
 
 logger = logging.getLogger(__name__)

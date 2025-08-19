@@ -5,9 +5,8 @@ Handles demographic grouping, anonymization, and trend calculations.
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
-from collections import defaultdict, Counter
+from datetime import datetime
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 

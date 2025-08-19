@@ -14,23 +14,20 @@ Key Features:
 - Integration with Content Studio and import processes
 """
 
-import asyncio
 import hashlib
 import re
 import uuid
 from dataclasses import dataclass
-from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import os
 
 import anthropic
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database_manager import db_manager
-from app.models.content import ContentItem
 from app.models.learning_objective import LearningObjective, Keyword, NodeLearningObjective, NodeKeyword
 from app.models.node import Node
 import logging

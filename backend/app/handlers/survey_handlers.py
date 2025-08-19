@@ -4,7 +4,6 @@ Handles survey responses, completions, and analytics processing.
 """
 
 import logging
-from datetime import datetime, timezone
 from typing import Any, Dict
 
 from faststream import Depends
@@ -177,7 +176,7 @@ async def handle_general_xapi_events(
         logger.info(f"📊 Event converted to dict, keys: {list(event_dict.keys())}")
         
         # Store in Elasticsearch
-        logger.info(f"💾 Attempting to store event in Elasticsearch...")
+        logger.info("💾 Attempting to store event in Elasticsearch...")
         result = await elasticsearch_service.store_xapi_statement(event_dict)
         logger.info(f"✅ Elasticsearch storage result: {result}")
         

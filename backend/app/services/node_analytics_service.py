@@ -7,7 +7,7 @@ activities, enabling content optimization and performance tracking.
 
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from sqlalchemy import select, func, and_, desc, case
@@ -16,9 +16,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database_manager import db_manager
 from app.models.node import Node, NodeInteraction, ActivityNode
 from app.models.content import ContentItem
-from app.models.user import User
 from app.models.learning_objective import LearningObjective, Keyword
-from app.services.elasticsearch_service import ElasticsearchService, get_elasticsearch_service
+from app.services.elasticsearch_service import ElasticsearchService
 
 logger = logging.getLogger(__name__)
 

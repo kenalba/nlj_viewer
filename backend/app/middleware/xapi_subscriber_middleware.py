@@ -4,7 +4,6 @@ Implements correct subscriber middleware pattern as per FastStream documentation
 """
 
 import logging
-from datetime import datetime, timezone
 from typing import Any, Callable, Dict
 
 from pydantic import BaseModel, ValidationError, Field
@@ -82,23 +81,23 @@ def _extract_message_data(message: Any) -> Dict[str, Any]:
     
     # Try different FastStream message attributes
     if hasattr(message, 'decoded_body'):
-        logger.debug(f"📦 Extracting from message.decoded_body")
+        logger.debug("📦 Extracting from message.decoded_body")
         return message.decoded_body
     elif hasattr(message, 'body'):
-        logger.debug(f"📦 Extracting from message.body")
+        logger.debug("📦 Extracting from message.body")
         return message.body
     elif hasattr(message, 'value'):
-        logger.debug(f"📦 Extracting from message.value")
+        logger.debug("📦 Extracting from message.value")
         return message.value
     elif isinstance(message, dict):
-        logger.debug(f"📦 Message is already a dict")
+        logger.debug("📦 Message is already a dict")
         return message
     else:
         # Try to convert to dict
         logger.debug(f"📦 Attempting to convert {type(message)} to dict")
         try:
             result = dict(message)
-            logger.debug(f"📦 Conversion successful")
+            logger.debug("📦 Conversion successful")
             return result
         except Exception as e:
             logger.error(f"❌ Conversion failed: {e}")
@@ -124,7 +123,7 @@ def _validate_xapi_statement(data: Dict[str, Any]) -> list:
     
     try:
         # Use Pydantic model for comprehensive validation
-        logger.debug(f"✅ Attempting Pydantic validation...")
+        logger.debug("✅ Attempting Pydantic validation...")
         validated_statement = XAPIStatement(**data)
         logger.debug(f"✅ Pydantic validation PASSED for ID: {validated_statement.id}")
         
@@ -186,7 +185,7 @@ async def xapi_validation_middleware(call_next: Callable, message: Any) -> Any:
             validation_stats["validation_errors"].extend(validation_errors)
             
             logger.warning(f"⚠️  xAPI validation FAILED for event {event_id}: {validation_errors}")
-            logger.warning(f"⚠️  Allowing event to proceed for graceful degradation")
+            logger.warning("⚠️  Allowing event to proceed for graceful degradation")
             
             # For now, let invalid events through with warnings
             # In production, you might want to route to dead letter queue
@@ -210,7 +209,7 @@ async def xapi_validation_middleware(call_next: Callable, message: Any) -> Any:
         logger.error(f"❌ Full traceback: {traceback.format_exc()}")
         
         # For robustness, continue processing even if middleware fails
-        logger.warning(f"⚠️  Bypassing validation due to error - allowing event to proceed")
+        logger.warning("⚠️  Bypassing validation due to error - allowing event to proceed")
         return await call_next(message)
 
 

@@ -18,7 +18,6 @@ from app.models.generation_session import GenerationSession, GenerationStatus
 from app.models.source_document import SourceDocument
 from app.services.claude_service import claude_service
 from app.services.elasticsearch_service import get_elasticsearch_service, ElasticsearchService
-from app.services.node_service import NodeService
 from app.models.content_item import ContentItem
 from app.utils.node_extractor import NodeExtractor
 

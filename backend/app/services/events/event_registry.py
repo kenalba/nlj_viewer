@@ -4,7 +4,7 @@ Provides a single interface to all event services for backwards compatibility.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from .base_event_service import get_kafka_service, BaseKafkaService
 from .content_events import get_content_event_service, ContentEventService

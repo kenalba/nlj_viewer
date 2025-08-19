@@ -23,8 +23,6 @@ from sqlalchemy.orm import selectinload
 from app.core.database_manager import db_manager
 from app.models.content import ContentItem
 from app.models.node import Node, ActivityNode, NodeInteraction
-from app.models.learning_objective import LearningObjective, Keyword, NodeLearningObjective, NodeKeyword
-from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
