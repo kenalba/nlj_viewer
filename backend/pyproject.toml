@@ -53,6 +53,7 @@ dev = [
     "pytest",
     "pytest-asyncio",
     "pytest-postgresql",
+    "aiosqlite",  # For async SQLite testing
     "black",
     "isort",
     "mypy",
@@ -96,7 +97,10 @@ in-place = true
 
 [dependency-groups]
 dev = [
+    "aiosqlite>=0.21.0",
     "autoflake>=2.3.1",
     "isort>=6.0.1",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.0.0",
     "ruff>=0.12.5",
 ]

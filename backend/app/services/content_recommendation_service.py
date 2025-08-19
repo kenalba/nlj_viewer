@@ -9,7 +9,6 @@ Provides intelligent content recommendations based on:
 """
 
 import logging
-from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
 from uuid import UUID
 
@@ -17,12 +16,9 @@ from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.content_item import ContentItem
-from app.models.keywords import Keyword
-from app.models.learning_objectives import LearningObjective  
+from app.models.content import ContentItem
+from app.models.learning_objective import Keyword, LearningObjective, NodeKeyword, NodeLearningObjective
 from app.models.node import Node, ActivityNode
-from app.models.node_keywords import NodeKeyword
-from app.models.node_learning_objectives import NodeLearningObjective
 from app.services.elasticsearch_service import ElasticsearchService
 from app.services.node_analytics_service import NodeAnalyticsService
 

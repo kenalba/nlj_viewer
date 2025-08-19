@@ -4,8 +4,7 @@ Matches the frontend permissions system for consistency.
 """
 
 from enum import Enum
-from functools import wraps
-from typing import Callable, Optional
+from typing import Callable
 
 from fastapi import Depends, HTTPException, status
 
@@ -62,6 +61,20 @@ def can_manage_system(user: User) -> bool:
     if not user:
         return False
     return user.role == UserRole.ADMIN
+
+
+async def has_content_access(user: User, content_id: str, db) -> bool:
+    """Check if user has access to specific content item."""
+    if not user:
+        return False
+    
+    # For now, all authenticated users have access to all content
+    # In a future implementation, this would check:
+    # - Content ownership
+    # - Content state (published vs draft)
+    # - User role permissions
+    # - Organization membership
+    return True
 
 
 def require_permission(level: PermissionLevel) -> Callable:

@@ -47,6 +47,13 @@ class ConceptRecommendationRequest(BaseModel):
     """Request for concept-based recommendations."""
     keywords: List[str] = Field(default_factory=list, description="Target keywords")
     objectives: List[str] = Field(default_factory=list, description="Target learning objectives")
+
+
+class BatchRecommendationRequest(BaseModel):
+    """Request for batch content recommendations."""
+    content_ids: List[UUID] = Field(..., min_items=1, max_items=10, description="Source content IDs")
+    limit_per_content: int = Field(5, ge=1, le=20, description="Recommendations per content item")
+    include_performance: bool = Field(True, description="Include performance metrics")
     limit: int = Field(15, ge=1, le=50, description="Maximum number of suggestions")
     difficulty_range: Optional[Tuple[int, int]] = Field(None, description="Difficulty range (min, max) 1-10")
     performance_threshold: float = Field(0.6, ge=0.0, le=1.0, description="Minimum success rate threshold")
@@ -239,9 +246,7 @@ async def get_concept_based_recommendations(
 
 @router.post("/content/batch")
 async def get_batch_content_recommendations(
-    content_ids: List[UUID] = Field(..., min_items=1, max_items=10, description="Source content IDs"),
-    limit_per_content: int = Query(5, ge=1, le=20, description="Recommendations per content item"),
-    include_performance: bool = Query(True, description="Include performance metrics"),
+    request_data: BatchRecommendationRequest,
     current_user: User = Depends(get_current_user),
     service: ContentRecommendationService = Depends(get_recommendation_service),
     request: Request = None
@@ -257,13 +262,13 @@ async def get_batch_content_recommendations(
     try:
         batch_recommendations = {}
         
-        for content_id in content_ids:
+        for content_id in request_data.content_ids:
             # Check access for each content item
             if await has_content_access(current_user, str(content_id), service.db):
                 recommendations = await service.get_related_content(
                     content_id=content_id,
-                    limit=limit_per_content,
-                    include_performance=include_performance
+                    limit=request_data.limit_per_content,
+                    include_performance=request_data.include_performance
                 )
                 batch_recommendations[str(content_id)] = recommendations
             else:
@@ -272,12 +277,12 @@ async def get_batch_content_recommendations(
         processing_time = (time.time() - start_time) * 1000
         total_recommendations = sum(len(recs) for recs in batch_recommendations.values())
         
-        logger.info(f"Generated {total_recommendations} batch recommendations for {len(content_ids)} items "
+        logger.info(f"Generated {total_recommendations} batch recommendations for {len(request_data.content_ids)} items "
                    f"(user: {current_user.id}, time: {processing_time:.1f}ms)")
         
         return {
             "batch_recommendations": batch_recommendations,
-            "total_content_items": len(content_ids),
+            "total_content_items": len(request_data.content_ids),
             "total_recommendations": total_recommendations,
             "processing_time_ms": processing_time
         }
