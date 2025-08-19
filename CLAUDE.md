@@ -90,7 +90,7 @@ The platform transforms educational content creation into streamlined workflows,
 - **Function Length**: Break down complex logic into functions of no more than 50 lines
 - **Data Structures**: Prefer Pydantic Models for external data (API, LLM). Use standard dataclasses for business logic-related data
 - **Validation**: Add all required custom validations to Pydantic models
-- **Rich Types**: Use PositiveInt, StringConstraints, Literals, etc when possible
+- **Rich Types**: Use PositiveInt, StringConstraints, Literals, etc when possible, and use modern (3.9+) Python typing.
 - **Docstrings**: Never use docstrings for any functions and classes
 - **Comments**: Add comments only where required to explain tricky parts or support better function structuring
 - **Inheritance**: Prefer composition over inheritance when designing class relationships
