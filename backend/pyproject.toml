@@ -19,7 +19,6 @@ dependencies = [
     "email-validator",
     # Authentication
     "python-jose[cryptography]",
-    "passlib[bcrypt]",
     # HTTP client for external integrations
     "httpx",
     "aiohttp",

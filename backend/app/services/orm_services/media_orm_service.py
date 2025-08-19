@@ -83,7 +83,7 @@ class MediaOrmService(BaseOrmService[MediaItem, MediaRepository]):
             voice_type=voice_type,
             generation_prompt=generation_prompt,
             metadata=metadata or {},
-            media_state=MediaState.PROCESSING,  # Default state
+            media_state=MediaState.GENERATING,  # Default state
         )
 
         try:

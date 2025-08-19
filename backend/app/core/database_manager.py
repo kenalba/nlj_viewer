@@ -219,12 +219,8 @@ class DatabaseConnectionManager:
         import uuid
         from datetime import datetime
 
-        from passlib.context import CryptContext
-
+        from app.core.security import get_password_hash
         from app.models.user import User, UserRole
-
-        # Password hashing
-        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
         # Create basic users
         essential_users = [
@@ -270,7 +266,7 @@ class DatabaseConnectionManager:
                 id=uuid.uuid4(),
                 username=user_data["username"],
                 email=user_data["email"],
-                hashed_password=pwd_context.hash(user_data["password"]),
+                hashed_password=get_password_hash(user_data["password"]),
                 full_name=user_data["full_name"],
                 role=user_data["role"],
                 is_active=True,

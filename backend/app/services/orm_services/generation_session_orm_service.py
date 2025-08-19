@@ -282,21 +282,20 @@ class GenerationSessionOrmService(BaseOrmService[GenerationSession, GenerationSe
         Check if status transition is valid.
 
         Valid transitions:
-        - PENDING -> IN_PROGRESS, FAILED
-        - IN_PROGRESS -> COMPLETED, FAILED, PAUSED
-        - PAUSED -> IN_PROGRESS, FAILED
-        - COMPLETED/FAILED -> (no transitions allowed)
+        - PENDING -> PROCESSING, FAILED, CANCELLED
+        - PROCESSING -> COMPLETED, FAILED, CANCELLED
+        - COMPLETED/FAILED/CANCELLED -> (no transitions allowed)
         """
         valid_transitions = {
-            GenerationStatus.PENDING: [GenerationStatus.IN_PROGRESS, GenerationStatus.FAILED],
-            GenerationStatus.IN_PROGRESS: [
+            GenerationStatus.PENDING: [GenerationStatus.PROCESSING, GenerationStatus.FAILED, GenerationStatus.CANCELLED],
+            GenerationStatus.PROCESSING: [
                 GenerationStatus.COMPLETED,
                 GenerationStatus.FAILED,
-                GenerationStatus.PAUSED,
+                GenerationStatus.CANCELLED,
             ],
-            GenerationStatus.PAUSED: [GenerationStatus.IN_PROGRESS, GenerationStatus.FAILED],
             GenerationStatus.COMPLETED: [],  # Terminal state
             GenerationStatus.FAILED: [],  # Terminal state
+            GenerationStatus.CANCELLED: [],  # Terminal state
         }
 
         return new_status in valid_transitions.get(current_status, [])

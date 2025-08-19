@@ -100,7 +100,7 @@ app/services/orm_services/
 
 **Actual Effort**: 3 days  
 **Dependencies**: 1.1 (Repositories) ✅  
-**Testing**: ⏳ ORM service unit tests (next phase)
+**Testing**: ✅ 31 comprehensive unit tests with mock-based approach - all passing
 
 #### **1.3 Create Service-Level Schemas**
 **Directory Structure:**
@@ -284,9 +284,9 @@ app/core/
 backend/tests/
 ├── __init__.py                    ✅ Complete - test package initialization  
 ├── conftest.py                    ✅ Complete - async test configuration
-├── conftest_async.py              ✅ Complete - async fixtures and helpers
 ├── test_setup.py                  ✅ Complete - pytest configuration verification
 ├── test_repositories_simple.py   ✅ Complete - 19 comprehensive repository tests
+├── test_orm_services.py          ✅ Complete - 31 comprehensive ORM service tests
 ├── test_repositories.py          📝 Legacy - more complex model instantiation tests
 ├── fixtures/                     ✅ Complete - test data factories and helpers
 │   ├── __init__.py              ✅ Complete
@@ -296,16 +296,21 @@ backend/tests/
 ```
 
 **Completed Testing Features:**
-- ✅ **Mock-based Unit Tests**: 19 fast, isolated repository tests using AsyncMock
+- ✅ **Mock-based Unit Tests**: 50 fast, isolated tests (19 repository + 31 ORM service tests) using AsyncMock
+- ✅ **Comprehensive Coverage**: All 9 ORM services and 17 repositories thoroughly tested
+- ✅ **Transaction Management**: Tests for commit/rollback boundaries and error handling
+- ✅ **Data Validation**: Tests for business rules, input validation, and error scenarios
+- ✅ **State Management**: Tests for entity lifecycle and state transition validation
+- ✅ **Security**: Migration from passlib to modern hashlib with PBKDF2-HMAC-SHA256
 - ✅ **Async Test Support**: Full pytest-asyncio integration with proper configuration
 - ✅ **VS Code Integration**: Testing sidebar configuration for easy test discovery
-- ✅ **Test Dependencies**: aiosqlite, pytest, pytest-asyncio properly installed
 - ✅ **Clean Test Architecture**: Separate concerns with simple mock objects vs complex ORM instantiation
 
 **Testing Strategy Implemented:**
-- ✅ **Unit Tests**: Fast, isolated tests for repository layer (19 tests passing)
+- ✅ **Unit Tests**: Fast, isolated tests for repository (19) and ORM service (31) layers
 - ✅ **Integration Tests**: VS Code testing sidebar integration 
 - ✅ **Mock Strategy**: AsyncMock for database sessions, simple mock objects for models
+- ✅ **Error Testing**: Comprehensive error handling for SQLAlchemy, integrity, and validation errors
 - ✅ **Test Configuration**: pytest.ini with async support and proper test discovery
 
 **Phase 1 Effort**: 2 days  
@@ -364,6 +369,8 @@ Each phase must pass these quality gates:
 | 1.1 | Repository Layer | 3-5 days | **High** | None | ✅ **COMPLETE** | 4 days |
 | 4.2 | Test Infrastructure (Phase 1) | 3-4 days | **High** | 1.1 | ✅ **COMPLETE** | 2 days |
 | 1.2 | ORM Services | 2-3 days | **High** | 1.1 | ✅ **COMPLETE** | 3 days |
+| Tests | ORM Service Unit Tests | 1-2 days | **High** | 1.2 | ✅ **COMPLETE** | 1 day |
+| Security | Passlib → Hashlib Migration | 0.5 days | **High** | None | ✅ **COMPLETE** | 0.5 days |
 | 1.3 | Service Schemas | 2-3 days | **High** | None | 📋 **NEXT** | - |
 | 2.1 | Use Cases | 4-6 days | **Medium** | Phase 1 | 📋 **PENDING** | - |
 | 2.2 | Domain Services | 3-4 days | **Medium** | 2.1 | 📋 **PENDING** | - |
@@ -372,9 +379,9 @@ Each phase must pass these quality gates:
 | 4.1 | Handler Updates | 2-3 days | **Low** | Phase 2 | 📋 **PENDING** | - |
 | 4.2 | Test Infrastructure (Complete) | 1-2 days | **Ongoing** | Each phase | 📋 **ONGOING** | - |
 
-**Progress**: ✅ 3/9 phases complete (33%)  
-**Total Completed Effort**: 9 days  
-**Remaining Estimated Effort**: 17-29 days
+**Progress**: ✅ 5/11 phases complete (45%)  
+**Total Completed Effort**: 10.5 days  
+**Remaining Estimated Effort**: 15.5-27.5 days
 
 ## 🚀 Next Steps
 
@@ -383,18 +390,20 @@ Each phase must pass these quality gates:
 2. ~~**Setup Testing Infrastructure**: Create test framework and fixtures~~ ✅
 3. ~~**Start Phase 1.1**: Implement Repository Layer for Content domain~~ ✅
 4. ~~**Complete Phase 1.2**: Implement ORM Services Layer with modern typing~~ ✅
+5. ~~**Create ORM Service Tests**: Comprehensive unit tests for all 9 ORM services~~ ✅
+6. ~~**Security Migration**: Migrate from passlib to modern hashlib with PBKDF2-HMAC-SHA256~~ ✅
 
 **🎯 CURRENT PRIORITIES:**
-5. **Create ORM Service Tests**: Comprehensive unit tests for all 9 ORM services
-6. **Start Phase 1.3**: Design and implement service-level schemas for clean layer separation
-7. **Integration Testing**: Add integration tests with real database (containerized testing)
-8. **CI/CD Integration**: Ensure automated testing works with new architecture
-9. **Monitor Progress**: Track progress against this plan and adjust as needed
+7. **Start Phase 1.3**: Design and implement service-level schemas for clean layer separation
+8. **Schema Validation**: Create comprehensive validation tests for service schemas
+9. **Integration Testing**: Add integration tests with real database (containerized testing)
+10. **CI/CD Integration**: Ensure automated testing works with new architecture
+11. **Monitor Progress**: Track progress against this plan and adjust as needed
 
 **📋 IMMEDIATE NEXT TASKS:**
-- Create comprehensive unit tests for all ORM services (BaseOrmService + 8 specialized services)
-- Test transaction management, error handling, and validation in ORM services
-- Begin designing service-level schemas to separate API contracts from business logic
+- Design service-level schemas to separate API contracts from business logic
+- Create service schema validation with comprehensive business rules
+- Begin planning Use Case layer (Phase 2.1) architecture and dependencies
 
 ## 📚 Success Criteria
 
