@@ -334,6 +334,18 @@ class UserOrmService(BaseOrmService[User, UserRepository]):
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise RuntimeError(f"Failed to unverify user: {e}") from e
+    
+    async def update_user_role(self, user_id: uuid.UUID, new_role: UserRole) -> User | None:
+        """Update user's role."""
+        try:
+            updated = await self.repository.update_by_id(user_id, role=new_role)
+            if updated:
+                await self.session.commit()
+                return updated
+            return None
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise RuntimeError(f"Failed to update user role: {e}") from e
 
     # User Queries
 
@@ -459,6 +471,91 @@ class UserOrmService(BaseOrmService[User, UserRepository]):
         # At least one digit
         if not re.search(r"\d", password):
             raise ValueError("Password must contain at least one digit")
+
+    # Profile Management Operations (for ManageProfileUseCase)
+
+    async def update_password(self, user_id: uuid.UUID, new_password: str) -> User | None:
+        """Update user password (admin operation or after current password verification)."""
+        try:
+            await self.validate_password(new_password)
+            updated = await self.repository.update_by_id(
+                user_id, 
+                hashed_password=get_password_hash(new_password),
+                password_changed_at=datetime.now(timezone.utc)
+            )
+            if updated:
+                await self.session.commit()
+                return updated
+            return None
+        except (ValueError, SQLAlchemyError):
+            await self.session.rollback()
+            raise
+
+    async def enable_mfa(self, user_id: uuid.UUID, mfa_method: str, mfa_secret: str | None = None) -> User | None:
+        """Enable MFA for user (placeholder implementation)."""
+        try:
+            update_data = {
+                "mfa_enabled": True,
+                "mfa_method": mfa_method,
+                "updated_at": datetime.now(timezone.utc)
+            }
+            if mfa_secret:
+                update_data["mfa_secret"] = mfa_secret
+            
+            updated = await self.repository.update_by_id(user_id, **update_data)
+            if updated:
+                await self.session.commit()
+                return updated
+            return None
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise RuntimeError(f"Failed to enable MFA: {e}") from e
+
+    async def disable_mfa(self, user_id: uuid.UUID) -> User | None:
+        """Disable MFA for user (placeholder implementation).""" 
+        try:
+            updated = await self.repository.update_by_id(
+                user_id, 
+                mfa_enabled=False, 
+                mfa_method=None, 
+                mfa_secret=None,
+                updated_at=datetime.now(timezone.utc)
+            )
+            if updated:
+                await self.session.commit()
+                return updated
+            return None
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise RuntimeError(f"Failed to disable MFA: {e}") from e
+
+    async def add_password_history(self, user_id: uuid.UUID, password_hash: str) -> bool:
+        """Add password to history (placeholder - would need password_history table)."""
+        # For now, this is a no-op since we don't have a password history table
+        # In a real implementation, this would store the password hash in a history table
+        return True
+
+    async def store_backup_codes(self, user_id: uuid.UUID, backup_codes: list[str]) -> bool:
+        """Store MFA backup codes (placeholder implementation).""" 
+        # For now, this is a no-op since we don't have a backup codes table
+        # In a real implementation, this would store hashed backup codes
+        return True
+
+    async def get_recent_passwords(self, user_id: uuid.UUID, limit: int = 5) -> list[str]:
+        """Get recent password hashes (placeholder - would query password_history table)."""
+        # For now, return empty list since we don't have password history
+        # In a real implementation, this would query the password history table
+        return []
+
+    async def update_user_preferences(self, user_id: uuid.UUID, preferences: dict[str, Any]) -> bool:
+        """Update user preferences (placeholder implementation)."""
+        try:
+            # For now, this is a no-op since we don't have a user_preferences table
+            # In a real implementation, this would update or upsert preferences in a separate table
+            return True
+        except Exception as e:
+            await self.session.rollback()
+            raise RuntimeError(f"Failed to update user preferences: {e}") from e
 
     # Abstract Method Implementations
 

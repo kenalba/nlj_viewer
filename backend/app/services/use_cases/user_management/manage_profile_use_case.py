@@ -127,7 +127,7 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
         session: AsyncSession,
         user_orm_service: UserOrmService,
         # user_preference_orm_service: UserPreferenceOrmService  # TODO: Implement when user preferences are needed
-    ):
+    ) -> None:
         """
         Initialize manage profile use case.
 
@@ -215,10 +215,10 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
                     email=updated_user.email,
                     username=getattr(updated_user, 'username', ''),
                     full_name=getattr(updated_user, 'full_name', ''),
-                    role=getattr(updated_user, 'role', 'learner'),
+                    role=getattr(updated_user, 'role', UserRole.LEARNER),
                     is_active=getattr(updated_user, 'is_active', True),
-                    created_at=getattr(updated_user, 'created_at', ''),
-                    updated_at=getattr(updated_user, 'updated_at', '')
+                    created_at=getattr(updated_user, 'created_at', None),
+                    updated_at=getattr(updated_user, 'updated_at', None)
                 ),
                 action_taken=request.action,
                 mfa_setup_data=extra_data.get("mfa_setup_data"),
@@ -228,8 +228,12 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
                 backup_codes=extra_data.get("backup_codes")
             )
 
-            # Publish profile management event
-            await self._publish_profile_management_event(response, request, user_context)
+            # Publish profile management event - wrapped for resilience
+            try:
+                await self._publish_profile_management_event(response, request, user_context)
+            except Exception as e:
+                # Log but don't fail the business operation - events are non-critical
+                logger.warning(f"Failed to publish profile management event: {e}")
 
             logger.info(
                 f"Profile management completed: {request.action.value} for user {target_user_id}"
@@ -240,6 +244,7 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
             raise
         except ValueError as e:
             self._handle_validation_error(e, f"profile management {request.action.value}")
+            raise  # Add explicit raise to satisfy type checker
         except Exception as e:
             await self._handle_service_error(e, f"profile management {request.action.value}")
             raise  # This should never be reached but satisfies mypy
@@ -276,7 +281,7 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
     async def _handle_update_info(
         self,
         request: ManageProfileRequest,
-        target_user,
+        target_user: Any,
         user_context: Dict[str, Any]
     ) -> tuple[Any, Dict[str, Any]]:
         """Handle profile information updates."""
@@ -297,10 +302,14 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
             update_data["username"] = request.username.strip()
         
         if request.bio is not None:
-            update_data["bio"] = request.bio.strip() if request.bio else None
+            bio_value: Optional[str] = request.bio.strip() if request.bio else None
+            if bio_value is not None:
+                update_data["bio"] = bio_value
         
         if request.phone is not None:
-            update_data["phone"] = request.phone.strip() if request.phone else None
+            phone_value: Optional[str] = request.phone.strip() if request.phone else None
+            if phone_value is not None:
+                update_data["phone"] = phone_value
         
         if request.timezone is not None:
             update_data["timezone"] = request.timezone
@@ -317,7 +326,7 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
     async def _handle_change_password(
         self,
         request: ManageProfileRequest,
-        target_user,
+        target_user: Any,
         user_context: Dict[str, Any]
     ) -> tuple[Any, Dict[str, Any]]:
         """Handle password changes."""
@@ -365,7 +374,7 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
     async def _handle_setup_mfa(
         self,
         request: ManageProfileRequest,
-        target_user,
+        target_user: Any,
         user_context: Dict[str, Any]
     ) -> tuple[Any, Dict[str, Any]]:
         """Handle MFA setup."""
@@ -373,7 +382,7 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
             raise ValueError("MFA method is required")
 
         user_orm_service = self.dependencies["user_orm_service"]
-        mfa_setup_data = {}
+        mfa_setup_data: Dict[str, Any] = {}
 
         if request.mfa_method == MfaMethod.TOTP:
             # Generate TOTP secret if not provided
@@ -440,7 +449,7 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
     async def _handle_disable_mfa(
         self,
         request: ManageProfileRequest,
-        target_user,
+        target_user: Any,
         user_context: Dict[str, Any]
     ) -> tuple[Any, Dict[str, Any]]:
         """Handle MFA disabling."""
@@ -466,7 +475,7 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
     async def _handle_update_preferences(
         self,
         request: ManageProfileRequest,
-        target_user,
+        target_user: Any,
         user_context: Dict[str, Any]
     ) -> tuple[Any, Dict[str, Any]]:
         """Handle user preference updates."""
@@ -484,7 +493,7 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
     async def _handle_upload_avatar(
         self,
         request: ManageProfileRequest,
-        target_user,
+        target_user: Any,
         user_context: Dict[str, Any]
     ) -> tuple[Any, Dict[str, Any]]:
         """Handle avatar upload."""
@@ -492,11 +501,12 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
             raise ValueError("Avatar image data is required")
 
         # Validate image
-        await self._validate_avatar_image(request.avatar_data, request.avatar_filename)
+        filename = request.avatar_filename or "avatar.jpg"
+        await self._validate_avatar_image(request.avatar_data, filename)
 
         # Upload avatar (in real implementation, use file storage service)
         avatar_url = await self._upload_avatar_file(
-            target_user.id, request.avatar_data, request.avatar_filename
+            target_user.id, request.avatar_data, filename
         )
 
         # Update user avatar URL
@@ -510,7 +520,7 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
     async def _handle_update_privacy_settings(
         self,
         request: ManageProfileRequest,
-        target_user,
+        target_user: Any,
         user_context: Dict[str, Any]
     ) -> tuple[Any, Dict[str, Any]]:
         """Handle privacy settings updates."""
@@ -528,7 +538,7 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
     async def _handle_deactivate_account(
         self,
         request: ManageProfileRequest,
-        target_user,
+        target_user: Any,
         user_context: Dict[str, Any]
     ) -> tuple[Any, Dict[str, Any]]:
         """Handle account deactivation."""
@@ -645,7 +655,7 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
         
         return f"otpauth://totp/{label}?secret={secret}&issuer={urllib.parse.quote(issuer)}"
 
-    def _validate_current_mfa_code(self, user, code: str) -> bool:
+    def _validate_current_mfa_code(self, user: Any, code: str) -> bool:
         """Validate current MFA code for user."""
         if user.mfa_method == "totp":
             return self._validate_totp_code(user.mfa_secret, code)

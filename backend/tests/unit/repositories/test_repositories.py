@@ -87,22 +87,19 @@ class TestBaseRepository:
         """Test create method."""
         test_data = {"username": "testuser", "email": "test@example.com"}
         
-        # Mock the model creation
-        mock_user = MagicMock()
-        mock_user.id = uuid4()
-        mock_user.username = "testuser"
+        result = await concrete_repo.create(**test_data)
         
-        # Patch the User class directly to return our mock
-        with patch('tests.test_repositories.User') as mock_user_class:
-            mock_user_class.return_value = mock_user
-            
-            result = await concrete_repo.create(**test_data)
-            
-            assert result == mock_user
-            mock_user_class.assert_called_once_with(**test_data)
-            mock_session.add.assert_called_once_with(mock_user)
-            mock_session.flush.assert_called_once()  # BaseRepository uses flush, not commit
-            mock_session.refresh.assert_called_once_with(mock_user)
+        # Verify the result has the expected attributes
+        assert hasattr(result, 'username')
+        assert result.username == "testuser"
+        assert hasattr(result, 'email')
+        assert result.email == "test@example.com"
+        assert hasattr(result, 'id')
+        
+        # Verify the session interactions
+        mock_session.add.assert_called_once_with(result)
+        mock_session.flush.assert_called_once()
+        mock_session.refresh.assert_called_once_with(result)
 
     async def test_update_by_id(self, concrete_repo, mock_session):
         """Test update_by_id method."""
@@ -161,27 +158,30 @@ class TestBaseRepository:
             {"username": "user2", "email": "user2@example.com"},
         ]
 
-        # Create mock users
-        mock_user1 = MagicMock()
-        mock_user1.id = uuid4()
-        mock_user1.username = "user1"
-        
-        mock_user2 = MagicMock()
-        mock_user2.id = uuid4()
-        mock_user2.username = "user2"
-        
-        created_users = [mock_user1, mock_user2]
+        result = await concrete_repo.bulk_create(test_data)
 
-        with patch('tests.test_repositories.User') as mock_user_class:
-            mock_user_class.side_effect = created_users
-            
-            result = await concrete_repo.bulk_create(test_data)
+        # Verify we get back the right number of instances
+        assert len(result) == 2
+        
+        # Verify the first user
+        assert hasattr(result[0], 'username')
+        assert result[0].username == "user1"
+        assert hasattr(result[0], 'email') 
+        assert result[0].email == "user1@example.com"
+        assert hasattr(result[0], 'id')
+        
+        # Verify the second user
+        assert hasattr(result[1], 'username')
+        assert result[1].username == "user2"
+        assert hasattr(result[1], 'email')
+        assert result[1].email == "user2@example.com"
+        assert hasattr(result[1], 'id')
 
-            assert len(result) == 2
-            mock_session.add_all.assert_called_once_with(created_users)
-            mock_session.flush.assert_called_once()  # BaseRepository uses flush, not commit
-            # Should call refresh for each instance
-            assert mock_session.refresh.call_count == 2
+        # Verify session interactions
+        mock_session.add_all.assert_called_once_with(result)
+        mock_session.flush.assert_called_once()
+        # Should call refresh for each instance
+        assert mock_session.refresh.call_count == 2
 
 
 @pytest.mark.asyncio

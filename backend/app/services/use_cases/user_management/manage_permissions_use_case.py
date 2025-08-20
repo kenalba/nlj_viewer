@@ -7,6 +7,7 @@ Handles basic role changes using JWT and existing UserOrmService.
 
 import logging
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 from enum import Enum
@@ -143,8 +144,12 @@ class ManagePermissionsUseCase(BaseUseCase[ManagePermissionsRequest, ManagePermi
             # Create standardized response
             final_response = await self._create_response(request, response_data)
 
-            # Publish events for audit trail
-            await self._publish_permission_event(final_response, request, user_context)
+            # Publish events for audit trail - wrapped for resilience
+            try:
+                await self._publish_permission_event(final_response, request, user_context)
+            except Exception as e:
+                # Log but don't fail the business operation - events are non-critical
+                logger.warning(f"Failed to publish permission event: {e}")
 
             logger.info(
                 f"Permission management completed: {request.action.value} for user {request.target_user_id}"
@@ -155,6 +160,7 @@ class ManagePermissionsUseCase(BaseUseCase[ManagePermissionsRequest, ManagePermi
             raise
         except ValueError as e:
             self._handle_validation_error(e, f"permission management {request.action.value}")
+            raise  # Add explicit raise to satisfy type checker
         except Exception as e:
             await self._handle_service_error(e, f"permission management {request.action.value}")
             raise  # This will never be reached but satisfies mypy

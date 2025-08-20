@@ -286,6 +286,19 @@ class ContentServiceSchema(
         new_content.completion_count = 0
         new_content.update_timestamps(creating=True)
         return new_content
+    
+    @classmethod
+    def from_orm_model(cls, orm_model) -> "ContentServiceSchema":
+        """
+        Convert ORM model to service schema.
+        
+        Args:
+            orm_model: ContentItem ORM model instance
+            
+        Returns:
+            ContentServiceSchema instance
+        """
+        return cls.model_validate(orm_model, from_attributes=True)
 
 
 class ContentCreateServiceSchema(ContentServiceSchema):

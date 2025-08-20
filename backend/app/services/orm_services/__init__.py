@@ -28,6 +28,8 @@ from .node_orm_service import NodeOrmService
 from .source_document_orm_service import SourceDocumentOrmService
 from .training_orm_service import TrainingOrmService
 from .learning_objective_orm_service import LearningObjectiveOrmService
+from .permission_orm_service import PermissionOrmService
+from .role_orm_service import RoleOrmService
 
 __all__ = [
     # Base
@@ -42,4 +44,7 @@ __all__ = [
     "SourceDocumentOrmService",
     "TrainingOrmService",
     "LearningObjectiveOrmService",
+    # Permission & Role Management
+    "PermissionOrmService",
+    "RoleOrmService",
 ]

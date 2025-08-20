@@ -225,3 +225,19 @@ class TrainingOrmService:
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise RuntimeError(f"Failed to get session attendance: {e}") from e
+
+    async def get_by_id(self, program_id: uuid.UUID) -> TrainingProgram | None:
+        """Get training program by ID."""
+        try:
+            return await self.program_repo.get_by_id(program_id)
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise RuntimeError(f"Failed to get training program: {e}") from e
+    
+    async def update_by_id(self, program_id: uuid.UUID, **data) -> TrainingProgram | None:
+        """Update training program by ID."""
+        try:
+            return await self.program_repo.update_by_id(program_id, **data)
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise RuntimeError(f"Failed to update training program: {e}") from e

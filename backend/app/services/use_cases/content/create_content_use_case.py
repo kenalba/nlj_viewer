@@ -178,6 +178,8 @@ class CreateContentUseCase(BaseUseCase[CreateContentRequest, CreateContentRespon
                 nlj_data=request.nlj_data,
                 is_template=request.is_template,
                 template_category=template_category,
+                import_source=request.import_source,
+                import_filename=request.import_filename,
                 created_by=user_id
             )
         except Exception as e:
@@ -206,7 +208,9 @@ class CreateContentUseCase(BaseUseCase[CreateContentRequest, CreateContentRespon
                 creator_id=service_data.created_by,
                 nlj_data=service_data.nlj_data,
                 is_template=service_data.is_template,
-                template_category=service_data.template_category
+                template_category=service_data.template_category,
+                import_source=service_data.import_source,
+                import_filename=service_data.import_filename
             )
         except Exception as e:
             logger.error(f"Failed to create content through ORM service: {e}")

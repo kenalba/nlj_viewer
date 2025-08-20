@@ -13,7 +13,6 @@ from enum import Enum
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user import UserRole
 from app.services.orm_services.user_orm_service import UserOrmService
 from ..base_use_case import BaseUseCase
 

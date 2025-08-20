@@ -155,8 +155,12 @@ class AuthenticateUserUseCase(BaseUseCase[AuthenticateUserRequest, AuthenticateU
                     auth_result, request, user_context
                 )
 
-            # Publish authentication events (placeholder)
-            await self._publish_authentication_event(response, request, user_context)
+            # Publish authentication events (placeholder) - wrapped for resilience
+            try:
+                await self._publish_authentication_event(response, request, user_context)
+            except Exception as e:
+                # Log but don't fail the authentication - events are non-critical
+                logger.warning(f"Failed to publish authentication event: {e}")
 
             logger.info(
                 f"Authentication completed: {request.authentication_method.value}, "
@@ -166,8 +170,10 @@ class AuthenticateUserUseCase(BaseUseCase[AuthenticateUserRequest, AuthenticateU
 
         except ValueError as e:
             self._handle_validation_error(e, f"authentication {request.authentication_method.value}")
+            raise  # Add explicit raise to satisfy type checker
         except Exception as e:
             await self._handle_service_error(e, f"authentication {request.authentication_method.value}")
+            raise  # This will never be reached but satisfies mypy
 
     async def _handle_email_password_auth(
         self, request: AuthenticateUserRequest
@@ -194,7 +200,7 @@ class AuthenticateUserUseCase(BaseUseCase[AuthenticateUserRequest, AuthenticateU
             return {
                 "status": AuthenticationStatus.ACCOUNT_DISABLED,
                 "message": "Account is disabled",
-                "user_id": user.id
+                "user_id": str(user.id)
             }
 
         # TODO: Add MFA, rate limiting, and account locking when those features are needed
@@ -416,7 +422,7 @@ class AuthenticateUserUseCase(BaseUseCase[AuthenticateUserRequest, AuthenticateU
             window_minutes=15
         )
 
-        return recent_failures >= 5  # Max 5 attempts per 15 minutes
+        return int(recent_failures) >= 5  # Max 5 attempts per 15 minutes
 
     async def _increment_failed_attempts(self, email: str, client_ip: str) -> None:
         """Increment failed authentication attempts."""
@@ -447,9 +453,9 @@ class AuthenticateUserUseCase(BaseUseCase[AuthenticateUserRequest, AuthenticateU
             window_minutes=60
         )
 
-        return recent_failures >= 10  # Lock after 10 failed attempts in 1 hour
+        return int(recent_failures) >= 10  # Lock after 10 failed attempts in 1 hour
 
-    async def _is_password_expired(self, user) -> bool:
+    async def _is_password_expired(self, user: Any) -> bool:
         """Check if user's password has expired."""
         if not user.password_changed_at:
             return False
@@ -458,7 +464,7 @@ class AuthenticateUserUseCase(BaseUseCase[AuthenticateUserRequest, AuthenticateU
         password_age = datetime.now() - user.password_changed_at
         return password_age.days > 90
 
-    async def _validate_mfa_code(self, user, mfa_code: str) -> bool:
+    async def _validate_mfa_code(self, user: Any, mfa_code: str) -> bool:
         """Validate MFA code for user."""
         # In real implementation, this would validate TOTP or SMS code
         # For now, simulate validation

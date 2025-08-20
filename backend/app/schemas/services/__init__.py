@@ -22,6 +22,8 @@ from .content_schemas import *  # noqa: F403, F401
 from .user_schemas import *  # noqa: F403, F401
 from .media_schemas import *  # noqa: F403, F401
 from .generation_schemas import *  # noqa: F403, F401
+from .training_schemas import *  # noqa: F403, F401
+from .permission_schemas import *  # noqa: F403, F401
 from .common import *  # noqa: F403, F401
 
 __all__ = [
@@ -38,6 +40,13 @@ __all__ = [
     "UserAuthenticationSchema",
     "PasswordChangeServiceSchema",
     
+    # Training Service Schemas
+    "TrainingProgramServiceSchema",
+    "TrainingSessionServiceSchema", 
+    "TrainingBookingServiceSchema",
+    "AttendanceRecordServiceSchema",
+    "TrainingFilterServiceSchema",
+    
     # Media Service Schemas
     "MediaServiceSchema",
     "MediaCreateServiceSchema",
@@ -49,8 +58,18 @@ __all__ = [
     "GenerationConfigServiceSchema",
     "GenerationStatusServiceSchema",
     
+    # Permission Service Schemas
+    "PermissionServiceSchema",
+    "UserPermissionSummaryServiceSchema", 
+    "UserPreferenceServiceSchema",
+    
     # Common utilities
     "ServiceSchemaBase",
     "ValidationMixin",
     "ConversionMixin",
+    "TimestampMixin",
+    "IdentityMixin",
+    "PaginationServiceSchema",
+    "SortingServiceSchema",
+    "SearchServiceSchema",
 ]

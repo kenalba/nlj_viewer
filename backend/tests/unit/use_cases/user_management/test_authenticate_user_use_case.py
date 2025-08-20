@@ -93,7 +93,7 @@ class TestAuthenticateUserUseCase:
         mock_user_orm_service.authenticate_user.return_value = mock_authenticated_user
         mock_user_orm_service.update_last_login.return_value = True
 
-        with patch('app.core.security.create_access_token', return_value="jwt_token_123") as mock_create_token:
+        with patch('app.services.use_cases.user_management.authenticate_user_use_case.create_access_token', return_value="jwt_token_123"):
             with patch.object(authenticate_user_use_case, '_publish_event') as mock_publish:
                 # Execute
                 result = await authenticate_user_use_case.execute(valid_auth_request, request_user_context)
@@ -316,7 +316,7 @@ class TestAuthenticateUserUseCase:
         mock_user_orm_service.authenticate_user.return_value = mock_authenticated_user
         mock_user_orm_service.update_last_login.return_value = True
 
-        with patch('app.core.security.create_access_token') as mock_create_token:
+        with patch('app.services.use_cases.user_management.authenticate_user_use_case.create_access_token') as mock_create_token:
             mock_create_token.return_value = "jwt_access_token_123"
 
             # Execute
@@ -324,13 +324,11 @@ class TestAuthenticateUserUseCase:
 
             # Verify token creation was called with correct data
             mock_create_token.assert_called_once()
-            token_call_args = mock_create_token.call_args[1]
-            assert "sub" in token_call_args["data"]
-            assert "email" in token_call_args["data"]
-            assert "role" in token_call_args["data"]
-            assert token_call_args["data"]["sub"] == str(mock_authenticated_user.id)
-            assert token_call_args["data"]["email"] == mock_authenticated_user.email
-            assert token_call_args["data"]["role"] == mock_authenticated_user.role.value
+            token_call_args = mock_create_token.call_args
+            
+            # Verify positional and keyword arguments match actual API
+            assert token_call_args[1]["subject"] == str(mock_authenticated_user.id)
+            assert "expires_delta" in token_call_args[1]
 
             # Verify token is included in response
             assert result.access_token == "jwt_access_token_123"

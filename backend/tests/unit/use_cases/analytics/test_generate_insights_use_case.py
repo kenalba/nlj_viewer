@@ -7,7 +7,7 @@ and xAPI event publishing for the event-driven architecture.
 
 import pytest
 import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession

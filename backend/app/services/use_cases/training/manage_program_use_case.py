@@ -15,7 +15,6 @@ from dataclasses import dataclass
 from typing import Any
 import uuid
 from enum import Enum
-from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -185,6 +184,8 @@ class ManageProgramUseCase(BaseUseCase[ManageProgramRequest, ManageProgramRespon
 
         except PermissionError:
             raise
+        except NotImplementedError:
+            raise  # Let NotImplementedError bubble up as design signal
         except ValueError as e:
             self._handle_validation_error(e, f"program management {request.action.value}")
         except Exception as e:

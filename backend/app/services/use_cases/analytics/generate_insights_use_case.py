@@ -183,10 +183,17 @@ class GenerateInsightsUseCase(BaseUseCase[GenerateInsightsRequest, GenerateInsig
                 processing_time_ms=processing_time
             )
 
-            # Publish insights generation event
-            await self._publish_insights_generation_event(
-                insights, summary_metrics, user_context, processing_time
-            )
+            # Publish insights generation event (fire-and-forget, don't break business flow)
+            try:
+                await self._publish_insights_generation_event(
+                    insights, summary_metrics, user_context, processing_time
+                )
+            except Exception as event_error:
+                # Log event publishing failure but continue business operation
+                logger.warning(
+                    f"Failed to publish insights generation event: {event_error}. "
+                    f"Business operation completed successfully."
+                )
 
             logger.info(
                 f"Insights generated successfully: {len(insights)} insights, "
@@ -265,7 +272,7 @@ class GenerateInsightsUseCase(BaseUseCase[GenerateInsightsRequest, GenerateInsig
         # For now, return placeholder data based on available services
         
         # Use training service to get basic data
-        training_orm_service = self.dependencies["training_orm_service"]
+        self.dependencies["training_orm_service"]
         
         # Generate placeholder performance data
         performance_data = {
@@ -350,7 +357,7 @@ class GenerateInsightsUseCase(BaseUseCase[GenerateInsightsRequest, GenerateInsig
         # TODO: Implement with actual analytics service when available
         
         # Use content service to get basic data
-        content_orm_service = self.dependencies["content_orm_service"]
+        self.dependencies["content_orm_service"]
         
         # Generate placeholder effectiveness data
         effectiveness_data = {
@@ -575,6 +582,24 @@ class GenerateInsightsUseCase(BaseUseCase[GenerateInsightsRequest, GenerateInsig
                 "message": "Implement re-engagement strategies or content refresh",
                 "priority": "high"
             })
+        elif engagement_trend == "increasing":
+            insights.append({
+                "type": "engagement_patterns",
+                "category": "improving_engagement",
+                "title": "Increasing Engagement Observed",
+                "message": "Learner engagement is improving over time",
+                "data": {"trend": engagement_trend, "frequency": interaction_frequency},
+                "timestamp": datetime.now().isoformat()
+            })
+        else:  # stable
+            insights.append({
+                "type": "engagement_patterns",
+                "category": "stable_engagement",
+                "title": "Stable Engagement Patterns",
+                "message": f"Learner engagement remains consistent with {interaction_frequency:.1f} avg interactions",
+                "data": {"trend": engagement_trend, "frequency": interaction_frequency},
+                "timestamp": datetime.now().isoformat()
+            })
 
         summary_metrics = {
             "engagement_trend": engagement_trend,
@@ -646,10 +671,12 @@ class GenerateInsightsUseCase(BaseUseCase[GenerateInsightsRequest, GenerateInsig
 
         # At-risk learner prediction
         at_risk_probability = predictions.get("dropout_risk_probability", 0)
+        success_probability = predictions.get("success_probability", 0)
+        
         if at_risk_probability > 0.7:
             insights.append({
                 "type": "predictive_analytics",
-                "category": "at_risk_prediction",
+                "category": "high_risk_prediction",
                 "title": "High Dropout Risk Detected",
                 "message": f"Learner has {at_risk_probability:.1%} probability of dropping out",
                 "data": {"risk_probability": at_risk_probability},
@@ -659,6 +686,29 @@ class GenerateInsightsUseCase(BaseUseCase[GenerateInsightsRequest, GenerateInsig
                 "type": "intervention",
                 "message": "Proactive intervention recommended to prevent dropout",
                 "priority": "high"
+            })
+        elif at_risk_probability > 0.3:
+            insights.append({
+                "type": "predictive_analytics",
+                "category": "moderate_risk_prediction",
+                "title": "Moderate Risk Identified",
+                "message": f"Learner has {at_risk_probability:.1%} probability of dropout - monitor closely",
+                "data": {"risk_probability": at_risk_probability},
+                "timestamp": datetime.now().isoformat()
+            })
+            recommendations.append({
+                "type": "monitoring",
+                "message": "Monitor learner progress and provide additional support if needed",
+                "priority": "medium"
+            })
+        else:
+            insights.append({
+                "type": "predictive_analytics", 
+                "category": "low_risk_prediction",
+                "title": "Low Risk Profile",
+                "message": f"Learner shows low dropout risk ({at_risk_probability:.1%}) with high success potential",
+                "data": {"risk_probability": at_risk_probability, "success_probability": success_probability},
+                "timestamp": datetime.now().isoformat()
             })
 
         summary_metrics = {

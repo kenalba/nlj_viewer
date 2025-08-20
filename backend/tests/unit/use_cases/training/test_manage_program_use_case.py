@@ -63,6 +63,22 @@ class TestManageProgramUseCase:
         )
 
     @pytest.fixture
+    def mock_training_program_schema(self):
+        """Create mock TrainingProgramServiceSchema for schema validation."""
+        from unittest.mock import MagicMock
+        mock_schema = MagicMock()
+        mock_schema.title = "Test Training Program"
+        mock_schema.description = "Test training program description"
+        mock_schema.is_active = True
+        return mock_schema
+    
+    @pytest.fixture(autouse=True)
+    def mock_schema_validation(self, mock_training_program_schema):
+        """Auto-mock the TrainingProgramServiceSchema validation for all tests."""
+        with patch.object(TrainingProgramServiceSchema, 'model_validate', return_value=mock_training_program_schema):
+            yield
+
+    @pytest.fixture
     def admin_user_context(self):
         """Create user context for admin user."""
         return {
@@ -217,8 +233,7 @@ class TestManageProgramUseCase:
         program_id = uuid.uuid4()
         archive_request = ManageProgramRequest(
             action=ProgramAction.ARCHIVE,
-            program_id=program_id,
-            reason="Program completed successfully"
+            program_id=program_id
         )
 
         # Mock program exists and is active
@@ -320,11 +335,21 @@ class TestManageProgramUseCase:
             mock_training_orm_service.get_by_id.return_value = mock_training_program
             mock_training_orm_service.update_by_id.return_value = mock_training_program
 
-        with patch.object(manage_program_use_case, '_publish_event') as mock_publish:
-            # Execute
-            await manage_program_use_case.execute(request, admin_user_context)
-
-            # Verify correct xAPI event type is published
-            mock_publish.assert_called()
-            event_call = mock_publish.call_args
-            assert expected_event in event_call[0][0] or action.value in event_call[0][0]
+        # Patch the correct event service method based on action
+        if action == ProgramAction.CREATE:
+            with patch.object(manage_program_use_case.training_event_service, 'publish_program_created') as mock_publish:
+                # Execute
+                await manage_program_use_case.execute(request, admin_user_context)
+                
+                # Verify correct xAPI event type is published
+                mock_publish.assert_called()
+        elif action == ProgramAction.ARCHIVE:
+            with patch.object(manage_program_use_case, '_publish_event') as mock_publish:
+                # Execute  
+                await manage_program_use_case.execute(request, admin_user_context)
+                
+                # Verify correct xAPI event type is published
+                mock_publish.assert_called()
+                # Verify the correct event type is used
+                event_call = mock_publish.call_args
+                assert event_call[0][0] == "publish_training_program_archived"

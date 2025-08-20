@@ -17,7 +17,7 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import UserRole
-from app.schemas.services.training_schemas import TrainingSessionServiceSchema, AttendanceRecordServiceSchema
+from app.schemas.services.training_schemas import TrainingSessionServiceSchema
 from app.services.orm_services.training_orm_service import TrainingOrmService
 from app.services.orm_services.user_orm_service import UserOrmService
 from app.services.events.training_events import TrainingEventService
@@ -217,9 +217,9 @@ class ManageSessionsUseCase(BaseUseCase[ManageSessionsRequest, ManageSessionsRes
 
         # Record attendance using actual TrainingOrmService API
         training_orm_service = self.dependencies["training_orm_service"]
-        user_id = uuid.UUID(user_context["user_id"])
+        uuid.UUID(user_context["user_id"])
 
-        attendance_record = await training_orm_service.record_attendance(
+        await training_orm_service.record_attendance(
             session_id=request.session_id,
             user_id=request.user_id,
             attended=request.attended,
@@ -231,7 +231,7 @@ class ManageSessionsUseCase(BaseUseCase[ManageSessionsRequest, ManageSessionsRes
         participants_affected = 1
 
         # Publish attendance event using proper xAPI format
-        user_info = self._extract_user_info(user_context)
+        self._extract_user_info(user_context)
         if request.attended:
             # Get learner info from user service for complete xAPI event
             user_orm_service = self.dependencies["user_orm_service"]

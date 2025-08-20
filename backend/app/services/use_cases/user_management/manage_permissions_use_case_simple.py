@@ -7,7 +7,7 @@ Handles basic role changes using JWT and existing UserOrmService.
 
 import logging
 from dataclasses import dataclass
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from uuid import UUID
 from enum import Enum
 

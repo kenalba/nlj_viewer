@@ -317,10 +317,11 @@ class TestContentRepository:
         test_session.add_all([user] + content_items)
         await test_session.commit()
         
-        # Get popular content
-        popular = await repo.get_popular_content(limit=10, min_view_count=400)  # High threshold to get our content
+        # Get popular content with a higher limit to ensure our test data is included
+        # (previous test runs may have left similar data in the database)
+        popular = await repo.get_popular_content(limit=50, min_view_count=400)
         
-        # Filter to our content
+        # Filter to our content using the unique identifier
         our_popular = [item for item in popular if unique_id in item.title]
         assert len(our_popular) == 2
         assert our_popular[0].title == f"Very Popular-{unique_id}"  # Highest views first

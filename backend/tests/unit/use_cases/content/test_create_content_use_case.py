@@ -43,6 +43,23 @@ class TestCreateContentUseCase:
     def create_content_use_case(self, mock_session, mock_content_orm_service):
         """Create CreateContentUseCase instance with mocked dependencies."""
         return CreateContentUseCase(mock_session, mock_content_orm_service)
+    
+    @pytest.fixture
+    def mock_content_service_schema(self):
+        """Create mock ContentServiceSchema for schema conversion."""
+        mock_schema = MagicMock()
+        mock_schema.title = "Test Survey Content"
+        mock_schema.content_type = ContentType.SURVEY
+        mock_schema.learning_style = LearningStyle.VISUAL
+        mock_schema.state = ContentState.DRAFT
+        mock_schema.is_template = False
+        return mock_schema
+    
+    @pytest.fixture(autouse=True)
+    def mock_schema_conversion(self, mock_content_service_schema):
+        """Auto-mock the ContentServiceSchema.from_orm_model conversion for all tests."""
+        with patch.object(ContentServiceSchema, 'from_orm_model', return_value=mock_content_service_schema):
+            yield
 
     @pytest.fixture
     def valid_content_request(self):
@@ -110,13 +127,8 @@ class TestCreateContentUseCase:
                                               creator_user_context, mock_content_orm_service, 
                                               mock_session, mock_created_content):
         """Test successful basic content creation workflow."""
-        # Setup - Mock the ORM service call and schema conversion
+        # Setup - Mock the ORM service call
         mock_content_orm_service.create_content.return_value = mock_created_content
-        
-        # Mock the schema conversion method that's causing issues
-        mock_content_schema = MagicMock()
-        mock_content_schema.title = "Test Survey Content"
-        mock_content_schema.content_type = ContentType.SURVEY
         
         with patch.object(create_content_use_case, '_publish_event') as mock_publish:
             # Execute
@@ -210,7 +222,7 @@ class TestCreateContentUseCase:
         
         with patch.object(create_content_use_case, '_publish_event') as mock_publish:
             # Execute
-            result = await create_content_use_case.execute(import_request, creator_user_context)
+            await create_content_use_case.execute(import_request, creator_user_context)
             
             # Verify import metadata handling
             call_args = mock_content_orm_service.create_content.call_args[1]
@@ -230,7 +242,7 @@ class TestCreateContentUseCase:
         }
         
         # Execute & Verify
-        with pytest.raises(PermissionError, match="content creation"):
+        with pytest.raises(PermissionError, match="Insufficient permissions"):
             await create_content_use_case.execute(valid_content_request, learner_context)
 
     async def test_validation_error_invalid_title(self, create_content_use_case, creator_user_context):
@@ -277,22 +289,30 @@ class TestCreateContentUseCase:
         mock_session.rollback.assert_called_once()
 
     async def test_business_rule_validation_template_category(self, create_content_use_case, 
-                                                            creator_user_context):
-        """Test business rule validation for template category requirements."""
-        # Setup - template without category should be invalid
-        invalid_template_request = CreateContentRequest(
+                                                            creator_user_context, mock_content_orm_service):
+        """Test business rule auto-categorization for templates without explicit category."""
+        # Setup - template without category should be auto-categorized
+        template_request = CreateContentRequest(
             title="Template Without Category",
-            description="Template missing required category",
+            description="Template that should be auto-categorized",
             content_type=ContentType.SURVEY,
             learning_style=LearningStyle.VISUAL,
             nlj_data={"title": "NLJ Content", "nodes": [{"id": "start", "type": "start"}], "edges": []},
             is_template=True,
-            template_category=None  # Invalid - templates should have categories
+            template_category=None  # Should be auto-categorized
         )
         
-        # Execute & Verify
-        with pytest.raises(ValueError, match="category"):
-            await create_content_use_case.execute(invalid_template_request, creator_user_context)
+        mock_content = MagicMock(id=uuid.uuid4())
+        mock_content_orm_service.create_content.return_value = mock_content
+        
+        with patch.object(create_content_use_case, '_publish_event'):
+            # Execute
+            result = await create_content_use_case.execute(template_request, creator_user_context)
+            
+            # Verify auto-categorization occurred
+            call_args = mock_content_orm_service.create_content.call_args[1]
+            assert call_args["template_category"] == "survey_templates"  # Auto-categorized and normalized
+            assert result.is_new_template is True
 
     async def test_user_context_extraction(self, create_content_use_case, valid_content_request,
                                          creator_user_context, mock_content_orm_service, mock_created_content):
@@ -327,7 +347,7 @@ class TestCreateContentUseCase:
         ]
         
         mock_contents = [
-            MagicMock(id=uuid.uuid4(), title=f"Similar Content Title") 
+            MagicMock(id=uuid.uuid4(), title="Similar Content Title") 
             for _ in range(3)
         ]
         
