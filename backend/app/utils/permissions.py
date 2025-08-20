@@ -9,7 +9,6 @@ from typing import Callable
 from fastapi import Depends, HTTPException, status
 
 from app.models.user import User, UserRole
-from app.core.deps import get_current_user
 
 
 class PermissionLevel(Enum):
@@ -79,6 +78,8 @@ async def has_content_access(user: User, content_id: str, db) -> bool:
 
 def require_permission(level: PermissionLevel) -> Callable:
     """FastAPI dependency to require specific permission level."""
+    # Import here to avoid circular dependency
+    from app.core.deps import get_current_user
     
     def permission_dependency(user: User = Depends(get_current_user)) -> User:
         """Check if user has required permission level."""

@@ -1,29 +1,48 @@
 """
 Content API endpoints for NLJ scenario management.
 Provides CRUD operations with role-based access control.
+Refactored for Clean Architecture compliance.
 """
 
-import math
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database_manager import get_db
-from app.core.deps import get_current_user
+from app.core.deps import (
+    RequireContentManager,
+    get_create_content_use_case,
+    get_update_content_use_case,
+    get_review_workflow_use_case,
+    get_get_content_use_case,
+    get_list_content_use_case,
+    get_delete_content_use_case,
+    get_record_content_view_use_case,
+    get_record_content_completion_use_case,
+    get_current_user
+)
+from app.core.user_context import extract_user_context
+from app.models.user import User
 from app.models.content import ContentState, ContentType, LearningStyle
-from app.models.user import User, UserRole
+# SQLAlchemy no longer needed - using Clean Architecture with use cases
+from app.services.use_cases.content.create_content_use_case import CreateContentRequest
+from app.services.use_cases.content.update_content_use_case import UpdateContentRequest
+from app.services.use_cases.content.review_workflow_use_case import ReviewWorkflowRequest, ReviewAction
 from app.schemas.content import (
     ContentCreate,
-    ContentFilters,
     ContentListResponse,
     ContentResponse,
     ContentStateUpdate,
     ContentSummary,
     ContentUpdate,
 )
-from app.services.content import ContentService
-from app.services.kafka_service import get_xapi_event_service
+from app.services.use_cases.content.create_content_use_case import CreateContentUseCase
+from app.services.use_cases.content.update_content_use_case import UpdateContentUseCase
+from app.services.use_cases.content.review_workflow_use_case import ReviewWorkflowUseCase
+from app.services.use_cases.content.get_content_use_case import GetContentUseCase, GetContentRequest
+from app.services.use_cases.content.list_content_use_case import ListContentUseCase, ListContentRequest, ContentListSortBy, ContentListSortOrder
+from app.services.use_cases.content.delete_content_use_case import DeleteContentUseCase, DeleteContentRequest
+from app.services.use_cases.content.record_content_view_use_case import RecordContentViewUseCase, RecordContentViewRequest
+from app.services.use_cases.content.record_content_completion_use_case import RecordContentCompletionUseCase, RecordContentCompletionRequest, CompletionResult
 
 router = APIRouter(prefix="/content", tags=["content"])
 
@@ -36,77 +55,63 @@ router = APIRouter(prefix="/content", tags=["content"])
     description="Create a new NLJ scenario. Requires Creator role or higher.",
 )
 async def create_content(
-    content_data: ContentCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+    content_data: ContentCreate,
+    current_user: RequireContentManager,
+    create_content_use_case: CreateContentUseCase = Depends(get_create_content_use_case),
 ) -> ContentResponse:
-    """Create new content item."""
-
-    # Permission check: Creator role or higher
-    if current_user.role not in [UserRole.CREATOR, UserRole.REVIEWER, UserRole.APPROVER, UserRole.ADMIN]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions to create content")
-
-    service = ContentService(db)
-
+    """Create new content item using Clean Architecture pattern."""
     try:
-        content = await service.create_content(content_data, current_user.id)
+        # Convert API schema to use case request with inline conversion
+        request = CreateContentRequest(
+            title=content_data.title,
+            description=content_data.description,
+            content_type=content_data.content_type,
+            learning_style=content_data.learning_style,
+            is_template=content_data.is_template,
+            template_category=content_data.template_category,
+            nlj_data=content_data.nlj_data,
+            parent_content_id=content_data.parent_content_id
+        )
+        
+        # Extract user context for use case
+        user_context = extract_user_context(current_user)
+        
+        # Execute use case
+        response = await create_content_use_case.execute(request, user_context)
+        
+        # Convert service response to API response
+        return ContentResponse(
+            id=response.content.id,
+            title=response.content.title,
+            description=response.content.description,
+            content_type=response.content.content_type,
+            learning_style=response.content.learning_style,
+            state=response.content.state,
+            is_template=response.content.is_template,
+            template_category=response.content.template_category,
+            nlj_data=response.content.nlj_data,
+            version=response.content.version or 1,
+            view_count=response.content.view_count or 0,
+            completion_count=response.content.completion_count or 0,
+            created_by=response.content.creator_id,
+            parent_content_id=response.content.parent_content_id,
+            created_at=response.content.created_at,
+            updated_at=response.content.updated_at,
+            published_at=getattr(response.content, 'published_at', None),
+            creator={
+                "id": response.content.creator_id,
+                "username": response.content.creator.username if hasattr(response.content, 'creator') else "",
+                "full_name": response.content.creator.full_name if hasattr(response.content, 'creator') else "",
+                "role": response.content.creator.role if hasattr(response.content, 'creator') else current_user.role,
+            },
+            import_source=response.content.import_source,
+            import_filename=response.content.import_filename,
+        )
 
-        # Refresh to ensure all attributes are loaded
-        await db.refresh(content, ["creator"])
-
-        # Publish IMPORTED event if content was created from import
-        if content_data.import_source:
-            try:
-                xapi_service = await get_xapi_event_service()
-                await xapi_service.publish_content_generation_imported(
-                    session_id=str(content.id),  # Use content ID as session ID for imports
-                    user_id=str(current_user.id),
-                    user_email=current_user.email,
-                    user_name=current_user.full_name or current_user.username,
-                    import_source=content_data.import_source,
-                    import_description=f"Imported content from {content_data.import_source}",
-                    original_filename=content_data.import_filename,
-                    session_title=content.title,
-                )
-            except Exception as e:
-                # Log error but don't fail the creation
-                import logging
-
-                logger = logging.getLogger(__name__)
-                logger.warning(f"Failed to publish content import event for {content.id}: {e}")
-
-        # Create response data within the session context
-        response_data = {
-            "id": content.id,
-            "title": content.title,
-            "description": content.description,
-            "content_type": content.content_type,
-            "nlj_data": content.nlj_data,
-            "learning_style": content.learning_style,
-            "is_template": content.is_template,
-            "template_category": content.template_category,
-            "state": content.state,
-            "version": content.version,
-            "view_count": content.view_count,
-            "completion_count": content.completion_count,
-            "created_by": content.created_by,
-            "parent_content_id": getattr(content, "parent_content_id", None),
-            "created_at": content.created_at,
-            "updated_at": content.updated_at,
-            "published_at": getattr(content, "published_at", None),
-            "creator": (
-                {
-                    "id": content.creator.id,
-                    "username": content.creator.username,
-                    "full_name": content.creator.full_name,
-                    "role": content.creator.role,
-                }
-                if content.creator
-                else None
-            ),
-        }
-
-        return ContentResponse.model_validate(response_data)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to create content: {str(e)}")
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
 
 @router.get(
@@ -131,52 +136,70 @@ async def list_content(
     sort_by: str = Query("created_at", description="Sort field"),
     sort_order: str = Query("desc", pattern="^(asc|desc)$", description="Sort order"),
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    list_content_use_case: ListContentUseCase = Depends(get_list_content_use_case),
 ) -> ContentListResponse:
-    """Get paginated content list with filters."""
-
-    # Build filters object - handle enum conversions
+    """Get paginated content list with filters using Clean Architecture pattern."""
     try:
-        filters = ContentFilters(
+        # Convert API parameters to use case request with inline conversion
+        use_case_request = ListContentRequest(
             page=page,
-            size=size,
-            state=ContentState(state) if state else None,
-            content_type=ContentType(content_type) if content_type else None,
-            learning_style=LearningStyle(learning_style) if learning_style else None,
+            per_page=size,
+            state_filter=ContentState(state) if state else None,
+            content_type_filter=ContentType(content_type) if content_type else None,
+            learning_style_filter=LearningStyle(learning_style) if learning_style else None,
             is_template=is_template,
             template_category=template_category,
-            created_by=uuid.UUID(created_by) if created_by else None,
+            created_by=created_by,
             search=search,
-            sort_by=sort_by,
-            sort_order=sort_order,
+            sort_by=ContentListSortBy(sort_by) if sort_by in [e.value for e in ContentListSortBy] else ContentListSortBy.CREATED_AT,
+            sort_order=ContentListSortOrder(sort_order) if sort_order in ["asc", "desc"] else ContentListSortOrder.DESC
         )
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid filter parameter: {str(e)}")
-
-    service = ContentService(db)
-
-    try:
-        items, total = await service.get_content_list(filters, current_user.id, current_user.role)
-
-        # Convert to summary format (without full NLJ data for performance)
+        
+        # Extract user context for use case
+        user_context = extract_user_context(current_user)
+        
+        # Execute use case
+        response = await list_content_use_case.execute(use_case_request, user_context)
+        
+        # Convert service response to API response
         content_summaries = []
-        for item in items:
-            try:
-                summary = ContentSummary.model_validate(item)
-                if item.creator:
-                    summary.creator_name = item.creator.full_name or item.creator.username
-                content_summaries.append(summary)
-            except Exception as e:
-                # Log the error but continue processing other items
-                print(f"Warning: Failed to process content item {getattr(item, 'id', 'unknown')}: {e}")
-                continue
-
-        pages = math.ceil(total / size) if total > 0 else 1
-
-        return ContentListResponse(items=content_summaries, total=total, page=page, size=size, pages=pages)
-
+        for content in response.content_items:
+            summary = ContentSummary(
+                id=content.id,
+                title=content.title,
+                description=content.description,
+                content_type=content.content_type,
+                learning_style=content.learning_style,
+                state=content.state,
+                is_template=content.is_template,
+                template_category=content.template_category,
+                version=content.version,
+                view_count=content.view_count,
+                completion_count=content.completion_count,
+                created_by=content.creator_id,
+                parent_content_id=content.parent_content_id,
+                created_at=content.created_at,
+                updated_at=content.updated_at,
+                creator_name=""  # Will be filled by additional lookup if needed
+            )
+            content_summaries.append(summary)
+        
+        pages = response.total_pages
+        
+        return ContentListResponse(
+            items=content_summaries, 
+            total=response.total, 
+            page=response.page, 
+            size=response.per_page, 
+            pages=pages
+        )
+        
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to list content: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to list content: {str(e)}")
 
 
 @router.get(
@@ -186,75 +209,56 @@ async def list_content(
     description="Get specific content item with full NLJ data.",
 )
 async def get_content(
-    content_id: uuid.UUID, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+    content_id: uuid.UUID, 
+    current_user: User = Depends(get_current_user), 
+    get_content_use_case: GetContentUseCase = Depends(get_get_content_use_case)
 ) -> ContentResponse:
-    """Get content by ID."""
-
-    service = ContentService(db)
-    content = await service.get_content_by_id(content_id)
-
-    if not content:
+    """Get content by ID using Clean Architecture pattern."""
+    try:
+        # Create use case request with inline conversion
+        request = GetContentRequest(content_id=content_id)
+        
+        # Extract user context for use case
+        user_context = extract_user_context(current_user)
+        
+        # Execute use case
+        response = await get_content_use_case.execute(request, user_context)
+        
+        # Convert service response to API response
+        return ContentResponse(
+            id=response.content.id,
+            title=response.content.title,
+            description=response.content.description,
+            content_type=response.content.content_type,
+            learning_style=response.content.learning_style,
+            state=response.content.state,
+            is_template=response.content.is_template,
+            template_category=response.content.template_category,
+            nlj_data=response.content.nlj_data,
+            version=response.content.version or 1,
+            view_count=response.content.view_count or 0,
+            completion_count=response.content.completion_count or 0,
+            created_by=response.content.creator_id,
+            parent_content_id=response.content.parent_content_id,
+            created_at=response.content.created_at,
+            updated_at=response.content.updated_at,
+            published_at=response.content.published_at,
+            creator={
+                "id": response.content.creator_id,
+                "username": "",  # Would need additional lookup for creator details
+                "full_name": "",
+                "role": current_user.role,  # Placeholder
+            },
+            import_source=response.content.import_source,
+            import_filename=response.content.import_filename,
+        )
+        
+    except ValueError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
-
-    # Permission check: role-based access
-    if current_user.role == UserRole.CREATOR:
-        # Creators can see their own content, published content, or any content for preview
-        # Allow preview access to draft content for testing/preview purposes
-        if content.created_by != current_user.id and content.state not in [
-            "draft",
-            "submitted",
-            "in_review",
-            "published",
-        ]:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
-    elif current_user.role == UserRole.REVIEWER:
-        # Reviewers can see their own content, submitted content, published content, or draft content for preview
-        # Allow preview access to all content including drafts
-        if content.created_by != current_user.id and content.state not in [
-            "draft",
-            "submitted",
-            "in_review",
-            "published",
-        ]:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
-    # Approvers and Admins can see all content (no additional check needed)
-
-    # Refresh the object to ensure all attributes are loaded
-    await db.refresh(content, ["creator"])
-
-    # Create response data within the session context
-    response_data = {
-        "id": content.id,
-        "title": content.title,
-        "description": content.description,
-        "content_type": content.content_type,
-        "nlj_data": content.nlj_data,
-        "learning_style": content.learning_style,
-        "is_template": content.is_template,
-        "template_category": content.template_category,
-        "state": content.state,
-        "version": content.version,
-        "view_count": content.view_count,
-        "completion_count": content.completion_count,
-        "created_by": content.created_by,
-        "created_at": content.created_at,
-        "updated_at": content.updated_at,
-        "creator": (
-            {
-                "id": content.creator.id,
-                "username": content.creator.username,
-                "full_name": content.creator.full_name,
-                "role": content.creator.role,
-            }
-            if content.creator
-            else None
-        ),
-    }
-
-    # Increment view count for analytics
-    await service.increment_view_count(content_id)
-
-    return ContentResponse.model_validate(response_data)
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to get content: {str(e)}")
 
 
 @router.put(
@@ -267,101 +271,63 @@ async def update_content(
     content_id: uuid.UUID,
     content_data: ContentUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    update_content_use_case: UpdateContentUseCase = Depends(get_update_content_use_case),
 ) -> ContentResponse:
-    """Update content item."""
-
-    service = ContentService(db)
-
+    """Update content item using Clean Architecture pattern."""
     try:
-        content = await service.update_content(content_id, content_data, current_user.id, current_user.role)
-
-        if not content:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
-
-        # Refresh to ensure all attributes are loaded
-        await db.refresh(content, ["creator"])
-
-        # Create response data within the session context
-        response_data = {
-            "id": content.id,
-            "title": content.title,
-            "description": content.description,
-            "content_type": content.content_type,
-            "nlj_data": content.nlj_data,
-            "learning_style": content.learning_style,
-            "is_template": content.is_template,
-            "template_category": content.template_category,
-            "state": content.state,
-            "version": content.version,
-            "view_count": content.view_count,
-            "completion_count": content.completion_count,
-            "created_by": content.created_by,
-            "parent_content_id": getattr(content, "parent_content_id", None),
-            "created_at": content.created_at,
-            "updated_at": content.updated_at,
-            "published_at": getattr(content, "published_at", None),
-            "creator": (
-                {
-                    "id": content.creator.id,
-                    "username": content.creator.username,
-                    "full_name": content.creator.full_name,
-                    "role": content.creator.role,
-                }
-                if content.creator
-                else None
-            ),
-        }
-
-        # Publish content modification event
-        try:
-            # Check if this content was generated (has generation session link)
-            # Look for generation session association to determine if this is generated content
-            from sqlalchemy import select
-
-            from app.models.activity_source import ActivitySource
-            from app.models.generation_session import GenerationSession
-
-            # Try to find if this content is linked to a generation session
-            generation_session_id = None
-            stmt = (
-                select(GenerationSession.id)
-                .join(ActivitySource, GenerationSession.id == ActivitySource.generation_session_id)
-                .where(ActivitySource.activity_id == content.id)
-            )
-
-            result = await db.execute(stmt)
-            gen_session = result.scalar_one_or_none()
-
-            if gen_session:
-                generation_session_id = str(gen_session)
-
-                # Publish MODIFIED event for generated content
-                xapi_service = await get_xapi_event_service()
-                await xapi_service.publish_content_generation_modified(
-                    session_id=generation_session_id,
-                    user_id=str(current_user.id),
-                    user_email=current_user.email,
-                    user_name=current_user.full_name or current_user.username,
-                    modification_type="manual_edit",
-                    modification_description=f"Content updated via API: {content.title}",
-                    session_title=content.title,
-                )
-        except Exception as e:
-            # Log error but don't fail the update
-            import logging
-
-            logger = logging.getLogger(__name__)
-            logger.warning(f"Failed to publish content modification event for {content_id}: {e}")
-
-        return ContentResponse.model_validate(response_data)
-
+        # Convert API schema to use case request with inline conversion
+        request = UpdateContentRequest(
+            content_id=content_id,
+            title=content_data.title,
+            description=content_data.description,
+            content_type=content_data.content_type,
+            learning_style=content_data.learning_style,
+            nlj_data=content_data.nlj_data,
+            is_template=content_data.is_template,
+            template_category=content_data.template_category
+        )
+        
+        # Extract user context for use case
+        user_context = extract_user_context(current_user)
+        
+        # Execute use case
+        response = await update_content_use_case.execute(request, user_context)
+        
+        # Convert service response to API response
+        return ContentResponse(
+            id=response.content.id,
+            title=response.content.title,
+            description=response.content.description,
+            content_type=response.content.content_type,
+            learning_style=response.content.learning_style,
+            state=response.content.state,
+            is_template=response.content.is_template,
+            template_category=response.content.template_category,
+            nlj_data=response.content.nlj_data,
+            version=response.content.version or 1,
+            view_count=response.content.view_count or 0,
+            completion_count=response.content.completion_count or 0,
+            created_by=response.content.creator_id,
+            parent_content_id=response.content.parent_content_id,
+            created_at=response.content.created_at,
+            updated_at=response.content.updated_at,
+            published_at=response.content.published_at,
+            creator={
+                "id": response.content.creator_id,
+                "username": "",  # Would need additional lookup for creator details
+                "full_name": "",
+                "role": current_user.role,  # Placeholder
+            },
+            import_source=response.content.import_source,
+            import_filename=response.content.import_filename,
+        )
+        
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
     except PermissionError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to update content: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to update content: {str(e)}")
 
 
 @router.delete(
@@ -371,24 +337,29 @@ async def update_content(
     description="Delete content item. Only creator or admin can delete draft content.",
 )
 async def delete_content(
-    content_id: uuid.UUID, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+    content_id: uuid.UUID, 
+    current_user: User = Depends(get_current_user), 
+    delete_content_use_case: DeleteContentUseCase = Depends(get_delete_content_use_case)
 ):
-    """Delete content item."""
-
-    service = ContentService(db)
-
+    """Delete content item using Clean Architecture pattern."""
     try:
-        deleted = await service.delete_content(content_id, current_user.id, current_user.role)
-
-        if not deleted:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
-
+        # Create use case request with inline conversion
+        request = DeleteContentRequest(content_id=content_id)
+        
+        # Extract user context for use case
+        user_context = extract_user_context(current_user)
+        
+        # Execute use case
+        response = await delete_content_use_case.execute(request, user_context)
+        
+        return {"message": response.message, "deleted_id": str(response.deleted_content_id)}
+        
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
     except PermissionError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to delete content: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to delete content: {str(e)}")
 
 
 @router.patch(
@@ -401,113 +372,70 @@ async def update_content_state(
     content_id: uuid.UUID,
     state_update: ContentStateUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    review_workflow_use_case: ReviewWorkflowUseCase = Depends(get_review_workflow_use_case),
 ) -> ContentResponse:
-    """Update content state."""
-
-    service = ContentService(db)
-
+    """Update content state using Clean Architecture pattern."""
     try:
-        content = await service.update_content_state(content_id, state_update, current_user.id, current_user.role)
-
-        if not content:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
-
-        # Refresh to ensure all attributes are loaded
-        await db.refresh(content, ["creator"])
-
-        # Create response data within the session context
-        response_data = {
-            "id": content.id,
-            "title": content.title,
-            "description": content.description,
-            "content_type": content.content_type,
-            "nlj_data": content.nlj_data,
-            "learning_style": content.learning_style,
-            "is_template": content.is_template,
-            "template_category": content.template_category,
-            "state": content.state,
-            "version": content.version,
-            "view_count": content.view_count,
-            "completion_count": content.completion_count,
-            "created_by": content.created_by,
-            "parent_content_id": getattr(content, "parent_content_id", None),
-            "created_at": content.created_at,
-            "updated_at": content.updated_at,
-            "published_at": getattr(content, "published_at", None),
-            "creator": (
-                {
-                    "id": content.creator.id,
-                    "username": content.creator.username,
-                    "full_name": content.creator.full_name,
-                    "role": content.creator.role,
-                }
-                if content.creator
-                else None
-            ),
+        # Convert state update to review action
+        action_mapping = {
+            "draft": ReviewAction.SAVE_DRAFT,
+            "pending_review": ReviewAction.SUBMIT,
+            "in_review": ReviewAction.START_REVIEW,
+            "approved": ReviewAction.APPROVE,
+            "rejected": ReviewAction.REJECT,
+            "published": ReviewAction.PUBLISH
         }
-
-        # Publish content events for state changes
-        try:
-            xapi_service = await get_xapi_event_service()
-
-            # Check if this is a review workflow state change
-            review_states = ["submitted", "in_review", "approved", "rejected", "published"]
-            if content.state.lower() in review_states:
-                # Publish REVIEWED event for approval workflow
-                await xapi_service.publish_content_generation_reviewed(
-                    session_id=str(content.id),  # Use content ID as session ID for non-generated content
-                    user_id=str(current_user.id),
-                    user_email=current_user.email,
-                    user_name=current_user.full_name or current_user.username,
-                    review_status=content.state.lower(),
-                    review_comment=state_update.comment or f"Content state changed to: {content.state}",
-                    session_title=content.title,
-                )
-
-            # Also check if this content was generated (has generation session link) for MODIFIED events
-            from sqlalchemy import select
-
-            from app.models.activity_source import ActivitySource
-            from app.models.generation_session import GenerationSession
-
-            # Try to find if this content is linked to a generation session
-            generation_session_id = None
-            stmt = (
-                select(GenerationSession.id)
-                .join(ActivitySource, GenerationSession.id == ActivitySource.generation_session_id)
-                .where(ActivitySource.activity_id == content.id)
-            )
-
-            result = await db.execute(stmt)
-            gen_session = result.scalar_one_or_none()
-
-            if gen_session:
-                generation_session_id = str(gen_session)
-
-                # Publish MODIFIED event for generated content
-                await xapi_service.publish_content_generation_modified(
-                    session_id=generation_session_id,
-                    user_id=str(current_user.id),
-                    user_email=current_user.email,
-                    user_name=current_user.full_name or current_user.username,
-                    modification_type="state_change",
-                    modification_description=f"Content state changed to: {content.state}",
-                    session_title=content.title,
-                )
-        except Exception as e:
-            # Log error but don't fail the update
-            import logging
-
-            logger = logging.getLogger(__name__)
-            logger.warning(f"Failed to publish content state modification event for {content_id}: {e}")
-
-        return ContentResponse.model_validate(response_data)
-
+        
+        # Create use case request with inline conversion
+        action = action_mapping.get(state_update.state.lower(), ReviewAction.SAVE_DRAFT)
+        request = ReviewWorkflowRequest(
+            content_id=content_id,
+            action=action,
+            comment=getattr(state_update, 'comment', None),
+            reviewer_notes=getattr(state_update, 'reviewer_notes', None)
+        )
+        
+        # Extract user context for use case
+        user_context = extract_user_context(current_user)
+        
+        # Execute use case
+        response = await review_workflow_use_case.execute(request, user_context)
+        
+        # Convert service response to API response
+        return ContentResponse(
+            id=response.content.id,
+            title=response.content.title,
+            description=response.content.description,
+            content_type=response.content.content_type,
+            learning_style=response.content.learning_style,
+            state=response.content.state,
+            is_template=response.content.is_template,
+            template_category=response.content.template_category,
+            nlj_data=response.content.nlj_data,
+            version=response.content.version or 1,
+            view_count=response.content.view_count or 0,
+            completion_count=response.content.completion_count or 0,
+            created_by=response.content.creator_id,
+            parent_content_id=response.content.parent_content_id,
+            created_at=response.content.created_at,
+            updated_at=response.content.updated_at,
+            published_at=response.content.published_at,
+            creator={
+                "id": response.content.creator_id,
+                "username": "",  # Would need additional lookup for creator details
+                "full_name": "",
+                "role": current_user.role,  # Placeholder
+            },
+            import_source=response.content.import_source,
+            import_filename=response.content.import_filename,
+        )
+        
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
     except PermissionError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to update content state: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to update content state: {str(e)}")
 
 
 @router.post(
@@ -517,17 +445,31 @@ async def update_content_state(
     description="Increment view count for analytics.",
 )
 async def record_content_view(
-    content_id: uuid.UUID, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+    content_id: uuid.UUID, 
+    current_user: User = Depends(get_current_user), 
+    record_view_use_case: RecordContentViewUseCase = Depends(get_record_content_view_use_case)
 ):
-    """Record content view for analytics."""
-
-    service = ContentService(db)
-    success = await service.increment_view_count(content_id)
-
-    if not success:
+    """Record content view for analytics using Clean Architecture pattern."""
+    try:
+        # Create use case request with inline conversion
+        request = RecordContentViewRequest(content_id=content_id)
+        
+        # Extract user context for use case
+        user_context = extract_user_context(current_user)
+        
+        # Execute use case
+        response = await record_view_use_case.execute(request, user_context)
+        
+        return {
+            "message": "View recorded", 
+            "view_count": response.view_count,
+            "user_view_count": response.user_view_count
+        }
+        
+    except ValueError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
-
-    return {"message": "View recorded"}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to record view: {str(e)}")
 
 
 @router.post(
@@ -537,14 +479,33 @@ async def record_content_view(
     description="Increment completion count for analytics.",
 )
 async def record_content_completion(
-    content_id: uuid.UUID, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+    content_id: uuid.UUID, 
+    current_user: User = Depends(get_current_user), 
+    record_completion_use_case: RecordContentCompletionUseCase = Depends(get_record_content_completion_use_case)
 ):
-    """Record content completion for analytics."""
-
-    service = ContentService(db)
-    success = await service.increment_completion_count(content_id)
-
-    if not success:
+    """Record content completion for analytics using Clean Architecture pattern."""
+    try:
+        # Create use case request with inline conversion
+        request = RecordContentCompletionRequest(
+            content_id=content_id,
+            result=CompletionResult(success=True)  # Basic completion without assessment
+        )
+        
+        # Extract user context for use case
+        user_context = extract_user_context(current_user)
+        
+        # Execute use case
+        response = await record_completion_use_case.execute(request, user_context)
+        
+        return {
+            "message": "Completion recorded", 
+            "completion_count": response.completion_count,
+            "user_completion_count": response.user_completion_count,
+            "mastery_achieved": response.mastery_achieved,
+            "achievements_unlocked": response.achievements_unlocked
+        }
+        
+    except ValueError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
-
-    return {"message": "Completion recorded"}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to record completion: {str(e)}")

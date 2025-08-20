@@ -13,8 +13,38 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database_manager import get_db
 from app.core.security import verify_token
+from app.core.user_context import extract_user_context
 from app.models.user import User, UserRole
 from app.services.kafka_service import kafka_service, xapi_event_service
+
+# Use Case imports
+from app.services.use_cases.content.create_content_use_case import CreateContentUseCase
+from app.services.use_cases.content.update_content_use_case import UpdateContentUseCase
+from app.services.use_cases.content.review_workflow_use_case import ReviewWorkflowUseCase
+from app.services.use_cases.content.generate_content_use_case import GenerateContentUseCase
+from app.services.use_cases.content.get_content_use_case import GetContentUseCase
+from app.services.use_cases.content.list_content_use_case import ListContentUseCase
+from app.services.use_cases.content.delete_content_use_case import DeleteContentUseCase
+from app.services.use_cases.content.record_content_view_use_case import RecordContentViewUseCase
+from app.services.use_cases.content.record_content_completion_use_case import RecordContentCompletionUseCase
+from app.services.use_cases.user_management.authenticate_user_use_case import AuthenticateUserUseCase
+from app.services.use_cases.user_management.manage_profile_use_case import ManageProfileUseCase
+from app.services.use_cases.user_management.manage_permissions_use_case import ManagePermissionsUseCase
+from app.services.use_cases.user_management.get_user_use_case import GetUserUseCase
+from app.services.use_cases.user_management.list_users_use_case import ListUsersUseCase
+from app.services.use_cases.training.manage_program_use_case import ManageProgramUseCase
+from app.services.use_cases.training.manage_sessions_use_case import ManageSessionsUseCase
+from app.services.use_cases.training.track_engagement_use_case import TrackEngagementUseCase
+from app.services.use_cases.analytics.generate_insights_use_case import GenerateInsightsUseCase
+from app.services.use_cases.analytics.export_data_use_case import ExportDataUseCase
+
+# ORM Service imports for dependency injection
+from app.services.orm_services.content_orm_service import ContentOrmService
+from app.services.orm_services.user_orm_service import UserOrmService
+from app.services.orm_services.training_orm_service import TrainingOrmService
+from app.services.orm_services.generation_session_orm_service import GenerationSessionOrmService
+from app.services.orm_services.permission_orm_service import PermissionOrmService
+from app.services.orm_services.role_orm_service import RoleOrmService
 
 # HTTP Bearer token scheme
 security = HTTPBearer()
@@ -148,3 +178,262 @@ async def get_kafka_service():
 async def get_xapi_event_service():
     """Get the global xAPI event service instance."""
     return xapi_event_service
+
+
+# Use Case Dependency Factories
+async def get_create_content_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> CreateContentUseCase:
+    """Factory for CreateContentUseCase."""
+    content_orm_service = ContentOrmService(db)
+    user_orm_service = UserOrmService(db)
+    generation_session_orm_service = GenerationSessionOrmService(db)
+    
+    return CreateContentUseCase(
+        session=db,
+        content_orm_service=content_orm_service,
+        user_orm_service=user_orm_service,
+        generation_session_orm_service=generation_session_orm_service
+    )
+
+
+async def get_update_content_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> UpdateContentUseCase:
+    """Factory for UpdateContentUseCase."""
+    content_orm_service = ContentOrmService(db)
+    user_orm_service = UserOrmService(db)
+    
+    return UpdateContentUseCase(
+        session=db,
+        content_orm_service=content_orm_service,
+        user_orm_service=user_orm_service
+    )
+
+
+async def get_review_workflow_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> ReviewWorkflowUseCase:
+    """Factory for ReviewWorkflowUseCase."""
+    content_orm_service = ContentOrmService(db)
+    user_orm_service = UserOrmService(db)
+    
+    return ReviewWorkflowUseCase(
+        session=db,
+        content_orm_service=content_orm_service,
+        user_orm_service=user_orm_service
+    )
+
+
+async def get_generate_content_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> GenerateContentUseCase:
+    """Factory for GenerateContentUseCase."""
+    content_orm_service = ContentOrmService(db)
+    user_orm_service = UserOrmService(db)
+    generation_session_orm_service = GenerationSessionOrmService(db)
+    
+    return GenerateContentUseCase(
+        session=db,
+        content_orm_service=content_orm_service,
+        user_orm_service=user_orm_service,
+        generation_session_orm_service=generation_session_orm_service
+    )
+
+
+async def get_authenticate_user_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> AuthenticateUserUseCase:
+    """Factory for AuthenticateUserUseCase."""
+    user_orm_service = UserOrmService(db)
+    
+    return AuthenticateUserUseCase(
+        session=db,
+        user_orm_service=user_orm_service
+    )
+
+
+async def get_manage_profile_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> ManageProfileUseCase:
+    """Factory for ManageProfileUseCase."""
+    user_orm_service = UserOrmService(db)
+    
+    return ManageProfileUseCase(
+        session=db,
+        user_orm_service=user_orm_service
+    )
+
+
+async def get_manage_permissions_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> ManagePermissionsUseCase:
+    """Factory for ManagePermissionsUseCase."""
+    user_orm_service = UserOrmService(db)
+    permission_orm_service = PermissionOrmService(db)
+    role_orm_service = RoleOrmService(db)
+    
+    return ManagePermissionsUseCase(
+        session=db,
+        user_orm_service=user_orm_service,
+        permission_orm_service=permission_orm_service,
+        role_orm_service=role_orm_service
+    )
+
+
+async def get_manage_program_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> ManageProgramUseCase:
+    """Factory for ManageProgramUseCase."""
+    training_orm_service = TrainingOrmService(db)
+    user_orm_service = UserOrmService(db)
+    
+    return ManageProgramUseCase(
+        session=db,
+        training_orm_service=training_orm_service,
+        user_orm_service=user_orm_service
+    )
+
+
+async def get_manage_sessions_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> ManageSessionsUseCase:
+    """Factory for ManageSessionsUseCase."""
+    training_orm_service = TrainingOrmService(db)
+    user_orm_service = UserOrmService(db)
+    
+    return ManageSessionsUseCase(
+        session=db,
+        training_orm_service=training_orm_service,
+        user_orm_service=user_orm_service
+    )
+
+
+async def get_track_engagement_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> TrackEngagementUseCase:
+    """Factory for TrackEngagementUseCase."""
+    training_orm_service = TrainingOrmService(db)
+    user_orm_service = UserOrmService(db)
+    
+    return TrackEngagementUseCase(
+        session=db,
+        training_orm_service=training_orm_service,
+        user_orm_service=user_orm_service
+    )
+
+
+async def get_generate_insights_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> GenerateInsightsUseCase:
+    """Factory for GenerateInsightsUseCase."""
+    content_orm_service = ContentOrmService(db)
+    user_orm_service = UserOrmService(db)
+    training_orm_service = TrainingOrmService(db)
+    
+    return GenerateInsightsUseCase(
+        session=db,
+        content_orm_service=content_orm_service,
+        user_orm_service=user_orm_service,
+        training_orm_service=training_orm_service
+    )
+
+
+async def get_export_data_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> ExportDataUseCase:
+    """Factory for ExportDataUseCase."""
+    content_orm_service = ContentOrmService(db)
+    user_orm_service = UserOrmService(db)
+    training_orm_service = TrainingOrmService(db)
+    
+    return ExportDataUseCase(
+        session=db,
+        content_orm_service=content_orm_service,
+        user_orm_service=user_orm_service,
+        training_orm_service=training_orm_service
+    )
+
+
+async def get_get_user_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> GetUserUseCase:
+    """Factory for GetUserUseCase."""
+    user_orm_service = UserOrmService(db)
+    
+    return GetUserUseCase(
+        session=db,
+        user_orm_service=user_orm_service
+    )
+
+
+async def get_list_users_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> ListUsersUseCase:
+    """Factory for ListUsersUseCase."""
+    user_orm_service = UserOrmService(db)
+    
+    return ListUsersUseCase(
+        session=db,
+        user_orm_service=user_orm_service
+    )
+
+
+async def get_get_content_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> GetContentUseCase:
+    """Factory for GetContentUseCase."""
+    content_orm_service = ContentOrmService(db)
+    
+    return GetContentUseCase(
+        session=db,
+        content_orm_service=content_orm_service
+    )
+
+
+async def get_list_content_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> ListContentUseCase:
+    """Factory for ListContentUseCase."""
+    content_orm_service = ContentOrmService(db)
+    
+    return ListContentUseCase(
+        session=db,
+        content_orm_service=content_orm_service
+    )
+
+
+async def get_delete_content_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> DeleteContentUseCase:
+    """Factory for DeleteContentUseCase."""
+    content_orm_service = ContentOrmService(db)
+    
+    return DeleteContentUseCase(
+        session=db,
+        content_orm_service=content_orm_service
+    )
+
+
+async def get_record_content_view_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> RecordContentViewUseCase:
+    """Factory for RecordContentViewUseCase."""
+    content_orm_service = ContentOrmService(db)
+    
+    return RecordContentViewUseCase(
+        session=db,
+        content_orm_service=content_orm_service
+    )
+
+
+async def get_record_content_completion_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> RecordContentCompletionUseCase:
+    """Factory for RecordContentCompletionUseCase."""
+    content_orm_service = ContentOrmService(db)
+    
+    return RecordContentCompletionUseCase(
+        session=db,
+        content_orm_service=content_orm_service
+    )
