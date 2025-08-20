@@ -1,0 +1,1 @@
+"""Analytics use case tests."""
