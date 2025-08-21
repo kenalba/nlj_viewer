@@ -12,16 +12,13 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database_manager import db_manager
+from app.core.security import get_password_hash
 
 # Import only what we need
 from app.models.user import User, UserRole
-
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 async def create_users(session: AsyncSession):
@@ -71,7 +68,7 @@ async def create_users(session: AsyncSession):
             id=uuid.uuid4(),
             username=user_data["username"],
             email=user_data["email"],
-            hashed_password=pwd_context.hash(user_data["password"]),
+            hashed_password=get_password_hash(user_data["password"]),
             full_name=user_data["full_name"],
             role=user_data["role"],
             is_active=True,

@@ -400,6 +400,76 @@ class ContentOrmService(BaseOrmService[ContentItem, ContentRepository]):
             await self.session.rollback()
             raise RuntimeError(f"Failed to get filtered content: {e}") from e
 
+    async def get_content_list(
+        self,
+        skip: int = 0,
+        limit: int = 50,
+        state_filter: ContentState | None = None,
+        content_type_filter: ContentType | None = None,
+        learning_style_filter: LearningStyle | None = None,
+        is_template: bool | None = None,
+        template_category: str | None = None,
+        created_by: uuid.UUID | None = None,
+        search: str | None = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc"
+    ) -> list[ContentItem]:
+        """
+        Get content list with comprehensive filtering.
+        
+        This method provides the exact interface expected by ListContentUseCase.
+        """
+        try:
+            items, _ = await self.get_content_with_filters(
+                offset=skip,
+                limit=limit,
+                state=state_filter,
+                content_type=content_type_filter,
+                learning_style=learning_style_filter,
+                is_template=is_template,
+                created_by=created_by,
+                search=search,
+                sort_by=sort_by,
+                sort_order=sort_order
+            )
+            return items
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise RuntimeError(f"Failed to get content list: {e}") from e
+
+    async def get_content_count(
+        self,
+        state_filter: ContentState | None = None,
+        content_type_filter: ContentType | None = None,
+        learning_style_filter: LearningStyle | None = None,
+        is_template: bool | None = None,
+        template_category: str | None = None,
+        created_by: uuid.UUID | None = None,
+        search: str | None = None
+    ) -> int:
+        """
+        Get total count of content matching filters.
+        
+        This method provides the exact interface expected by ListContentUseCase.
+        """
+        try:
+            # Use the repository's built-in filtering - it returns (items, count)
+            _, total_count = await self.repository.get_content_with_filters(
+                state=state_filter,
+                content_type=content_type_filter,
+                learning_style=learning_style_filter,
+                is_template=is_template,
+                template_category=template_category,
+                created_by=created_by,
+                search=search,
+                limit=0,  # Don't fetch items, just get the count
+                offset=0
+            )
+            return total_count
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise RuntimeError(f"Failed to get content count: {e}") from e
+
     # Abstract Method Implementations
 
     async def validate_entity_data(self, **kwargs: Any) -> dict[str, Any]:

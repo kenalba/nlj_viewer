@@ -5,10 +5,10 @@ Tracks AI content generation sessions with full lineage and chain of custody.
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import Enum as PythonEnum
 from typing import TYPE_CHECKING, Any, List
 
-from sqlalchemy import JSON, Column, DateTime, ForeignKey, String, Table, Text
+from sqlalchemy import JSON, Column, DateTime, Enum as SQLEnum, ForeignKey, String, Table, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from app.models.user import User
 
 
-class GenerationStatus(str, Enum):
+class GenerationStatus(str, PythonEnum):
     """Generation session status."""
 
     PENDING = "pending"
@@ -80,7 +80,7 @@ class GenerationSession(Base):
 
     # Status tracking
     status: Mapped[GenerationStatus] = mapped_column(
-        String(20), default=GenerationStatus.PENDING, nullable=False, index=True
+        SQLEnum(GenerationStatus), default=GenerationStatus.PENDING, nullable=False, index=True
     )
     error_message: Mapped[str | None] = mapped_column(Text)
 

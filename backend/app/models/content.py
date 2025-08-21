@@ -5,10 +5,10 @@ Uses modern SQLAlchemy 2.0 syntax with Python 3.11+ typing.
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import Enum as PythonEnum
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import JSON, DateTime, ForeignKey, String, Text
+from sqlalchemy import JSON, DateTime, Enum as SQLEnum, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from app.models.workflow import ContentVersion
 
 
-class ContentState(str, Enum):
+class ContentState(str, PythonEnum):
     """Content lifecycle states."""
 
     DRAFT = "draft"
@@ -35,7 +35,7 @@ class ContentState(str, Enum):
     ARCHIVED = "archived"
 
 
-class ContentType(str, Enum):
+class ContentType(str, PythonEnum):
     """Types of content that can be created."""
 
     TRAINING = "training"
@@ -45,7 +45,7 @@ class ContentType(str, Enum):
     MIXED = "mixed"
 
 
-class LearningStyle(str, Enum):
+class LearningStyle(str, PythonEnum):
     """Learning style variants for content generation."""
 
     VISUAL = "visual"
@@ -73,13 +73,13 @@ class ContentItem(Base):
     nlj_data: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, comment="Complete NLJ scenario data as JSON")
 
     # Content metadata
-    content_type: Mapped[ContentType] = mapped_column(String(20), default=ContentType.TRAINING, nullable=False)
+    content_type: Mapped[ContentType] = mapped_column(SQLEnum(ContentType), default=ContentType.TRAINING, nullable=False)
     learning_style: Mapped[LearningStyle | None] = mapped_column(
-        String(20), comment="Primary learning style for this content variant"
+        SQLEnum(LearningStyle), comment="Primary learning style for this content variant"
     )
 
     # Content lifecycle
-    state: Mapped[ContentState] = mapped_column(String(20), default=ContentState.DRAFT, nullable=False, index=True)
+    state: Mapped[ContentState] = mapped_column(SQLEnum(ContentState), default=ContentState.DRAFT, nullable=False, index=True)
     version: Mapped[int] = mapped_column(default=1, nullable=False)
 
     # Content relationships

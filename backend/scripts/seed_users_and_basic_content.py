@@ -12,17 +12,14 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
+from app.core.security import get_password_hash
 from app.models.content import ContentItem, ContentState, ContentType
 
 # Import models
 from app.models.user import User, UserRole
-
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Database URL from environment or default
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://nlj_user:nlj_pass@localhost:5432/nlj_platform")
@@ -39,7 +36,7 @@ async def create_users(session: AsyncSession) -> dict[str, User]:
         id=uuid.uuid4(),
         username="admin",
         email="admin@nlj-platform.com",
-        hashed_password=pwd_context.hash("admin123456"),
+        hashed_password=get_password_hash("admin123456"),
         full_name="Administrator",
         role=UserRole.ADMIN,
         is_active=True,
@@ -53,7 +50,7 @@ async def create_users(session: AsyncSession) -> dict[str, User]:
         id=uuid.uuid4(),
         username="creator",
         email="creator@nlj-platform.com",
-        hashed_password=pwd_context.hash("creator123"),
+        hashed_password=get_password_hash("creator123"),
         full_name="Content Creator",
         role=UserRole.CREATOR,
         is_active=True,
@@ -67,7 +64,7 @@ async def create_users(session: AsyncSession) -> dict[str, User]:
         id=uuid.uuid4(),
         username="reviewer",
         email="reviewer@nlj-platform.com",
-        hashed_password=pwd_context.hash("reviewer123"),
+        hashed_password=get_password_hash("reviewer123"),
         full_name="Content Reviewer",
         role=UserRole.REVIEWER,
         is_active=True,
@@ -81,7 +78,7 @@ async def create_users(session: AsyncSession) -> dict[str, User]:
         id=uuid.uuid4(),
         username="player",
         email="player@nlj-platform.com",
-        hashed_password=pwd_context.hash("player123"),
+        hashed_password=get_password_hash("player123"),
         full_name="Player/Learner",
         role=UserRole.PLAYER,
         is_active=True,
@@ -95,7 +92,7 @@ async def create_users(session: AsyncSession) -> dict[str, User]:
         id=uuid.uuid4(),
         username="learner",
         email="learner@nlj-platform.com",
-        hashed_password=pwd_context.hash("learner123"),
+        hashed_password=get_password_hash("learner123"),
         full_name="Training Learner",
         role=UserRole.PLAYER,
         is_active=True,

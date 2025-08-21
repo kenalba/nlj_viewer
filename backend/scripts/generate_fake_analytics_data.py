@@ -20,11 +20,11 @@ from typing import Any, Dict, List, Tuple
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database_manager import db_manager
+from app.core.security import get_password_hash
 from app.models.content import ContentItem
 
 # Import models and services
@@ -32,8 +32,7 @@ from app.models.user import User, UserRole
 from app.services.elasticsearch_service import elasticsearch_service
 from app.services.kafka_service import kafka_service
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing now handled by security module
 
 
 @dataclass
@@ -355,7 +354,7 @@ class FakeDataGenerator:
                 id=uuid.uuid4(),
                 username=f"{first_name.lower()}.{last_name.lower()}{i:03d}",
                 email=f"{first_name.lower()}.{last_name.lower()}{i:03d}@{company}.com",
-                hashed_password=pwd_context.hash("learner123"),
+                hashed_password=get_password_hash("learner123"),
                 full_name=f"{first_name} {last_name}",
                 role=persona.role,
                 is_active=True,

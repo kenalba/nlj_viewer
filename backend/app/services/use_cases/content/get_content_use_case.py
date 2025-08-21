@@ -117,27 +117,7 @@ class GetContentUseCase(BaseUseCase[GetContentRequest, GetContentResponse]):
             )
 
             # Convert to service schema
-            content_schema = ContentServiceSchema(
-                id=content.id,
-                title=content.title,
-                description=content.description,
-                content_type=content.content_type,
-                learning_style=content.learning_style,
-                state=content.state,
-                is_template=content.is_template,
-                template_category=content.template_category,
-                nlj_data=content.nlj_data,
-                version=content.version or 1,
-                view_count=content.view_count or 0,
-                completion_count=content.completion_count or 0,
-                creator_id=content.created_by,
-                parent_content_id=content.parent_content_id,
-                created_at=content.created_at,
-                updated_at=content.updated_at,
-                published_at=getattr(content, 'published_at', None),
-                import_source=content.import_source,
-                import_filename=content.import_filename
-            )
+            content_schema = ContentServiceSchema.from_orm_model(content)
 
             response = GetContentResponse(
                 content=content_schema,

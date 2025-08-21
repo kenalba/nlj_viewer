@@ -1,6 +1,6 @@
 """
 Security utilities for JWT authentication and password hashing.
-Uses modern Python 3.11+ typing and async patterns with hashlib.
+Uses modern Python 3.11+ typing and async patterns with PBKDF2.
 """
 
 import hashlib
@@ -87,7 +87,6 @@ def get_password_hash(password: str) -> str:
     
     Args:
         password: Plain text password
-
     Returns:
         Hashed password string in format: iterations$salt$hash (base64 encoded)
     """
@@ -114,11 +113,9 @@ def get_password_hash(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     Verify a password against its hash using constant-time comparison.
-
     Args:
         plain_password: Plain text password to verify
         hashed_password: Stored password hash in format iterations$salt$hash
-
     Returns:
         True if password matches, False otherwise
     """

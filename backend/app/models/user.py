@@ -5,7 +5,7 @@ Uses modern SQLAlchemy 2.0 syntax with Python 3.11+ typing.
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import Enum as PythonEnum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     # from app.models.workflow import ApprovalStep
 
 
-class UserRole(str, Enum):
+class UserRole(str, PythonEnum):
     """User roles for access control."""
 
     PLAYER = "PLAYER"
