@@ -72,6 +72,7 @@ class StaticLoaderService:
                 "nlj_files": 0,
                 "connections_files": 0,
                 "wordle_files": 0,
+                "survey_files": 0,
                 "total_files": 0,
                 "errors": [],
             }
@@ -91,7 +92,14 @@ class StaticLoaderService:
             results["wordle_files"] = wordle_result["items_loaded"]
             results["errors"].extend(wordle_result.get("errors", []))
 
-            results["total_files"] = results["nlj_files"] + results["connections_files"] + results["wordle_files"]
+            # Load Survey files
+            survey_result = await self._load_directory_content(static_dir / "sample_surveys", "survey")
+            results["survey_files"] = survey_result["items_loaded"]
+            results["errors"].extend(survey_result.get("errors", []))
+
+            # Skip crosswords for now (not tested)
+
+            results["total_files"] = results["nlj_files"] + results["connections_files"] + results["wordle_files"] + results["survey_files"]
 
             self.logger.info(f"Static content loading completed: {results['total_files']} files loaded")
 
@@ -102,6 +110,7 @@ class StaticLoaderService:
                     "nlj_files": results["nlj_files"],
                     "connections_files": results["connections_files"],
                     "wordle_files": results["wordle_files"],
+                    "survey_files": results["survey_files"],
                 },
                 "errors": results["errors"],
                 "static_directory": str(static_dir),
@@ -142,6 +151,7 @@ class StaticLoaderService:
                 ("sample_nljs", "NLJ files"),
                 ("sample_connections", "Connections files"),
                 ("sample_wordle", "Wordle files"),
+                ("sample_surveys", "Survey files"),
             ]
 
             for dir_name, description in directories_to_check:
@@ -211,6 +221,7 @@ class StaticLoaderService:
                 "sample_nljs",
                 "sample_connections", 
                 "sample_wordle",
+                "sample_surveys",
                 "wordlists",
             ]
 
@@ -264,9 +275,12 @@ class StaticLoaderService:
             if static_dir.exists() and static_dir.is_dir():
                 return static_dir
 
-        # Try common static directory locations
+        # Try common static directory locations  
         possible_paths = [
-            Path("/mnt/c/Users/aeroz/Documents/GitHub/nlj_viewer/static"),  # Absolute path
+            Path("/app/frontend-static"),  # Docker frontend static mount
+            Path("/app/static"),  # Docker backend static mount  
+            Path("/mnt/c/Users/aeroz/Documents/GitHub/nlj_viewer/frontend/public/static"),  # Frontend static (local dev)
+            Path("/mnt/c/Users/aeroz/Documents/GitHub/nlj_viewer/static"),  # Backend static (local dev)
             Path("../../../static"),  # Relative from backend/app/services/seed/
             Path("./static"),  # From backend root
             Path("../../static"),  # From app/services/seed/
@@ -291,22 +305,30 @@ class StaticLoaderService:
 
         try:
             if content_type == "nlj":
-                result = await self.content_seed_service._load_nlj_files(
-                    directory, self.content_seed_service.user_orm_service.find_by_username("creator")
-                )
-                items_loaded = len(result) if result else 0
+                creator = await self.content_seed_service.user_orm_service.get_user_by_username("creator")
+                if creator:
+                    result = await self.content_seed_service._load_nlj_files(directory, creator.id)
+                    items_loaded = len(result) if result else 0
 
             elif content_type == "connections":
-                creator = await self.content_seed_service.user_orm_service.find_by_username("creator")
+                creator = await self.content_seed_service.user_orm_service.get_user_by_username("creator")
                 if creator:
                     result = await self.content_seed_service._load_connections_files(directory, creator.id)
                     items_loaded = len(result) if result else 0
 
             elif content_type == "wordle":
-                creator = await self.content_seed_service.user_orm_service.find_by_username("creator")
+                creator = await self.content_seed_service.user_orm_service.get_user_by_username("creator")
                 if creator:
                     result = await self.content_seed_service._load_wordle_files(directory, creator.id)
                     items_loaded = len(result) if result else 0
+
+            elif content_type == "survey":
+                creator = await self.content_seed_service.user_orm_service.get_user_by_username("creator")
+                if creator:
+                    result = await self.content_seed_service._load_survey_files(directory, creator.id)
+                    items_loaded = len(result) if result else 0
+
+            # Skip crossword loading for now
 
         except Exception as e:
             error_msg = f"Failed to load {content_type} content from {directory}: {e}"
@@ -330,7 +352,12 @@ class StaticLoaderService:
                 return "categories" in data or "words" in data
 
             elif directory_type == "sample_wordle":
-                return "words" in data or "wordlist" in data
+                return "words" in data or "wordlist" in data or "gameData" in data
+
+            elif directory_type == "sample_surveys":
+                return "nodes" in data and "links" in data
+
+            # Skip crossword validation for now
 
             return True  # Basic validation passed
 

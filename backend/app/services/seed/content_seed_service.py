@@ -64,9 +64,10 @@ class ContentSeedService(BaseSeedService[ContentOrmService]):
 
     async def _seed_essential_items(self) -> dict[str, Any]:
         """
-        Create essential content items for basic system operation.
+        Create essential content items using static sample files.
 
-        Creates basic sample content to demonstrate platform capabilities.
+        Loads sample NLJs, Connections games, and Wordle games from static files
+        to provide rich demo content for the platform.
 
         Returns:
             Dictionary with seeding results
@@ -75,6 +76,38 @@ class ContentSeedService(BaseSeedService[ContentOrmService]):
         creator = await self.user_orm_service.get_user_by_username("creator")
         if not creator:
             raise RuntimeError("Creator user not found - seed users first")
+
+        # Use StaticLoaderService to load all sample content
+        from .static_loader_service import StaticLoaderService
+        static_loader = StaticLoaderService(self.session, self)
+        
+        try:
+            result = await static_loader.load_all_static_content()
+            
+            if result["status"] == "completed":
+                self.logger.info(f"Essential seeding completed: {result['items_loaded']} items from static files")
+                return {
+                    "status": "completed",
+                    "items_created": result["items_loaded"],
+                    "breakdown": result.get("breakdown", {}),
+                    "static_directory": result.get("static_directory"),
+                    "errors": result.get("errors", [])
+                }
+            else:
+                self.logger.warning(f"Static loading {result['status']}: {result.get('reason', 'Unknown error')}")
+                # Fall back to minimal hardcoded content if static loading fails
+                return await self._seed_minimal_fallback_content(creator)
+                
+        except Exception as e:
+            self.logger.error(f"Static content loading failed: {e}")
+            # Fall back to minimal hardcoded content
+            return await self._seed_minimal_fallback_content(creator)
+
+    async def _seed_minimal_fallback_content(self, creator) -> dict[str, Any]:
+        """
+        Fallback method to create minimal content when static files aren't available.
+        """
+        self.logger.info("Using minimal fallback content")
 
         essential_content = [
             {
@@ -417,6 +450,40 @@ class ContentSeedService(BaseSeedService[ContentOrmService]):
         # This would create additional hardcoded demo scenarios
         # For now, returning empty result to avoid duplication with static files
         return {"status": "completed", "items_created": 0}
+
+    async def _load_survey_files(self, survey_dir: Path, creator_id: uuid.UUID) -> list[Any]:
+        """Load survey files from directory."""
+        if not survey_dir.exists():
+            self.logger.warning(f"Survey directory {survey_dir} does not exist")
+            return []
+
+        created_items = []
+        for json_file in survey_dir.glob("*.json"):
+            try:
+                with open(json_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+
+                # Create Survey content
+                content = await self.orm_service.create_content(
+                    title=data.get("name", json_file.stem.replace("_", " ").title()),
+                    description=data.get("description", f"Survey from {json_file.name}"),
+                    nlj_data=data,
+                    creator_id=creator_id,
+                    content_type=ContentType.SURVEY,
+                    learning_style=LearningStyle.READING_WRITING,
+                )
+
+                await self.orm_service.update_content_state(
+                    content_id=content.id, new_state=ContentState.PUBLISHED
+                )
+
+                created_items.append(content)
+                self.logger.info(f"Loaded survey: {content.title}")
+
+            except Exception as e:
+                self.logger.error(f"Failed to load survey file {json_file}: {e}")
+
+        return created_items
 
     async def _clear_seeded_data(self) -> dict[str, Any]:
         """

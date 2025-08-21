@@ -20,6 +20,8 @@ from app.models.content import ContentType, LearningStyle, ContentState
 from app.models.user import UserRole
 from app.schemas.services.content_schemas import ContentServiceSchema
 from app.services.orm_services.content_orm_service import ContentOrmService
+from app.services.orm_services.user_orm_service import UserOrmService
+from app.services.orm_services.generation_session_orm_service import GenerationSessionOrmService
 from ..base_use_case import BaseUseCase
 
 logger = logging.getLogger(__name__)
@@ -63,15 +65,28 @@ class UpdateContentUseCase(BaseUseCase[UpdateContentRequest, UpdateContentRespon
     - Template update events if template properties change
     """
 
-    def __init__(self, session: AsyncSession, content_orm_service: ContentOrmService):
+    def __init__(
+        self, 
+        session: AsyncSession, 
+        content_orm_service: ContentOrmService,
+        user_orm_service: UserOrmService,
+        generation_session_orm_service: GenerationSessionOrmService
+    ):
         """
         Initialize update content use case.
 
         Args:
             session: Database session for transaction management
             content_orm_service: Content ORM service for data operations
+            user_orm_service: User ORM service for user operations
+            generation_session_orm_service: Generation session ORM service
         """
-        super().__init__(session, content_orm_service=content_orm_service)
+        super().__init__(
+            session, 
+            content_orm_service=content_orm_service,
+            user_orm_service=user_orm_service,
+            generation_session_orm_service=generation_session_orm_service
+        )
 
     async def execute(
         self,

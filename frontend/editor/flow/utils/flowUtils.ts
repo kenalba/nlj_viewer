@@ -314,7 +314,7 @@ export function nljLinkToFlowEdgeData(nljLink: Link): FlowEdgeData {
 
 // Convert NLJ scenario to Flow nodes and edges
 export function nljScenarioToFlow(scenario: NLJScenario): { nodes: FlowNode[], edges: FlowEdge[] } {
-  const nodes: FlowNode[] = scenario.nodes.map(nljNode => {
+  const nodes: FlowNode[] = (scenario.nodes || []).map(nljNode => {
     // Normalize node type to match expected types
     let normalizedType = nljNode.type;
     if (nljNode.type === 'panel') {
@@ -365,7 +365,7 @@ export function nljScenarioToFlow(scenario: NLJScenario): { nodes: FlowNode[], e
   });
 
   // Convert explicit links
-  const edges: FlowEdge[] = scenario.links.map(nljLink => {
+  const edges: FlowEdge[] = (scenario.links || []).map(nljLink => {
     // Handle different link formats (sourceNodeId/targetNodeId vs source/target)
     const sourceId = nljLink.sourceNodeId || (nljLink as any).source;
     const targetId = nljLink.targetNodeId || (nljLink as any).target;
@@ -406,7 +406,7 @@ export function nljScenarioToFlow(scenario: NLJScenario): { nodes: FlowNode[], e
   }).filter(Boolean) as FlowEdge[]; // Remove any null entries
 
   // Add parent-child relationships from parentId fields
-  scenario.nodes.forEach(node => {
+  (scenario.nodes || []).forEach(node => {
     if ('parentId' in node && node.parentId) {
       // Create an edge from parent to child
       const parentChildEdge: FlowEdge = {

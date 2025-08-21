@@ -93,13 +93,13 @@ async def create_content(
             version=response.content.version or 1,
             view_count=response.content.view_count or 0,
             completion_count=response.content.completion_count or 0,
-            created_by=response.content.creator_id,
+            created_by=response.content.created_by,
             parent_content_id=response.content.parent_content_id,
             created_at=response.content.created_at,
             updated_at=response.content.updated_at,
             published_at=getattr(response.content, 'published_at', None),
             creator={
-                "id": response.content.creator_id,
+                "id": response.content.created_by,
                 "username": response.content.creator.username if hasattr(response.content, 'creator') else "",
                 "full_name": response.content.creator.full_name if hasattr(response.content, 'creator') else "",
                 "role": response.content.creator.role if hasattr(response.content, 'creator') else current_user.role,
@@ -176,7 +176,7 @@ async def list_content(
                 version=content.version,
                 view_count=content.view_count,
                 completion_count=content.completion_count,
-                created_by=content.creator_id,
+                created_by=content.created_by,
                 parent_content_id=content.parent_content_id,
                 created_at=content.created_at,
                 updated_at=content.updated_at,
@@ -238,13 +238,13 @@ async def get_content(
             version=response.content.version or 1,
             view_count=response.content.view_count or 0,
             completion_count=response.content.completion_count or 0,
-            created_by=response.content.creator_id,
+            created_by=response.content.created_by,
             parent_content_id=response.content.parent_content_id,
             created_at=response.content.created_at,
             updated_at=response.content.updated_at,
             published_at=response.content.published_at,
             creator={
-                "id": response.content.creator_id,
+                "id": response.content.created_by,
                 "username": "",  # Would need additional lookup for creator details
                 "full_name": "",
                 "role": current_user.role,  # Placeholder
@@ -307,13 +307,13 @@ async def update_content(
             version=response.content.version or 1,
             view_count=response.content.view_count or 0,
             completion_count=response.content.completion_count or 0,
-            created_by=response.content.creator_id,
+            created_by=response.content.created_by,
             parent_content_id=response.content.parent_content_id,
             created_at=response.content.created_at,
             updated_at=response.content.updated_at,
             published_at=response.content.published_at,
             creator={
-                "id": response.content.creator_id,
+                "id": response.content.created_by,
                 "username": "",  # Would need additional lookup for creator details
                 "full_name": "",
                 "role": current_user.role,  # Placeholder
@@ -415,13 +415,13 @@ async def update_content_state(
             version=response.content.version or 1,
             view_count=response.content.view_count or 0,
             completion_count=response.content.completion_count or 0,
-            created_by=response.content.creator_id,
+            created_by=response.content.created_by,
             parent_content_id=response.content.parent_content_id,
             created_at=response.content.created_at,
             updated_at=response.content.updated_at,
             published_at=response.content.published_at,
             creator={
-                "id": response.content.creator_id,
+                "id": response.content.created_by,
                 "username": "",  # Would need additional lookup for creator details
                 "full_name": "",
                 "role": current_user.role,  # Placeholder

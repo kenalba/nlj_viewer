@@ -234,10 +234,31 @@ class ClaudeService:
     async def _call_messages_api_with_retry(
         self, model: str, max_tokens: int, temperature: float, messages: List[Dict[str, Any]]
     ) -> Optional[Message]:
-        """Call Messages API with retry logic for rate limiting."""
+        """Call Messages API with retry logic for rate limiting and server errors."""
+        import logging
+        logger = logging.getLogger(__name__)
 
         for attempt in range(self.max_retries):
             try:
+                logger.info(f"🤖 Claude API call attempt {attempt + 1}/{self.max_retries}")
+                logger.info(f"  - Model: {model}")
+                logger.info(f"  - Max tokens: {max_tokens}")
+                logger.info(f"  - Temperature: {temperature}")
+                logger.info(f"  - Messages count: {len(messages)}")
+                
+                # Log content details for debugging
+                for i, msg in enumerate(messages):
+                    if msg["role"] == "user" and "content" in msg:
+                        content = msg["content"]
+                        if isinstance(content, list):
+                            doc_count = sum(1 for item in content if item.get("type") == "document")
+                            text_items = [item for item in content if item.get("type") == "text"]
+                            total_text_length = sum(len(item.get("text", "")) for item in text_items)
+                            logger.info(f"  - Message {i}: {doc_count} documents, {total_text_length} chars text")
+                        else:
+                            logger.info(f"  - Message {i}: {len(str(content))} chars")
+                
+                start_time = time.time()
                 message = await asyncio.to_thread(
                     self.client.messages.create,
                     model=model,
@@ -245,26 +266,64 @@ class ClaudeService:
                     temperature=temperature,
                     messages=messages,
                 )
+                api_call_time = time.time() - start_time
+                
+                logger.info(f"✅ Claude API call successful ({api_call_time:.2f}s)")
+                if message.usage:
+                    logger.info(f"  - Input tokens: {message.usage.input_tokens}")
+                    logger.info(f"  - Output tokens: {message.usage.output_tokens}")
+                    logger.info(f"  - Total tokens: {message.usage.input_tokens + message.usage.output_tokens}")
+                
                 return message
 
             except anthropic.RateLimitError as e:
+                logger.warning(f"⚠️ Claude API rate limit error (attempt {attempt + 1}): {e}")
                 if attempt < self.max_retries - 1:
                     delay = self.retry_delay * (2**attempt)  # Exponential backoff
-                    print(f"Rate limited, retrying in {delay} seconds...")
+                    logger.info(f"🕒 Rate limited, retrying in {delay} seconds...")
                     await asyncio.sleep(delay)
                     continue
                 else:
-                    print(f"Rate limit exceeded after {self.max_retries} attempts")
+                    logger.error(f"❌ Rate limit exceeded after {self.max_retries} attempts")
+                    raise e
+
+            except anthropic.APIError as e:
+                logger.error(f"❌ Claude API error (attempt {attempt + 1}): {e}")
+                logger.error(f"  - Error type: {type(e).__name__}")
+                logger.error(f"  - Status code: {getattr(e, 'status_code', 'unknown')}")
+                logger.error(f"  - Message: {str(e)}")
+                
+                # Check for server errors (5xx) that should be retried
+                if hasattr(e, 'status_code') and e.status_code and 500 <= e.status_code < 600:
+                    if attempt < self.max_retries - 1:
+                        delay = self.retry_delay * (2**attempt)  # Exponential backoff
+                        logger.info(f"🔄 Server error {e.status_code}, retrying in {delay} seconds...")
+                        await asyncio.sleep(delay)
+                        continue
+                    else:
+                        logger.error(f"❌ Server error {e.status_code} persisted after {self.max_retries} attempts")
+                        raise e
+                else:
+                    # For client errors (4xx) or other API errors, don't retry
+                    logger.error(f"❌ Non-retryable API error: {e}")
                     raise e
 
             except Exception as e:
-                print(f"Error calling Messages API (attempt {attempt + 1}): {e}")
+                logger.error(f"❌ Unexpected error calling Claude API (attempt {attempt + 1}): {e}")
+                logger.error(f"  - Error type: {type(e).__name__}")
+                logger.error(f"  - Full error: {str(e)}")
+                
+                # For unexpected errors, retry with exponential backoff
                 if attempt < self.max_retries - 1:
-                    await asyncio.sleep(self.retry_delay)
+                    delay = self.retry_delay * (2**attempt)
+                    logger.info(f"🔄 Unexpected error, retrying in {delay} seconds...")
+                    await asyncio.sleep(delay)
                     continue
                 else:
+                    logger.error(f"❌ Unexpected error persisted after {self.max_retries} attempts")
                     raise e
 
+        logger.error(f"❌ All Claude API retry attempts exhausted")
         return None
 
     def _extract_response_content(self, message: Message) -> str:
@@ -290,11 +349,20 @@ class ClaudeService:
         Extract JSON content from Claude's response using a robust parsing approach.
         """
         import json
+        import re
+
+        # Method 0: Try to parse the entire response as JSON (if Claude followed instructions)
+        try:
+            response_text_cleaned = response_text.strip()
+            if response_text_cleaned.startswith('{') and response_text_cleaned.endswith('}'):
+                parsed = json.loads(response_text_cleaned)
+                if isinstance(parsed, dict) and self._is_valid_nlj_structure(parsed):
+                    return parsed
+        except json.JSONDecodeError:
+            pass
 
         # Method 1: Look for JSON code blocks first (most reliable)
         code_block_patterns = [r"```json\s*(.*?)\s*```", r"```\s*(.*?)\s*```"]
-
-        import re
 
         for pattern in code_block_patterns:
             matches = re.findall(pattern, response_text, re.DOTALL)
@@ -306,7 +374,49 @@ class ClaudeService:
                 except json.JSONDecodeError:
                     continue
 
-        # Method 2: Use a JSON decoder that can handle partial streams
+        # Method 2: Look for the largest JSON object in the text
+        # Find all potential JSON objects starting with { and ending with }
+        json_objects = []
+        brace_level = 0
+        start_idx = -1
+        
+        for i, char in enumerate(response_text):
+            if char == '{':
+                if brace_level == 0:
+                    start_idx = i
+                brace_level += 1
+            elif char == '}':
+                brace_level -= 1
+                if brace_level == 0 and start_idx != -1:
+                    # Found a complete JSON object
+                    json_candidate = response_text[start_idx:i+1]
+                    try:
+                        parsed = json.loads(json_candidate)
+                        if isinstance(parsed, dict):
+                            json_objects.append(parsed)
+                    except json.JSONDecodeError:
+                        pass
+                    start_idx = -1
+        
+        # Sort by preference: NLJ structures first, then by size
+        def score_json_object(obj):
+            if not isinstance(obj, dict):
+                return 0
+            score = len(str(obj))  # Base score on size
+            if "nodes" in obj and "links" in obj and "id" in obj:
+                score += 10000  # Heavily prefer complete NLJ schemas
+            elif "nodes" in obj or "links" in obj:
+                score += 1000  # Somewhat prefer partial NLJ structures
+            return score
+
+        json_objects.sort(key=score_json_object, reverse=True)
+        
+        # Return the best candidate
+        for obj in json_objects:
+            if self._is_valid_nlj_structure(obj):
+                return obj
+
+        # Method 3: Use a JSON decoder that can handle partial streams
         # This is much more robust than regex
         def extract_json_objects(text: str):
             """Extract all valid JSON objects from text using incremental parsing."""

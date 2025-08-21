@@ -253,7 +253,8 @@ class GenerateContentUseCase(BaseUseCase[GenerateContentRequest, GenerateContent
             return await generation_orm_service.create_generation_session(
                 user_id=user_id,
                 session_type=request.generation_type,
-                config=validated_config
+                config=validated_config,
+                source_document_ids=request.source_document_ids
             )
 
         except Exception as e:
@@ -275,37 +276,52 @@ class GenerateContentUseCase(BaseUseCase[GenerateContentRequest, GenerateContent
         For now, we'll simulate the start process.
         """
         try:
+            logger.info(f"🔄 Starting generation process for session {generation_session.id}")
             generation_orm_service = self.dependencies["generation_session_orm_service"]
 
             # Update session to processing status
+            logger.info(f"📝 Updating session {generation_session.id} status to PROCESSING")
             updated_session = await generation_orm_service.update_session_status(
                 generation_session.id, GenerationStatus.PROCESSING
             )
+            logger.info(f"✅ Session status updated successfully")
 
             # Publish generation started event
             user_info = self._extract_user_info(user_context)
+            logger.info(f"📡 Publishing generation started event:")
+            logger.info(f"  - Session ID: {updated_session.id}")
+            logger.info(f"  - User: {user_info['user_email']}")
+            logger.info(f"  - Content type: {generation_session.prompt_config.get('generation_type', 'scenario')}")
+            
             await self._publish_event(
                 "publish_content_generation_started",
                 session_id=str(updated_session.id),
                 user_id=user_info["user_id"],
                 user_email=user_info["user_email"],
                 user_name=user_info["user_name"],
-                content_type=generation_session.session_type or "scenario",
+                content_type=generation_session.prompt_config.get("generation_type", "scenario"),
                 session_title=f"Generation Session {updated_session.id}"
             )
+            
+            logger.info(f"✅ Generation started event published successfully")
+            logger.info(f"🎯 FastStream consumer should now pick up this event and start Claude API generation")
 
             return True
 
         except Exception as e:
-            logger.error(f"Failed to start generation process: {e}")
+            logger.error(f"❌ Failed to start generation process for session {generation_session.id}: {e}")
+            logger.error(f"  - Error type: {type(e).__name__}")
+            logger.error(f"  - Error details: {str(e)}")
             
             # Update session to failed status
             try:
+                logger.info(f"🔄 Updating session {generation_session.id} to FAILED status due to start error")
                 await generation_orm_service.update_session_status(
                     generation_session.id, GenerationStatus.FAILED
                 )
+                logger.info(f"✅ Session status updated to FAILED")
             except Exception as update_error:
-                logger.error(f"Failed to update session status to failed: {update_error}")
+                logger.error(f"❌ Failed to update session status to failed: {update_error}")
 
             return False
 
@@ -350,6 +366,12 @@ class GenerateContentUseCase(BaseUseCase[GenerateContentRequest, GenerateContent
         """Publish generation requested event."""
         user_info = self._extract_user_info(user_context)
 
+        logger.info(f"📡 Publishing generation requested event:")
+        logger.info(f"  - Session ID: {generation_session.id}")
+        logger.info(f"  - User: {user_info['user_email']} ({user_info['user_id']})")
+        logger.info(f"  - Content type: {request.generation_type}")
+        logger.info(f"  - Source documents: {len(request.source_document_ids)}")
+
         await self._publish_event(
             "publish_content_generation_requested",
             session_id=str(generation_session.id),
@@ -361,6 +383,8 @@ class GenerateContentUseCase(BaseUseCase[GenerateContentRequest, GenerateContent
             content_type=request.generation_type,
             session_title=request.activity_name or f"Generation Session {generation_session.id}"
         )
+        
+        logger.info(f"✅ Generation requested event published successfully")
 
     async def _handle_service_error(self, error: Exception, context: str) -> None:
         """Handle service errors with generation-specific cleanup."""

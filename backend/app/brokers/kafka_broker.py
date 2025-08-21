@@ -44,8 +44,14 @@ async def startup():
     logger.info("=" * 50)
     
     # Import handlers to register subscribers
+    from app.handlers import content_handlers
+    from app.handlers import training_handlers
+    from app.handlers import auto_tagging_handlers
+    from app.handlers import knowledge_extraction_handlers
+    from app.handlers import node_interaction_handlers
+    from app.handlers import survey_handlers
     
-    logger.info("✅ All event handlers registered")
+    logger.info("✅ All event handlers imported and registered")
 
 
 @app.on_shutdown

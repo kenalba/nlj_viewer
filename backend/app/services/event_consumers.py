@@ -970,6 +970,15 @@ class EventConsumerService:
 
             start_time = time.time()
 
+            logger.info(f"🤖 Calling Claude API for content generation (EVENT CONSUMER):")
+            logger.info(f"  - Session ID: {session.id}")
+            logger.info(f"  - Model: claude-sonnet-4-20250514")
+            logger.info(f"  - Max tokens: 8192")
+            logger.info(f"  - Temperature: 0.1")
+            logger.info(f"  - File IDs: {file_ids}")
+            logger.info(f"  - Prompt length: {len(generated_prompt)} characters")
+            logger.info(f"  - Prompt preview (first 500 chars): {generated_prompt[:500]}...")
+
             generated_content, error_message, tokens_used = await claude_service.generate_content(
                 prompt_text=generated_prompt,
                 file_ids=file_ids,
@@ -979,6 +988,17 @@ class EventConsumerService:
             )
 
             generation_time = time.time() - start_time
+            
+            logger.info(f"🤖 Claude API response received (EVENT CONSUMER):")
+            logger.info(f"  - Tokens used: {tokens_used}")
+            logger.info(f"  - Error message: {error_message}")
+            logger.info(f"  - Generated content type: {type(generated_content)}")
+            logger.info(f"  - Generated content length: {len(str(generated_content)) if generated_content else 0}")
+            if generated_content:
+                logger.info(f"  - Generated content preview (first 1000 chars): {str(generated_content)[:1000]}...")
+            else:
+                logger.warning(f"  - Generated content is None or empty!")
+            logger.info(f"⏱️ Generation completed in {generation_time:.2f} seconds")
 
             if error_message or not generated_content:
                 raise ValueError(f"Claude API generation failed: {error_message or 'No content generated'}")
@@ -989,22 +1009,45 @@ class EventConsumerService:
             )
 
             # Extract and validate NLJ content from Claude response
+            logger.info(f"🔍 Starting NLJ content extraction and validation (EVENT CONSUMER)...")
+            logger.info(f"  - Generated content type: {type(generated_content)}")
+            logger.info(f"  - Generated content keys (if dict): {list(generated_content.keys()) if isinstance(generated_content, dict) else 'N/A'}")
+            
             validated_nlj = None
             if isinstance(generated_content, dict):
+                logger.info(f"  - Processing dict response...")
                 if "raw_response" in generated_content:
+                    logger.info(f"  - Found raw_response in generated content")
                     # Try to parse JSON from raw response
                     try:
                         import json
 
                         response_text = generated_content["raw_response"]
+                        logger.info(f"  - Raw response length: {len(response_text)}")
+                        logger.info(f"  - Raw response preview: {response_text[:500]}...")
+                        
                         # Look for JSON content in the response
                         if "{" in response_text and "}" in response_text:
                             start_idx = response_text.find("{")
                             end_idx = response_text.rfind("}") + 1
                             json_content = response_text[start_idx:end_idx]
+                            logger.info(f"  - Extracted JSON content length: {len(json_content)}")
+                            logger.info(f"  - Extracted JSON preview: {json_content[:500]}...")
+                            
                             validated_nlj = json.loads(json_content)
+                            logger.info(f"✅ Successfully parsed JSON from raw response")
+                            logger.info(f"  - Parsed NLJ keys: {list(validated_nlj.keys()) if isinstance(validated_nlj, dict) else 'N/A'}")
+                        else:
+                            logger.warning(f"  - No JSON braces found in raw response")
+                            validated_nlj = {
+                                "nodes": [],
+                                "links": [],
+                                "error": "No JSON found in response",
+                                "raw": response_text,
+                            }
                     except (json.JSONDecodeError, ValueError) as e:
-                        logger.warning(f"Could not parse JSON from response: {e}")
+                        logger.error(f"❌ Could not parse JSON from response: {e}")
+                        logger.error(f"  - Failed JSON content: {json_content[:1000] if 'json_content' in locals() else 'N/A'}...")
                         validated_nlj = {
                             "nodes": [],
                             "links": [],
@@ -1012,8 +1055,13 @@ class EventConsumerService:
                             "raw": response_text,
                         }
                 else:
+                    logger.info(f"  - No raw_response key, using generated_content directly")
                     validated_nlj = generated_content
             else:
+                logger.info(f"  - Generated content is not dict, attempting direct JSON parse...")
+                logger.info(f"  - Content type: {type(generated_content)}")
+                logger.info(f"  - Content preview: {str(generated_content)[:500]}...")
+                
                 # If it's just a string, try to parse as JSON
                 try:
                     import json
@@ -1021,13 +1069,22 @@ class EventConsumerService:
                     validated_nlj = (
                         json.loads(generated_content) if isinstance(generated_content, str) else generated_content
                     )
-                except (json.JSONDecodeError, ValueError):
+                    logger.info(f"✅ Successfully parsed JSON from string/direct content")
+                    logger.info(f"  - Parsed NLJ keys: {list(validated_nlj.keys()) if isinstance(validated_nlj, dict) else 'N/A'}")
+                except (json.JSONDecodeError, ValueError) as e:
+                    logger.error(f"❌ Failed to parse JSON from string: {e}")
+                    logger.error(f"  - Original content: {str(generated_content)}")
                     validated_nlj = {
                         "nodes": [],
                         "links": [],
                         "error": "Invalid JSON response",
                         "raw": str(generated_content),
                     }
+
+            logger.info(f"🎯 Final validated NLJ content (EVENT CONSUMER):")
+            logger.info(f"  - Type: {type(validated_nlj)}")
+            logger.info(f"  - Keys (if dict): {list(validated_nlj.keys()) if isinstance(validated_nlj, dict) else 'N/A'}")
+            logger.info(f"  - Content preview: {str(validated_nlj)[:500]}...")
 
             # Update session with completed status and real data
             session.status = GenerationStatus.COMPLETED

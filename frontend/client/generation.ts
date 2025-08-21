@@ -23,6 +23,7 @@ export interface GenerateContentRequest {
   generated_prompt?: string;
   activity_name?: string;
   activity_description?: string;
+  generation_type?: string;
 }
 
 export interface GenerationProgressResponse {

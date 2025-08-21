@@ -74,8 +74,8 @@ class ContentServiceSchema(
         if not isinstance(v, dict):
             raise ValueError("NLJ data must be a dictionary")
         
-        # Check for essential NLJ fields
-        required_fields = ["title", "nodes", "edges"]
+        # Check for essential NLJ fields (match frontend expectations)
+        required_fields = ["name", "nodes", "links"]
         missing_fields = [field for field in required_fields if field not in v]
         if missing_fields:
             raise ValueError(f"NLJ data missing required fields: {missing_fields}")
@@ -385,7 +385,7 @@ class ContentStateTransitionSchema(ServiceSchemaBase):
         # Use ContentServiceSchema validation logic
         temp_content = ContentServiceSchema(
             title="temp",
-            nlj_data={"title": "temp", "nodes": [], "edges": []},
+            nlj_data={"name": "temp", "nodes": [], "links": []},
             state=self.current_state,
         )
         

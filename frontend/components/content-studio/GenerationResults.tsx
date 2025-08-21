@@ -153,7 +153,7 @@ export const GenerationResults: React.FC<GenerationResultsProps> = ({
                 <Grid item xs={6} sm={3}>
                   <Paper sx={{ p: 2, textAlign: 'center' }}>
                     <Typography variant="h4" color="primary">
-                      {generatedContent.nodes.length}
+                      {generatedContent?.nodes?.length || 0}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Total Nodes
@@ -163,7 +163,7 @@ export const GenerationResults: React.FC<GenerationResultsProps> = ({
                 <Grid item xs={6} sm={3}>
                   <Paper sx={{ p: 2, textAlign: 'center' }}>
                     <Typography variant="h4" color="primary">
-                      {generatedContent.links.length}
+                      {generatedContent?.links?.length || 0}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Connections

@@ -92,6 +92,7 @@ const AppContent: React.FC = () => {
   const [editingContentItem, setEditingContentItem] = useState<ContentItem | null>(null);
   const [loadingScenario, setLoadingScenario] = useState<boolean>(false);
   const [scenarioError, setScenarioError] = useState<string | null>(null);
+  const [hasCreatedNewActivity, setHasCreatedNewActivity] = useState<boolean>(false);
   
   
   // Load scenario from localStorage when game state changes
@@ -179,6 +180,9 @@ const AppContent: React.FC = () => {
       }
       if (scenarioError) {
         setScenarioError(null);
+      }
+      if (hasCreatedNewActivity) {
+        setHasCreatedNewActivity(false);
       }
     }
   }, [location.pathname, editingScenario, loadingScenario, scenarioError]);
@@ -454,23 +458,69 @@ const AppContent: React.FC = () => {
     }
     
     // If creating new activity and no editing scenario, check for template in navigation state
-    if (action === 'new' && !editingScenario) {
+    if (action === 'new' && !editingScenario && !loadingScenario && !hasCreatedNewActivity) {
+      setLoadingScenario(true);
+      setScenarioError(null);
+      
       const navigationState = location.state as any;
-      if (navigationState?.template) {
-        // Use template from navigation state
-        scenarioToEdit = {
-          ...navigationState.template,
-          id: `new-${Date.now()}`,
-          name: navigationState.name || navigationState.template.name,
-          description: navigationState.description || navigationState.template.description
-        };
-        // Clear the navigation state to prevent issues with back navigation
-        window.history.replaceState({}, '', location.pathname);
-      } else {
-        // Create blank scenario
-        scenarioToEdit = createBlankScenario();
-      }
-      setEditingScenario(scenarioToEdit);
+      
+      // Create activity in database immediately
+      const createAndRedirect = async () => {
+        try {
+          let scenarioToCreate;
+          
+          if (navigationState?.template) {
+            // Use template from navigation state
+            scenarioToCreate = {
+              ...navigationState.template,
+              name: navigationState.name || navigationState.template.name,
+              description: navigationState.description || navigationState.template.description
+            };
+          } else {
+            // Create blank scenario
+            scenarioToCreate = createBlankScenario();
+            
+            // Override with user-provided data from modal if available
+            if (navigationState?.name) {
+              scenarioToCreate.name = navigationState.name;
+            }
+            if (navigationState?.description) {
+              scenarioToCreate.description = navigationState.description;
+            }
+          }
+          
+          // Clear the navigation state to prevent issues with back navigation
+          if (navigationState) {
+            window.history.replaceState({}, '', location.pathname);
+          }
+          
+          // Create activity in database
+          const contentData = {
+            title: scenarioToCreate.name || 'New Activity',
+            description: scenarioToCreate.description || 'Activity created with Flow Editor',
+            nlj_data: scenarioToCreate,
+            content_type: 'training' as const,
+            learning_style: 'visual' as const,
+            is_template: false,
+          };
+          
+          const createdContent = await contentApi.create(contentData);
+          
+          // Mark that we've created an activity for this session
+          setHasCreatedNewActivity(true);
+          
+          // Redirect to edit the newly created activity
+          navigate(`/app/flow/edit/${createdContent.id}`, { replace: true });
+          
+        } catch (error) {
+          console.error('Failed to create new activity:', error);
+          setScenarioError('Failed to create new activity. Please try again.');
+        } finally {
+          setLoadingScenario(false);
+        }
+      };
+      
+      createAndRedirect();
     }
     
     // If we have an edit ID but still no scenario, wait for loading
@@ -508,61 +558,26 @@ const AppContent: React.FC = () => {
           setEditingScenario(scenario);
           
           try {
-            // Determine if we're creating new content or updating existing
-            const isNewScenario = scenario.id.startsWith('new-');
-            
-            if (isNewScenario) {
-              // Create new content item with complete NLJ scenario data as draft
-              const contentData = {
-                title: scenario.name,
-                description: scenario.description || 'Activity created with Flow Editor',
-                nlj_data: {
-                  ...scenario, // Include all scenario properties
-                  id: scenario.id // Ensure ID is preserved
-                },
-                content_type: (scenario.activityType as any) || 'training', // Use scenario's activity type or default
-                learning_style: 'visual' as const, // Default to visual
-                is_template: false,
-                template_category: 'Custom',
-                state: 'draft' // Explicitly save as draft
-              };
-              
-              const createdContent = await contentApi.create(contentData);
-              
-              // Update scenario with real ID from database
-              const updatedScenario = {
-                ...scenario,
-                id: createdContent.id
-              };
-              
-              setEditingScenario(updatedScenario);
-              
-              // Update URL to reflect the new ID
-              const newUrl = new URL(window.location.href);
-              newUrl.searchParams.set('edit', createdContent.id);
-              window.history.replaceState({}, '', newUrl.toString());
-              
-              console.log('Created new content item:', createdContent.id);
-            } else {
-              // Update existing content item with complete NLJ scenario data
-              // Keep content in draft state when editing (unless it's published)
-              const updateData = {
-                title: scenario.name,
-                description: scenario.description || 'Activity updated with Flow Editor',
-                nlj_data: {
-                  ...scenario // Include all scenario properties
-                },
-                // Preserve existing state, but ensure drafts remain drafts
-                ...(editingContentItem?.state !== 'published' && { state: 'draft' })
-              };
-              
-              await contentApi.update(scenario.id, updateData);
-              console.log('Updated existing content item:', scenario.id);
+            // Flow Editor should only handle updates now (creates happen in /app/flow/new)
+            if (!scenario.id || scenario.id.startsWith('new-')) {
+              throw new Error('Invalid scenario ID - activities should be created in database before editing');
             }
+            
+            // Update existing content item
+            const updateData = {
+              title: scenario.name,
+              nlj_data: {
+                ...scenario // Include all scenario properties
+              },
+              // Preserve existing state, but ensure drafts remain drafts
+              ...(editingContentItem?.state !== 'published' && { state: 'draft' })
+            };
+            
+            await contentApi.update(scenario.id, updateData);
+            console.log('Updated existing content item:', scenario.id);
             
             // Show success notification  
             console.log('Scenario saved successfully!');
-            // Note: The FlowEditor component handles showing save success feedback
             
           } catch (error) {
             console.error('Failed to save scenario:', error);

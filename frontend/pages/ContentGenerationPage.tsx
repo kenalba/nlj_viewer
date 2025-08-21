@@ -364,7 +364,8 @@ export const ContentGenerationPage: React.FC = () => {
         prompt_config: state.promptConfig,
         generated_prompt: unifiedPrompt,
         activity_name: `Generated Activity - ${new Date().toLocaleDateString()}`,
-        activity_description: `Generated from ${state.selectedDocuments.length} source document(s)`
+        activity_description: `Generated from ${state.selectedDocuments.length} source document(s)`,
+        generation_type: state.contentType || 'activity'
       });
 
       console.log('✅ Generation initiated, session ID:', response.session_id);

@@ -128,7 +128,8 @@ services:
     volumes:
       - ./backend/uploads:/app/uploads
       - ./backend/app:/app/app  # For development hot-reload
-      - ./static:/app/static  # Static content for seed script
+      - ./static:/app/static  # Backend static content
+      - ./frontend/public/static:/app/frontend-static  # Frontend static content
     depends_on:
       redpanda:
         condition: service_healthy

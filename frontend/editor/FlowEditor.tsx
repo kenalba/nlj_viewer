@@ -14,6 +14,13 @@ import {
   Snackbar,
   Tooltip,
   Divider,
+  TextField,
+  ClickAwayListener,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -26,6 +33,9 @@ import {
   Settings as SettingsIcon,
   History as HistoryIcon,
   Functions as FunctionsIcon,
+  Edit as EditIcon,
+  Check as CheckIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 
 import { FlowViewer } from './components/flow/FlowViewer';
@@ -83,6 +93,9 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
   const [showVersionManager, setShowVersionManager] = useState(false);
   const [showVariables, setShowVariables] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(120);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editingTitleValue, setEditingTitleValue] = useState(scenario.name || '');
   const headerRef = useRef<HTMLDivElement>(null);
   const { themeMode } = useTheme();
   const { loadScenario } = useGameContext();
@@ -103,13 +116,40 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
   // Update scenario when prop changes (e.g., from template selection)
   useEffect(() => {
     setEditedScenario(scenario);
+    setEditingTitleValue(scenario.name || '');
     setIsDirty(false);
   }, [scenario]);
 
+
+  // Warn user about unsaved changes before leaving page
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return 'You have unsaved changes. Are you sure you want to leave?';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isDirty]);
+
+
+
   const handleScenarioChange = useCallback((updatedScenario: NLJScenario) => {
-    setEditedScenario(updatedScenario);
+    // Ensure we preserve the correct database ID from the original scenario prop
+    const scenarioWithCorrectId = {
+      ...updatedScenario,
+      id: scenario.id // Use the database ID from props, not from the updated scenario
+    };
+    
+    setEditedScenario(scenarioWithCorrectId);
     setIsDirty(true);
-  }, []);
+  }, [scenario.id]);
 
   const handleActivitySettingsChange = useCallback((settings: ActivitySettings) => {
     const updatedScenario = {
@@ -120,17 +160,63 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
     setIsDirty(true);
   }, [editedScenario]);
 
-  const handleSave = useCallback(() => {
-    if (onSave) {
-      onSave(editedScenario);
+  // Title editing functions
+  const handleTitleEdit = useCallback(() => {
+    setIsEditingTitle(true);
+    setEditingTitleValue(editedScenario.name || '');
+  }, [editedScenario.name]);
+
+  const handleTitleSave = useCallback(() => {
+    if (editingTitleValue.trim() && editingTitleValue !== editedScenario.name) {
+      const updatedScenario = {
+        ...editedScenario,
+        name: editingTitleValue.trim(),
+      };
+      setEditedScenario(updatedScenario);
+      setIsDirty(true);
     }
+    setIsEditingTitle(false);
+  }, [editingTitleValue, editedScenario]);
+
+  const handleTitleCancel = useCallback(() => {
+    setEditingTitleValue(editedScenario.name || '');
+    setIsEditingTitle(false);
+  }, [editedScenario.name]);
+
+  const handleTitleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTitleSave();
+    } else if (e.key === 'Escape') {
+      handleTitleCancel();
+    }
+  }, [handleTitleSave, handleTitleCancel]);
+
+  const handleSave = useCallback(async () => {
+    if (isSaving || !isDirty) return; // Prevent multiple saves and unnecessary saves
     
-    // Save to localStorage for consistency with current app flow
-    localStorage.setItem(`scenario_${editedScenario.id}`, JSON.stringify(editedScenario));
-    
-    setIsDirty(false);
-    setShowSaveSuccess(true);
-  }, [editedScenario, onSave]);
+    try {
+      setIsSaving(true);
+      
+      // Save to database and trigger xAPI events
+      if (onSave) {
+        await onSave(editedScenario);
+        console.log('Saved to database:', editedScenario.name);
+      }
+      
+      setIsDirty(false);
+      setShowSaveSuccess(true);
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setShowSaveSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Save failed:', error);
+      // TODO: Show error message to user
+    } finally {
+      setIsSaving(false);
+    }
+  }, [editedScenario, onSave, isSaving, isDirty]);
 
   // Version-aware save with change summary
   const handleVersionSave = useCallback(async (changeSummary: string) => {
@@ -268,19 +354,67 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
           </IconButton>
           
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h6" component="h1">
-              Flow Editor: {editedScenario.name || 'Untitled Scenario'}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h6" component="span">
+                Flow Editor:
+              </Typography>
+              {isEditingTitle ? (
+                <ClickAwayListener onClickAway={handleTitleSave}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TextField
+                      value={editingTitleValue}
+                      onChange={(e) => setEditingTitleValue(e.target.value)}
+                      onKeyDown={handleTitleKeyDown}
+                      size="small"
+                      autoFocus
+                      sx={{ 
+                        minWidth: '200px',
+                        '& .MuiOutlinedInput-root': {
+                          height: '32px',
+                          fontSize: '1.25rem',
+                          fontWeight: 500,
+                        }
+                      }}
+                    />
+                    <IconButton size="small" onClick={handleTitleSave} color="primary">
+                      <CheckIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small" onClick={handleTitleCancel}>
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                </ClickAwayListener>
+              ) : (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography 
+                    variant="h6" 
+                    component="h1" 
+                    sx={{ 
+                      cursor: 'pointer',
+                      '&:hover': { textDecoration: 'underline' }
+                    }}
+                    onClick={handleTitleEdit}
+                  >
+                    {editedScenario.name || 'Untitled Scenario'}
+                  </Typography>
+                  <Tooltip title="Edit title">
+                    <IconButton size="small" onClick={handleTitleEdit}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              )}
+            </Box>
             <Stack direction="row" spacing={1} alignItems="center">
               <Chip
                 icon={<InfoIcon />}
-                label={`${editedScenario.nodes.length} nodes`}
+                label={`${editedScenario.nodes?.length || 0} nodes`}
                 size="small"
                 variant="outlined"
               />
               <Chip
                 icon={<InfoIcon />}
-                label={`${editedScenario.links.length} connections`}
+                label={`${editedScenario.links?.length || 0} connections`}
                 size="small"
                 variant="outlined"
               />
@@ -316,7 +450,7 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
             </Stack>
           </Box>
           
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row" spacing={1} alignItems="center">
             {/* Version Management Button */}
             {contentItem && canManageVersions ? (
               <Tooltip title={`Version History (${versionStats.total} versions)`}>
@@ -379,6 +513,84 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
                 <SettingsIcon />
               </IconButton>
             </Tooltip>
+
+            {/* Prominent Save Button - Far Right */}
+            <Box sx={{ ml: 3 }}>
+              {isSaving ? (
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 1,
+                    px: 2,
+                    py: 1,
+                    backgroundColor: 'warning.main',
+                    color: 'warning.contrastText',
+                    borderRadius: 1,
+                  }}
+                >
+                  <SaveIcon />
+                  <Typography variant="button" fontWeight="bold">
+                    Saving...
+                  </Typography>
+                </Box>
+              ) : isDirty ? (
+                <Tooltip title="Save all changes to database (will trigger xAPI events)">
+                  <Box
+                    component="button"
+                    onClick={handleSave}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      px: 3,
+                      py: 1.5,
+                      backgroundColor: 'primary.main',
+                      color: 'primary.contrastText',
+                      border: 'none',
+                      borderRadius: 1,
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      fontWeight: 'bold',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.02857em',
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        backgroundColor: 'primary.dark',
+                        transform: 'translateY(-1px)',
+                        boxShadow: 2,
+                      },
+                      '&:active': {
+                        transform: 'translateY(0px)',
+                      }
+                    }}
+                  >
+                    <SaveIcon />
+                    <Typography variant="button" fontWeight="bold">
+                      Save
+                    </Typography>
+                  </Box>
+                </Tooltip>
+              ) : (
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 1,
+                    px: 2,
+                    py: 1,
+                    backgroundColor: 'success.main',
+                    color: 'success.contrastText',
+                    borderRadius: 1,
+                  }}
+                >
+                  <SaveIcon />
+                  <Typography variant="button" fontWeight="bold">
+                    All Saved
+                  </Typography>
+                </Box>
+              )}
+            </Box>
           </Stack>
         </Stack>
       </Paper>
@@ -476,51 +688,7 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
             </IconButton>
           </Tooltip>
           
-          {/* Version-aware save (if version management is available) */}
-          {contentItem && canManageVersions ? (
-            <Tooltip title="Save New Version">
-              <IconButton
-                onClick={() => {
-                  const changeSummary = prompt('Describe your changes:');
-                  if (changeSummary) {
-                    handleVersionSave(changeSummary);
-                  }
-                }}
-                disabled={!hasUnsavedChanges()}
-                size="small"
-                color={hasUnsavedChanges() ? 'primary' : 'inherit'}
-                sx={{
-                  backgroundColor: hasUnsavedChanges() ? 'primary.main' : 'transparent',
-                  color: hasUnsavedChanges() ? 'primary.contrastText' : 'text.disabled',
-                  '&:hover': {
-                    backgroundColor: hasUnsavedChanges() ? 'primary.dark' : 'action.hover',
-                  },
-                }}
-              >
-                <SaveIcon />
-              </IconButton>
-            </Tooltip>
-          ) : (
-            <Tooltip title="Save Changes">
-              <span>
-                <IconButton
-                  onClick={handleSave}
-                  disabled={!isDirty}
-                  size="small"
-                  color={isDirty ? 'primary' : 'inherit'}
-                  sx={{
-                    backgroundColor: isDirty ? 'primary.main' : 'transparent',
-                    color: isDirty ? 'primary.contrastText' : 'text.disabled',
-                    '&:hover': {
-                      backgroundColor: isDirty ? 'primary.dark' : 'action.hover',
-                    },
-                  }}
-                >
-                  <SaveIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
-          )}
+          {/* Removed old save button - now using prominent header save button */}
         </Stack>
       </Paper>
 
@@ -540,6 +708,7 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
           Draft saved successfully!
         </Alert>
       </Snackbar>
+
 
       {/* Version Management Modal */}
       {contentItem && versionManagement && (

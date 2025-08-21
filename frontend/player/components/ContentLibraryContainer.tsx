@@ -462,7 +462,12 @@ export const ContentLibraryContainer: React.FC<ContentLibraryContainerProps> = (
 
   const handleActivityCreated = useCallback((template: ActivityTemplate, name: string, description?: string) => {
     if (template.category === 'blank') {
-      navigate('/app/flow/new');
+      navigate('/app/flow/new', { 
+        state: { 
+          name, 
+          description 
+        } 
+      });
     } else {
       navigate('/app/flow/new', { 
         state: { 

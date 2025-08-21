@@ -23,6 +23,8 @@ from app.schemas.services.content_schemas import (
     ContentServiceSchema
 )
 from app.services.orm_services.content_orm_service import ContentOrmService
+from app.services.orm_services.user_orm_service import UserOrmService
+from app.services.orm_services.generation_session_orm_service import GenerationSessionOrmService
 from ..base_use_case import BaseUseCase
 
 logger = logging.getLogger(__name__)
@@ -40,6 +42,7 @@ class CreateContentRequest:
     template_category: Optional[str] = None
     import_source: Optional[str] = None
     import_filename: Optional[str] = None
+    parent_content_id: Optional[UUID] = None
 
 
 @dataclass 
@@ -67,15 +70,28 @@ class CreateContentUseCase(BaseUseCase[CreateContentRequest, CreateContentRespon
     - Template creation event if content is marked as template
     """
     
-    def __init__(self, session: AsyncSession, content_orm_service: ContentOrmService):
+    def __init__(
+        self, 
+        session: AsyncSession, 
+        content_orm_service: ContentOrmService,
+        user_orm_service: UserOrmService,
+        generation_session_orm_service: GenerationSessionOrmService
+    ):
         """
         Initialize create content use case.
         
         Args:
             session: Database session for transaction management
             content_orm_service: Content ORM service for data persistence
+            user_orm_service: User ORM service for user operations
+            generation_session_orm_service: Generation session ORM service
         """
-        super().__init__(session, content_orm_service=content_orm_service)
+        super().__init__(
+            session, 
+            content_orm_service=content_orm_service,
+            user_orm_service=user_orm_service,
+            generation_session_orm_service=generation_session_orm_service
+        )
     
     async def execute(
         self, 
@@ -180,6 +196,7 @@ class CreateContentUseCase(BaseUseCase[CreateContentRequest, CreateContentRespon
                 template_category=template_category,
                 import_source=request.import_source,
                 import_filename=request.import_filename,
+                parent_content_id=request.parent_content_id,
                 created_by=user_id
             )
         except Exception as e:
@@ -210,7 +227,8 @@ class CreateContentUseCase(BaseUseCase[CreateContentRequest, CreateContentRespon
                 is_template=service_data.is_template,
                 template_category=service_data.template_category,
                 import_source=service_data.import_source,
-                import_filename=service_data.import_filename
+                import_filename=service_data.import_filename,
+                parent_content_id=service_data.parent_content_id
             )
         except Exception as e:
             logger.error(f"Failed to create content through ORM service: {e}")

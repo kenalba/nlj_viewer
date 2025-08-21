@@ -120,8 +120,7 @@ class DeleteContentUseCase(BaseUseCase[DeleteContentRequest, DeleteContentRespon
 
             # Perform deletion through ORM service
             deletion_success = await content_orm_service.delete_content(
-                request.content_id,
-                cascade=True  # Delete related entities
+                request.content_id
             )
 
             if not deletion_success:

@@ -191,87 +191,204 @@ class CreateActivityFromGenerationUseCase(BaseUseCase[CreateActivityFromGenerati
             raise ValueError("Generation session has no generated content available for activity creation")
 
     async def _extract_and_validate_nlj_data(self, session) -> tuple[Dict[str, Any], str, list[str]]:
-        """Extract and validate NLJ data from generation session."""
+        """Extract JSON content from Claude response and validate NLJ structure."""
         generated_content = session.generated_content
         validation_warnings = []
 
-        # Basic validation of NLJ structure
+        # Basic validation of generated content
         if not isinstance(generated_content, dict):
             raise ValueError("Generated content is not in expected dictionary format")
 
-        # Check for required NLJ components
-        required_fields = ['nodes', 'edges']
-        for field in required_fields:
-            if field not in generated_content:
-                raise ValueError(f"Generated content missing required field: {field}")
+        # Extract NLJ data using multiple extraction strategies
+        nlj_data = await self._extract_json_from_claude_response(generated_content)
+        
+        if not nlj_data:
+            raise ValueError("Could not extract valid JSON from Claude response")
 
-        # Validate nodes structure
-        nodes = generated_content.get('nodes', [])
-        if not isinstance(nodes, list) or len(nodes) == 0:
-            raise ValueError("Generated content has no valid nodes")
+        # Perform comprehensive NLJ structure validation
+        validation_errors = self._validate_nlj_structure(nlj_data)
+        
+        if validation_errors:
+            error_message = f"Generated NLJ structure validation failed: {'; '.join(validation_errors)}"
+            logger.error(f"❌ {error_message}")
+            logger.error(f"  - Invalid NLJ data: {nlj_data}")
+            raise ValueError(error_message)
 
         # Quality assessment
-        quality_score = self._assess_content_quality(generated_content, validation_warnings)
+        quality_score = self._assess_content_quality(nlj_data, validation_warnings)
 
         # Ensure metadata exists
-        if 'metadata' not in generated_content:
-            generated_content['metadata'] = {}
+        if 'metadata' not in nlj_data:
+            nlj_data['metadata'] = {}
             validation_warnings.append("Added missing metadata section")
 
         # Add generation attribution
-        generated_content['metadata']['generated_from_session'] = str(session.id)
-        generated_content['metadata']['generation_timestamp'] = session.created_at.isoformat() if session.created_at else datetime.now().isoformat()
+        nlj_data['metadata']['generated_from_session'] = str(session.id)
+        nlj_data['metadata']['generation_timestamp'] = session.created_at.isoformat() if session.created_at else datetime.now().isoformat()
 
-        return generated_content, quality_score, validation_warnings
+        return nlj_data, quality_score, validation_warnings
+
+    async def _extract_json_from_claude_response(self, generated_content: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Extract JSON content from Claude response using multiple strategies."""
+        import json
+        
+        logger.info(f"🔍 Starting JSON extraction from Claude response")
+        logger.info(f"  - Generated content keys: {list(generated_content.keys())}")
+        
+        # Strategy 1: Check if Claude service already extracted the JSON
+        if "generated_json" in generated_content:
+            logger.info(f"✅ Found pre-extracted JSON from Claude service")
+            validated_nlj = generated_content["generated_json"]
+            if isinstance(validated_nlj, dict):
+                logger.info(f"  - Pre-extracted NLJ keys: {list(validated_nlj.keys())}")
+                return validated_nlj
+
+        # Strategy 2: Check for validated_nlj field (from handler)
+        if "validated_nlj" in generated_content:
+            logger.info(f"✅ Found validated_nlj field")
+            validated_nlj = generated_content["validated_nlj"]
+            if isinstance(validated_nlj, dict):
+                return validated_nlj
+
+        # Strategy 3: Extract from raw_response
+        if "raw_response" in generated_content:
+            logger.info(f"🔄 Extracting JSON from raw_response")
+            response_text = generated_content["raw_response"]
+            
+            # Method 1: Try to parse the entire response as JSON
+            try:
+                response_text_cleaned = response_text.strip()
+                if response_text_cleaned.startswith('{') and response_text_cleaned.endswith('}'):
+                    parsed = json.loads(response_text_cleaned)
+                    if isinstance(parsed, dict) and self._is_valid_nlj_structure(parsed):
+                        logger.info(f"✅ Successfully parsed entire response as valid NLJ JSON")
+                        return parsed
+            except json.JSONDecodeError:
+                logger.info(f"  - Full response is not valid JSON, trying extraction")
+
+            # Method 2: Extract JSON from response with prefatory text
+            if "{" in response_text and "}" in response_text:
+                start_idx = response_text.find("{")
+                end_idx = response_text.rfind("}") + 1
+                json_content = response_text[start_idx:end_idx]
+                
+                try:
+                    parsed = json.loads(json_content)
+                    if isinstance(parsed, dict):
+                        logger.info(f"✅ Successfully extracted and parsed JSON from response")
+                        logger.info(f"  - Extracted NLJ keys: {list(parsed.keys())}")
+                        return parsed
+                except json.JSONDecodeError as e:
+                    logger.error(f"❌ Failed to parse extracted JSON: {e}")
+
+        # Strategy 4: Try to parse generated_content directly
+        logger.info(f"🔄 Attempting to use generated_content directly as NLJ data")
+        if isinstance(generated_content, dict) and ("nodes" in generated_content or "name" in generated_content):
+            logger.info(f"✅ Using generated_content directly as NLJ structure")
+            return generated_content
+
+        logger.error(f"❌ All JSON extraction strategies failed")
+        return None
+
+    def _is_valid_nlj_structure(self, data: Dict[str, Any]) -> bool:
+        """Quick check if data looks like a valid NLJ structure."""
+        if not isinstance(data, dict):
+            return False
+        
+        # Basic NLJ structure indicators
+        has_nodes = "nodes" in data and isinstance(data["nodes"], list)
+        has_links = "links" in data and isinstance(data["links"], list)
+        has_name = "name" in data
+        
+        return has_nodes or has_links or has_name
+
+    def _validate_nlj_structure(self, nlj_data: Dict[str, Any]) -> list[str]:
+        """Validate NLJ structure and return list of validation errors."""
+        validation_errors = []
+        
+        if not isinstance(nlj_data, dict):
+            validation_errors.append("NLJ data must be a dictionary")
+            return validation_errors
+        
+        # Required fields validation
+        required_fields = ["name", "nodes", "links"]
+        for field in required_fields:
+            if field not in nlj_data:
+                validation_errors.append(f"Missing required field: {field}")
+        
+        # Structure validation
+        if "nodes" in nlj_data:
+            if not isinstance(nlj_data["nodes"], list):
+                validation_errors.append("'nodes' must be an array")
+            elif len(nlj_data["nodes"]) == 0:
+                validation_errors.append("'nodes' array cannot be empty")
+            else:
+                # Validate required node types
+                node_types = [node.get("type") for node in nlj_data["nodes"] if isinstance(node, dict)]
+                if "start" not in node_types:
+                    validation_errors.append("NLJ must contain a 'start' node")
+                if "end" not in node_types:
+                    validation_errors.append("NLJ must contain an 'end' node")
+        
+        if "links" in nlj_data and not isinstance(nlj_data["links"], list):
+            validation_errors.append("'links' must be an array")
+        
+        return validation_errors
 
     def _assess_content_quality(self, nlj_data: Dict[str, Any], warnings: list[str]) -> str:
-        """Assess quality of generated NLJ content."""
+        """Assess quality of generated content (may be raw JSON or NLJ structure)."""
         score_points = 0
         max_points = 10
 
+        # Basic JSON validity (already checked, but counts towards score)
+        score_points += 2  # Valid JSON structure
+
+        # Check if it's NLJ-structured content
         nodes = nlj_data.get('nodes', [])
         edges = nlj_data.get('edges', [])
+        
+        if isinstance(nodes, list) and isinstance(edges, list):
+            # NLJ-structured content assessment
+            if len(nodes) >= 3:
+                score_points += 2
+            elif len(nodes) >= 1:
+                score_points += 1
+                warnings.append("Content has fewer than 3 nodes")
 
-        # Node quality checks
-        if len(nodes) >= 3:
-            score_points += 2
-        elif len(nodes) >= 1:
-            score_points += 1
-            warnings.append("Content has fewer than 3 nodes")
+            if len(edges) >= len(nodes) - 1 and len(nodes) > 0:  # Minimum connected graph
+                score_points += 2
+            elif len(nodes) > 0:
+                score_points += 1
+                warnings.append("Content may not be fully connected")
 
-        # Edge quality checks
-        if len(edges) >= len(nodes) - 1:  # Minimum connected graph
+            # Content richness in nodes
+            node_with_content = any(
+                node.get('content') and len(str(node.get('content', ''))) > 50 
+                for node in nodes if isinstance(node, dict)
+            )
+            if node_with_content:
+                score_points += 2
+            elif len(nodes) == 0:
+                warnings.append("Raw JSON content - no interactive nodes detected")
+            else:
+                warnings.append("Nodes have limited content")
+        else:
+            # Raw JSON content assessment
+            content_size = len(str(nlj_data))
+            if content_size > 500:
+                score_points += 2
+                warnings.append("Rich raw JSON content detected")
+            elif content_size > 100:
+                score_points += 1
+                warnings.append("Moderate raw JSON content detected")
+            else:
+                warnings.append("Limited raw JSON content")
+
+        # General metadata/structure completeness
+        if len(nlj_data) > 2:  # More than just basic structure
             score_points += 2
         else:
-            score_points += 1
-            warnings.append("Content may not be fully connected")
-
-        # Content richness checks
-        node_with_content = any(
-            node.get('content') and len(str(node.get('content', ''))) > 50 
-            for node in nodes if isinstance(node, dict)
-        )
-        if node_with_content:
-            score_points += 2
-        else:
-            warnings.append("Nodes have limited content")
-
-        # Metadata completeness
-        metadata = nlj_data.get('metadata', {})
-        if isinstance(metadata, dict) and len(metadata) > 1:
-            score_points += 2
-        else:
-            warnings.append("Limited metadata available")
-
-        # Structure validation
-        valid_structure = all(
-            isinstance(node, dict) and 'id' in node 
-            for node in nodes
-        )
-        if valid_structure:
-            score_points += 2
-        else:
-            warnings.append("Some nodes have invalid structure")
+            warnings.append("Limited content structure")
 
         # Quality scoring
         if score_points >= 9:
@@ -295,7 +412,7 @@ class CreateActivityFromGenerationUseCase(BaseUseCase[CreateActivityFromGenerati
         content_orm_service = self.dependencies["content_orm_service"]
 
         # Determine content type
-        content_type = request.override_content_type or "TRAINING"  # Default to training
+        content_type = request.override_content_type or "training"  # Default to training
 
         # Enhanced metadata if requested
         enhanced_metadata = {}

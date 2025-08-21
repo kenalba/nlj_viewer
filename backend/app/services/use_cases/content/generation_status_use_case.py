@@ -43,6 +43,7 @@ class GenerationStatusResponse:
     is_completed: bool = False
     is_failed: bool = False
     has_generated_content: bool = False
+    generated_content: Optional[Dict[str, Any]] = None
     estimated_completion_time: Optional[datetime] = None
     processing_started_at: Optional[datetime] = None
     total_processing_time_seconds: Optional[float] = None
@@ -172,6 +173,30 @@ class GenerationStatusUseCase(BaseUseCase[GenerationStatusRequest, GenerationSta
                                hasattr(session, 'generated_content') and 
                                session.generated_content is not None)
 
+        # Get generated content if available
+        generated_content = None
+        if has_generated_content:
+            logger.info(f"🎯 Extracting generated content from session {session.id}")
+            logger.info(f"  - Session.generated_content type: {type(session.generated_content)}")
+            
+            if isinstance(session.generated_content, dict):
+                # Check if it has the expected structure from the handler
+                if 'generated_json' in session.generated_content:
+                    generated_content = session.generated_content['generated_json']
+                    logger.info(f"  - Using generated_json field")
+                    logger.info(f"  - Generated JSON type: {type(generated_content)}")
+                    logger.info(f"  - Generated JSON preview: {str(generated_content)[:300]}...")
+                else:
+                    generated_content = session.generated_content
+                    logger.info(f"  - Using entire generated_content dict")
+            else:
+                generated_content = session.generated_content
+                logger.info(f"  - Using generated_content as-is (non-dict)")
+            
+            logger.info(f"  - Final extracted content type: {type(generated_content)}")
+            if isinstance(generated_content, dict):
+                logger.info(f"  - Final content keys: {list(generated_content.keys())}")
+
         # Progress calculation
         progress_percentage = self._calculate_progress_percentage(status, session)
         current_step = self._determine_current_step(status, session)
@@ -207,6 +232,7 @@ class GenerationStatusUseCase(BaseUseCase[GenerationStatusRequest, GenerationSta
             is_completed=is_completed,
             is_failed=is_failed,
             has_generated_content=has_generated_content,
+            generated_content=generated_content,
             estimated_completion_time=estimated_completion_time,
             processing_started_at=processing_started_at,
             total_processing_time_seconds=total_processing_time

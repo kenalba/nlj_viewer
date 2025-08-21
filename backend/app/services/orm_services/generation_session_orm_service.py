@@ -64,19 +64,21 @@ class GenerationSessionOrmService(BaseOrmService[GenerationSession, GenerationSe
             RuntimeError: If creation fails
             ValueError: If validation fails
         """
-        # Validate session data
+        # Validate session data (only fields that exist in the model)
         session_data = await self.validate_entity_data(
             user_id=user_id,
-            session_type=session_type,
             config=config,
-            activity_title=activity_title,
-            source_document_ids=source_document_ids or [],
-            parent_activity_id=parent_activity_id,
             status=GenerationStatus.PENDING,  # Default status
         )
 
         try:
+            # Create the session first
             session_obj = await self.repository.create(**session_data)
+            
+            # Handle source document relationships if provided
+            if source_document_ids:
+                await self._link_source_documents(session_obj, source_document_ids)
+            
             await self.session.commit()
 
             return await self.handle_entity_relationships(session_obj)
@@ -317,64 +319,45 @@ class GenerationSessionOrmService(BaseOrmService[GenerationSession, GenerationSe
 
     # Abstract Method Implementations
 
-    async def validate_entity_data(self, **kwargs) -> dict[str, Any]:
+    async def validate_entity_data(self, **kwargs: Any) -> dict[str, Any]:
         """
         Validate generation session data before persistence.
-
-        Validates required fields, configuration, and session parameters.
+        Only validates and returns fields that exist in the GenerationSession model.
         """
         validated = {}
 
-        # UUID validations
+        # UUID validations - only actual model fields
         if "user_id" in kwargs:
             if not isinstance(kwargs["user_id"], uuid.UUID):
                 raise ValueError("User ID must be a valid UUID")
             validated["user_id"] = kwargs["user_id"]
 
-        if "parent_activity_id" in kwargs and kwargs["parent_activity_id"] is not None:
-            if not isinstance(kwargs["parent_activity_id"], uuid.UUID):
-                raise ValueError("Parent activity ID must be a valid UUID")
-            validated["parent_activity_id"] = kwargs["parent_activity_id"]
-
-        # String validations
-        if "session_type" in kwargs:
-            session_type = kwargs["session_type"]
-            if not isinstance(session_type, str) or not session_type.strip():
-                raise ValueError("Session type must be a non-empty string")
-            validated["session_type"] = session_type.strip()
-
-        if "activity_title" in kwargs and kwargs["activity_title"] is not None:
-            title = kwargs["activity_title"]
-            if not isinstance(title, str):
-                raise ValueError("Activity title must be a string")
-            validated["activity_title"] = title.strip() if title.strip() else None
-
-        if "current_step" in kwargs and kwargs["current_step"] is not None:
-            step = kwargs["current_step"]
-            if not isinstance(step, str):
-                raise ValueError("Current step must be a string")
-            validated["current_step"] = step.strip() if step.strip() else None
-
+        # String validations - only actual model fields  
         if "error_message" in kwargs and kwargs["error_message"] is not None:
             error = kwargs["error_message"]
             if not isinstance(error, str):
                 raise ValueError("Error message must be a string")
             validated["error_message"] = error.strip() if error.strip() else None
 
-        # Dictionary/List validations
+        if "claude_conversation_id" in kwargs and kwargs["claude_conversation_id"] is not None:
+            conv_id = kwargs["claude_conversation_id"]
+            if not isinstance(conv_id, str):
+                raise ValueError("Claude conversation ID must be a string")
+            validated["claude_conversation_id"] = conv_id.strip() if conv_id.strip() else None
+
+        if "claude_message_id" in kwargs and kwargs["claude_message_id"] is not None:
+            msg_id = kwargs["claude_message_id"]
+            if not isinstance(msg_id, str):
+                raise ValueError("Claude message ID must be a string")
+            validated["claude_message_id"] = msg_id.strip() if msg_id.strip() else None
+
+        # Dictionary validations - only actual model fields
         if "config" in kwargs:
             config = kwargs["config"]
             if not isinstance(config, dict):
                 raise ValueError("Config must be a dictionary")
-            validated["config"] = config
-
-        if "source_document_ids" in kwargs:
-            doc_ids = kwargs["source_document_ids"]
-            if not isinstance(doc_ids, list):
-                raise ValueError("Source document IDs must be a list")
-            if doc_ids and not all(isinstance(doc_id, uuid.UUID) for doc_id in doc_ids):
-                raise ValueError("All source document IDs must be valid UUIDs")
-            validated["source_document_ids"] = doc_ids
+            # Store config as prompt_config (matching the model field name)
+            validated["prompt_config"] = config
 
         if "generated_content" in kwargs and kwargs["generated_content"] is not None:
             content = kwargs["generated_content"]
@@ -382,49 +365,101 @@ class GenerationSessionOrmService(BaseOrmService[GenerationSession, GenerationSe
                 raise ValueError("Generated content must be a dictionary")
             validated["generated_content"] = content
 
-        # Enum validation
+        if "validated_nlj" in kwargs and kwargs["validated_nlj"] is not None:
+            nlj = kwargs["validated_nlj"]
+            if not isinstance(nlj, dict):
+                raise ValueError("Validated NLJ must be a dictionary")
+            validated["validated_nlj"] = nlj
+
+        if "validation_errors" in kwargs and kwargs["validation_errors"] is not None:
+            errors = kwargs["validation_errors"]
+            if not isinstance(errors, list):
+                raise ValueError("Validation errors must be a list")
+            validated["validation_errors"] = errors
+
+        # Enum/Status validations
         if "status" in kwargs:
-            if not isinstance(kwargs["status"], GenerationStatus):
-                raise ValueError("Status must be a valid GenerationStatus enum")
-            validated["status"] = kwargs["status"]
+            status = kwargs["status"]
+            if isinstance(status, str):
+                # Convert string to GenerationStatus enum
+                try:
+                    status = GenerationStatus(status)
+                except ValueError:
+                    raise ValueError(f"Invalid status: {status}")
+            elif not isinstance(status, GenerationStatus):
+                raise ValueError("Status must be a GenerationStatus enum or valid string")
+            validated["status"] = status
 
         # Numeric validations
-        if "progress" in kwargs and kwargs["progress"] is not None:
-            progress = kwargs["progress"]
-            if not isinstance(progress, int) or not (0 <= progress <= 100):
-                raise ValueError("Progress must be an integer between 0 and 100")
-            validated["progress"] = progress
+        if "total_tokens_used" in kwargs and kwargs["total_tokens_used"] is not None:
+            tokens = kwargs["total_tokens_used"]
+            if not isinstance(tokens, int) or tokens < 0:
+                raise ValueError("Total tokens used must be a non-negative integer")
+            validated["total_tokens_used"] = tokens
+
+        if "generation_time_seconds" in kwargs and kwargs["generation_time_seconds"] is not None:
+            time_val = kwargs["generation_time_seconds"]
+            if not isinstance(time_val, (int, float)) or time_val < 0:
+                raise ValueError("Generation time must be a non-negative number")
+            validated["generation_time_seconds"] = float(time_val)
 
         # Datetime validations
-        if "completed_at" in kwargs and kwargs["completed_at"] is not None:
-            if not isinstance(kwargs["completed_at"], datetime):
-                raise ValueError("Completed at must be a datetime")
-            validated["completed_at"] = kwargs["completed_at"]
+        for field in ["started_at", "completed_at"]:
+            if field in kwargs and kwargs[field] is not None:
+                dt_val = kwargs[field]
+                if not isinstance(dt_val, datetime):
+                    raise ValueError(f"{field} must be a datetime object")
+                validated[field] = dt_val
 
         return validated
 
     async def handle_entity_relationships(self, entity: GenerationSession) -> GenerationSession:
         """
         Handle generation session entity relationships after persistence.
-
-        Loads user and related entity relationships.
+        Simply refresh the entity to ensure it's properly attached to the session.
         """
         try:
-            # Refresh entity to get latest data
+            # Refresh entity to get latest data and ensure it's attached to the session
             await self.session.refresh(entity)
-
-            # Load user relationship if not already loaded
-            if not entity.creator:
-                await self.session.refresh(entity, ["creator"])
-
-            # Load source documents and created activities if available
-            if hasattr(entity, "source_documents") and not entity.source_documents:
-                await self.session.refresh(entity, ["source_documents"])
-
-            if hasattr(entity, "created_activities") and not entity.created_activities:
-                await self.session.refresh(entity, ["created_activities"])
-
             return entity
 
         except SQLAlchemyError as e:
             raise RuntimeError(f"Failed to handle generation session relationships: {e}") from e
+    
+    async def _link_source_documents(self, session: GenerationSession, source_document_ids: list[uuid.UUID]) -> None:
+        """
+        Link source documents to a generation session using the association table.
+        
+        Args:
+            session: GenerationSession to link documents to
+            source_document_ids: List of source document UUIDs to link
+        """
+        try:
+            from app.models.source_document import SourceDocument
+            from app.models.generation_session import generation_session_sources
+            from sqlalchemy import select, insert
+            
+            # Validate that all source document IDs exist
+            for doc_id in source_document_ids:
+                if not isinstance(doc_id, uuid.UUID):
+                    raise ValueError("Each source document ID must be a valid UUID")
+            
+            # Verify all source documents exist
+            stmt = select(SourceDocument.id).where(SourceDocument.id.in_(source_document_ids))
+            result = await self.session.execute(stmt)
+            found_ids = {row[0] for row in result}
+            
+            missing_ids = set(source_document_ids) - found_ids
+            if missing_ids:
+                raise ValueError(f"Source documents not found: {missing_ids}")
+            
+            # Insert into association table directly to avoid relationship lazy loading
+            for doc_id in source_document_ids:
+                stmt = insert(generation_session_sources).values(
+                    generation_session_id=session.id,
+                    source_document_id=doc_id
+                )
+                await self.session.execute(stmt)
+            
+        except Exception as e:
+            raise RuntimeError(f"Failed to link source documents: {str(e)}") from e

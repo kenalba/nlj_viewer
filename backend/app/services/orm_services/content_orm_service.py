@@ -505,21 +505,40 @@ class ContentOrmService(BaseOrmService[ContentItem, ContentRepository]):
                 nlj_data["edges"] = []
             validated["nlj_data"] = nlj_data
 
-        # Enum validations
+        # Enum validations with flexible string conversion
         if "content_type" in kwargs:
-            if not isinstance(kwargs["content_type"], ContentType):
-                raise ValueError("Content type must be a valid ContentType enum")
-            validated["content_type"] = kwargs["content_type"]
+            content_type = kwargs["content_type"]
+            if isinstance(content_type, str):
+                try:
+                    content_type = ContentType(content_type)
+                except ValueError:
+                    raise ValueError(f"Invalid content type: {content_type}")
+            elif not isinstance(content_type, ContentType):
+                raise ValueError("Content type must be a valid ContentType enum or string")
+            validated["content_type"] = content_type
 
         if "learning_style" in kwargs:
-            if not isinstance(kwargs["learning_style"], LearningStyle):
-                raise ValueError("Learning style must be a valid LearningStyle enum")
-            validated["learning_style"] = kwargs["learning_style"]
+            learning_style = kwargs["learning_style"]
+            if learning_style is not None:
+                if isinstance(learning_style, str):
+                    try:
+                        learning_style = LearningStyle(learning_style)
+                    except ValueError:
+                        raise ValueError(f"Invalid learning style: {learning_style}")
+                elif not isinstance(learning_style, LearningStyle):
+                    raise ValueError("Learning style must be a valid LearningStyle enum or string")
+            validated["learning_style"] = learning_style
 
         if "state" in kwargs:
-            if not isinstance(kwargs["state"], ContentState):
-                raise ValueError("State must be a valid ContentState enum")
-            validated["state"] = kwargs["state"]
+            state = kwargs["state"]
+            if isinstance(state, str):
+                try:
+                    state = ContentState(state)
+                except ValueError:
+                    raise ValueError(f"Invalid content state: {state}")
+            elif not isinstance(state, ContentState):
+                raise ValueError("State must be a valid ContentState enum or string")
+            validated["state"] = state
 
         # UUID validations
         if "creator_id" in kwargs:

@@ -125,12 +125,14 @@ class GetContentUseCase(BaseUseCase[GetContentRequest, GetContentResponse]):
                 can_review=can_review
             )
 
-            # Publish content view event - wrapped for resilience
-            try:
-                await self._publish_content_view_event(request, user_context, response)
-            except Exception as e:
-                # Log but don't fail the business operation
-                logger.warning(f"Failed to publish content view event: {e}")
+            # Publish content view event only for actual content consumption (not admin/reviewer access)
+            current_user_role = user_context.get("user_role")
+            if current_user_role in [UserRole.LEARNER, UserRole.PLAYER]:
+                try:
+                    await self._publish_content_view_event(request, user_context, response)
+                except Exception as e:
+                    # Log but don't fail the business operation
+                    logger.warning(f"Failed to publish content view event: {e}")
 
             logger.info(f"Content retrieved: {request.content_id} by user {current_user_id}")
             return response
@@ -223,8 +225,8 @@ class GetContentUseCase(BaseUseCase[GetContentRequest, GetContentResponse]):
             viewer_email=actor_info["user_email"],
             view_timestamp=datetime.now().isoformat(),
             content_title=response.content.title,
-            content_type=response.content.content_type.value if response.content.content_type else None,
-            content_state=response.content.state.value if response.content.state else None,
+            content_type=response.content.content_type.value if hasattr(response.content.content_type, 'value') else str(response.content.content_type) if response.content.content_type else None,
+            content_state=response.content.state.value if hasattr(response.content.state, 'value') else str(response.content.state) if response.content.state else None,
             can_modify=response.can_modify,
             can_review=response.can_review
         )

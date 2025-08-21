@@ -270,6 +270,13 @@ frontend/services/nodeIntelligenceService.ts                           # AI edit
 - Accessibility improvements and testing
 - Mobile experience optimization
 
+
+# OTHER ITEMS:
+- Content tagging
+- Sessions within Training.
+- Learning Objectives within training
+- Learning Objectives within content
+- Node robustness?
 ---
 
 *This backlog is continuously updated as new requirements emerge and priorities shift. Items are prioritized based on user impact, technical complexity, and strategic value.*
