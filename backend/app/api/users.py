@@ -29,8 +29,6 @@ from app.services.use_cases.user_management.list_users_use_case import (
     ListUsersUseCase,
     ListUsersRequest
 )
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.database_manager import get_db
 
 router = APIRouter()
 
@@ -256,23 +254,34 @@ async def update_user(
 async def activate_user(
     user_id: uuid.UUID, 
     admin_user: RequireAdmin,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    manage_profile_use_case: Annotated[ManageProfileUseCase, Depends(get_manage_profile_use_case)]
 ) -> dict[str, str]:
     """
     Activate user account (admin only).
     """
-    # For account activation, we need a dedicated use case for account status management
-    # This would be better handled by an AccountManagementUseCase in Phase 2.2
-    # For now, keep the legacy UserService approach for this specific operation
-    from app.services.user import UserService
+    # Create use case request for account activation
+    activate_request = ManageProfileRequest(
+        action=ProfileAction.ACTIVATE_ACCOUNT,
+        user_id=user_id,
+        activation_reason="Activated by administrator"
+    )
     
-    user_service = UserService(db)
+    # Extract admin user context
+    admin_context = extract_user_context(admin_user)
     
-    success = await user_service.activate_user(user_id)
-    if not success:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    return {"message": "User activated successfully"}
+    try:
+        # Execute use case
+        await manage_profile_use_case.execute(activate_request, admin_context)
+        return {"message": "User activated successfully"}
+        
+    except ValueError as e:
+        if "not found" in str(e):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except RuntimeError:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 
 @router.post("/{user_id}/deactivate")

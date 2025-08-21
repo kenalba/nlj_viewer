@@ -39,6 +39,7 @@ class ProfileAction(Enum):
     UPDATE_PREFERENCES = "update_preferences"
     UPLOAD_AVATAR = "upload_avatar"
     UPDATE_PRIVACY_SETTINGS = "update_privacy_settings"
+    ACTIVATE_ACCOUNT = "activate_account"
     DEACTIVATE_ACCOUNT = "deactivate_account"
 
 
@@ -90,7 +91,8 @@ class ManageProfileRequest:
     # Privacy settings
     privacy_settings: Optional[Dict[str, Any]] = None
     
-    # Account deactivation
+    # Account activation/deactivation
+    activation_reason: Optional[str] = None
     deactivation_reason: Optional[str] = None
     deactivate_immediately: bool = False
 
@@ -210,6 +212,10 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
                     )
                 elif request.action == ProfileAction.UPDATE_PRIVACY_SETTINGS:
                     updated_user, extra_data = await self._handle_update_privacy_settings(
+                        request, target_user, user_context
+                    )
+                elif request.action == ProfileAction.ACTIVATE_ACCOUNT:
+                    updated_user, extra_data = await self._handle_activate_account(
                         request, target_user, user_context
                     )
                 elif request.action == ProfileAction.DEACTIVATE_ACCOUNT:
@@ -596,6 +602,22 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
         # )
 
         return target_user, {"privacy_updated": True}
+
+    async def _handle_activate_account(
+        self,
+        request: ManageProfileRequest,
+        target_user: Any,
+        user_context: Dict[str, Any]
+    ) -> tuple[Any, Dict[str, Any]]:
+        """Handle account activation."""
+        # Activate user account
+        user_orm_service = self.dependencies["user_orm_service"]
+        updated_user = await user_orm_service.activate_user(
+            target_user.id,
+            activation_reason=getattr(request, 'activation_reason', None) or "Account activated by administrator"
+        )
+
+        return updated_user, {"account_activated": True}
 
     async def _handle_deactivate_account(
         self,
