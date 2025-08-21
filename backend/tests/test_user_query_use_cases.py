@@ -10,12 +10,11 @@ from uuid import UUID, uuid4
 from datetime import datetime
 
 from app.models.user import UserRole
-from app.schemas.services.user_schemas import UserServiceSchema
 from app.services.use_cases.user_management.get_user_use_case import (
     GetUserUseCase, GetUserRequest, GetUserResponse
 )
 from app.services.use_cases.user_management.list_users_use_case import (
-    ListUsersUseCase, ListUsersRequest, ListUsersResponse, UserListSortBy
+    ListUsersUseCase, ListUsersRequest, ListUsersResponse
 )
 
 
