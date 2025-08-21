@@ -12,9 +12,7 @@ from typing import Any
 from pydantic import Field, field_validator, model_validator
 
 from app.models.generation_session import GenerationStatus
-from app.schemas.generation import (
-    GenerationSessionCreate, GenerationSessionResponse
-)
+from app.schemas.generation import GenerationSessionResponse
 from .common import (
     ServiceSchemaBase,
     ValidationMixin,
@@ -152,10 +150,10 @@ class GenerationSessionServiceSchema(
     
     def complete_successfully(
         self, 
-        generated_content: dict, 
-        validated_nlj: dict, 
-        tokens_used: int = None, 
-        generation_time: float = None
+        generated_content: dict[str, Any], 
+        validated_nlj: dict[str, Any], 
+        tokens_used: int | None = None, 
+        generation_time: float | None = None
     ) -> None:
         """Mark session as completed successfully (mirrors GenerationSession.complete_successfully)."""
         if not self.can_transition_to_status(GenerationStatus.COMPLETED):
@@ -171,7 +169,7 @@ class GenerationSessionServiceSchema(
             self.generation_time_seconds = generation_time
         self.update_timestamps()
     
-    def fail_with_error(self, error_message: str, validation_errors: list[str] = None) -> None:
+    def fail_with_error(self, error_message: str, validation_errors: list[str] | None = None) -> None:
         """Mark session as failed with error details (mirrors GenerationSession.fail_with_error)."""
         if not self.can_transition_to_status(GenerationStatus.FAILED):
             raise ValueError(f"Cannot transition from {self.status} to FAILED")
@@ -190,7 +188,7 @@ class GenerationSessionServiceSchema(
         self.completed_at = datetime.now(timezone.utc)
         self.update_timestamps()
     
-    def get_generation_summary(self) -> dict:
+    def get_generation_summary(self) -> dict[str, Any]:
         """Get a summary of the generation session (mirrors GenerationSession.get_generation_summary)."""
         return {
             "id": str(self.id),
@@ -202,7 +200,7 @@ class GenerationSessionServiceSchema(
         }
     
     @classmethod
-    def from_api_schema(cls, api_schema: GenerationSessionCreate, **extra_data) -> "GenerationSessionServiceSchema":
+    def from_api_schema(cls, api_schema: GenerationSessionResponse, **extra_data: Any) -> "GenerationSessionServiceSchema":
         """Convert from API schema to service schema."""
         # Extract data from API schema
         api_data = api_schema.model_dump(exclude_none=True)
@@ -216,7 +214,7 @@ class GenerationSessionServiceSchema(
         
         return cls.model_validate(merged_data)
     
-    def to_api_schema(self, api_schema_class=GenerationSessionResponse) -> GenerationSessionResponse:
+    def to_api_schema(self, api_schema_class: type[GenerationSessionResponse] = GenerationSessionResponse) -> GenerationSessionResponse:
         """Convert service schema to API response schema."""
         # Get all data for API response
         api_data = self.model_dump()
@@ -227,6 +225,19 @@ class GenerationSessionServiceSchema(
         api_data["source_documents"] = []  # This would come from relationships in real usage
         
         return api_schema_class.model_validate(api_data)
+    
+    @classmethod
+    def from_orm_model(cls, orm_model: Any) -> "GenerationSessionServiceSchema":
+        """
+        Convert ORM model to service schema.
+        
+        Args:
+            orm_model: GenerationSession ORM model instance
+            
+        Returns:
+            GenerationSessionServiceSchema instance
+        """
+        return cls.model_validate(orm_model, from_attributes=True)
 
 
 class GenerationSessionCreateServiceSchema(GenerationSessionServiceSchema):
@@ -255,7 +266,7 @@ class GenerationSessionCreateServiceSchema(GenerationSessionServiceSchema):
         return v
     
     @model_validator(mode="after")
-    def validate_creation_rules(self):
+    def validate_creation_rules(self) -> "GenerationSessionCreateServiceSchema":
         """Apply creation-specific validation."""
         # Set creation defaults
         if not self.id:
@@ -334,7 +345,7 @@ class GenerationSessionFilterServiceSchema(ServiceSchemaBase):
     has_valid_nlj: bool | None = None
     
     @model_validator(mode="after")
-    def validate_filter_combination(self):
+    def validate_filter_combination(self) -> "GenerationSessionFilterServiceSchema":
         """Validate filter combinations make sense."""
         # Validate sorting field is allowed for generation sessions
         allowed_sort_fields = [
@@ -349,7 +360,7 @@ class GenerationSessionFilterServiceSchema(ServiceSchemaBase):
     
     def build_filter_criteria(self) -> dict[str, Any]:
         """Build filter criteria for repository queries."""
-        criteria = {
+        criteria: dict[str, Any] = {
             "limit": self.pagination.size,
             "offset": self.pagination.get_offset(),
         }

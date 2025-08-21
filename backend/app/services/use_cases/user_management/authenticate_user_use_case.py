@@ -356,12 +356,21 @@ class AuthenticateUserUseCase(BaseUseCase[AuthenticateUserRequest, AuthenticateU
         user_orm_service = self.dependencies["user_orm_service"]
         await user_orm_service.update_last_login(user.id)
 
-        # Create authentication data (simplified)
+        # Create authentication data with full user information
         auth_data = {
             "id": str(user.id),
             "user_id": str(user.id),
+            "username": user.username,
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role.value if hasattr(user.role, 'value') else str(user.role),
+            "is_active": user.is_active,
+            "is_verified": getattr(user, 'is_verified', False),
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "updated_at": user.updated_at.isoformat() if user.updated_at else None,
+            "last_login": user.last_login.isoformat() if user.last_login else None,
             "authentication_method": request.authentication_method.value,
-            "created_at": datetime.now().isoformat(),
+            "session_created_at": datetime.now().isoformat(),
             "client_ip": request.client_ip,
             "user_agent": request.user_agent,
             "is_valid": True

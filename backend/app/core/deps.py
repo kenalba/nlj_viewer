@@ -13,7 +13,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database_manager import get_db
 from app.core.security import verify_token
-from app.core.user_context import extract_user_context
 from app.models.user import User, UserRole
 from app.services.kafka_service import kafka_service, xapi_event_service
 
@@ -27,6 +26,14 @@ from app.services.use_cases.content.list_content_use_case import ListContentUseC
 from app.services.use_cases.content.delete_content_use_case import DeleteContentUseCase
 from app.services.use_cases.content.record_content_view_use_case import RecordContentViewUseCase
 from app.services.use_cases.content.record_content_completion_use_case import RecordContentCompletionUseCase
+from app.services.use_cases.content.list_generation_sessions_use_case import ListGenerationSessionsUseCase
+from app.services.use_cases.content.get_generation_session_use_case import GetGenerationSessionUseCase
+from app.services.use_cases.content.cancel_generation_use_case import CancelGenerationUseCase
+from app.services.use_cases.content.generation_status_use_case import GenerationStatusUseCase
+from app.services.use_cases.content.create_activity_from_generation_use_case import CreateActivityFromGenerationUseCase
+from app.services.use_cases.content.start_generation_use_case import StartGenerationUseCase
+from app.services.use_cases.content.retry_generation_use_case import RetryGenerationUseCase
+from app.services.use_cases.content.get_generation_statistics_use_case import GetGenerationStatisticsUseCase
 from app.services.use_cases.user_management.authenticate_user_use_case import AuthenticateUserUseCase
 from app.services.use_cases.user_management.manage_profile_use_case import ManageProfileUseCase
 from app.services.use_cases.user_management.manage_permissions_use_case import ManagePermissionsUseCase
@@ -43,6 +50,7 @@ from app.services.orm_services.content_orm_service import ContentOrmService
 from app.services.orm_services.user_orm_service import UserOrmService
 from app.services.orm_services.training_orm_service import TrainingOrmService
 from app.services.orm_services.generation_session_orm_service import GenerationSessionOrmService
+from app.services.orm_services.source_document_orm_service import SourceDocumentOrmService
 from app.services.orm_services.permission_orm_service import PermissionOrmService
 from app.services.orm_services.role_orm_service import RoleOrmService
 
@@ -229,15 +237,15 @@ async def get_generate_content_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> GenerateContentUseCase:
     """Factory for GenerateContentUseCase."""
-    content_orm_service = ContentOrmService(db)
-    user_orm_service = UserOrmService(db)
     generation_session_orm_service = GenerationSessionOrmService(db)
+    source_document_orm_service = SourceDocumentOrmService(db)
+    content_orm_service = ContentOrmService(db)
     
     return GenerateContentUseCase(
         session=db,
-        content_orm_service=content_orm_service,
-        user_orm_service=user_orm_service,
-        generation_session_orm_service=generation_session_orm_service
+        generation_session_orm_service=generation_session_orm_service,
+        source_document_orm_service=source_document_orm_service,
+        content_orm_service=content_orm_service
     )
 
 
@@ -436,4 +444,102 @@ async def get_record_content_completion_use_case(
     return RecordContentCompletionUseCase(
         session=db,
         content_orm_service=content_orm_service
+    )
+
+
+async def get_list_generation_sessions_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> ListGenerationSessionsUseCase:
+    """Factory for ListGenerationSessionsUseCase."""
+    generation_session_orm_service = GenerationSessionOrmService(db)
+    
+    return ListGenerationSessionsUseCase(
+        session=db,
+        generation_session_orm_service=generation_session_orm_service
+    )
+
+
+async def get_get_generation_session_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> GetGenerationSessionUseCase:
+    """Factory for GetGenerationSessionUseCase."""
+    generation_session_orm_service = GenerationSessionOrmService(db)
+    
+    return GetGenerationSessionUseCase(
+        session=db,
+        generation_session_orm_service=generation_session_orm_service
+    )
+
+
+async def get_cancel_generation_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> CancelGenerationUseCase:
+    """Factory for CancelGenerationUseCase."""
+    generation_session_orm_service = GenerationSessionOrmService(db)
+    
+    return CancelGenerationUseCase(
+        session=db,
+        generation_session_orm_service=generation_session_orm_service
+    )
+
+
+async def get_generation_status_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> GenerationStatusUseCase:
+    """Factory for GenerationStatusUseCase."""
+    generation_session_orm_service = GenerationSessionOrmService(db)
+    
+    return GenerationStatusUseCase(
+        session=db,
+        generation_session_orm_service=generation_session_orm_service
+    )
+
+
+async def get_create_activity_from_generation_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> CreateActivityFromGenerationUseCase:
+    """Factory for CreateActivityFromGenerationUseCase."""
+    generation_session_orm_service = GenerationSessionOrmService(db)
+    content_orm_service = ContentOrmService(db)
+    
+    return CreateActivityFromGenerationUseCase(
+        session=db,
+        generation_session_orm_service=generation_session_orm_service,
+        content_orm_service=content_orm_service
+    )
+
+
+async def get_start_generation_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> StartGenerationUseCase:
+    """Factory for StartGenerationUseCase."""
+    generation_session_orm_service = GenerationSessionOrmService(db)
+    
+    return StartGenerationUseCase(
+        session=db,
+        generation_session_orm_service=generation_session_orm_service
+    )
+
+
+async def get_retry_generation_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> RetryGenerationUseCase:
+    """Factory for RetryGenerationUseCase."""
+    generation_session_orm_service = GenerationSessionOrmService(db)
+    
+    return RetryGenerationUseCase(
+        session=db,
+        generation_session_orm_service=generation_session_orm_service
+    )
+
+
+async def get_generation_statistics_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> GetGenerationStatisticsUseCase:
+    """Factory for GetGenerationStatisticsUseCase."""
+    generation_session_orm_service = GenerationSessionOrmService(db)
+    
+    return GetGenerationStatisticsUseCase(
+        session=db,
+        generation_session_orm_service=generation_session_orm_service
     )

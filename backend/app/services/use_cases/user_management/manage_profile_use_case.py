@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 class ProfileAction(Enum):
     """Profile management actions."""
+    CREATE_USER = "create_user"
     UPDATE_INFO = "update_info"
     CHANGE_PASSWORD = "change_password"
     SETUP_MFA = "setup_mfa"
@@ -68,6 +69,10 @@ class ManageProfileRequest:
     current_password: Optional[str] = None
     new_password: Optional[str] = None
     confirm_password: Optional[str] = None
+    
+    # User creation (for registration)
+    password: Optional[str] = None  # For CREATE_USER action
+    role: Optional[UserRole] = None  # For CREATE_USER action
     
     # MFA setup
     mfa_method: Optional[MfaMethod] = None
@@ -163,50 +168,56 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
             RuntimeError: If profile management fails
         """
         try:
-            # Determine target user (self or other)
-            target_user_id = request.user_id or UUID(user_context["user_id"])
-            
-            # Validate permissions
-            await self._validate_profile_permissions(target_user_id, user_context)
-
-            # Get target user
-            target_user = await self._get_target_user(target_user_id)
-
-            # Route to specific action handler
-            if request.action == ProfileAction.UPDATE_INFO:
-                updated_user, extra_data = await self._handle_update_info(
-                    request, target_user, user_context
-                )
-            elif request.action == ProfileAction.CHANGE_PASSWORD:
-                updated_user, extra_data = await self._handle_change_password(
-                    request, target_user, user_context
-                )
-            elif request.action == ProfileAction.SETUP_MFA:
-                updated_user, extra_data = await self._handle_setup_mfa(
-                    request, target_user, user_context
-                )
-            elif request.action == ProfileAction.DISABLE_MFA:
-                updated_user, extra_data = await self._handle_disable_mfa(
-                    request, target_user, user_context
-                )
-            elif request.action == ProfileAction.UPDATE_PREFERENCES:
-                updated_user, extra_data = await self._handle_update_preferences(
-                    request, target_user, user_context
-                )
-            elif request.action == ProfileAction.UPLOAD_AVATAR:
-                updated_user, extra_data = await self._handle_upload_avatar(
-                    request, target_user, user_context
-                )
-            elif request.action == ProfileAction.UPDATE_PRIVACY_SETTINGS:
-                updated_user, extra_data = await self._handle_update_privacy_settings(
-                    request, target_user, user_context
-                )
-            elif request.action == ProfileAction.DEACTIVATE_ACCOUNT:
-                updated_user, extra_data = await self._handle_deactivate_account(
-                    request, target_user, user_context
+            # Handle user creation separately (no existing user needed)
+            if request.action == ProfileAction.CREATE_USER:
+                updated_user, extra_data = await self._handle_create_user(
+                    request, user_context
                 )
             else:
-                raise ValueError(f"Unsupported profile action: {request.action}")
+                # Determine target user (self or other)
+                target_user_id = request.user_id or UUID(user_context["user_id"])
+                
+                # Validate permissions
+                await self._validate_profile_permissions(target_user_id, user_context)
+
+                # Get target user
+                target_user = await self._get_target_user(target_user_id)
+
+                # Route to specific action handler
+                if request.action == ProfileAction.UPDATE_INFO:
+                    updated_user, extra_data = await self._handle_update_info(
+                        request, target_user, user_context
+                    )
+                elif request.action == ProfileAction.CHANGE_PASSWORD:
+                    updated_user, extra_data = await self._handle_change_password(
+                        request, target_user, user_context
+                    )
+                elif request.action == ProfileAction.SETUP_MFA:
+                    updated_user, extra_data = await self._handle_setup_mfa(
+                        request, target_user, user_context
+                    )
+                elif request.action == ProfileAction.DISABLE_MFA:
+                    updated_user, extra_data = await self._handle_disable_mfa(
+                        request, target_user, user_context
+                    )
+                elif request.action == ProfileAction.UPDATE_PREFERENCES:
+                    updated_user, extra_data = await self._handle_update_preferences(
+                        request, target_user, user_context
+                    )
+                elif request.action == ProfileAction.UPLOAD_AVATAR:
+                    updated_user, extra_data = await self._handle_upload_avatar(
+                        request, target_user, user_context
+                    )
+                elif request.action == ProfileAction.UPDATE_PRIVACY_SETTINGS:
+                    updated_user, extra_data = await self._handle_update_privacy_settings(
+                        request, target_user, user_context
+                    )
+                elif request.action == ProfileAction.DEACTIVATE_ACCOUNT:
+                    updated_user, extra_data = await self._handle_deactivate_account(
+                        request, target_user, user_context
+                    )
+                else:
+                    raise ValueError(f"Unsupported profile action: {request.action}")
 
             # Create response
             response = ManageProfileResponse(
@@ -277,6 +288,57 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
             raise ValueError(f"User not found: {user_id}")
 
         return user
+
+    async def _handle_create_user(
+        self,
+        request: ManageProfileRequest,
+        user_context: Dict[str, Any]
+    ) -> tuple[Any, Dict[str, Any]]:
+        """Handle user creation (registration)."""
+        # Validate required fields for user creation
+        if not request.username:
+            raise ValueError("Username is required for user creation")
+        if not request.email:
+            raise ValueError("Email is required for user creation")
+        if not request.password:
+            raise ValueError("Password is required for user creation")
+
+        try:
+            user_orm_service = self.dependencies["user_orm_service"]
+            
+            # Check if username already exists
+            existing_user = await user_orm_service.get_by_username(request.username)
+            if existing_user:
+                raise ValueError("Username already exists")
+            
+            # Check if email already exists  
+            existing_user = await user_orm_service.get_by_email(request.email)
+            if existing_user:
+                raise ValueError("Email already exists")
+            
+            # Create the new user
+            new_user = await user_orm_service.create_user(
+                username=request.username,
+                email=request.email,
+                password=request.password,
+                full_name=request.full_name,
+                role=request.role or UserRole.LEARNER
+            )
+            
+            # Publish user creation event
+            try:
+                await self._publish_user_creation_event(new_user, user_context)
+            except Exception as e:
+                logger.warning(f"Failed to publish user creation event: {e}")
+            
+            logger.info(f"User created successfully: {new_user.id}")
+            return new_user, {}
+            
+        except ValueError:
+            raise
+        except Exception as e:
+            logger.error(f"Failed to create user: {e}")
+            raise RuntimeError(f"User creation failed: {str(e)}") from e
 
     async def _handle_update_info(
         self,
@@ -739,6 +801,23 @@ class ManageProfileUseCase(BaseUseCase[ManageProfileRequest, ManageProfileRespon
                 updater_email=actor_info["user_email"],
                 update_timestamp=datetime.now().isoformat()
             )
+
+    async def _publish_user_creation_event(
+        self,
+        new_user: Any,
+        user_context: Dict[str, Any]
+    ) -> None:
+        """Publish user creation event."""
+        await self._publish_event(
+            "publish_user_created",
+            user_id=str(new_user.id),
+            username=new_user.username,
+            email=new_user.email,
+            full_name=new_user.full_name,
+            role=new_user.role.value if hasattr(new_user.role, 'value') else str(new_user.role),
+            creation_timestamp=datetime.now().isoformat(),
+            registration_method="web_form"
+        )
 
     async def _handle_service_error(self, error: Exception, context: str) -> None:
         """Handle service errors with rollback."""
