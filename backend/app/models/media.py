@@ -8,7 +8,7 @@ from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import ARRAY, JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import ARRAY, JSON, Boolean, DateTime, Enum as SQLEnum, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -74,9 +74,9 @@ class MediaItem(Base):
     description: Mapped[str | None] = mapped_column(Text)
 
     # Media type and state
-    media_type: Mapped[MediaType] = mapped_column(String(20), nullable=False, index=True)
+    media_type: Mapped[MediaType] = mapped_column(SQLEnum(MediaType), nullable=False, index=True)
     media_state: Mapped[MediaState] = mapped_column(
-        String(20), default=MediaState.GENERATING, nullable=False, index=True
+        SQLEnum(MediaState), default=MediaState.GENERATING, nullable=False, index=True
     )
 
     # Content fields
@@ -101,7 +101,7 @@ class MediaItem(Base):
     )
 
     # Media-specific configuration
-    media_style: Mapped[MediaStyle | None] = mapped_column(String(30), comment="Style template used for generation")
+    media_style: Mapped[MediaStyle | None] = mapped_column(SQLEnum(MediaStyle), comment="Style template used for generation")
     voice_config: Mapped[dict[str, Any] | None] = mapped_column(JSON, comment="Voice settings for audio generation")
 
     # Source tracking

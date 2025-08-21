@@ -11,7 +11,6 @@ Handles paginated listing of user's generation sessions with filtering:
 import logging
 from dataclasses import dataclass
 from typing import Dict, Any, List, Optional
-from enum import Enum
 from datetime import datetime
 from uuid import UUID
 

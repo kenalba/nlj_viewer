@@ -164,7 +164,7 @@ class ContentRepository(BaseRepository[ContentItem]):
         content_result = await self.session.execute(query)
         count_result = await self.session.execute(count_query)
         
-        content_items = content_result.scalars().all()
+        content_items = list(content_result.scalars().all())
         total_count = count_result.scalar()
         
         return content_items, total_count

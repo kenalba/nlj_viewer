@@ -7,6 +7,7 @@ Handles training programs, sessions, bookings, and attendance tracking.
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -18,9 +19,10 @@ from app.services.orm_repositories.training_repository import (
     TrainingBookingRepository,
     AttendanceRecordRepository,
 )
+from .base_orm_service import BaseOrmService
 
 
-class TrainingOrmService:
+class TrainingOrmService(BaseOrmService[TrainingProgram, TrainingProgramRepository]):
     """
     Training ORM Service managing training-related entities with Clean Architecture.
 
@@ -47,7 +49,10 @@ class TrainingOrmService:
         attendance_repository: AttendanceRecordRepository,
     ):
         """Initialize Training ORM Service with session and repositories."""
-        self.session = session
+        # Initialize base class with TrainingProgram as primary entity
+        super().__init__(session, program_repository)
+        
+        # Store additional repositories for training-related entities
         self.program_repo = program_repository
         self.session_repo = session_repository
         self.booking_repo = booking_repository
@@ -241,3 +246,60 @@ class TrainingOrmService:
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise RuntimeError(f"Failed to update training program: {e}") from e
+
+    # Abstract methods implementation for BaseOrmService
+
+    async def validate_entity_data(self, **kwargs) -> dict[str, Any]:
+        """
+        Validate training program data before persistence.
+        
+        Args:
+            **kwargs: Training program data to validate
+            
+        Returns:
+            Validated and potentially transformed entity data
+            
+        Raises:
+            ValueError: If validation fails
+        """
+        validated_data = dict(kwargs)
+        
+        # Validate required fields
+        if not validated_data.get("title"):
+            raise ValueError("Training program title is required")
+        
+        if not validated_data.get("description"):
+            raise ValueError("Training program description is required")
+            
+        # Validate duration
+        duration = validated_data.get("duration_minutes", 0)
+        if not isinstance(duration, int) or duration <= 0:
+            raise ValueError("Training program duration must be a positive integer")
+        
+        # Validate learning objectives
+        objectives = validated_data.get("learning_objectives", [])
+        if not isinstance(objectives, list):
+            raise ValueError("Learning objectives must be a list")
+            
+        # Set defaults for optional fields
+        validated_data.setdefault("requires_approval", False)
+        validated_data.setdefault("auto_approve", True)
+        validated_data.setdefault("is_published", True)
+        validated_data.setdefault("prerequisites", [])
+        validated_data.setdefault("instructor_requirements", {})
+        
+        return validated_data
+
+    async def handle_entity_relationships(self, entity: TrainingProgram) -> TrainingProgram:
+        """
+        Handle complex training program relationships after persistence.
+        
+        Args:
+            entity: The persisted training program
+            
+        Returns:
+            Training program with relationships properly handled
+        """
+        # For training programs, we might want to ensure proper relationships
+        # are established with content, users, etc. For now, return as-is
+        return entity

@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import ARRAY, BigInteger, DateTime, ForeignKey, String, Text
+from sqlalchemy import ARRAY, BigInteger, DateTime, Enum as SQLEnum, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -56,15 +56,15 @@ class SourceDocument(Base):
     filename: Mapped[str] = mapped_column(String(255), nullable=False, comment="Current filename (may be converted)")
     original_filename: Mapped[str] = mapped_column(String(255), nullable=False, comment="Original uploaded filename")
     file_type: Mapped[FileType] = mapped_column(
-        String(20), nullable=False, comment="Current file type (after conversion if applicable)"
+        SQLEnum(FileType), nullable=False, comment="Current file type (after conversion if applicable)"
     )
     original_file_type: Mapped[FileType] = mapped_column(
-        String(20), nullable=False, comment="Original file type before conversion"
+        SQLEnum(FileType), nullable=False, comment="Original file type before conversion"
     )
 
     # Conversion tracking
     conversion_status: Mapped[ConversionStatus] = mapped_column(
-        String(20), default=ConversionStatus.PENDING, nullable=False
+        SQLEnum(ConversionStatus), default=ConversionStatus.PENDING, nullable=False
     )
     conversion_error: Mapped[str | None] = mapped_column(Text)
 

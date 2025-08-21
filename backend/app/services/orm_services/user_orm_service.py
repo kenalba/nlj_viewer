@@ -5,6 +5,7 @@ Provides transaction-managed CRUD operations for User entities using repository 
 Handles user authentication, profile management, and role-based operations.
 """
 
+import logging
 import uuid
 import re
 from datetime import datetime, timezone
@@ -17,6 +18,8 @@ from app.core.security import get_password_hash, verify_password
 from app.models.user import User, UserRole
 from app.services.orm_repositories.user_repository import UserRepository
 from .base_orm_service import BaseOrmService
+
+logger = logging.getLogger(__name__)
 
 
 class UserOrmService(BaseOrmService[User, UserRepository]):

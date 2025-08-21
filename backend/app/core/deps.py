@@ -54,6 +54,18 @@ from app.services.orm_services.source_document_orm_service import SourceDocument
 from app.services.orm_services.permission_orm_service import PermissionOrmService
 from app.services.orm_services.role_orm_service import RoleOrmService
 
+# Repository imports for Clean Architecture compliance
+from app.services.orm_repositories.user_repository import UserRepository
+from app.services.orm_repositories.content_repository import ContentRepository
+from app.services.orm_repositories.training_repository import (
+    TrainingProgramRepository,
+    TrainingSessionRepository, 
+    TrainingBookingRepository,
+    AttendanceRecordRepository
+)
+from app.services.orm_repositories.generation_repository import GenerationSessionRepository
+from app.services.orm_repositories.source_document_repository import SourceDocumentRepository
+
 # HTTP Bearer token scheme
 security = HTTPBearer()
 
@@ -193,9 +205,12 @@ async def get_create_content_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> CreateContentUseCase:
     """Factory for CreateContentUseCase."""
-    content_orm_service = ContentOrmService(db)
-    user_orm_service = UserOrmService(db)
-    generation_session_orm_service = GenerationSessionOrmService(db)
+    content_repository = ContentRepository(db)
+    content_orm_service = ContentOrmService(db, content_repository)
+    user_repository = UserRepository(db)
+    user_orm_service = UserOrmService(db, user_repository)
+    generation_repository = GenerationSessionRepository(db)
+    generation_session_orm_service = GenerationSessionOrmService(db, generation_repository)
     
     return CreateContentUseCase(
         session=db,
@@ -209,8 +224,10 @@ async def get_update_content_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> UpdateContentUseCase:
     """Factory for UpdateContentUseCase."""
-    content_orm_service = ContentOrmService(db)
-    user_orm_service = UserOrmService(db)
+    content_repository = ContentRepository(db)
+    content_orm_service = ContentOrmService(db, content_repository)
+    user_repository = UserRepository(db)
+    user_orm_service = UserOrmService(db, user_repository)
     
     return UpdateContentUseCase(
         session=db,
@@ -223,8 +240,10 @@ async def get_review_workflow_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> ReviewWorkflowUseCase:
     """Factory for ReviewWorkflowUseCase."""
-    content_orm_service = ContentOrmService(db)
-    user_orm_service = UserOrmService(db)
+    content_repository = ContentRepository(db)
+    content_orm_service = ContentOrmService(db, content_repository)
+    user_repository = UserRepository(db)
+    user_orm_service = UserOrmService(db, user_repository)
     
     return ReviewWorkflowUseCase(
         session=db,
@@ -237,9 +256,12 @@ async def get_generate_content_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> GenerateContentUseCase:
     """Factory for GenerateContentUseCase."""
-    generation_session_orm_service = GenerationSessionOrmService(db)
-    source_document_orm_service = SourceDocumentOrmService(db)
-    content_orm_service = ContentOrmService(db)
+    generation_repository = GenerationSessionRepository(db)
+    generation_session_orm_service = GenerationSessionOrmService(db, generation_repository)
+    source_document_repository = SourceDocumentRepository(db)
+    source_document_orm_service = SourceDocumentOrmService(db, source_document_repository)
+    content_repository = ContentRepository(db)
+    content_orm_service = ContentOrmService(db, content_repository)
     
     return GenerateContentUseCase(
         session=db,
@@ -253,7 +275,8 @@ async def get_authenticate_user_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> AuthenticateUserUseCase:
     """Factory for AuthenticateUserUseCase."""
-    user_orm_service = UserOrmService(db)
+    user_repository = UserRepository(db)
+    user_orm_service = UserOrmService(db, user_repository)
     
     return AuthenticateUserUseCase(
         session=db,
@@ -265,7 +288,8 @@ async def get_manage_profile_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> ManageProfileUseCase:
     """Factory for ManageProfileUseCase."""
-    user_orm_service = UserOrmService(db)
+    user_repository = UserRepository(db)
+    user_orm_service = UserOrmService(db, user_repository)
     
     return ManageProfileUseCase(
         session=db,
@@ -277,9 +301,12 @@ async def get_manage_permissions_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> ManagePermissionsUseCase:
     """Factory for ManagePermissionsUseCase."""
-    user_orm_service = UserOrmService(db)
-    permission_orm_service = PermissionOrmService(db)
-    role_orm_service = RoleOrmService(db)
+    user_repository = UserRepository(db)
+    user_orm_service = UserOrmService(db, user_repository)
+    permission_repository = UserRepository(db)  # PermissionOrmService uses UserRepository
+    permission_orm_service = PermissionOrmService(db, permission_repository)
+    role_repository = UserRepository(db)  # RoleOrmService uses UserRepository  
+    role_orm_service = RoleOrmService(db, role_repository)
     
     return ManagePermissionsUseCase(
         session=db,
@@ -293,8 +320,13 @@ async def get_manage_program_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> ManageProgramUseCase:
     """Factory for ManageProgramUseCase."""
-    training_orm_service = TrainingOrmService(db)
-    user_orm_service = UserOrmService(db)
+    program_repository = TrainingProgramRepository(db)
+    session_repository = TrainingSessionRepository(db)
+    booking_repository = TrainingBookingRepository(db)
+    attendance_repository = AttendanceRecordRepository(db)
+    training_orm_service = TrainingOrmService(db, program_repository, session_repository, booking_repository, attendance_repository)
+    user_repository = UserRepository(db)
+    user_orm_service = UserOrmService(db, user_repository)
     
     return ManageProgramUseCase(
         session=db,
@@ -307,8 +339,13 @@ async def get_manage_sessions_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> ManageSessionsUseCase:
     """Factory for ManageSessionsUseCase."""
-    training_orm_service = TrainingOrmService(db)
-    user_orm_service = UserOrmService(db)
+    program_repository = TrainingProgramRepository(db)
+    session_repository = TrainingSessionRepository(db)
+    booking_repository = TrainingBookingRepository(db)
+    attendance_repository = AttendanceRecordRepository(db)
+    training_orm_service = TrainingOrmService(db, program_repository, session_repository, booking_repository, attendance_repository)
+    user_repository = UserRepository(db)
+    user_orm_service = UserOrmService(db, user_repository)
     
     return ManageSessionsUseCase(
         session=db,
@@ -321,8 +358,13 @@ async def get_track_engagement_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> TrackEngagementUseCase:
     """Factory for TrackEngagementUseCase."""
-    training_orm_service = TrainingOrmService(db)
-    user_orm_service = UserOrmService(db)
+    program_repository = TrainingProgramRepository(db)
+    session_repository = TrainingSessionRepository(db)
+    booking_repository = TrainingBookingRepository(db)
+    attendance_repository = AttendanceRecordRepository(db)
+    training_orm_service = TrainingOrmService(db, program_repository, session_repository, booking_repository, attendance_repository)
+    user_repository = UserRepository(db)
+    user_orm_service = UserOrmService(db, user_repository)
     
     return TrackEngagementUseCase(
         session=db,
@@ -335,9 +377,15 @@ async def get_generate_insights_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> GenerateInsightsUseCase:
     """Factory for GenerateInsightsUseCase."""
-    content_orm_service = ContentOrmService(db)
-    user_orm_service = UserOrmService(db)
-    training_orm_service = TrainingOrmService(db)
+    content_repository = ContentRepository(db)
+    content_orm_service = ContentOrmService(db, content_repository)
+    user_repository = UserRepository(db)
+    user_orm_service = UserOrmService(db, user_repository)
+    program_repository = TrainingProgramRepository(db)
+    session_repository = TrainingSessionRepository(db)
+    booking_repository = TrainingBookingRepository(db)
+    attendance_repository = AttendanceRecordRepository(db)
+    training_orm_service = TrainingOrmService(db, program_repository, session_repository, booking_repository, attendance_repository)
     
     return GenerateInsightsUseCase(
         session=db,
@@ -351,9 +399,15 @@ async def get_export_data_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> ExportDataUseCase:
     """Factory for ExportDataUseCase."""
-    content_orm_service = ContentOrmService(db)
-    user_orm_service = UserOrmService(db)
-    training_orm_service = TrainingOrmService(db)
+    content_repository = ContentRepository(db)
+    content_orm_service = ContentOrmService(db, content_repository)
+    user_repository = UserRepository(db)
+    user_orm_service = UserOrmService(db, user_repository)
+    program_repository = TrainingProgramRepository(db)
+    session_repository = TrainingSessionRepository(db)
+    booking_repository = TrainingBookingRepository(db)
+    attendance_repository = AttendanceRecordRepository(db)
+    training_orm_service = TrainingOrmService(db, program_repository, session_repository, booking_repository, attendance_repository)
     
     return ExportDataUseCase(
         session=db,
@@ -367,7 +421,8 @@ async def get_get_user_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> GetUserUseCase:
     """Factory for GetUserUseCase."""
-    user_orm_service = UserOrmService(db)
+    user_repository = UserRepository(db)
+    user_orm_service = UserOrmService(db, user_repository)
     
     return GetUserUseCase(
         session=db,
@@ -379,7 +434,8 @@ async def get_list_users_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> ListUsersUseCase:
     """Factory for ListUsersUseCase."""
-    user_orm_service = UserOrmService(db)
+    user_repository = UserRepository(db)
+    user_orm_service = UserOrmService(db, user_repository)
     
     return ListUsersUseCase(
         session=db,
@@ -391,7 +447,8 @@ async def get_get_content_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> GetContentUseCase:
     """Factory for GetContentUseCase."""
-    content_orm_service = ContentOrmService(db)
+    content_repository = ContentRepository(db)
+    content_orm_service = ContentOrmService(db, content_repository)
     
     return GetContentUseCase(
         session=db,
@@ -403,7 +460,8 @@ async def get_list_content_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> ListContentUseCase:
     """Factory for ListContentUseCase."""
-    content_orm_service = ContentOrmService(db)
+    content_repository = ContentRepository(db)
+    content_orm_service = ContentOrmService(db, content_repository)
     
     return ListContentUseCase(
         session=db,
@@ -415,7 +473,8 @@ async def get_delete_content_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> DeleteContentUseCase:
     """Factory for DeleteContentUseCase."""
-    content_orm_service = ContentOrmService(db)
+    content_repository = ContentRepository(db)
+    content_orm_service = ContentOrmService(db, content_repository)
     
     return DeleteContentUseCase(
         session=db,
@@ -427,7 +486,8 @@ async def get_record_content_view_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> RecordContentViewUseCase:
     """Factory for RecordContentViewUseCase."""
-    content_orm_service = ContentOrmService(db)
+    content_repository = ContentRepository(db)
+    content_orm_service = ContentOrmService(db, content_repository)
     
     return RecordContentViewUseCase(
         session=db,
@@ -439,7 +499,8 @@ async def get_record_content_completion_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> RecordContentCompletionUseCase:
     """Factory for RecordContentCompletionUseCase."""
-    content_orm_service = ContentOrmService(db)
+    content_repository = ContentRepository(db)
+    content_orm_service = ContentOrmService(db, content_repository)
     
     return RecordContentCompletionUseCase(
         session=db,
@@ -451,7 +512,8 @@ async def get_list_generation_sessions_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> ListGenerationSessionsUseCase:
     """Factory for ListGenerationSessionsUseCase."""
-    generation_session_orm_service = GenerationSessionOrmService(db)
+    generation_repository = GenerationSessionRepository(db)
+    generation_session_orm_service = GenerationSessionOrmService(db, generation_repository)
     
     return ListGenerationSessionsUseCase(
         session=db,
@@ -463,7 +525,8 @@ async def get_get_generation_session_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> GetGenerationSessionUseCase:
     """Factory for GetGenerationSessionUseCase."""
-    generation_session_orm_service = GenerationSessionOrmService(db)
+    generation_repository = GenerationSessionRepository(db)
+    generation_session_orm_service = GenerationSessionOrmService(db, generation_repository)
     
     return GetGenerationSessionUseCase(
         session=db,
@@ -475,7 +538,8 @@ async def get_cancel_generation_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> CancelGenerationUseCase:
     """Factory for CancelGenerationUseCase."""
-    generation_session_orm_service = GenerationSessionOrmService(db)
+    generation_repository = GenerationSessionRepository(db)
+    generation_session_orm_service = GenerationSessionOrmService(db, generation_repository)
     
     return CancelGenerationUseCase(
         session=db,
@@ -487,7 +551,8 @@ async def get_generation_status_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> GenerationStatusUseCase:
     """Factory for GenerationStatusUseCase."""
-    generation_session_orm_service = GenerationSessionOrmService(db)
+    generation_repository = GenerationSessionRepository(db)
+    generation_session_orm_service = GenerationSessionOrmService(db, generation_repository)
     
     return GenerationStatusUseCase(
         session=db,
@@ -499,8 +564,10 @@ async def get_create_activity_from_generation_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> CreateActivityFromGenerationUseCase:
     """Factory for CreateActivityFromGenerationUseCase."""
-    generation_session_orm_service = GenerationSessionOrmService(db)
-    content_orm_service = ContentOrmService(db)
+    generation_repository = GenerationSessionRepository(db)
+    generation_session_orm_service = GenerationSessionOrmService(db, generation_repository)
+    content_repository = ContentRepository(db)
+    content_orm_service = ContentOrmService(db, content_repository)
     
     return CreateActivityFromGenerationUseCase(
         session=db,
@@ -513,7 +580,8 @@ async def get_start_generation_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> StartGenerationUseCase:
     """Factory for StartGenerationUseCase."""
-    generation_session_orm_service = GenerationSessionOrmService(db)
+    generation_repository = GenerationSessionRepository(db)
+    generation_session_orm_service = GenerationSessionOrmService(db, generation_repository)
     
     return StartGenerationUseCase(
         session=db,
@@ -525,7 +593,8 @@ async def get_retry_generation_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> RetryGenerationUseCase:
     """Factory for RetryGenerationUseCase."""
-    generation_session_orm_service = GenerationSessionOrmService(db)
+    generation_repository = GenerationSessionRepository(db)
+    generation_session_orm_service = GenerationSessionOrmService(db, generation_repository)
     
     return RetryGenerationUseCase(
         session=db,
@@ -537,7 +606,8 @@ async def get_generation_statistics_use_case(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> GetGenerationStatisticsUseCase:
     """Factory for GetGenerationStatisticsUseCase."""
-    generation_session_orm_service = GenerationSessionOrmService(db)
+    generation_repository = GenerationSessionRepository(db)
+    generation_session_orm_service = GenerationSessionOrmService(db, generation_repository)
     
     return GetGenerationStatisticsUseCase(
         session=db,

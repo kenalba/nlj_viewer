@@ -8,7 +8,7 @@ from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, Enum as SQLEnum, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -91,7 +91,7 @@ class ContentVersion(Base):
         Integer, nullable=False, comment="Incremental version number (1, 2, 3, ...)"
     )
     version_status: Mapped[VersionStatus] = mapped_column(
-        String(20), default=VersionStatus.DRAFT, nullable=False, index=True
+        SQLEnum(VersionStatus), default=VersionStatus.DRAFT, nullable=False, index=True
     )
 
     # Content snapshot - store the NLJ JSON for this specific version
@@ -307,7 +307,7 @@ class WorkflowReview(Base):
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
     )
 
-    decision: Mapped[ReviewDecision] = mapped_column(String(20), nullable=False)
+    decision: Mapped[ReviewDecision] = mapped_column(SQLEnum(ReviewDecision), nullable=False)
 
     comments: Mapped[str | None] = mapped_column(Text, comment="Reviewer feedback and comments")
 
@@ -362,7 +362,7 @@ class WorkflowTemplate(Base):
     # Template identification
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="Human-readable template name")
     content_type: Mapped[WorkflowTemplateType] = mapped_column(
-        String(20), nullable=False, index=True, comment="Type of content this template applies to"
+        SQLEnum(WorkflowTemplateType), nullable=False, index=True, comment="Type of content this template applies to"
     )
 
     # Template configuration

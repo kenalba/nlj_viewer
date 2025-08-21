@@ -166,27 +166,7 @@ class ListContentUseCase(BaseUseCase[ListContentRequest, ListContentResponse]):
             # Convert content items to service schemas
             content_schemas = []
             for content in content_items:
-                content_schema = ContentServiceSchema(
-                    id=content.id,
-                    title=content.title,
-                    description=content.description,
-                    content_type=getattr(content, 'content_type', None),
-                    learning_style=getattr(content, 'learning_style', None),
-                    state=getattr(content, 'state', ContentState.DRAFT),
-                    is_template=getattr(content, 'is_template', False),
-                    template_category=getattr(content, 'template_category', None),
-                    nlj_data=getattr(content, 'nlj_data', {}),
-                    version=getattr(content, 'version', 1),
-                    view_count=getattr(content, 'view_count', 0),
-                    completion_count=getattr(content, 'completion_count', 0),
-                    creator_id=getattr(content, 'created_by', None),
-                    parent_content_id=getattr(content, 'parent_content_id', None),
-                    created_at=getattr(content, 'created_at', None),
-                    updated_at=getattr(content, 'updated_at', None),
-                    published_at=getattr(content, 'published_at', None),
-                    import_source=getattr(content, 'import_source', None),
-                    import_filename=getattr(content, 'import_filename', None)
-                )
+                content_schema = ContentServiceSchema.from_orm_model(content)
                 content_schemas.append(content_schema)
 
             # Calculate pagination metadata
@@ -276,6 +256,23 @@ class ListContentUseCase(BaseUseCase[ListContentRequest, ListContentResponse]):
             adjusted_request.include_archived = False  # Never show archived
 
         return adjusted_request
+
+    def _ensure_valid_nlj_data(self, nlj_data: dict[str, Any]) -> dict[str, Any]:
+        """Ensure NLJ data has required fields for schema validation."""
+        if not isinstance(nlj_data, dict):
+            nlj_data = {}
+        
+        # Ensure required fields exist
+        if "title" not in nlj_data:
+            nlj_data["title"] = "Untitled"
+        
+        if "nodes" not in nlj_data:
+            nlj_data["nodes"] = []
+        
+        if "edges" not in nlj_data:
+            nlj_data["edges"] = []
+            
+        return nlj_data
 
     async def _publish_content_list_event(
         self,

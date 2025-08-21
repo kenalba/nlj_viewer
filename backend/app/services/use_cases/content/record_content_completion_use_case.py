@@ -16,7 +16,6 @@ from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user import UserRole
 from app.services.orm_services.content_orm_service import ContentOrmService
 from ..base_use_case import BaseUseCase
 

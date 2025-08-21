@@ -79,6 +79,8 @@ def do_run_migrations(connection: Connection) -> None:
         target_metadata=target_metadata,
         compare_type=True,
         compare_server_default=True,
+        transaction_per_migration=True,  # Use single transaction per migration
+        transactional_ddl=True,  # Use transactional DDL for PostgreSQL
     )
 
     with context.begin_transaction():
@@ -87,16 +89,14 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
     """Run migrations in 'online' mode with async support."""
-    # Use database manager for proper RDS/LocalStack connection handling
-    from app.core.database_manager import db_manager
+    # Use direct database URL from settings - avoid database manager complexity
+    url = config.get_main_option("sqlalchemy.url")
     
-    # Initialize database manager to get proper connection URL
-    await db_manager.initialize()
-    
-    # Create async engine using the database manager's connection URL
+    # Create async engine with single connection pool to avoid conflicts
     connectable = create_async_engine(
-        str(db_manager._connection_url),
-        poolclass=pool.NullPool,
+        url,
+        poolclass=pool.NullPool,  # Use NullPool to avoid connection pooling issues
+        echo=False,  # Disable SQL echo to reduce overhead
     )
 
     async with connectable.connect() as connection:

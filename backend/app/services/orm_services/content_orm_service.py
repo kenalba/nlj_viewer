@@ -242,8 +242,8 @@ class ContentOrmService(BaseOrmService[ContentItem, ContentRepository]):
             if not content:
                 return None
 
-            # Validate state transition using entity method
-            if not content.can_transition_to(new_state):
+            # Validate state transition using service method
+            if not self._can_transition_to_state(content.state, new_state):
                 raise ValueError(f"Cannot transition from {content.state} to {new_state}")
 
             update_data: dict[str, Any] = {"state": new_state}

@@ -1,25 +1,4 @@
 services:
-  # Existing NLJ Platform Database
-  nlj-db:
-    image: postgres:15-alpine
-    container_name: nlj_postgres
-    environment:
-      POSTGRES_DB: nlj_platform
-      POSTGRES_USER: nlj_user
-      POSTGRES_PASSWORD: nlj_pass
-      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
-    ports:
-      - "5432:5432"
-    volumes:
-      - nlj_db_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U nlj_user -d nlj_platform"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - nlj_network
-
   # Test Database - PostgreSQL for running tests with production-like environment
   nlj-test-db:
     image: postgres:15-alpine
@@ -110,8 +89,8 @@ services:
     env_file:
       - .env
     environment:
-      # Database Configuration
-      - DATABASE_URL=postgresql+asyncpg://nlj_user:nlj_pass@nlj-db:5432/nlj_platform
+      # Database Configuration - RDS Instance
+      - DATABASE_URL=postgresql+asyncpg://nlj_admin:nlj_secure_password_2024@host.docker.internal:4510/nlj_platform
       
       # RedPanda Configuration (Kafka API Compatible)
       - KAFKA_BOOTSTRAP_SERVERS=redpanda:29092
@@ -149,9 +128,8 @@ services:
     volumes:
       - ./backend/uploads:/app/uploads
       - ./backend/app:/app/app  # For development hot-reload
+      - ./static:/app/static  # Static content for seed script
     depends_on:
-      nlj-db:
-        condition: service_healthy
       redpanda:
         condition: service_healthy
     networks:
@@ -238,8 +216,8 @@ services:
       - KAFKA_CLIENT_ID=nlj-faststream-platform
       - KAFKA_GROUP_ID=nlj-faststream-consumer
       
-      # Database Configuration
-      - DATABASE_URL=postgresql+asyncpg://nlj_user:nlj_pass@nlj-db:5432/nlj_platform
+      # Database Configuration - RDS Instance  
+      - DATABASE_URL=postgresql+asyncpg://nlj_admin:nlj_secure_password_2024@host.docker.internal:4510/nlj_platform
       - DATABASE_POOL_SIZE=10
       - DATABASE_MAX_OVERFLOW=20
       
@@ -258,8 +236,6 @@ services:
     volumes:
       - ./backend/app:/app/app  # Development hot-reload
     depends_on:
-      nlj-db:
-        condition: service_healthy
       redpanda:
         condition: service_healthy
       elasticsearch:
@@ -293,8 +269,6 @@ services:
 
 
 volumes:
-  nlj_db_data:
-    driver: local
   redpanda_data:
     driver: local
   elasticsearch_data:
