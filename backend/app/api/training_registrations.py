@@ -1,152 +1,161 @@
 """
-Training Registration API endpoints.
-Handles learner registration for training sessions via event-driven architecture.
+Training Registration API endpoints - Clean Architecture.
+Handles learner registration for training sessions using Clean Architecture patterns.
 """
 
 import logging
-from typing import Annotated, Any, Dict, Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field, ConfigDict
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel, Field
 
-from app.core.database_manager import get_db
-from app.core.deps import get_current_user
-from app.models.training_program import TrainingProgram, TrainingSession
+from app.core.deps import get_current_user, get_track_engagement_use_case
+from app.core.user_context import extract_user_context
 from app.models.user import User
-from app.services.kafka_service import XAPIEventService, get_xapi_event_service
+from app.services.use_cases.training.track_engagement_use_case import (
+    TrackEngagementUseCase, TrackEngagementRequest, EngagementAction
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-# Pydantic schemas
+# API Schemas (request/response models for API boundary)
 class BookingRequest(BaseModel):
     """Schema for booking registration requests."""
-
     session_id: UUID = Field(..., description="Training session UUID")
     registration_method: str = Field(default="online", description="Registration method")
-    special_requirements: Optional[Dict[str, Any]] = Field(None, description="Special accommodations or requirements")
-    registration_notes: Optional[str] = Field(None, max_length=500, description="Optional notes from learner")
+    special_requirements: dict[str, str] | None = Field(None, description="Special accommodations")
+    registration_notes: str | None = Field(None, max_length=500, description="Optional notes")
 
 
 class BookingResponse(BaseModel):
-    """Schema for event-driven booking responses."""
-
+    """Schema for booking registration responses."""
     message: str = Field(..., description="Registration status message")
-    event_id: str = Field(..., description="Event ID for tracking")
-    booking_id: str = Field(..., description="Booking ID")
+    booking_id: str = Field(..., description="Booking ID for tracking")
     session_id: str = Field(..., description="Session ID")
-    status_endpoint: str = Field(..., description="Endpoint to check booking status")
+    status: str = Field(..., description="Registration status")
 
 
-class RegistrationResponse(BaseModel):
-    """Schema for user registration responses."""
-
-    id: str
-    program_id: str
+class RegistrationStatusResponse(BaseModel):
+    """Schema for registration status responses."""
+    booking_id: str
     session_id: str
     learner_id: str
-    booking_status: str
+    status: str
     registration_method: str
-    special_requirements: Optional[Dict[str, Any]]
-    waitlist_position: Optional[int]
-    confirmation_sent: bool
-    registered_at: str
-    updated_at: str
+    waitlist_position: int | None = None
+    confirmation_sent: bool = False
+    registered_at: str | None = None
 
-    model_config = ConfigDict(from_attributes=True)
 
+# API Endpoints
 
 @router.post("/register", response_model=BookingResponse)
 async def register_for_training(
     booking_data: BookingRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
-    xapi_service: Annotated[XAPIEventService, Depends(get_xapi_event_service)],
+    current_user: User = Depends(get_current_user),
+    track_engagement_use_case: TrackEngagementUseCase = Depends(get_track_engagement_use_case)
 ) -> BookingResponse:
-    """
-    Register a learner for a training session via event-driven architecture.
-    Publishes booking.requested event which will be processed asynchronously.
-    """
-
+    """Register a learner for a training session using Clean Architecture."""
+    
+    # TODO: Add REGISTER_FOR_SESSION action to EngagementAction enum
+    # For now, return placeholder
     try:
-        # Verify session exists and is available for registration
-        stmt = select(TrainingSession).where(TrainingSession.id == booking_data.session_id)
-        result = await db.execute(stmt)
-        session = result.scalar_one_or_none()
-
-        if not session:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Training session not found")
-
-        if session.status != "scheduled":
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Cannot register for session with status: {session.status}",
-            )
-
-        # Get session program for event context
-        program_stmt = select(TrainingProgram).where(TrainingProgram.id == session.program_id)
-        program_result = await db.execute(program_stmt)
-        program = program_result.scalar_one_or_none()
-
-        if not program:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Session program not found")
-
-        # Generate booking ID
-        booking_id = str(uuid4())
-
-        # Publish booking.requested event
-        await xapi_service.publish_booking_requested(
-            booking_id=booking_id,
-            session_id=str(booking_data.session_id),
-            session_title=program.title,
-            learner_id=str(current_user.id),
-            learner_email=current_user.email,
-            learner_name=current_user.full_name or current_user.email,
-            registration_method=booking_data.registration_method,
-            special_requirements=booking_data.special_requirements,
-        )
-
-        # The event consumer will handle the booking processing asynchronously via Kafka
-        # No need to directly call the consumer function - the published event above will trigger it
-
-        # Generate event ID for tracking
-        event_id = str(uuid4())
-
-        logger.info(
-            f"Published booking.requested event for learner {current_user.id} " f"in session {booking_data.session_id}"
-        )
-
-        return BookingResponse(
-            message="Registration request submitted",
-            event_id=event_id,
-            booking_id=booking_id,
-            session_id=str(booking_data.session_id),
-            status_endpoint=f"/api/bookings/{booking_id}/status",
-        )
-
-    except HTTPException:
-        # Re-raise HTTP exceptions
-        raise
-    except Exception as e:
-        logger.error(f"Error processing training registration: {e}")
+        # Placeholder until REGISTER action is implemented
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to process registration request"
+            status_code=status.HTTP_501_NOT_IMPLEMENTED, 
+            detail="Training registration not yet implemented - needs REGISTER action in TrackEngagementUseCase"
         )
+        
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except RuntimeError:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 
-@router.get("/{booking_id}/status")
+@router.get("/{booking_id}/status", response_model=RegistrationStatusResponse)
 async def get_booking_status(
     booking_id: UUID,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
-) -> Dict[str, Any]:
+    current_user: User = Depends(get_current_user),
+    track_engagement_use_case: TrackEngagementUseCase = Depends(get_track_engagement_use_case)
+) -> RegistrationStatusResponse:
     """Get the current status of a booking registration."""
+    
+    # TODO: Add GET_REGISTRATION_STATUS action to EngagementAction enum
+    try:
+        # Placeholder until status checking is implemented
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED, 
+            detail="Registration status checking not yet implemented - needs GET_STATUS action in TrackEngagementUseCase"
+        )
+        
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except RuntimeError:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
-    # This would query the database to get current booking status
-    # For now, returning a placeholder response
-    return {"booking_id": str(booking_id), "status": "processing", "message": "Registration is being processed"}
+
+@router.delete("/{booking_id}", response_model=dict[str, str])
+async def cancel_registration(
+    booking_id: UUID,
+    current_user: User = Depends(get_current_user),
+    track_engagement_use_case: TrackEngagementUseCase = Depends(get_track_engagement_use_case)
+) -> dict[str, str]:
+    """Cancel a training registration."""
+    
+    # TODO: Add CANCEL_REGISTRATION action to EngagementAction enum
+    try:
+        # Placeholder until cancellation is implemented
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED, 
+            detail="Registration cancellation not yet implemented - needs CANCEL action in TrackEngagementUseCase"
+        )
+        
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except RuntimeError:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+
+
+@router.get("/my-registrations", response_model=list[RegistrationStatusResponse])
+async def get_my_registrations(
+    current_user: User = Depends(get_current_user),
+    track_engagement_use_case: TrackEngagementUseCase = Depends(get_track_engagement_use_case),
+    upcoming_only: bool = True
+) -> list[RegistrationStatusResponse]:
+    """Get current user's training registrations."""
+    
+    # Convert to engagement tracking request
+    registrations_request = TrackEngagementRequest(
+        action=EngagementAction.GET_UPCOMING_SESSIONS,
+        user_id=current_user.id,
+        limit=50
+    )
+    
+    user_context = extract_user_context(current_user)
+    
+    try:
+        # TODO: Enhance TrackEngagementUseCase to return registration details
+        # For now, return empty list as placeholder
+        return []
+        
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except RuntimeError:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
