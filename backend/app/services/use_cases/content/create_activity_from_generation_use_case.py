@@ -229,65 +229,39 @@ class CreateActivityFromGenerationUseCase(BaseUseCase[CreateActivityFromGenerati
         return nlj_data, quality_score, validation_warnings
 
     async def _extract_json_from_claude_response(self, generated_content: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Extract JSON content from Claude response using multiple strategies."""
-        import json
+        """Extract NLJ JSON from the session's generated content."""
+        logger.info(f"🔍 Extracting NLJ JSON from session generated content")
+        logger.info(f"  - Generated content type: {type(generated_content)}")
         
-        logger.info(f"🔍 Starting JSON extraction from Claude response")
-        logger.info(f"  - Generated content keys: {list(generated_content.keys())}")
-        
-        # Strategy 1: Check if Claude service already extracted the JSON
-        if "generated_json" in generated_content:
-            logger.info(f"✅ Found pre-extracted JSON from Claude service")
-            validated_nlj = generated_content["generated_json"]
-            if isinstance(validated_nlj, dict):
-                logger.info(f"  - Pre-extracted NLJ keys: {list(validated_nlj.keys())}")
-                return validated_nlj
-
-        # Strategy 2: Check for validated_nlj field (from handler)
-        if "validated_nlj" in generated_content:
-            logger.info(f"✅ Found validated_nlj field")
-            validated_nlj = generated_content["validated_nlj"]
-            if isinstance(validated_nlj, dict):
-                return validated_nlj
-
-        # Strategy 3: Extract from raw_response
-        if "raw_response" in generated_content:
-            logger.info(f"🔄 Extracting JSON from raw_response")
-            response_text = generated_content["raw_response"]
+        # The FastStream handler should have already parsed and stored clean NLJ JSON
+        if isinstance(generated_content, dict):
+            logger.info(f"  - Generated content keys: {list(generated_content.keys())}")
             
-            # Method 1: Try to parse the entire response as JSON
-            try:
-                response_text_cleaned = response_text.strip()
-                if response_text_cleaned.startswith('{') and response_text_cleaned.endswith('}'):
-                    parsed = json.loads(response_text_cleaned)
-                    if isinstance(parsed, dict) and self._is_valid_nlj_structure(parsed):
-                        logger.info(f"✅ Successfully parsed entire response as valid NLJ JSON")
-                        return parsed
-            except json.JSONDecodeError:
-                logger.info(f"  - Full response is not valid JSON, trying extraction")
-
-            # Method 2: Extract JSON from response with prefatory text
-            if "{" in response_text and "}" in response_text:
-                start_idx = response_text.find("{")
-                end_idx = response_text.rfind("}") + 1
-                json_content = response_text[start_idx:end_idx]
+            # Check if it looks like NLJ data
+            if self._is_valid_nlj_structure(generated_content):
+                logger.info(f"✅ Generated content is valid NLJ structure")
+                return generated_content
+            else:
+                logger.warning(f"⚠️ Generated content doesn't look like NLJ structure")
+                # Check if it might be the old wrapper format (fallback)
+                if "raw_response" in generated_content:
+                    logger.info(f"🔄 Fallback: Found raw_response in wrapper, extracting JSON")
+                    import json
+                    try:
+                        response_text = generated_content["raw_response"]
+                        parsed = json.loads(response_text.strip())
+                        if isinstance(parsed, dict):
+                            logger.info(f"✅ Successfully parsed raw_response as fallback")
+                            return parsed
+                    except json.JSONDecodeError as e:
+                        logger.error(f"❌ Failed to parse raw_response as fallback: {e}")
                 
-                try:
-                    parsed = json.loads(json_content)
-                    if isinstance(parsed, dict):
-                        logger.info(f"✅ Successfully extracted and parsed JSON from response")
-                        logger.info(f"  - Extracted NLJ keys: {list(parsed.keys())}")
-                        return parsed
-                except json.JSONDecodeError as e:
-                    logger.error(f"❌ Failed to parse extracted JSON: {e}")
+                # Return as-is if it contains some data
+                if generated_content:
+                    logger.info(f"📦 Using generated_content as-is")
+                    return generated_content
 
-        # Strategy 4: Try to parse generated_content directly
-        logger.info(f"🔄 Attempting to use generated_content directly as NLJ data")
-        if isinstance(generated_content, dict) and ("nodes" in generated_content or "name" in generated_content):
-            logger.info(f"✅ Using generated_content directly as NLJ structure")
-            return generated_content
-
-        logger.error(f"❌ All JSON extraction strategies failed")
+        logger.error(f"❌ Cannot extract NLJ JSON from generated content")
         return None
 
     def _is_valid_nlj_structure(self, data: Dict[str, Any]) -> bool:

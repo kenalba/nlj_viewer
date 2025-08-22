@@ -209,7 +209,7 @@ class GenerateContentUseCase(BaseUseCase[GenerateContentRequest, GenerateContent
         user_role = user_context.get("user_role")
 
         # Document owner has access
-        if hasattr(document, 'uploaded_by') and document.uploaded_by == user_id:
+        if hasattr(document, 'user_id') and document.user_id == user_id:
             return
 
         # Reviewers and above can access any document

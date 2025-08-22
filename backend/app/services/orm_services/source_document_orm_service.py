@@ -36,39 +36,45 @@ class SourceDocumentOrmService(BaseOrmService[SourceDocument, SourceDocumentRepo
 
     async def create_document(
         self,
-        title: str,
+        filename: str,
+        original_filename: str,
         file_path: str,
         file_size: int,
         file_type: str,
-        creator_id: uuid.UUID,
+        original_file_type: str,
+        user_id: uuid.UUID,
         content_hash: str | None = None,
-        extracted_text: str | None = None,
+        summary: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> SourceDocument:
         """
         Create new source document with validation.
 
         Args:
-            title: Document title
+            filename: Current document filename (may be converted)
+            original_filename: Original uploaded filename
             file_path: Path to uploaded file
             file_size: File size in bytes
-            file_type: MIME type of file
-            creator_id: ID of user who uploaded document
+            file_type: Current file type (after conversion if applicable)
+            original_file_type: Original file type before conversion
+            user_id: ID of user who uploaded document
             content_hash: Hash of file content for deduplication
-            extracted_text: Extracted text content
+            summary: AI-generated summary of document content
             metadata: Document metadata
 
         Returns:
             Created SourceDocument
         """
         document_data = await self.validate_entity_data(
-            title=title,
+            filename=filename,
+            original_filename=original_filename,
             file_path=file_path,
             file_size=file_size,
             file_type=file_type,
-            creator_id=creator_id,
+            original_file_type=original_file_type,
+            user_id=user_id,
             content_hash=content_hash,
-            extracted_text=extracted_text,
+            summary=summary,
             metadata=metadata or {},
         )
 
@@ -133,11 +139,17 @@ class SourceDocumentOrmService(BaseOrmService[SourceDocument, SourceDocumentRepo
         """Validate source document data before persistence."""
         validated = {}
 
-        if "title" in kwargs:
-            title = kwargs["title"]
-            if not isinstance(title, str) or not title.strip():
-                raise ValueError("Title must be a non-empty string")
-            validated["title"] = title.strip()
+        if "filename" in kwargs:
+            filename = kwargs["filename"]
+            if not isinstance(filename, str) or not filename.strip():
+                raise ValueError("Filename must be a non-empty string")
+            validated["filename"] = filename.strip()
+
+        if "original_filename" in kwargs:
+            original_filename = kwargs["original_filename"]
+            if not isinstance(original_filename, str) or not original_filename.strip():
+                raise ValueError("Original filename must be a non-empty string")
+            validated["original_filename"] = original_filename.strip()
 
         if "file_path" in kwargs:
             path = kwargs["file_path"]
@@ -149,7 +161,25 @@ class SourceDocumentOrmService(BaseOrmService[SourceDocument, SourceDocumentRepo
             file_type = kwargs["file_type"]
             if not isinstance(file_type, str) or not file_type.strip():
                 raise ValueError("File type must be a non-empty string")
-            validated["file_type"] = file_type.strip()
+            # Convert MIME type to FileType enum value
+            if file_type == "application/pdf":
+                validated["file_type"] = "pdf"
+            elif file_type.startswith("text/"):
+                validated["file_type"] = "txt"
+            else:
+                validated["file_type"] = file_type.strip()
+
+        if "original_file_type" in kwargs:
+            original_file_type = kwargs["original_file_type"]
+            if not isinstance(original_file_type, str) or not original_file_type.strip():
+                raise ValueError("Original file type must be a non-empty string")
+            # Convert MIME type to FileType enum value
+            if original_file_type == "application/pdf":
+                validated["original_file_type"] = "pdf"
+            elif original_file_type.startswith("text/"):
+                validated["original_file_type"] = "txt"
+            else:
+                validated["original_file_type"] = original_file_type.strip()
 
         if "file_size" in kwargs:
             size = kwargs["file_size"]
@@ -157,10 +187,10 @@ class SourceDocumentOrmService(BaseOrmService[SourceDocument, SourceDocumentRepo
                 raise ValueError("File size must be a non-negative integer")
             validated["file_size"] = size
 
-        if "creator_id" in kwargs:
-            if not isinstance(kwargs["creator_id"], uuid.UUID):
-                raise ValueError("Creator ID must be a valid UUID")
-            validated["uploaded_by"] = kwargs["creator_id"]
+        if "user_id" in kwargs:
+            if not isinstance(kwargs["user_id"], uuid.UUID):
+                raise ValueError("User ID must be a valid UUID")
+            validated["user_id"] = kwargs["user_id"]
 
         if "content_hash" in kwargs and kwargs["content_hash"] is not None:
             hash_val = kwargs["content_hash"]
@@ -168,17 +198,23 @@ class SourceDocumentOrmService(BaseOrmService[SourceDocument, SourceDocumentRepo
                 raise ValueError("Content hash must be a non-empty string if provided")
             validated["content_hash"] = hash_val.strip()
 
-        if "extracted_text" in kwargs and kwargs["extracted_text"] is not None:
-            text = kwargs["extracted_text"]
+        if "summary" in kwargs and kwargs["summary"] is not None:
+            text = kwargs["summary"]
             if not isinstance(text, str):
-                raise ValueError("Extracted text must be a string")
-            validated["extracted_text"] = text
+                raise ValueError("Summary text must be a string")
+            validated["summary"] = text
 
         if "metadata" in kwargs:
             metadata = kwargs["metadata"]
             if not isinstance(metadata, dict):
                 raise ValueError("Metadata must be a dictionary")
-            validated["metadata"] = metadata
+            # Handle specific metadata fields that map to model columns
+            if "keywords" in metadata:
+                validated["keywords"] = metadata["keywords"]
+            if "learning_objectives" in metadata:
+                validated["learning_objectives"] = metadata["learning_objectives"]
+            if "target_audience" in metadata:
+                validated["target_audience"] = metadata["target_audience"]
 
         return validated
 
@@ -186,8 +222,8 @@ class SourceDocumentOrmService(BaseOrmService[SourceDocument, SourceDocumentRepo
         """Handle source document entity relationships after persistence."""
         try:
             await self.session.refresh(entity)
-            if not entity.uploaded_by_user:
-                await self.session.refresh(entity, ["uploaded_by_user"])
+            if not hasattr(entity, 'owner') or not entity.owner:
+                await self.session.refresh(entity, ["owner"])
             return entity
         except SQLAlchemyError as e:
             raise RuntimeError(f"Failed to handle document relationships: {e}") from e

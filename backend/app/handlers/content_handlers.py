@@ -506,9 +506,25 @@ async def _perform_claude_content_generation(session: GenerationSession, db: Asy
         session.status = GenerationStatus.COMPLETED
         session.completed_at = datetime.now(timezone.utc)
         
-        # Store the complete Claude response for Use Case processing
-        # The generated_content field will contain everything needed for JSON extraction and validation
-        session.generated_content = generated_content
+        # Extract and parse the raw_response from the Claude service response
+        # Store only the parsed JSON NLJ data for Use Case processing
+        if isinstance(generated_content, dict) and "raw_response" in generated_content:
+            import json
+            try:
+                # Parse the raw_response JSON string into a dictionary
+                raw_response_text = generated_content["raw_response"]
+                parsed_nlj = json.loads(raw_response_text)
+                logger.info(f"✅ Successfully parsed raw_response into NLJ JSON")
+                logger.info(f"  - Parsed NLJ keys: {list(parsed_nlj.keys()) if isinstance(parsed_nlj, dict) else 'N/A'}")
+                session.generated_content = parsed_nlj
+            except json.JSONDecodeError as e:
+                logger.error(f"❌ Failed to parse raw_response as JSON: {e}")
+                logger.error(f"  - Raw response preview: {raw_response_text[:500]}...")
+                # Store the entire response as fallback for debugging
+                session.generated_content = generated_content
+        else:
+            logger.warning(f"⚠️ No raw_response found in generated_content, storing as-is")
+            session.generated_content = generated_content
         session.total_tokens_used = tokens_used
         session.generation_time_seconds = generation_time
 
