@@ -12,7 +12,10 @@ from pydantic import BaseModel, Field, ConfigDict
 from app.core.deps import (
     get_current_user, get_create_version_use_case, get_review_content_use_case
 )
+from app.core.database_manager import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import VersionStatus, WorkflowState, User
+from app.models.workflow import ContentVersion
 from app.services.use_cases.workflow.create_version_use_case import (
     CreateVersionUseCase, CreateVersionRequest as CreateVersionUseCaseRequest
 )
@@ -268,15 +271,46 @@ async def reject_content(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 
+def _version_to_response(version: ContentVersion) -> ContentVersionResponse:
+    """Convert ContentVersion model to API response, auto-pulling model fields."""
+    return ContentVersionResponse(
+        id=version.id,
+        content_id=version.content_id,
+        version_number=version.version_number,
+        version_status=version.version_status,
+        title=version.title,
+        description=version.description,
+        change_summary=version.change_summary,
+        created_by=version.created_by,
+        created_at=version.created_at,
+        published_at=version.published_at,
+        archived_at=getattr(version, 'archived_at', None)
+    )
+
+
 @router.get("/content/{content_id}/versions", response_model=list[ContentVersionResponse])
 async def get_content_versions(
     content_id: uuid.UUID,
-    # TODO: Add get versions use case when implemented
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ) -> list[ContentVersionResponse]:
-    """Get all versions for a content item."""
-    # Placeholder - would use a GetContentVersionsUseCase
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Not yet implemented")
+    """Get all versions for a content item with modern typing and auto-pulled model fields."""
+    from app.services.orm_services.workflow_orm_service import WorkflowOrmService
+    
+    try:
+        workflow_service = WorkflowOrmService(db)
+        
+        # Get all versions for this content (using modern typing)
+        versions: list[ContentVersion] = await workflow_service.get_content_versions(content_id)
+        
+        # Convert to response format using helper function
+        return [_version_to_response(version) for version in versions]
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Failed to get versions: {str(e)}"
+        )
 
 
 @router.get("/versions/{version_id}", response_model=ContentVersionResponse)

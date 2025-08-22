@@ -117,18 +117,11 @@ const ActivityDetailPage: React.FC = () => {
   const activitiesIndex = pathSegments.indexOf('activities');
   const id = activitiesIndex !== -1 ? pathSegments[activitiesIndex + 1] : null;
 
-  // Debug logging
-  console.log('ActivityDetailPage rendered with ID:', id);
-  console.log('Current pathname:', window.location.pathname);
-  console.log('Path segments:', pathSegments);
 
   // Fetch activity
   const { data: activity, isLoading, error } = useQuery({
     queryKey: ['content', id],
-    queryFn: () => {
-      console.log('Fetching activity with ID:', id);
-      return contentApi.get(id!);
-    },
+    queryFn: () => contentApi.get(id!),
     enabled: !!id,
   });
 
@@ -572,10 +565,10 @@ const ActivityDetailPage: React.FC = () => {
                       alignItems: 'center',
                       justifyContent: 'center',
                       minHeight: 120,
-                      backgroundColor: 'grey.50',
+                      backgroundColor: 'background.default',
                       borderRadius: 1,
                       border: '1px dashed',
-                      borderColor: 'grey.300'
+                      borderColor: 'divider'
                     }}>
                       <Typography variant="body2" color="text.secondary" sx={{ 
                         fontStyle: 'italic',

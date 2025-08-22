@@ -6,6 +6,7 @@ Handles workflow creation, state transitions, reviews, and multi-stage processes
 """
 
 import uuid
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -272,3 +273,36 @@ class WorkflowOrmService(BaseOrmService[ApprovalWorkflow, WorkflowRepository]):
     ) -> list[WorkflowTemplate]:
         """Get available workflow templates."""
         return await self.repo.get_workflow_templates(content_type, active_only)
+
+    # Implementation of abstract methods from BaseOrmService
+    async def validate_entity_data(self, **kwargs) -> dict[str, Any]:
+        """Validate workflow entity data before persistence."""
+        # Basic validation for workflow entities
+        validated_data = {}
+        
+        # For ContentVersion creation
+        if 'content_id' in kwargs and 'created_by' in kwargs:
+            if not kwargs['content_id'] or not kwargs['created_by']:
+                raise ValueError("content_id and created_by are required for content version")
+            validated_data.update({
+                'content_id': kwargs['content_id'],
+                'created_by': kwargs['created_by']
+            })
+        
+        # For ApprovalWorkflow creation
+        if 'content_version_id' in kwargs:
+            if not kwargs['content_version_id']:
+                raise ValueError("content_version_id is required for approval workflow")
+            validated_data['content_version_id'] = kwargs['content_version_id']
+        
+        # Copy all other provided fields
+        for key, value in kwargs.items():
+            if key not in validated_data:
+                validated_data[key] = value
+        
+        return validated_data
+
+    async def handle_entity_relationships(self, entity: ApprovalWorkflow) -> ApprovalWorkflow:
+        """Handle workflow entity relationships after persistence."""
+        # For workflows, relationships (version, reviewer, etc.) are handled by SQLAlchemy
+        return entity

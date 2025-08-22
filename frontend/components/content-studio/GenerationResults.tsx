@@ -19,7 +19,12 @@ import {
   Grid,
   Paper,
   CircularProgress,
-  Snackbar
+  Snackbar,
+  TextField,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Tooltip
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -27,7 +32,10 @@ import {
   Visibility as PreviewIcon,
   Share as ShareIcon,
   Download as DownloadIcon,
-  CheckCircle as CheckIcon
+  CheckCircle as CheckIcon,
+  ExpandMore as ExpandMoreIcon,
+  Quiz as QuizIcon,
+  PlayArrow as PlayIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import type { NLJScenario } from '../../types/nlj';
@@ -48,6 +56,9 @@ export const GenerationResults: React.FC<GenerationResultsProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [activityTitle, setActivityTitle] = useState(generatedContent?.name || 'Generated Activity');
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareSuccess, setShareSuccess] = useState(false);
   if (!generatedContent) {
     return (
       <Box textAlign="center" py={4}>
@@ -82,7 +93,7 @@ export const GenerationResults: React.FC<GenerationResultsProps> = ({
     try {
       // Create activity from generation session
       const response = await apiClient.post(`/api/generation/sessions/${sessionId}/create-activity`, {
-        title: generatedContent.name || 'Generated Activity',
+        title: activityTitle.trim() || 'Generated Activity',
         description: generatedContent.description || 'Generated from Content Studio'
       });
 
@@ -100,6 +111,27 @@ export const GenerationResults: React.FC<GenerationResultsProps> = ({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleShare = async () => {
+    // For now, just copy the generation session ID to clipboard
+    // TODO: Integrate with sharing system after activity is saved
+    setIsSharing(true);
+    try {
+      if (sessionId) {
+        await navigator.clipboard.writeText(`${window.location.origin}/app/generation/session/${sessionId}`);
+        setShareSuccess(true);
+        setTimeout(() => setShareSuccess(false), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const handleTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setActivityTitle(event.target.value);
   };
 
   const handlePreviewActivity = () => {
@@ -122,7 +154,31 @@ export const GenerationResults: React.FC<GenerationResultsProps> = ({
     return stats;
   };
 
+  const getUserFriendlyStats = () => {
+    if (!generatedContent?.nodes) return { learningSteps: 0, questions: 0, interactions: 0 };
+    
+    const questionTypes = ['question', 'true_false', 'multi_select', 'ordering'];
+    const interactionTypes = ['choice', 'input', 'drag_drop'];
+    
+    let learningSteps = 0;
+    let questions = 0;
+    let interactions = 0;
+    
+    generatedContent.nodes.forEach(node => {
+      if (questionTypes.includes(node.type)) {
+        questions++;
+      } else if (interactionTypes.includes(node.type)) {
+        interactions++;
+      } else if (!['start', 'end'].includes(node.type)) {
+        learningSteps++;
+      }
+    });
+    
+    return { learningSteps, questions, interactions };
+  };
+
   const nodeStats = getNodeTypeStats();
+  const friendlyStats = getUserFriendlyStats();
 
   return (
     <Box>
@@ -139,133 +195,143 @@ export const GenerationResults: React.FC<GenerationResultsProps> = ({
         </Box>
       </Box>
 
-      <Grid container spacing={3}>
-        {/* Generated Content Overview */}
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                {generatedContent.name}
-              </Typography>
-              
-              {/* Content Statistics */}
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={6} sm={3}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
-                    <Typography variant="h4" color="primary">
-                      {generatedContent?.nodes?.length || 0}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Total Nodes
-                    </Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
-                    <Typography variant="h4" color="primary">
-                      {generatedContent?.links?.length || 0}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Connections
-                    </Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
-                    <Typography variant="h4" color="primary">
-                      {generatedContent.variableDefinitions?.length || 0}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Variables
-                    </Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
-                    <Typography variant="h4" color="primary">
-                      {Object.keys(nodeStats).length}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Node Types
-                    </Typography>
-                  </Paper>
-                </Grid>
-              </Grid>
+      {/* Hero Section - Title and Primary Actions */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <TextField
+            variant="outlined"
+            label="Activity Title"
+            value={activityTitle}
+            onChange={handleTitleChange}
+            fullWidth
+            sx={{ mb: 3 }}
+            helperText="Give your activity a descriptive name"
+          />
+          
+          <Box display="flex" gap={2} flexWrap="wrap" justifyContent="center">
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={isSaving ? <CircularProgress size={20} /> : <SaveIcon />}
+              onClick={handleSaveAsDraft}
+              disabled={isSaving || !sessionId || !activityTitle.trim()}
+              sx={{ minWidth: 150 }}
+            >
+              {isSaving ? 'Saving...' : 'Save Activity'}
+            </Button>
+            
+            <Button
+              variant="outlined"
+              size="large"
+              startIcon={<EditIcon />}
+              onClick={() => onOpenInFlowEditor(generatedContent)}
+              sx={{ minWidth: 150 }}
+            >
+              Edit in Flow Editor
+            </Button>
+            
+            <Tooltip title="Copy shareable link">
+              <Button
+                variant="outlined"
+                size="large"
+                startIcon={isSharing ? <CircularProgress size={20} /> : <ShareIcon />}
+                onClick={handleShare}
+                disabled={isSharing}
+                sx={{ minWidth: 120 }}
+              >
+                Share
+              </Button>
+            </Tooltip>
 
-              {/* Node Type Breakdown */}
-              <Typography variant="subtitle1" gutterBottom>
-                Content Breakdown
-              </Typography>
-              <Box sx={{ mb: 3 }}>
-                {Object.entries(nodeStats).map(([nodeType, count]) => (
-                  <Chip
-                    key={nodeType}
-                    label={`${nodeType.replace('_', ' ')}: ${count}`}
-                    sx={{ mr: 1, mb: 1 }}
-                    size="small"
-                  />
-                ))}
-              </Box>
+            <Button
+              variant="outlined"
+              size="large"
+              startIcon={<PlayIcon />}
+              onClick={handlePreviewActivity}
+              sx={{ minWidth: 120 }}
+            >
+              Preview
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
 
-              {/* Variables */}
-              {generatedContent.variableDefinitions && generatedContent.variableDefinitions.length > 0 && (
-                <>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Variables
-                  </Typography>
-                  <List dense>
-                    {generatedContent.variableDefinitions.map((variable, index) => (
-                      <ListItem key={index}>
-                        <ListItemText
-                          primary={variable.name}
-                          secondary={`Type: ${variable.type}, Default: ${variable.initialValue}`}
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Actions */}
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Next Steps
-              </Typography>
-              
-              <Alert severity="success" sx={{ mb: 3 }}>
-                <Typography variant="body2">
-                  Your content has been generated and validated against the NLJ schema.
+      {/* Activity Overview */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom display="flex" alignItems="center" gap={1}>
+            <QuizIcon color="primary" />
+            Activity Overview
+          </Typography>
+          
+          <Grid container spacing={3} sx={{ textAlign: 'center' }}>
+            <Grid size={{ xs: 4, md: 2 }}>
+              <Box>
+                <Typography variant="h3" color="primary" fontWeight="bold">
+                  {friendlyStats.learningSteps}
                 </Typography>
-              </Alert>
+                <Typography variant="body2" color="text.secondary">
+                  Learning Steps
+                </Typography>
+              </Box>
+            </Grid>
+            
+            <Grid size={{ xs: 4, md: 2 }}>
+              <Box>
+                <Typography variant="h3" color="secondary.main" fontWeight="bold">
+                  {friendlyStats.questions}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Questions
+                </Typography>
+              </Box>
+            </Grid>
+            
+            <Grid size={{ xs: 4, md: 2 }}>
+              <Box>
+                <Typography variant="h3" color="info.main" fontWeight="bold">
+                  {friendlyStats.interactions}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Interactions
+                </Typography>
+              </Box>
+            </Grid>
+            
+            <Grid size={{ xs: 6, md: 3 }}>
+              <Box>
+                <Typography variant="h3" color="success.main" fontWeight="bold">
+                  {generatedContent?.links?.length || 0}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Connections
+                </Typography>
+              </Box>
+            </Grid>
+            
+            <Grid size={{ xs: 6, md: 3 }}>
+              <Box>
+                <Typography variant="h3" color="warning.main" fontWeight="bold">
+                  {generatedContent?.nodes?.length || 0}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Total Elements
+                </Typography>
+              </Box>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
 
+      {/* Secondary Actions */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Export & Share
+              </Typography>
               <Box display="flex" flexDirection="column" gap={2}>
-                <Button
-                  variant="contained"
-                  size="large"
-                  startIcon={<EditIcon />}
-                  onClick={() => onOpenInFlowEditor(generatedContent)}
-                  fullWidth
-                >
-                  Open in Flow Editor
-                </Button>
-
-                <Button
-                  variant="outlined"
-                  startIcon={isSaving ? <CircularProgress size={20} /> : <SaveIcon />}
-                  onClick={handleSaveAsDraft}
-                  disabled={isSaving || !sessionId}
-                  fullWidth
-                >
-                  {isSaving ? 'Saving...' : 'Save as Draft'}
-                </Button>
-
-                <Divider />
-
                 <Button
                   variant="outlined"
                   startIcon={<DownloadIcon />}
@@ -274,42 +340,38 @@ export const GenerationResults: React.FC<GenerationResultsProps> = ({
                 >
                   Download JSON
                 </Button>
-
-                <Button
-                  variant="outlined"
-                  startIcon={<PreviewIcon />}
-                  onClick={handlePreviewActivity}
-                  fullWidth
-                >
-                  Preview Activity
-                </Button>
+                <Alert severity="info" sx={{ mt: 1 }}>
+                  <Typography variant="body2">
+                    Save first to enable full sharing features with analytics and QR codes.
+                  </Typography>
+                </Alert>
               </Box>
             </CardContent>
           </Card>
-
-          {/* Generation Details */}
-          <Card sx={{ mt: 2 }}>
+        </Grid>
+        
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 Generation Details
               </Typography>
-              
               <List dense>
-                <ListItem>
+                <ListItem sx={{ px: 0 }}>
                   <ListItemText
                     primary="Generated"
                     secondary={new Date().toLocaleString()}
                   />
                 </ListItem>
-                <ListItem>
+                <ListItem sx={{ px: 0 }}>
                   <ListItemText
-                    primary="Model"
+                    primary="AI Model"
                     secondary="Claude-3.5-Sonnet"
                   />
                 </ListItem>
-                <ListItem>
+                <ListItem sx={{ px: 0 }}>
                   <ListItemText
-                    primary="Schema Version"
+                    primary="Schema"
                     secondary="NLJ v2.0"
                   />
                 </ListItem>
@@ -319,18 +381,59 @@ export const GenerationResults: React.FC<GenerationResultsProps> = ({
         </Grid>
       </Grid>
 
-      {/* Tips for editing */}
-      <Alert severity="info" sx={{ mt: 3 }}>
-        <Typography variant="body2" gutterBottom>
-          <strong>Pro Tips:</strong>
-        </Typography>
-        <Typography variant="body2" component="ul" sx={{ pl: 2, mb: 0 }}>
-          <li>Use the Flow Editor to visually customize node connections and content</li>
-          <li>Add images, videos, and rich media to enhance engagement</li>
-          <li>Test your activity before publishing to ensure smooth user experience</li>
-          <li>Use variables and branching to create personalized learning paths</li>
-        </Typography>
-      </Alert>
+      {/* Technical Details - Progressive Disclosure */}
+      <Accordion>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="h6">Technical Details</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography variant="subtitle2" gutterBottom>
+            Node Type Breakdown
+          </Typography>
+          <Box sx={{ mb: 3 }}>
+            {Object.entries(nodeStats).map(([nodeType, count]) => (
+              <Chip
+                key={nodeType}
+                label={`${nodeType.replace(/_/g, ' ')}: ${count}`}
+                sx={{ mr: 1, mb: 1 }}
+                size="small"
+                variant="outlined"
+              />
+            ))}
+          </Box>
+
+          {/* Variables */}
+          {generatedContent.variableDefinitions && generatedContent.variableDefinitions.length > 0 && (
+            <>
+              <Typography variant="subtitle2" gutterBottom>
+                Variables Defined
+              </Typography>
+              <List dense>
+                {generatedContent.variableDefinitions.map((variable, index) => (
+                  <ListItem key={index} sx={{ px: 0 }}>
+                    <ListItemText
+                      primary={variable.name}
+                      secondary={`Type: ${variable.type}, Default: ${variable.initialValue}`}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </>
+          )}
+
+          <Alert severity="info" sx={{ mt: 2 }}>
+            <Typography variant="body2" gutterBottom>
+              <strong>Next Steps:</strong>
+            </Typography>
+            <Typography variant="body2" component="ul" sx={{ pl: 2, mb: 0 }}>
+              <li>Use the Flow Editor to visually customize connections and content</li>
+              <li>Add images, videos, and rich media to enhance engagement</li>
+              <li>Test your activity before publishing</li>
+              <li>Use variables and branching for personalized learning paths</li>
+            </Typography>
+          </Alert>
+        </AccordionDetails>
+      </Accordion>
 
       {/* Success/Error Snackbars */}
       <Snackbar
@@ -340,6 +443,16 @@ export const GenerationResults: React.FC<GenerationResultsProps> = ({
       >
         <Alert severity="success" onClose={() => setSaveSuccess(false)}>
           Activity saved successfully! Redirecting to Flow Editor...
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={shareSuccess}
+        autoHideDuration={3000}
+        onClose={() => setShareSuccess(false)}
+      >
+        <Alert severity="success" onClose={() => setShareSuccess(false)}>
+          Link copied to clipboard! Share this with others to collaborate.
         </Alert>
       </Snackbar>
 

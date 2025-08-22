@@ -85,7 +85,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ open, onClose, content }
     enabled: open && canShare && shares.length > 0,
   });
 
-  const activeShare = shares.find(share => share.is_active) || null;
+  const activeShare = shares.length > 0 ? shares[0] : null;
   const formattedAnalytics = analytics ? formatShareAnalytics(analytics) : null;
 
   // Create share mutation
@@ -113,7 +113,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ open, onClose, content }
   useEffect(() => {
     if (activeShare && !qrCodeDataUrl && !isGeneratingQR) {
       setIsGeneratingQR(true);
-      generateQRCode(activeShare.public_url, { width: 300, margin: 2 })
+      generateQRCode(activeShare.share_url, { width: 300, margin: 2 })
         .then(setQrCodeDataUrl)
         .finally(() => setIsGeneratingQR(false));
     }
@@ -137,14 +137,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({ open, onClose, content }
 
   const handleRevokeShare = useCallback(() => {
     if (activeShare) {
-      revokeShareMutation.mutate(activeShare.id);
+      revokeShareMutation.mutate(activeShare.token_id);
     }
   }, [activeShare, revokeShareMutation]);
 
   const handleCopyLink = useCallback(async () => {
     if (activeShare) {
       try {
-        await navigator.clipboard.writeText(activeShare.public_url);
+        await navigator.clipboard.writeText(activeShare.share_url);
         setCopySuccess(true);
         setTimeout(() => setCopySuccess(false), 2000);
       } catch (error) {
@@ -199,7 +199,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ open, onClose, content }
                   <Box display="flex" gap={1} alignItems="center">
                     <TextField
                       fullWidth
-                      value={activeShare.public_url}
+                      value={activeShare.share_url}
                       variant="outlined"
                       size="small"
                       InputProps={{
@@ -294,7 +294,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ open, onClose, content }
                           <Box display="flex" gap={1} flexWrap="wrap" justifyContent="center">
                             <Chip 
                               icon={<ViewIcon />} 
-                              label={`${activeShare.access_count} views`} 
+                              label={`${formattedAnalytics?.totalViews || '0'} views`} 
                               size="small" 
                               variant="outlined"
                             />
@@ -304,11 +304,12 @@ export const ShareModal: React.FC<ShareModalProps> = ({ open, onClose, content }
                               size="small"
                               color={activeShare.expires_at ? 'warning' : 'success'}
                             />
-                            {activeShare.description && (
+                            {activeShare.is_password_protected && (
                               <Chip
-                                label={activeShare.description}
+                                label="Password Protected"
                                 size="small"
                                 variant="outlined"
+                                color="warning"
                               />
                             )}
                           </Box>

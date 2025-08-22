@@ -233,14 +233,22 @@ class CreateActivityFromGenerationUseCase(BaseUseCase[CreateActivityFromGenerati
         logger.info(f"🔍 Extracting NLJ JSON from session generated content")
         logger.info(f"  - Generated content type: {type(generated_content)}")
         
-        # The FastStream handler should have already parsed and stored clean NLJ JSON
+        # Use the same extraction logic as GenerationStatusUseCase for consistency
         if isinstance(generated_content, dict):
             logger.info(f"  - Generated content keys: {list(generated_content.keys())}")
             
-            # Check if it looks like NLJ data
-            if self._is_valid_nlj_structure(generated_content):
-                logger.info(f"✅ Generated content is valid NLJ structure")
+            # Check if it has the expected structure from the handler (wrapper format)
+            if 'generated_json' in generated_content:
+                extracted_content = generated_content['generated_json']
+                logger.info(f"  - Using generated_json field")
+                logger.info(f"  - Generated JSON type: {type(extracted_content)}")
+                return extracted_content
+            
+            # Check if it looks like direct NLJ data (new handler format)
+            elif self._is_valid_nlj_structure(generated_content):
+                logger.info(f"✅ Generated content is direct NLJ structure")
                 return generated_content
+            
             else:
                 logger.warning(f"⚠️ Generated content doesn't look like NLJ structure")
                 # Check if it might be the old wrapper format (fallback)

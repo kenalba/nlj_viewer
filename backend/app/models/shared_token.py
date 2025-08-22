@@ -77,6 +77,11 @@ class SharedToken(Base):
         return self.is_active and not self.is_expired
 
     @property
+    def token_id(self) -> str:
+        """Get the token ID (alias for token field)."""
+        return self.token
+
+    @property
     def shared_type(self) -> str:
         """Get the type of shared resource."""
         return "media" if self.media_id else "content"

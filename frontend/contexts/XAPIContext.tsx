@@ -261,7 +261,6 @@ export const XAPIProvider: React.FC<XAPIProviderProps> = ({
           name: `user_${sessionId.current.split('-')[0]}`
         }
       });
-      console.log('👤 Created xAPI actor:', defaultUser.name);
       setActorState(defaultUser);
     }
   }, [actor, isEnabled]);

@@ -200,6 +200,31 @@ class GenerationSessionOrmService(BaseOrmService[GenerationSession, GenerationSe
         """Mark a generation session as failed with error message."""
         return await self.update_session_status(session_id, GenerationStatus.FAILED, error_message=error_message)
 
+    async def update_session_metadata(self, session_id: uuid.UUID, metadata: dict[str, Any]) -> bool:
+        """Update session metadata with additional information."""
+        try:
+            session = await self.repository.get_by_id(session_id)
+            if not session:
+                return False
+            
+            # Update metadata (assuming there's a metadata field on the model)
+            if hasattr(session, 'metadata'):
+                if session.metadata is None:
+                    session.metadata = {}
+                session.metadata.update(metadata)
+            else:
+                # If no metadata field, we can store it in prompt_config for now
+                if session.prompt_config is None:
+                    session.prompt_config = {}
+                session.prompt_config.update(metadata)
+            
+            await self.session.commit()
+            return True
+            
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise RuntimeError(f"Failed to update session metadata: {e}") from e
+
     # Generation Session Queries
 
     async def get_user_sessions(

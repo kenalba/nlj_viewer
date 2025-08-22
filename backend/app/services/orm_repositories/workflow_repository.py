@@ -26,7 +26,11 @@ class WorkflowRepository(BaseRepository[ApprovalWorkflow]):
     """Repository for workflow database operations."""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(session, ApprovalWorkflow)
+        super().__init__(session)
+
+    @property
+    def model(self) -> type[ApprovalWorkflow]:
+        return ApprovalWorkflow
 
     async def create_version(
         self,
@@ -71,17 +75,16 @@ class WorkflowRepository(BaseRepository[ApprovalWorkflow]):
         template_id: uuid.UUID | None = None
     ) -> ApprovalWorkflow:
         """Create a new approval workflow."""
-        workflow_data = {
-            "content_version_id": content_version_id,
-            "current_state": WorkflowState.DRAFT,
-            "requires_approval": requires_approval,
-            "auto_publish": auto_publish,
-            "assigned_reviewer_id": assigned_reviewer_id,
-            "template_id": template_id,
-            "created_at": datetime.now(timezone.utc),
-            "updated_at": datetime.now(timezone.utc)
-        }
-        return await self.create(workflow_data)
+        return await self.create(
+            content_version_id=content_version_id,
+            current_state=WorkflowState.DRAFT,
+            requires_approval=requires_approval,
+            auto_publish=auto_publish,
+            assigned_reviewer_id=assigned_reviewer_id,
+            template_id=template_id,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
+        )
 
     async def get_workflow_by_version(self, version_id: uuid.UUID) -> ApprovalWorkflow | None:
         """Get workflow by content version ID with full relationships."""
@@ -117,7 +120,7 @@ class WorkflowRepository(BaseRepository[ApprovalWorkflow]):
             .order_by(desc(ApprovalWorkflow.submitted_at))
         )
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def update_workflow_state(
         self,
@@ -177,7 +180,7 @@ class WorkflowRepository(BaseRepository[ApprovalWorkflow]):
             .options(
                 selectinload(ContentVersion.content),
                 selectinload(ContentVersion.creator),
-                selectinload(ContentVersion.workflow)
+                selectinload(ContentVersion.approval_workflow)
             )
             .where(ContentVersion.id == version_id)
         )
@@ -188,12 +191,12 @@ class WorkflowRepository(BaseRepository[ApprovalWorkflow]):
         """Get all versions for a content item."""
         query = (
             select(ContentVersion)
-            .options(selectinload(ContentVersion.workflow))
+            .options(selectinload(ContentVersion.approval_workflow))
             .where(ContentVersion.content_id == content_id)
             .order_by(desc(ContentVersion.version_number))
         )
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def get_published_version(self, content_id: uuid.UUID) -> ContentVersion | None:
         """Get the currently published version of content."""
@@ -226,9 +229,9 @@ class WorkflowRepository(BaseRepository[ApprovalWorkflow]):
         version.published_at = datetime.now(timezone.utc)
         
         # Update workflow if exists
-        if version.workflow:
-            version.workflow.current_state = WorkflowState.PUBLISHED
-            version.workflow.published_at = datetime.now(timezone.utc)
+        if version.approval_workflow:
+            version.approval_workflow.current_state = WorkflowState.PUBLISHED
+            version.approval_workflow.published_at = datetime.now(timezone.utc)
         
         await self.session.commit()
         return True
@@ -238,7 +241,7 @@ class WorkflowRepository(BaseRepository[ApprovalWorkflow]):
         # Get all versions and workflows
         query = (
             select(ContentVersion)
-            .options(selectinload(ContentVersion.workflow))
+            .options(selectinload(ContentVersion.approval_workflow))
             .where(ContentVersion.content_id == content_id)
         )
         result = await self.session.execute(query)
@@ -248,7 +251,7 @@ class WorkflowRepository(BaseRepository[ApprovalWorkflow]):
         total_versions = len(versions)
         published_versions = sum(1 for v in versions if v.version_status == VersionStatus.PUBLISHED)
         
-        workflows_with_reviews = [v.workflow for v in versions if v.workflow]
+        workflows_with_reviews = [v.approval_workflow for v in versions if v.approval_workflow]
         avg_review_time = None
         
         if workflows_with_reviews:
@@ -266,7 +269,7 @@ class WorkflowRepository(BaseRepository[ApprovalWorkflow]):
             "total_versions": total_versions,
             "published_versions": published_versions,
             "pending_reviews": sum(1 for v in versions 
-                                 if v.workflow and v.workflow.current_state in [
+                                 if v.approval_workflow and v.approval_workflow.current_state in [
                                      WorkflowState.SUBMITTED_FOR_REVIEW,
                                      WorkflowState.IN_REVIEW
                                  ]),
@@ -317,11 +320,11 @@ class WorkflowRepository(BaseRepository[ApprovalWorkflow]):
         if active_only:
             conditions.append(WorkflowTemplate.is_active == True)
         
-        query = (
-            select(WorkflowTemplate)
-            .options(selectinload(WorkflowTemplate.stages))
-            .where(and_(*conditions) if conditions else True)
-            .order_by(WorkflowTemplate.name)
-        )
+        query = select(WorkflowTemplate).options(selectinload(WorkflowTemplate.stages))
+        
+        if conditions:
+            query = query.where(and_(*conditions))
+        
+        query = query.order_by(WorkflowTemplate.name)
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())

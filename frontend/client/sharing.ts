@@ -8,20 +8,11 @@ import type { ContentItem } from './content';
 
 // API Response Types
 export interface SharedToken {
-  id: string;
-  content_id: string;
-  token: string;
-  created_by: string;
-  created_at: string;
+  token_id: string;
+  share_url: string;
   expires_at?: string;
-  is_active: boolean;
-  access_count: number;
-  last_accessed_at?: string;
-  description?: string;
-  is_expired: boolean;
-  is_valid: boolean;
-  public_url: string;
-  qr_code_url?: string;
+  max_views?: number;
+  is_password_protected: boolean;
 }
 
 export interface PublicActivity {
@@ -36,11 +27,14 @@ export interface PublicActivity {
 }
 
 export interface ShareAnalytics {
-  total_shares: number;
-  total_public_views: number;
-  total_public_completions: number;
-  last_shared_at?: string;
-  most_recent_access?: string;
+  token_id: string;
+  view_count: number;
+  max_views?: number;
+  remaining_views?: number;
+  created_at: string;
+  last_accessed_at?: string;
+  expires_at?: string;
+  is_active: boolean;
 }
 
 export interface CreateShareRequest {
@@ -49,10 +43,11 @@ export interface CreateShareRequest {
 }
 
 export interface CreateShareResponse {
-  success: boolean;
-  token: SharedToken;
-  public_url: string;
-  message: string;
+  token_id: string;
+  share_url: string;
+  expires_at?: string;
+  max_views?: number;
+  is_password_protected: boolean;
 }
 
 export interface UpdateShareRequest {
@@ -74,8 +69,8 @@ export const sharingApi = {
   /**
    * Get all shares for a specific content item
    */
-  async getContentShares(contentId: string): Promise<SharedToken[]> {
-    const response = await apiClient.get<SharedToken[]>(`/api/content/${contentId}/shares`);
+  async getContentShares(contentId: string): Promise<CreateShareResponse[]> {
+    const response = await apiClient.get<CreateShareResponse[]>(`/api/content/${contentId}/shares`);
     return response.data;
   },
 
@@ -230,19 +225,22 @@ export function formatShareAnalytics(analytics: ShareAnalytics): {
   completionRate: string;
   lastActivity: string;
 } {
-  const completionRate = analytics.total_public_views > 0 
-    ? Math.round((analytics.total_public_completions / analytics.total_public_views) * 100)
-    : 0;
+  // Handle the actual backend response structure
+  const viewCount = analytics.view_count || 0;
+  
+  // For now, since we don't have completion tracking in the backend,
+  // we'll use placeholder values
+  const completionRate = 0; // TODO: Implement completion tracking
 
-  const lastActivity = analytics.most_recent_access || analytics.last_shared_at;
+  const lastActivity = analytics.last_accessed_at;
   const lastActivityFormatted = lastActivity 
     ? new Date(lastActivity).toLocaleDateString()
     : 'Never';
 
   return {
-    totalShares: analytics.total_shares.toString(),
-    totalViews: analytics.total_public_views.toString(),
-    totalCompletions: analytics.total_public_completions.toString(),
+    totalShares: '1', // Single share token
+    totalViews: viewCount.toString(),
+    totalCompletions: '0', // TODO: Implement completion tracking
     completionRate: `${completionRate}%`,
     lastActivity: lastActivityFormatted,
   };

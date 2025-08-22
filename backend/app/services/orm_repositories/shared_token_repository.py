@@ -22,7 +22,11 @@ class SharedTokenRepository(BaseRepository[SharedToken]):
     """Repository for shared token database operations."""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(session, SharedToken)
+        super().__init__(session)
+
+    @property
+    def model(self) -> type[SharedToken]:
+        return SharedToken
 
     async def create_token(
         self,
@@ -36,20 +40,15 @@ class SharedTokenRepository(BaseRepository[SharedToken]):
         metadata: dict[str, object] | None = None
     ) -> SharedToken:
         """Create a new shared token with specified parameters."""
-        token_data = {
-            "content_id": content_id,
-            "created_by": created_by,
-            "expires_at": expires_at,
-            "max_views": max_views,
-            "is_password_protected": is_password_protected,
-            "password_hash": password_hash,
-            "allow_anonymous": allow_anonymous,
-            "metadata": metadata or {},
-            "view_count": 0,
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc)
-        }
-        return await self.create(token_data)
+        return await self.create(
+            content_id=content_id,
+            created_by=created_by,
+            expires_at=expires_at,
+            access_count=0,
+            is_active=True,
+            created_at=datetime.now(timezone.utc),
+            description=f"Shared on {datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
+        )
 
     async def get_by_token_id(self, token_id: str) -> SharedToken | None:
         """Get shared token by token ID with content and user relationships."""
@@ -59,7 +58,7 @@ class SharedTokenRepository(BaseRepository[SharedToken]):
                 selectinload(SharedToken.content),
                 selectinload(SharedToken.creator)
             )
-            .where(SharedToken.token_id == token_id)
+            .where(SharedToken.token == token_id)
         )
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
@@ -68,7 +67,7 @@ class SharedTokenRepository(BaseRepository[SharedToken]):
         self, 
         content_id: uuid.UUID
     ) -> SharedToken | None:
-        """Get active shared token for specific content."""
+        """Get most recent active shared token for specific content."""
         query = (
             select(SharedToken)
             .options(selectinload(SharedToken.content))
@@ -78,6 +77,8 @@ class SharedTokenRepository(BaseRepository[SharedToken]):
                     SharedToken.is_active == True
                 )
             )
+            .order_by(SharedToken.created_at.desc())
+            .limit(1)
         )
         result = await self.session.execute(query)
         return result.scalar_one_or_none()

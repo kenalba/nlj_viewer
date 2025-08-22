@@ -11,10 +11,12 @@ import uuid
 import hashlib
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import UserRole
+from app.models.content import ContentItem
 from app.services.orm_services.shared_token_orm_service import SharedTokenOrmService
 from app.services.orm_services.content_orm_service import ContentOrmService
 from app.services.orm_services.user_orm_service import UserOrmService
@@ -25,6 +27,7 @@ from ..base_use_case import BaseUseCase
 class CreateShareRequest:
     """Request object for creating a content share."""
     content_id: uuid.UUID
+    current_user_id: uuid.UUID
     expires_at: datetime | None = None
     max_views: int | None = None
     password: str | None = None
@@ -66,10 +69,12 @@ class CreateShareUseCase(BaseUseCase[CreateShareRequest, CreateShareResponse]):
         self.content_service = content_orm_service
         self.user_service = user_orm_service
 
-    async def execute(self, request: CreateShareRequest) -> CreateShareResponse:
+    async def execute(self, request: CreateShareRequest, user_context: dict[str, Any]) -> CreateShareResponse:
         """Execute the create share workflow."""
-        # Get current user from context
-        current_user = await self.get_current_user()
+        # Get current user
+        current_user = await self.user_service.get_by_id(request.current_user_id)
+        if not current_user:
+            raise ValueError("User not found")
         
         # Validate content exists and user has access
         content = await self.content_service.get_by_id(request.content_id)
@@ -89,31 +94,27 @@ class CreateShareUseCase(BaseUseCase[CreateShareRequest, CreateShareResponse]):
                 100000
             ).hex()
         
-        # Create share token
+        # Create share token (only using supported fields)
         share_token = await self.shared_token_service.create_share_token(
             content_id=request.content_id,
             created_by=current_user.id,
-            expires_at=request.expires_at,
-            max_views=request.max_views,
-            is_password_protected=bool(request.password),
-            password_hash=password_hash,
-            allow_anonymous=request.allow_anonymous,
-            metadata=request.metadata
+            expires_at=request.expires_at
         )
         
         # Generate share URL
         share_url = f"/shared/{share_token.token_id}"
         
         # Publish sharing event
-        await self.publish_event("content.shared", {
-            "content_id": str(request.content_id),
-            "token_id": share_token.token_id,
-            "created_by": str(current_user.id),
-            "expires_at": request.expires_at.isoformat() if request.expires_at else None,
-            "max_views": request.max_views,
-            "is_password_protected": bool(request.password),
-            "allow_anonymous": request.allow_anonymous
-        })
+        await self._publish_event(
+            "content.shared",
+            content_id=str(request.content_id),
+            token_id=share_token.token_id,
+            created_by=str(current_user.id),
+            expires_at=request.expires_at.isoformat() if request.expires_at else None,
+            max_views=request.max_views,
+            is_password_protected=bool(request.password),
+            allow_anonymous=request.allow_anonymous
+        )
         
         return CreateShareResponse(
             token_id=share_token.token_id,
@@ -123,7 +124,7 @@ class CreateShareUseCase(BaseUseCase[CreateShareRequest, CreateShareResponse]):
             is_password_protected=bool(request.password)
         )
 
-    async def _validate_sharing_permissions(self, user_id: uuid.UUID, content) -> None:
+    async def _validate_sharing_permissions(self, user_id: uuid.UUID, content: ContentItem) -> None:
         """Validate user can share the content."""
         # Content owner can always share
         if content.created_by == user_id:
