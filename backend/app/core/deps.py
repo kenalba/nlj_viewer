@@ -44,6 +44,10 @@ from app.services.use_cases.training.manage_sessions_use_case import ManageSessi
 from app.services.use_cases.training.track_engagement_use_case import TrackEngagementUseCase
 from app.services.use_cases.analytics.generate_insights_use_case import GenerateInsightsUseCase
 from app.services.use_cases.analytics.export_data_use_case import ExportDataUseCase
+from app.services.use_cases.sharing.create_share_use_case import CreateShareUseCase
+from app.services.use_cases.sharing.access_shared_content_use_case import AccessSharedContentUseCase
+from app.services.use_cases.workflow.create_version_use_case import CreateVersionUseCase
+from app.services.use_cases.workflow.review_content_use_case import ReviewContentUseCase
 
 # ORM Service imports for dependency injection
 from app.services.orm_services.content_orm_service import ContentOrmService
@@ -53,6 +57,8 @@ from app.services.orm_services.generation_session_orm_service import GenerationS
 from app.services.orm_services.source_document_orm_service import SourceDocumentOrmService
 from app.services.orm_services.permission_orm_service import PermissionOrmService
 from app.services.orm_services.role_orm_service import RoleOrmService
+from app.services.orm_services.shared_token_orm_service import SharedTokenOrmService
+from app.services.orm_services.workflow_orm_service import WorkflowOrmService
 
 # Repository imports for Clean Architecture compliance
 from app.services.orm_repositories.user_repository import UserRepository
@@ -612,4 +618,74 @@ async def get_generation_statistics_use_case(
     return GetGenerationStatisticsUseCase(
         session=db,
         generation_session_orm_service=generation_session_orm_service
+    )
+
+
+# Sharing Domain Use Cases
+
+async def get_create_share_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> CreateShareUseCase:
+    """Factory for CreateShareUseCase."""
+    shared_token_orm_service = SharedTokenOrmService(db)
+    content_repository = ContentRepository(db)
+    content_orm_service = ContentOrmService(db, content_repository)
+    user_repository = UserRepository(db)
+    user_orm_service = UserOrmService(db, user_repository)
+    
+    return CreateShareUseCase(
+        session=db,
+        shared_token_orm_service=shared_token_orm_service,
+        content_orm_service=content_orm_service,
+        user_orm_service=user_orm_service
+    )
+
+
+async def get_access_shared_content_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> AccessSharedContentUseCase:
+    """Factory for AccessSharedContentUseCase."""
+    shared_token_orm_service = SharedTokenOrmService(db)
+    content_repository = ContentRepository(db)
+    content_orm_service = ContentOrmService(db, content_repository)
+    
+    return AccessSharedContentUseCase(
+        session=db,
+        shared_token_orm_service=shared_token_orm_service,
+        content_orm_service=content_orm_service
+    )
+
+
+# Workflow Domain Use Cases
+
+async def get_create_version_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> CreateVersionUseCase:
+    """Factory for CreateVersionUseCase."""
+    workflow_orm_service = WorkflowOrmService(db)
+    content_repository = ContentRepository(db)
+    content_orm_service = ContentOrmService(db, content_repository)
+    user_repository = UserRepository(db)
+    user_orm_service = UserOrmService(db, user_repository)
+    
+    return CreateVersionUseCase(
+        session=db,
+        workflow_orm_service=workflow_orm_service,
+        content_orm_service=content_orm_service,
+        user_orm_service=user_orm_service
+    )
+
+
+async def get_review_content_use_case(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> ReviewContentUseCase:
+    """Factory for ReviewContentUseCase."""
+    workflow_orm_service = WorkflowOrmService(db)
+    user_repository = UserRepository(db)
+    user_orm_service = UserOrmService(db, user_repository)
+    
+    return ReviewContentUseCase(
+        session=db,
+        workflow_orm_service=workflow_orm_service,
+        user_orm_service=user_orm_service
     )

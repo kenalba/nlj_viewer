@@ -17,6 +17,9 @@ from .learning_objective_repository import (
     NodeLearningObjectiveRepository,
     NodeKeywordRepository
 )
+from .shared_token_repository import SharedTokenRepository
+from .workflow_repository import WorkflowRepository
+from .activity_source_repository import ActivitySourceRepository
 
 __all__ = [
     # Base
@@ -47,4 +50,9 @@ __all__ = [
     "KeywordRepository",
     "NodeLearningObjectiveRepository",
     "NodeKeywordRepository",
+    
+    # Workflow and sharing
+    "SharedTokenRepository",
+    "WorkflowRepository",
+    "ActivitySourceRepository",
 ]

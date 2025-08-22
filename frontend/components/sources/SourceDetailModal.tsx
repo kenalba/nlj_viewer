@@ -131,13 +131,13 @@ const SourceDetailModal: React.FC<SourceDetailModalProps> = ({
             {getStatusChip()}
             {document.claude_file_id ? (
               <Chip
-                label="Uploaded to Claude"
+                label="Uploaded"
                 color="primary"
                 icon={<CloudDoneIcon />}
               />
             ) : (
               <Chip
-                label="Not in Claude"
+                label="Not Uploaded"
                 variant="outlined"
                 icon={<CloudUploadIcon />}
               />

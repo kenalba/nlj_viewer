@@ -30,6 +30,9 @@ from .training_orm_service import TrainingOrmService
 from .learning_objective_orm_service import LearningObjectiveOrmService
 from .permission_orm_service import PermissionOrmService
 from .role_orm_service import RoleOrmService
+from .shared_token_orm_service import SharedTokenOrmService
+from .workflow_orm_service import WorkflowOrmService
+from .activity_source_orm_service import ActivitySourceOrmService
 
 __all__ = [
     # Base
@@ -47,4 +50,8 @@ __all__ = [
     # Permission & Role Management
     "PermissionOrmService",
     "RoleOrmService",
+    # Workflow and Sharing Services
+    "SharedTokenOrmService",
+    "WorkflowOrmService",
+    "ActivitySourceOrmService",
 ]

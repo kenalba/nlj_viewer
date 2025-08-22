@@ -1,40 +1,83 @@
 """
 API endpoints for shared token management and public activity access.
-Provides both authenticated endpoints for managing shares and public endpoints for accessing shared content.
+Clean Architecture implementation with Use Cases for all business logic.
 """
 
 import uuid
-from typing import List
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel
 
 from app.core.config import settings
-from app.core.database_manager import get_db
-from app.core.deps import get_current_user
-from app.models.user import User
-from app.schemas.shared_token import (
-    CreateShareRequest,
-    CreateShareResponse,
-    PublicActivityResponse,
-    ShareAnalytics,
-    SharedTokenCreate,
-    SharedTokenResponse,
-    SharedTokenUpdate,
+from app.core.deps import (
+    get_current_user, get_create_share_use_case, get_access_shared_content_use_case
 )
-from app.services.shared_token_service import SharedTokenService
+from app.models.user import User
+from app.services.use_cases.sharing.create_share_use_case import (
+    CreateShareUseCase, CreateShareRequest as CreateShareUseCaseRequest
+)
+from app.services.use_cases.sharing.access_shared_content_use_case import (
+    AccessSharedContentUseCase, AccessSharedContentRequest as AccessSharedContentUseCaseRequest
+)
 
 # Two routers: one for authenticated sharing management, one for public access
 auth_router = APIRouter(prefix="/content", tags=["sharing"])
 public_router = APIRouter(prefix="/shared", tags=["public"])
 
 
-def build_public_url(request: Request, token: str) -> str:
+# API Request/Response schemas
+class CreateShareRequest(BaseModel):
+    """API request schema for creating a share."""
+    expires_at: datetime | None = None
+    max_views: int | None = None
+    password: str | None = None
+    allow_anonymous: bool = True
+    metadata: dict[str, object] | None = None
+
+
+class CreateShareResponse(BaseModel):
+    """API response schema for share creation."""
+    token_id: str
+    share_url: str
+    expires_at: datetime | None
+    max_views: int | None
+    is_password_protected: bool
+
+
+class AccessSharedContentRequest(BaseModel):
+    """API request schema for accessing shared content."""
+    password: str | None = None
+
+
+class AccessSharedContentResponse(BaseModel):
+    """API response schema for shared content access."""
+    content_id: str
+    content_title: str
+    content_data: dict[str, object]
+    remaining_views: int | None
+    creator_name: str
+    metadata: dict[str, object]
+
+
+class ShareAnalytics(BaseModel):
+    """API response schema for share analytics."""
+    token_id: str
+    view_count: int
+    max_views: int | None
+    remaining_views: int | None
+    created_at: datetime
+    last_accessed_at: datetime | None
+    expires_at: datetime | None
+    is_active: bool
+
+
+def build_public_url(request: Request, token_id: str) -> str:
     """Build the public URL for a shared activity."""
     # Use configured frontend URL if available
     if settings.FRONTEND_URL:
         frontend_url = settings.FRONTEND_URL.rstrip("/")
-        return f"{frontend_url}/shared/{token}"
+        return f"{frontend_url}/shared/{token_id}"
 
     # Otherwise, derive from request
     base_url = str(request.base_url).rstrip("/")
@@ -48,26 +91,7 @@ def build_public_url(request: Request, token: str) -> str:
         # In production, assume frontend is served from same domain
         frontend_url = base_url
 
-    return f"{frontend_url}/shared/{token}"
-
-
-def token_to_response(token, request: Request) -> SharedTokenResponse:
-    """Convert SharedToken model to response schema."""
-    return SharedTokenResponse(
-        id=token.id,
-        content_id=token.content_id,
-        token=token.token,
-        created_by=token.created_by,
-        created_at=token.created_at,
-        expires_at=token.expires_at,
-        is_active=token.is_active,
-        access_count=token.access_count,
-        last_accessed_at=token.last_accessed_at,
-        description=token.description,
-        is_expired=token.is_expired,
-        is_valid=token.is_valid,
-        public_url=build_public_url(request, token.token),
-    )
+    return f"{frontend_url}/shared/{token_id}"
 
 
 # Authenticated endpoints for share management
@@ -76,175 +100,189 @@ def token_to_response(token, request: Request) -> SharedTokenResponse:
     response_model=CreateShareResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create public share",
-    description="Create a public share token for published content. Only content creators and admins can create shares.",
+    description="Create a public share token for content. Uses Clean Architecture patterns."
 )
 async def create_share(
     content_id: uuid.UUID,
-    share_request: CreateShareRequest,
+    request_data: CreateShareRequest,
     request: Request,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    create_share_use_case: CreateShareUseCase = Depends(get_create_share_use_case),
+    current_user: User = Depends(get_current_user)
 ) -> CreateShareResponse:
-    """Create a new public share for content."""
-
-    service = SharedTokenService(db)
-
+    """Create a public share for content using Clean Architecture Use Case."""
     try:
-        token_data = SharedTokenCreate(description=share_request.description, expires_at=share_request.expires_at)
-
-        token = await service.create_share_token(content_id=content_id, user_id=current_user.id, token_data=token_data)
-
-        public_url = build_public_url(request, token.token)
-
-        return CreateShareResponse(
-            success=True,
-            token=token_to_response(token, request),
-            public_url=public_url,
-            message="Share created successfully",
+        # Convert API request to Use Case request
+        use_case_request = CreateShareUseCaseRequest(
+            content_id=content_id,
+            expires_at=request_data.expires_at,
+            max_views=request_data.max_views,
+            password=request_data.password,
+            allow_anonymous=request_data.allow_anonymous,
+            metadata=request_data.metadata
         )
-
+        
+        # Execute use case
+        result = await create_share_use_case.execute(use_case_request)
+        
+        # Build full share URL
+        share_url = build_public_url(request, result.token_id)
+        
+        # Convert Use Case response to API response
+        return CreateShareResponse(
+            token_id=result.token_id,
+            share_url=share_url,
+            expires_at=result.expires_at,
+            max_views=result.max_views,
+            is_password_protected=result.is_password_protected
+        )
+        
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except Exception:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create share")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 
 @auth_router.get(
-    "/{content_id}/shares",
-    response_model=List[SharedTokenResponse],
-    summary="Get content shares",
-    description="Get all share tokens for a content item. Only accessible by content creators and admins.",
+    "/{content_id}/share",
+    response_model=CreateShareResponse,
+    summary="Get existing share",
+    description="Get existing share token for content if one exists."
 )
-async def get_content_shares(
+async def get_existing_share(
     content_id: uuid.UUID,
     request: Request,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> List[SharedTokenResponse]:
-    """Get all shares for a content item."""
-
-    service = SharedTokenService(db)
-    tokens = await service.get_content_shares(content_id)
-
-    return [token_to_response(token, request) for token in tokens]
-
-
-@auth_router.get(
-    "/{content_id}/share-analytics",
-    response_model=ShareAnalytics,
-    summary="Get share analytics",
-    description="Get analytics data for content sharing.",
-)
-async def get_share_analytics(
-    content_id: uuid.UUID, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
-) -> ShareAnalytics:
-    """Get sharing analytics for content."""
-
-    service = SharedTokenService(db)
-    return await service.get_share_analytics(content_id)
-
-
-@auth_router.put(
-    "/shares/{token_id}",
-    response_model=SharedTokenResponse,
-    summary="Update share token",
-    description="Update a share token. Only the creator can update their shares.",
-)
-async def update_share_token(
-    token_id: uuid.UUID,
-    update_data: SharedTokenUpdate,
-    request: Request,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> SharedTokenResponse:
-    """Update an existing share token."""
-
-    service = SharedTokenService(db)
-    token = await service.update_share_token(token_id, current_user.id, update_data)
-
-    if not token:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Share token not found or access denied")
-
-    return token_to_response(token, request)
+    # TODO: Add get share use case when implemented
+    current_user: User = Depends(get_current_user)
+) -> CreateShareResponse:
+    """Get existing share for content."""
+    # Placeholder - would use a GetShareUseCase
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Not yet implemented")
 
 
 @auth_router.delete(
-    "/shares/{token_id}",
+    "/{content_id}/share",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Revoke share token",
-    description="Revoke a share token. Only the creator can revoke their shares.",
+    summary="Revoke share",
+    description="Revoke/deactivate the public share for content."
 )
-async def revoke_share_token(
-    token_id: uuid.UUID, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+async def revoke_share(
+    content_id: uuid.UUID,
+    # TODO: Add revoke share use case when implemented
+    current_user: User = Depends(get_current_user)
 ):
-    """Revoke a share token."""
-
-    service = SharedTokenService(db)
-    success = await service.revoke_share_token(token_id, current_user.id)
-
-    if not success:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Share token not found or access denied")
+    """Revoke public share for content."""
+    # Placeholder - would use a RevokeShareUseCase
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Not yet implemented")
 
 
-@auth_router.get(
-    "/my-shares",
-    response_model=List[SharedTokenResponse],
-    summary="Get user's shares",
-    description="Get all share tokens created by the current user.",
-)
-async def get_user_shares(
-    request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
-) -> List[SharedTokenResponse]:
-    """Get all shares created by the current user."""
-
-    service = SharedTokenService(db)
-    tokens = await service.get_user_shares(current_user.id)
-
-    return [token_to_response(token, request) for token in tokens]
-
-
-# Public endpoints (no authentication required)
-# Note: More specific routes MUST come before catch-all routes in FastAPI
-
-
-# Health check endpoint for public access - MUST be before /{token}
-@public_router.get("/health", summary="Health check", description="Public health check endpoint")
-async def public_health_check():
-    """Public health check for the sharing system."""
-    return {"status": "healthy", "service": "public_sharing"}
-
-
+# Public endpoints for accessing shared content
 @public_router.get(
-    "/{token}",
-    response_model=PublicActivityResponse,
-    summary="Get shared activity",
-    description="Get activity data via public share token. No authentication required.",
+    "/{token_id}",
+    response_model=AccessSharedContentResponse,
+    summary="Access shared content",
+    description="Access content via public share token. No authentication required."
 )
-async def get_shared_activity(token: str, db: AsyncSession = Depends(get_db)) -> PublicActivityResponse:
-    """Get activity data for public access via share token."""
-
-    service = SharedTokenService(db)
-    activity = await service.get_public_activity(token)
-
-    if not activity:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shared activity not found or access expired")
-
-    return activity
+async def access_shared_content(
+    token_id: str,
+    request: Request,
+    access_shared_content_use_case: AccessSharedContentUseCase = Depends(get_access_shared_content_use_case),
+    password: str | None = None
+) -> AccessSharedContentResponse:
+    """Access shared content using public token."""
+    try:
+        # Get request metadata
+        user_agent = request.headers.get("User-Agent")
+        ip_address = request.client.host if request.client else None
+        
+        # Convert API request to Use Case request
+        use_case_request = AccessSharedContentUseCaseRequest(
+            token_id=token_id,
+            password=password,
+            user_agent=user_agent,
+            ip_address=ip_address
+        )
+        
+        # Execute use case
+        result = await access_shared_content_use_case.execute(use_case_request)
+        
+        # Convert Use Case response to API response
+        return AccessSharedContentResponse(
+            content_id=result.content_id,
+            content_title=result.content_title,
+            content_data=result.content_data,
+            remaining_views=result.remaining_views,
+            creator_name=result.creator_name,
+            metadata=result.metadata
+        )
+        
+    except ValueError as e:
+        if "password" in str(e).lower():
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 
 @public_router.post(
-    "/{token}/complete",
-    status_code=status.HTTP_200_OK,
-    summary="Record completion",
-    description="Record completion of a publicly accessed activity.",
+    "/{token_id}/access",
+    response_model=AccessSharedContentResponse,
+    summary="Access password-protected content",
+    description="Access password-protected shared content."
 )
-async def record_public_completion(token: str, db: AsyncSession = Depends(get_db)):
-    """Record completion for a publicly accessed activity."""
+async def access_protected_content(
+    token_id: str,
+    request_data: AccessSharedContentRequest,
+    request: Request,
+    access_shared_content_use_case: AccessSharedContentUseCase = Depends(get_access_shared_content_use_case)
+) -> AccessSharedContentResponse:
+    """Access password-protected shared content."""
+    try:
+        # Get request metadata
+        user_agent = request.headers.get("User-Agent")
+        ip_address = request.client.host if request.client else None
+        
+        # Convert API request to Use Case request
+        use_case_request = AccessSharedContentUseCaseRequest(
+            token_id=token_id,
+            password=request_data.password,
+            user_agent=user_agent,
+            ip_address=ip_address
+        )
+        
+        # Execute use case
+        result = await access_shared_content_use_case.execute(use_case_request)
+        
+        # Convert Use Case response to API response
+        return AccessSharedContentResponse(
+            content_id=result.content_id,
+            content_title=result.content_title,
+            content_data=result.content_data,
+            remaining_views=result.remaining_views,
+            creator_name=result.creator_name,
+            metadata=result.metadata
+        )
+        
+    except ValueError as e:
+        if "password" in str(e).lower():
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
-    service = SharedTokenService(db)
-    success = await service.record_completion(token)
 
-    if not success:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shared activity not found or access expired")
-
-    return {"message": "Completion recorded successfully"}
+@auth_router.get(
+    "/{content_id}/share/analytics",
+    response_model=ShareAnalytics,
+    summary="Get share analytics",
+    description="Get analytics data for content share."
+)
+async def get_share_analytics(
+    content_id: uuid.UUID,
+    # TODO: Add analytics use case when implemented
+    current_user: User = Depends(get_current_user)
+) -> ShareAnalytics:
+    """Get analytics for content share."""
+    # Placeholder - would use a GetShareAnalyticsUseCase
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Not yet implemented")

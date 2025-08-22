@@ -507,7 +507,7 @@ const SourceDetailPage: React.FC = () => {
           />
           {document.claude_file_id && (
             <Chip
-              label="Uploaded to Claude"
+              label="Uploaded"
               color="success"
               size="small"
               icon={<UploadIcon />}
