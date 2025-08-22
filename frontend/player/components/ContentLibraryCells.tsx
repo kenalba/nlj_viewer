@@ -236,10 +236,11 @@ export const ActionsCell = React.memo(({ item, user, onPlay, onEdit, onDelete, o
           size="small"
           onClick={handlePlay}
           sx={{ 
-            backgroundColor: 'primary.main',
-            color: 'white',
+            backgroundColor: 'action.hover',
+            color: 'text.secondary',
             '&:hover': {
-              backgroundColor: 'primary.dark'
+              backgroundColor: 'action.selected',
+              color: 'text.primary'
             }
           }}
         >
@@ -255,10 +256,10 @@ export const ActionsCell = React.memo(({ item, user, onPlay, onEdit, onDelete, o
               size="small"
               onClick={handleMoreActionsClick}
               sx={{ 
-                backgroundColor: 'grey.100',
+                backgroundColor: 'action.hover',
                 color: 'text.secondary',
                 '&:hover': {
-                  backgroundColor: 'grey.200',
+                  backgroundColor: 'action.selected',
                   color: 'text.primary'
                 }
               }}

@@ -94,7 +94,7 @@ export const CreateActivityModal: React.FC<CreateActivityModalProps> = ({
       <DialogContent sx={{ px: 4, py: 2 }}>
         <Grid container spacing={2} sx={{ maxWidth: '100%' }}>
           {ACTIVITY_TEMPLATES.map((template) => (
-            <Grid key={template.id} item xs={6} sm={4}>
+            <Grid key={template.id} size={{ xs: 6, sm: 4 }}>
               <Card 
                 sx={{ 
                   cursor: 'pointer', 
@@ -251,7 +251,7 @@ export const CreateActivityModal: React.FC<CreateActivityModalProps> = ({
       </DialogTitle>
 
       {/* Progress Stepper */}
-      <Box sx={{ px: 4, pb: 1 }}>
+      <Box sx={{ px: 4, py: 3, borderBottom: 1, borderColor: 'divider' }}>
         <Stepper activeStep={currentStep} alternativeLabel sx={{ width: '100%' }}>
           {MODAL_STEPS.map((label) => (
             <Step key={label}>

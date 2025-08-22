@@ -155,9 +155,11 @@ const AnalyticsPage: React.FC = () => {
           </FormControl>
 
           <Tooltip title="Refresh Data">
-            <IconButton onClick={() => refetch()} disabled={isLoading} size="small">
-              <RefreshIcon />
-            </IconButton>
+            <span>
+              <IconButton onClick={() => refetch()} disabled={isLoading} size="small">
+                <RefreshIcon />
+              </IconButton>
+            </span>
           </Tooltip>
           
           <Button
@@ -180,7 +182,7 @@ const AnalyticsPage: React.FC = () => {
           <Typography variant="body2">
             <strong>Analytics System:</strong> {analyticsData.healthStatus.analytics_system} | 
             <strong> FastStream:</strong> {analyticsData.healthStatus.faststream?.success ? 'Operational' : 'Degraded'} | 
-            <strong> Elasticsearch:</strong> {analyticsData.healthStatus.elasticsearch.success ? 'Connected' : 'Disconnected'}
+            <strong> Elasticsearch:</strong> {analyticsData.healthStatus.elasticsearch?.success ? 'Connected' : 'Disconnected'}
           </Typography>
         </Alert>
       )}

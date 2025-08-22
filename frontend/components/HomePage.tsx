@@ -710,7 +710,7 @@ const HomePageContent: React.FC = () => {
               Quick Stats
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid size={6}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h4" color="primary" sx={{ fontWeight: 600 }}>
                     {metrics.completedActivities}
@@ -720,7 +720,7 @@ const HomePageContent: React.FC = () => {
                   </Typography>
                 </Box>
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={6}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h4" color="secondary" sx={{ fontWeight: 600 }}>
                     {metrics.learningHours}h

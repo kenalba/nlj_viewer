@@ -364,16 +364,16 @@ Example:
           flexGrow: 1,
           cursor: 'pointer',
           border: 2,
-          borderColor: dragOver ? 'primary.main' : 'grey.300',
+          borderColor: dragOver ? 'primary.main' : 'divider',
           borderStyle: dragOver ? 'solid' : 'dashed',
-          bgcolor: dragOver ? 'primary.50' : 'grey.50',
+          bgcolor: dragOver ? 'action.hover' : 'background.paper',
           transition: 'all 0.2s ease',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           minHeight: 300,
           '&:hover': { 
-            bgcolor: dragOver ? 'primary.100' : 'grey.100',
+            bgcolor: 'action.hover',
             borderColor: 'primary.light',
             borderStyle: 'solid'
           }
@@ -387,7 +387,7 @@ Example:
         <CardContent sx={{ textAlign: 'center', py: 4 }}>
           <UploadIcon sx={{ 
             fontSize: 48, 
-            color: dragOver ? 'primary.main' : 'grey.600', 
+            color: dragOver ? 'primary.main' : 'text.secondary', 
             mb: 2,
             transition: 'color 0.2s ease'
           }} />
@@ -534,13 +534,13 @@ Example:
                 <Typography variant="subtitle2" gutterBottom>
                   Import Warnings:
                 </Typography>
-                <ul style={{ margin: 0, paddingLeft: 20 }}>
+                <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
                   {warnings.map((warning, index) => (
-                    <li key={index}>
+                    <Box component="li" key={index}>
                       <Typography variant="body2">{warning}</Typography>
-                    </li>
+                    </Box>
                   ))}
-                </ul>
+                </Box>
               </Alert>
             )}
           </>
@@ -575,10 +575,8 @@ Example:
       }}
     >
       <DialogTitle>
-        <Typography variant="h5">
-          Import Activity
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+        Import Activity
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           Upload files (Ander JSON, Trivie Excel) or paste JSON content directly
         </Typography>
       </DialogTitle>

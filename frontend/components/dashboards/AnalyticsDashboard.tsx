@@ -330,7 +330,7 @@ export const AnalyticsDashboard: React.FC = () => {
           <Typography variant="body2">
             <strong>Analytics System:</strong> {analyticsData.healthStatus.analytics_system} | 
             <strong> FastStream:</strong> {analyticsData.healthStatus.faststream?.success ? 'Operational' : 'Degraded'} | 
-            <strong> Elasticsearch:</strong> {analyticsData.healthStatus.elasticsearch.success ? 'Connected' : 'Disconnected'}
+            <strong> Elasticsearch:</strong> {analyticsData.healthStatus.elasticsearch?.success ? 'Connected' : 'Disconnected'}
           </Typography>
         </Alert>
       )}

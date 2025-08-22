@@ -77,15 +77,12 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
         const overrideRole = localStorage.getItem('viewAsRole');
         const overrideJobCode = localStorage.getItem('viewAsJobCode');
         
-        console.log('DashboardContext: Retrieved overrides from localStorage:', { overrideRole, overrideJobCode });
-        
         if ((overrideRole || overrideJobCode) && (user.role === 'ADMIN' || process.env.NODE_ENV === 'development')) {
           // Validate and apply role override
           if (overrideRole) {
             const validRoles = ['PLAYER', 'LEARNER', 'CREATOR', 'REVIEWER', 'APPROVER', 'ADMIN'];
             if (validRoles.includes(overrideRole)) {
               effectiveRole = overrideRole as any;
-              console.log('DashboardContext: Using override role:', effectiveRole);
             } else {
               console.warn('DashboardContext: Invalid override role, removing:', overrideRole);
               localStorage.removeItem('viewAsRole');
@@ -97,7 +94,6 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
             const validJobCodes = ['DP', 'GM', 'SM', 'SP', 'FM', 'FI', 'BM', 'BD', 'IM'];
             if (validJobCodes.includes(overrideJobCode)) {
               effectiveJobCodes = [overrideJobCode];
-              console.log('DashboardContext: Using override job code:', effectiveJobCodes);
             } else {
               console.warn('DashboardContext: Invalid override job code, removing:', overrideJobCode);
               localStorage.removeItem('viewAsJobCode');
@@ -118,9 +114,6 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
     const role = effectiveRole.toLowerCase();
     let dashboardType: DashboardContext['dashboardType'] = 'player';
     
-    // Debug logging
-    console.log('DashboardContext: User role:', user.role, 'Effective role:', effectiveRole, 'Lowercase:', role);
-    
     if (role === 'learner') {
       dashboardType = 'learner';
     } else if (role === 'creator') {
@@ -130,8 +123,6 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
     } else if (role === 'admin' || role === 'approver') {
       dashboardType = 'admin';
     }
-    
-    console.log('DashboardContext: Dashboard type:', dashboardType);
 
     // Mock metrics (will be replaced with real API data)
     const mockMetrics: DashboardMetrics = {
